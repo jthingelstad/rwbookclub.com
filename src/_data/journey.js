@@ -1,17 +1,13 @@
 // Groups books into year buckets for the reading-journey home page.
-// books.json is already sorted most-recent first; this preserves that order
+// Pulls from books.js (the enriched view) so cover widths reflect the
+// JPEGs actually present on disk. The shared array is already sorted
+// most-recent-first by the fetch script; this preserves that order
 // inside each year and emits years in descending order.
 
-const path = require("path");
-const fs = require("fs");
+const buildBooks = require("./books.js");
 
 module.exports = function () {
-  const booksPath = path.join(__dirname, "books.json");
-  if (!fs.existsSync(booksPath)) {
-    // Fetch hasn't been run yet — return an empty journey so 11ty can still build.
-    return { years: [], totalBooks: 0 };
-  }
-  const books = JSON.parse(fs.readFileSync(booksPath, "utf8"));
+  const books = buildBooks();
 
   const byYear = new Map();
   for (const book of books) {

@@ -7,7 +7,7 @@
     "fetch": "python scripts/fetch_airtable.py && python scripts/process_images.py",
     "build": "eleventy",
     "serve": "eleventy --serve",
-    "clean": "rm -rf _site src/_data/*.json src/assets/images/covers src/assets/images/members"
+    "clean": "rm -rf _site src/_data/*.json src/_data/raw src/assets/images/covers src/assets/images/members"
   },
   "devDependencies": {
     "@11ty/eleventy": "^3.0.0"

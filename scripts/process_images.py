@@ -1,8 +1,11 @@
-"""Download book covers and member photos referenced in src/_data/*.json,
-resize them with Pillow, and write progressive JPEGs at multiple widths.
+"""Download book covers and member photos referenced in
+src/_data/raw/*.json, resize them with Pillow, and write progressive JPEGs
+at multiple widths.
 
-Strips the ephemeral signed URLs from the JSON afterward so the templates
-only see local filenames.
+The 11ty data layer (src/_data/books.js, src/_data/members.js) derives
+`coverWidths`/`photoWidths`/`hasCover`/`hasPhoto` from whatever JPEGs
+exist on disk at build time, so this script no longer needs to write
+anything back into the JSON. Its only job is downloading and resizing.
 """
 
 from __future__ import annotations
@@ -14,7 +17,7 @@ from io import BytesIO
 import requests
 from PIL import Image
 
-from lib import COVERS_DIR, DATA_DIR, MEMBERS_IMG_DIR
+from lib import COVERS_DIR, MEMBERS_IMG_DIR, RAW_DATA_DIR
 
 COVER_WIDTHS = [240, 480, 960]
 PHOTO_WIDTHS = [240, 480]
@@ -47,22 +50,20 @@ def process_image(url: str, base_filename: str, out_dir, widths: list[int]) -> l
 
 
 def main() -> None:
-    books = json.loads((DATA_DIR / "books.json").read_text())
-    members = json.loads((DATA_DIR / "members.json").read_text())
+    books = json.loads((RAW_DATA_DIR / "books.json").read_text())
+    members = json.loads((RAW_DATA_DIR / "members.json").read_text())
 
     cover_count = sum(1 for b in books if b.get("coverUrl"))
-    print(f"Processing {cover_count} book covers → {COVERS_DIR.relative_to(COVERS_DIR.parent.parent.parent)}")
+    print(f"Processing {cover_count} book covers")
     for b in books:
         url = b.get("coverUrl")
         if not url:
             continue
         try:
             widths = process_image(url, b["slug"], COVERS_DIR, COVER_WIDTHS)
-            b["coverWidths"] = widths
             print(f"  ✓ {b['slug']} ({', '.join(str(w) for w in widths)})")
         except Exception as e:
             print(f"  ✗ {b['slug']}: {e}", file=sys.stderr)
-            b["hasCover"] = False
 
     photo_count = sum(1 for m in members if m.get("photoUrl"))
     print(f"Processing {photo_count} member photos")
@@ -72,24 +73,10 @@ def main() -> None:
             continue
         try:
             widths = process_image(url, m["slug"], MEMBERS_IMG_DIR, PHOTO_WIDTHS)
-            m["photoWidths"] = widths
             print(f"  ✓ {m['slug']} ({', '.join(str(w) for w in widths)})")
         except Exception as e:
             print(f"  ✗ {m['slug']}: {e}", file=sys.stderr)
-            m["hasPhoto"] = False
 
-    # Strip ephemeral signed URLs before 11ty consumes the JSON
-    for b in books:
-        b.pop("coverUrl", None)
-    for m in members:
-        m.pop("photoUrl", None)
-
-    (DATA_DIR / "books.json").write_text(
-        json.dumps(books, indent=2, ensure_ascii=False)
-    )
-    (DATA_DIR / "members.json").write_text(
-        json.dumps(members, indent=2, ensure_ascii=False)
-    )
     print("Done.")
 
 

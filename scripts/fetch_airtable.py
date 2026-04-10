@@ -16,6 +16,7 @@ from lib import (
     DATA_DIR,
     MEETINGS,
     MEMBERS,
+    RAW_DATA_DIR,
     REVIEWS,
     airtable_session,
     first_attachment_url,
@@ -289,10 +290,14 @@ def main() -> None:
     )
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    (DATA_DIR / "books.json").write_text(
+    RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    # Books and members live under raw/ because their *.js siblings in
+    # src/_data enrich them with cover/photo widths derived from the
+    # filesystem at build time.
+    (RAW_DATA_DIR / "books.json").write_text(
         json.dumps(book_records, indent=2, ensure_ascii=False)
     )
-    (DATA_DIR / "members.json").write_text(
+    (RAW_DATA_DIR / "members.json").write_text(
         json.dumps(member_records, indent=2, ensure_ascii=False)
     )
     (DATA_DIR / "authors.json").write_text(

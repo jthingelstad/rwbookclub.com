@@ -13,6 +13,7 @@ from unidecode import unidecode
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "src" / "_data"
+RAW_DATA_DIR = DATA_DIR / "raw"
 COVERS_DIR = ROOT / "src" / "assets" / "images" / "covers"
 MEMBERS_IMG_DIR = ROOT / "src" / "assets" / "images" / "members"
 
