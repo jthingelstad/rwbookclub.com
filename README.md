@@ -6,27 +6,39 @@ Airtable base, deployed to GitHub Pages.
 
 ## How it works
 
+The Airtable base is the canonical source of truth, but the JSON data and the
+resized cover/photo art are **committed to this repo**. That keeps the
+everyday "edit a template, push, deploy" loop fast — no Python, no Airtable
+round-trip on every push.
+
 ```
- Airtable  ──▶  scripts/fetch_airtable.py  ──▶  src/_data/*.json
-                scripts/process_images.py  ──▶  src/assets/images/{covers,members}/
-                                                       │
-                                                       ▼
-                                            Eleventy build (src → _site)
-                                                       │
-                                                       ▼
-                                              GitHub Pages deploy
+ Airtable  ──▶  scripts/fetch_airtable.py  ──▶  src/_data/*.json   ─┐
+                scripts/process_images.py  ──▶  src/assets/images/  ─┤
+                                                                      │
+                              (committed to git)                      │
+                                                                      ▼
+                                                       Eleventy build (src → _site)
+                                                                      │
+                                                                      ▼
+                                                          GitHub Pages deploy
 ```
 
-The Airtable base is the canonical source of truth. The Python pipeline pulls
-every table, denormalizes it into JSON for Eleventy to consume, and downloads /
-resizes cover art and member photos. None of the generated artifacts are
-committed — the GitHub Actions workflow regenerates them on every push.
+There are two GitHub Actions workflows:
+
+- **`deploy.yml`** runs on every push to `main`. Pure build: `npm ci`,
+  `eleventy`, deploy. ~30 s. Use this for any template / CSS / copy edit.
+- **`refresh.yml`** is **manual only** (Actions → "Refresh from Airtable" →
+  Run workflow). Pulls fresh data from Airtable, regenerates resized images,
+  commits the diff if anything changed, then builds and deploys. Use this when
+  there's a new book, a new member, or any Airtable edit.
+
+You can also refresh locally — see "Local development" below.
 
 See `CLAUDE.md` for the full schema and data conventions.
 
 ## Local development
 
-Requirements: Python 3.10+, Node 18+.
+Requirements: Python 3.10+, Node 18+. (CI uses Python 3.14 and Node 24.)
 
 ```bash
 # 1. Set up a virtualenv and install Python deps
@@ -41,34 +53,34 @@ npm install
 #    AIRTABLE_BASE_ID=...
 #    AIRTABLE_PAT=...
 
-# 4. Pull data and build
-npm run fetch    # runs both Python scripts
+# 4. Edit and preview
 npm run serve    # eleventy --serve, opens at http://localhost:8080
+
+# 5. (Occasionally) refresh data from Airtable
+npm run fetch    # runs both Python scripts; updates src/_data/ + src/assets/images/
+git add src/_data src/assets/images
+git commit -m "Refresh data from Airtable"
+git push
 ```
 
-`npm run clean` removes generated artifacts (`_site/`, fetched JSON, processed
-images) if you want a fresh build.
+`npm run clean` removes `_site/` and the generated data and images entirely
+(use it before a `npm run fetch` if you want a fully clean rebuild).
 
 ## Deployment
 
-GitHub Actions does everything. Every push to `main` triggers
-`.github/workflows/build.yml`, which:
-
-1. Installs Python deps and runs `fetch_airtable.py` + `process_images.py`
-2. Installs Node deps and runs `eleventy`
-3. Uploads `_site/` to GitHub Pages
-
-There's also a manual `workflow_dispatch` trigger if you edit Airtable and want
-the site to catch up without pushing a commit.
+GitHub Actions handles all deploys.
 
 ### Required GitHub secrets
 
-In **Settings → Secrets and variables → Actions**, add:
+Only the **refresh** workflow needs Airtable access. In **Settings → Secrets
+and variables → Actions**, add:
 
-| Secret              | Value                              |
-|---------------------|------------------------------------|
-| `AIRTABLE_BASE_ID`  | `appmiF5yLSzx0klJc`                |
-| `AIRTABLE_PAT`      | The personal access token from `.env` |
+| Secret              | Value                                  |
+|---------------------|----------------------------------------|
+| `AIRTABLE_BASE_ID`  | `appmiF5yLSzx0klJc`                    |
+| `AIRTABLE_PAT`      | The personal access token from `.env`  |
+
+The everyday `deploy.yml` workflow doesn't read these.
 
 ### GitHub Pages settings
 
@@ -103,35 +115,39 @@ automatically.
 
 ```
 .
-├── .eleventy.js              # 11ty config: filters, dirs, passthroughs
-├── .github/workflows/build.yml
-├── package.json              # Node deps + npm scripts
-├── requirements.txt          # Python deps
+├── .eleventy.js                  # 11ty config: filters, dirs, passthroughs
+├── .github/workflows/
+│   ├── deploy.yml                # On push: build + deploy (no Python)
+│   └── refresh.yml               # Manual: Airtable fetch + commit + deploy
+├── package.json                  # Node deps + npm scripts
+├── requirements.txt              # Python deps
 ├── scripts/
-│   ├── lib.py                # Shared: env, slugify, paginated list_all
-│   ├── fetch_airtable.py     # Airtable → src/_data/*.json
-│   └── process_images.py     # Resize covers + photos with Pillow
+│   ├── lib.py                    # Shared: env, slugify, paginated list_all
+│   ├── fetch_airtable.py         # Airtable → src/_data/*.json
+│   └── process_images.py         # Resize covers + photos with Pillow
 ├── src/
-│   ├── CNAME                 # rwbookclub.com
+│   ├── CNAME                     # rwbookclub.com
 │   ├── _data/
-│   │   ├── site.json         # Static site config (committed)
-│   │   ├── journey.js        # Groups books by year for the home page
-│   │   ├── currentMembers.js # Filtered to is_current for member pages
-│   │   ├── books.json        # ── generated, gitignored
-│   │   ├── members.json      # ──
-│   │   ├── meetings.json     # ──
-│   │   ├── authors.json      # ──
-│   │   └── reviews.json      # ──
+│   │   ├── site.json             # Static site config
+│   │   ├── journey.js            # Groups books by year for the home page
+│   │   ├── currentMembers.js     # Filters to current members for pages
+│   │   ├── books.json            # ── refreshed by scripts/fetch_airtable.py
+│   │   ├── members.json          # ──
+│   │   ├── authors.json          # ──
+│   │   └── reviews.json          # ──
 │   ├── _includes/
-│   │   ├── layouts/base.njk  # HTML shell
-│   │   └── cover.njk         # Responsive cover image macro
+│   │   ├── layouts/base.njk      # HTML shell
+│   │   └── cover.njk             # Responsive cover image include
 │   ├── assets/
-│   │   ├── css/styles.css    # The whole visual layer
-│   │   ├── fonts/            # Self-hosted Fraunces (variable WOFF2)
-│   │   └── images/{covers,members}/  # generated, gitignored
-│   ├── books/book.njk        # Paginated per-book template
-│   ├── members/member.njk    # Paginated per-current-member template
+│   │   ├── css/styles.css        # The whole visual layer
+│   │   ├── fonts/                # Self-hosted Fraunces (variable WOFF2)
+│   │   └── images/{covers,members}/  # ── refreshed by process_images.py
+│   ├── books/
+│   │   ├── book.njk              # Paginated per-book detail page
+│   │   └── index.njk             # All-books cover grid
+│   ├── members/member.njk        # Paginated per-current-member page
 │   ├── about.njk
-│   └── index.njk             # The reading journey
-└── _site/                    # 11ty output, gitignored
+│   ├── feed.njk                  # RSS feed (latest 20 picks)
+│   └── index.njk                 # The reading journey
+└── _site/                        # 11ty output, gitignored
 ```

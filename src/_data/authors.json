@@ -1,0 +1,877 @@
+[
+  {
+    "id": "rec0BRUEV1xxsCNfp",
+    "name": "Bruce Sterling",
+    "bookCount": 1
+  },
+  {
+    "id": "rec19cVOl5FM6gINm",
+    "name": "Frans De Waal",
+    "bookCount": 1
+  },
+  {
+    "id": "rec1Pz9fM8W6wR9GU",
+    "name": "Kelly McGonigal",
+    "bookCount": 1
+  },
+  {
+    "id": "rec1kxQMBcUJapX4u",
+    "name": "Michael J. Casey",
+    "bookCount": 1
+  },
+  {
+    "id": "rec1rqtQF0nZYLlMP",
+    "name": "Alexander (Sandy) Pentland",
+    "bookCount": 1
+  },
+  {
+    "id": "rec1te8G9jfzqjIZv",
+    "name": "Anu Partanen",
+    "bookCount": 1
+  },
+  {
+    "id": "rec4kb1vO0poovcLo",
+    "name": "Henry David Thoreau",
+    "bookCount": 1
+  },
+  {
+    "id": "rec4wLAT5aAx123ID",
+    "name": "Paul Scharre",
+    "bookCount": 1
+  },
+  {
+    "id": "rec4zSb4UhMDaSsTB",
+    "name": "Ralph Waldo Emerson",
+    "bookCount": 1
+  },
+  {
+    "id": "rec57nUOQKVNbYIn7",
+    "name": "Siddhartha Mukherjee",
+    "bookCount": 1
+  },
+  {
+    "id": "rec60tXCR48yURm9d",
+    "name": "Alan Weisman",
+    "bookCount": 1
+  },
+  {
+    "id": "rec63Kf6DCgiV30Vk",
+    "name": "Stuart Brown",
+    "bookCount": 1
+  },
+  {
+    "id": "rec64ixAJwoPdpiO5",
+    "name": "Natasha Dow Schüll",
+    "bookCount": 1
+  },
+  {
+    "id": "rec67UkSW5Ej9rtcW",
+    "name": "Deborah Gordon",
+    "bookCount": 1
+  },
+  {
+    "id": "rec6cHBzEgRAMYVbU",
+    "name": "Erik Larson",
+    "bookCount": 1
+  },
+  {
+    "id": "rec6loAGWjH9zQpo2",
+    "name": "Lawrence Wright",
+    "bookCount": 1
+  },
+  {
+    "id": "rec75laVL8mCVKhwb",
+    "name": "Steven Pressfield",
+    "bookCount": 1
+  },
+  {
+    "id": "rec7FlBhkWnyqY1IM",
+    "name": "Thomas L. Friedman",
+    "bookCount": 1
+  },
+  {
+    "id": "rec7YYpDIHtWx0CwS",
+    "name": "Walter M. Miller, Jr.",
+    "bookCount": 1
+  },
+  {
+    "id": "rec8aQyYtWfcJZZDo",
+    "name": "Yuval Noah Harari",
+    "bookCount": 1
+  },
+  {
+    "id": "rec8dRJtRVtIIUMPQ",
+    "name": "Chris Anderson",
+    "bookCount": 1
+  },
+  {
+    "id": "rec9P8WBCMJpGuhxn",
+    "name": "Dale Carpenter",
+    "bookCount": 1
+  },
+  {
+    "id": "rec9QYUWLR4YL4B5g",
+    "name": "Daniel Gilbert",
+    "bookCount": 1
+  },
+  {
+    "id": "rec9ivPE1w0rnYAs5",
+    "name": "Frederick P. Brooks Jr.",
+    "bookCount": 1
+  },
+  {
+    "id": "rec9rBKvVQ8qC7MG6",
+    "name": "Charles Van Doren",
+    "bookCount": 1
+  },
+  {
+    "id": "rec9zgwWgG4U9GZzG",
+    "name": "Nick Lane",
+    "bookCount": 1
+  },
+  {
+    "id": "recARO7q1dovOQc0d",
+    "name": "Jonathan Bier",
+    "bookCount": 1
+  },
+  {
+    "id": "recAdQvoX05NsCTQR",
+    "name": "George Gilder",
+    "bookCount": 1
+  },
+  {
+    "id": "recAiNh1Lm2uZkaKZ",
+    "name": "Robert Harris",
+    "bookCount": 1
+  },
+  {
+    "id": "recAn6zrfgLk0I4FL",
+    "name": "Mia Consalvo",
+    "bookCount": 1
+  },
+  {
+    "id": "recBMnwzQ1DMFrHaB",
+    "name": "Julian Dibbell",
+    "bookCount": 1
+  },
+  {
+    "id": "recBN5PmbGo1Lseie",
+    "name": "Philip Roth",
+    "bookCount": 1
+  },
+  {
+    "id": "recBPRv14TIQ1920m",
+    "name": "Ken Grimwood",
+    "bookCount": 1
+  },
+  {
+    "id": "recBiD6s2zB1lFBW1",
+    "name": "Donella Meadows",
+    "bookCount": 1
+  },
+  {
+    "id": "recCYOEnjgL55a62Y",
+    "name": "Edward O. Wilson",
+    "bookCount": 1
+  },
+  {
+    "id": "recD63ysNLoh2Je1K",
+    "name": "Daniel Suarez",
+    "bookCount": 2
+  },
+  {
+    "id": "recD8UyAqDawG4qnT",
+    "name": "Steven Pinker",
+    "bookCount": 1
+  },
+  {
+    "id": "recDkJYfoTYYa1mcA",
+    "name": "T. Colin Campbell",
+    "bookCount": 1
+  },
+  {
+    "id": "recEov2I2kZzeo6Fv",
+    "name": "Kenneth S. Deffeyes",
+    "bookCount": 1
+  },
+  {
+    "id": "recF1JrVFtCZhXh5U",
+    "name": "Nate Silver",
+    "bookCount": 1
+  },
+  {
+    "id": "recG1vKQxR2bc80PQ",
+    "name": "Connie Willis",
+    "bookCount": 2
+  },
+  {
+    "id": "recGZM13Kn8TJ26FD",
+    "name": "Steve Krug",
+    "bookCount": 1
+  },
+  {
+    "id": "recGpm0Ja90mxTjPz",
+    "name": "Eric von Hippel",
+    "bookCount": 1
+  },
+  {
+    "id": "recHQyDhFuXiIyqK5",
+    "name": "Alexis Madrigal",
+    "bookCount": 1
+  },
+  {
+    "id": "recHrkOEQvfUE0sHJ",
+    "name": "Andrei Lankov",
+    "bookCount": 1
+  },
+  {
+    "id": "recIMGBqQJSmfMLHi",
+    "name": "Aeschylus",
+    "bookCount": 1
+  },
+  {
+    "id": "recIXv0Jiogvo3jGZ",
+    "name": "George Orwell",
+    "bookCount": 1
+  },
+  {
+    "id": "recIbXEEfVcFULxFO",
+    "name": "Paul Strathern",
+    "bookCount": 1
+  },
+  {
+    "id": "recIdviffUhLdqpv4",
+    "name": "David MacKay",
+    "bookCount": 1
+  },
+  {
+    "id": "recIeVH9WDp1Qhlmx",
+    "name": "Thomas Halliday",
+    "bookCount": 1
+  },
+  {
+    "id": "recJ833y24nhDn1BS",
+    "name": "Andrew Guthrie Ferguson",
+    "bookCount": 1
+  },
+  {
+    "id": "recJBdmKjS7lutn8O",
+    "name": "J. D. Vance",
+    "bookCount": 1
+  },
+  {
+    "id": "recJQdBlwADBt2yYO",
+    "name": "Karen Armstrong",
+    "bookCount": 1
+  },
+  {
+    "id": "recKKKriKnRUeT9YB",
+    "name": "Michael Pillsbury",
+    "bookCount": 1
+  },
+  {
+    "id": "recLtjDzvdC5mFzSm",
+    "name": "William Gibson",
+    "bookCount": 1
+  },
+  {
+    "id": "recM3FAu0WLhQoyCN",
+    "name": "Paul Graham",
+    "bookCount": 1
+  },
+  {
+    "id": "recN295rUmoc3PQP6",
+    "name": "Christopher McDougall",
+    "bookCount": 1
+  },
+  {
+    "id": "recNMag8joZ35xvPb",
+    "name": "Kazuo Ishiguro",
+    "bookCount": 3
+  },
+  {
+    "id": "recNs9eyKslP76JWV",
+    "name": "Jenny Odell",
+    "bookCount": 1
+  },
+  {
+    "id": "recO8sDaCWURWDu42",
+    "name": "Neil Gaiman",
+    "bookCount": 1
+  },
+  {
+    "id": "recO98r95y4b8u01j",
+    "name": "Patrick Radden Keefe",
+    "bookCount": 1
+  },
+  {
+    "id": "recOnkMp3EFtPztVd",
+    "name": "Billy Collins",
+    "bookCount": 1
+  },
+  {
+    "id": "recOw728CDeLH08Sg",
+    "name": "Isabel Wilkerson",
+    "bookCount": 1
+  },
+  {
+    "id": "recOxF51TFaZqTyY2",
+    "name": "Colin Woodard",
+    "bookCount": 1
+  },
+  {
+    "id": "recP8xeMFdV3SLh21",
+    "name": "Vernor Vinge",
+    "bookCount": 1
+  },
+  {
+    "id": "recPUUgIZ0bBxVKcX",
+    "name": "Sue Johnson",
+    "bookCount": 1
+  },
+  {
+    "id": "recPs1KxIDKqWtmBh",
+    "name": "Bruce Schneier",
+    "bookCount": 1
+  },
+  {
+    "id": "recPyqSVANtLrX84f",
+    "name": "Maggie Mahar",
+    "bookCount": 1
+  },
+  {
+    "id": "recQoUXNyEQmKTdRm",
+    "name": "Katherine Boo",
+    "bookCount": 1
+  },
+  {
+    "id": "recRVHqBfzlreCoF9",
+    "name": "Daniel Kahneman",
+    "bookCount": 1
+  },
+  {
+    "id": "recRfMUoC9RoklDpp",
+    "name": "Tina Rosenberg",
+    "bookCount": 1
+  },
+  {
+    "id": "recRxFEagAhioVnxa",
+    "name": "Paul Vigna",
+    "bookCount": 1
+  },
+  {
+    "id": "recRzTAYPQLQGf2Pi",
+    "name": "Tom Vanderbilt",
+    "bookCount": 1
+  },
+  {
+    "id": "recSOYesVD9HMoWDo",
+    "name": "Brian Christian",
+    "bookCount": 1
+  },
+  {
+    "id": "recShyvKELD6fwFYx",
+    "name": "Robert J. Gordon",
+    "bookCount": 1
+  },
+  {
+    "id": "recTFgZl2N6XbWQkV",
+    "name": "Greg Bear",
+    "bookCount": 1
+  },
+  {
+    "id": "recTWwzD9rI1HEU9U",
+    "name": "Glenn Greenwald",
+    "bookCount": 1
+  },
+  {
+    "id": "recTnuKvnVgkG3Uz9",
+    "name": "Andrew Solomon",
+    "bookCount": 1
+  },
+  {
+    "id": "recUG6E03nk6eelCp",
+    "name": "Lawrence Lessig",
+    "bookCount": 2
+  },
+  {
+    "id": "recUdd2zhJYnJw0t5",
+    "name": "Edward Tufte",
+    "bookCount": 1
+  },
+  {
+    "id": "recUhDdSx6p0PPM8S",
+    "name": "Mark Miodownik",
+    "bookCount": 1
+  },
+  {
+    "id": "recUzdSW2oInYp4ur",
+    "name": "Gwen Westerman",
+    "bookCount": 1
+  },
+  {
+    "id": "recVOoxH85aoGmtUw",
+    "name": "David R. Montgomery",
+    "bookCount": 1
+  },
+  {
+    "id": "recVh9StigSpNg9Tn",
+    "name": "David Anthony",
+    "bookCount": 1
+  },
+  {
+    "id": "recVsoXdAzQd9Db1Q",
+    "name": "Edward Glaeser",
+    "bookCount": 1
+  },
+  {
+    "id": "recWgIKXHESemdPdK",
+    "name": "John Battelle",
+    "bookCount": 1
+  },
+  {
+    "id": "recWgMuCBdXHqQvSK",
+    "name": "Jerome Groopman",
+    "bookCount": 1
+  },
+  {
+    "id": "recWslqC80fm9l8rS",
+    "name": "Brad Stone",
+    "bookCount": 1
+  },
+  {
+    "id": "recXDsaoboLARxE0b",
+    "name": "Robert Axelrod",
+    "bookCount": 1
+  },
+  {
+    "id": "recYVB3N32jdroa66",
+    "name": "Robert Pirsig",
+    "bookCount": 1
+  },
+  {
+    "id": "recYbf0yu8xHIPp7O",
+    "name": "Marc Levinson",
+    "bookCount": 2
+  },
+  {
+    "id": "recZGJCtLCV2U14mm",
+    "name": "William Jordan",
+    "bookCount": 1
+  },
+  {
+    "id": "recZM38mLZ5GltNMN",
+    "name": "Jennifer A. Doudna",
+    "bookCount": 1
+  },
+  {
+    "id": "recaAeEuhMnQkGRZ5",
+    "name": "Duncan J. Watts",
+    "bookCount": 1
+  },
+  {
+    "id": "recbIkhwQDrNByX7i",
+    "name": "Cass R. Sunstein",
+    "bookCount": 1
+  },
+  {
+    "id": "reccHkPnzjEv3SJvV",
+    "name": "Pedro Domingos",
+    "bookCount": 1
+  },
+  {
+    "id": "reccJI12Bv2TDlyey",
+    "name": "Murray N. Rothbard",
+    "bookCount": 1
+  },
+  {
+    "id": "reccLQILiQx1CDT79",
+    "name": "Robert Wright",
+    "bookCount": 1
+  },
+  {
+    "id": "recciYfe2RldQrmPN",
+    "name": "Steven D. Levitt",
+    "bookCount": 1
+  },
+  {
+    "id": "recdTNpNONOavX8vu",
+    "name": "Louis Menand",
+    "bookCount": 1
+  },
+  {
+    "id": "recdXvfnOQI4HrxIm",
+    "name": "Robert Putnam",
+    "bookCount": 1
+  },
+  {
+    "id": "recdfiXTuTg2PkBIp",
+    "name": "Cormac McCarthy",
+    "bookCount": 1
+  },
+  {
+    "id": "rece0lBep4hb7Q2OF",
+    "name": "Alan Moore",
+    "bookCount": 1
+  },
+  {
+    "id": "receATAdsSncNAP2Y",
+    "name": "Neil Postman",
+    "bookCount": 1
+  },
+  {
+    "id": "receF6aD3c6CBR4Vx",
+    "name": "Richard Dawkins",
+    "bookCount": 1
+  },
+  {
+    "id": "receiSIALmzihFJhj",
+    "name": "Mark Newman",
+    "bookCount": 1
+  },
+  {
+    "id": "receoq6gVAFn2o0dF",
+    "name": "Samuel H. Sternberg",
+    "bookCount": 1
+  },
+  {
+    "id": "receu9JpSJfYJenpZ",
+    "name": "Richard H. Thaler",
+    "bookCount": 1
+  },
+  {
+    "id": "recezfLlhqUGtw6Vz",
+    "name": "Ann Leckie",
+    "bookCount": 1
+  },
+  {
+    "id": "recf3aF1vJ4SF0C3D",
+    "name": "Doris Kearns Goodwin",
+    "bookCount": 1
+  },
+  {
+    "id": "recfEuLCrCpyFZFNW",
+    "name": "Boris Strugatsky",
+    "bookCount": 1
+  },
+  {
+    "id": "recfVHdyy1tXvhBWv",
+    "name": "Steve Weber",
+    "bookCount": 1
+  },
+  {
+    "id": "recfiE5ectRj1zYIw",
+    "name": "Tim Wu",
+    "bookCount": 1
+  },
+  {
+    "id": "recg08BdHyhMMMHiZ",
+    "name": "David Graeber",
+    "bookCount": 1
+  },
+  {
+    "id": "recg8QUgmpt5w66Df",
+    "name": "Tara Westover",
+    "bookCount": 1
+  },
+  {
+    "id": "recgOelxVIaO7xh4V",
+    "name": "Matthew Walker",
+    "bookCount": 1
+  },
+  {
+    "id": "recgQKXRiMdJcNH1d",
+    "name": "Cory Doctorow",
+    "bookCount": 2
+  },
+  {
+    "id": "recgf622XC1xxQHJL",
+    "name": "Noam Chomsky",
+    "bookCount": 1
+  },
+  {
+    "id": "recgtjptQLCSdpzLc",
+    "name": "Laurence Bergreen",
+    "bookCount": 1
+  },
+  {
+    "id": "recgxC4bcVXrKLiur",
+    "name": "Matthew Desmond",
+    "bookCount": 1
+  },
+  {
+    "id": "reciCWsoJxXBR39TL",
+    "name": "Dennis Bray",
+    "bookCount": 1
+  },
+  {
+    "id": "reciuLkHU5cODvw3d",
+    "name": "Walter Isaacson",
+    "bookCount": 2
+  },
+  {
+    "id": "recj62PEKMis4KZPU",
+    "name": "David Foster Wallace",
+    "bookCount": 1
+  },
+  {
+    "id": "recjEVzqR8GFZoXAO",
+    "name": "Jeffrey Toobin",
+    "bookCount": 1
+  },
+  {
+    "id": "recjHk8zsJezc2MlB",
+    "name": "Janine R. Wedel",
+    "bookCount": 1
+  },
+  {
+    "id": "recjLN4uXHcxL4szL",
+    "name": "Nicholas Eberstadt",
+    "bookCount": 2
+  },
+  {
+    "id": "recjnistYOrK4KEVl",
+    "name": "Bruce White",
+    "bookCount": 1
+  },
+  {
+    "id": "reckDh7IugAvGVOGf",
+    "name": "Neal Stephenson",
+    "bookCount": 1
+  },
+  {
+    "id": "reckFqRGIJFQmOVtd",
+    "name": "Andy Weir",
+    "bookCount": 1
+  },
+  {
+    "id": "reckNDwBiVjKvZdGF",
+    "name": "Andy Greenberg",
+    "bookCount": 1
+  },
+  {
+    "id": "reckTS5ygFVWKXoO2",
+    "name": "Philip E. Tetlock",
+    "bookCount": 1
+  },
+  {
+    "id": "reckZFzNJdoKplhzp",
+    "name": "Sarah Bakewell",
+    "bookCount": 1
+  },
+  {
+    "id": "reckbY1vcaVNOoiou",
+    "name": "Matthieu Ricard",
+    "bookCount": 1
+  },
+  {
+    "id": "recl1vcClEDoqxVsQ",
+    "name": "Ethan Mollick",
+    "bookCount": 1
+  },
+  {
+    "id": "recn2hKCSDq6JV3Kq",
+    "name": "Oliver Sacks",
+    "bookCount": 1
+  },
+  {
+    "id": "recnMHS5tEfyYVrJJ",
+    "name": "Jared Diamond",
+    "bookCount": 2
+  },
+  {
+    "id": "recnXdapX7fBBIkwC",
+    "name": "Bill Bryson",
+    "bookCount": 1
+  },
+  {
+    "id": "recnmptqks6xZAQlW",
+    "name": "Barry Schwartz",
+    "bookCount": 1
+  },
+  {
+    "id": "recnmvgNkxMv4VcoI",
+    "name": "Guy Deutscher",
+    "bookCount": 1
+  },
+  {
+    "id": "recoAngR5NkkUBYZY",
+    "name": "Jack Weatherford",
+    "bookCount": 1
+  },
+  {
+    "id": "recoFEKmTWPyplvTG",
+    "name": "Steven Strogatz",
+    "bookCount": 1
+  },
+  {
+    "id": "recoZ4HPPzNcama9H",
+    "name": "Christopher Vaughan",
+    "bookCount": 1
+  },
+  {
+    "id": "recpUEft33DC3xHd2",
+    "name": "Alexander Langlands",
+    "bookCount": 1
+  },
+  {
+    "id": "recpY4K2ZrsiHeR4m",
+    "name": "Barbara Kingsolver",
+    "bookCount": 1
+  },
+  {
+    "id": "recpmj9htQ2K4xUYB",
+    "name": "Nassim Nicholas Taleb",
+    "bookCount": 2
+  },
+  {
+    "id": "recpyM0y3f8aou78n",
+    "name": "John C. Wright",
+    "bookCount": 1
+  },
+  {
+    "id": "recqRFcF4YzuksR4F",
+    "name": "Jedidiah Jenkins",
+    "bookCount": 1
+  },
+  {
+    "id": "recqav8GPZm2WbM7V",
+    "name": "David Pilling",
+    "bookCount": 1
+  },
+  {
+    "id": "recrL1vsYs1pyv5Gk",
+    "name": "Muhammad Yunus",
+    "bookCount": 1
+  },
+  {
+    "id": "recrQuOac49wFANyL",
+    "name": "Sebastian Mallaby",
+    "bookCount": 1
+  },
+  {
+    "id": "recrblgeXFCXhefDz",
+    "name": "Geoffrey West",
+    "bookCount": 1
+  },
+  {
+    "id": "recsFTpbb7PYFRyR2",
+    "name": "David M. Gwynn",
+    "bookCount": 1
+  },
+  {
+    "id": "recsHydqgVCcAdxwY",
+    "name": "Susan Cain",
+    "bookCount": 1
+  },
+  {
+    "id": "recsRkRDXqhxLATZ7",
+    "name": "David Wengrow",
+    "bookCount": 1
+  },
+  {
+    "id": "recsWnkshHfdBaYMJ",
+    "name": "Robert B. Cialdini",
+    "bookCount": 1
+  },
+  {
+    "id": "rectKw9YqKQtTRIw3",
+    "name": "Hannah Arendt",
+    "bookCount": 1
+  },
+  {
+    "id": "rectdyc8xdYYniPUI",
+    "name": "Nick Sousanis",
+    "bookCount": 1
+  },
+  {
+    "id": "recttLgqpIzrBLGvY",
+    "name": "Mihaly Csikszentmihalyi",
+    "bookCount": 1
+  },
+  {
+    "id": "recu1Fle5OypuMd3h",
+    "name": "James Surowiecki",
+    "bookCount": 1
+  },
+  {
+    "id": "recuYBWKpLqvWCCEO",
+    "name": "John H. Holland",
+    "bookCount": 1
+  },
+  {
+    "id": "recvU4id29pr9NUpg",
+    "name": "Anders Ericsson",
+    "bookCount": 1
+  },
+  {
+    "id": "recwY6T4pzaC6nFBJ",
+    "name": "Thomas Campbell",
+    "bookCount": 1
+  },
+  {
+    "id": "recwkKIPbYMiueOgI",
+    "name": "Barbara Tuchman",
+    "bookCount": 1
+  },
+  {
+    "id": "recxNJkNB69yXjN5d",
+    "name": "Michael Pollan",
+    "bookCount": 2
+  },
+  {
+    "id": "recxW7AFza5Jw2Nle",
+    "name": "Stephen J. Dubner",
+    "bookCount": 1
+  },
+  {
+    "id": "recxnp2ZnFQ46mOHD",
+    "name": "Sarah Ogilvie",
+    "bookCount": 1
+  },
+  {
+    "id": "recy4DBoxPCAqtTaI",
+    "name": "Joseph Conrad",
+    "bookCount": 1
+  },
+  {
+    "id": "recyPCi7Wp17eVlOU",
+    "name": "Nessa Carey",
+    "bookCount": 1
+  },
+  {
+    "id": "recyVH29q4JVcRzU1",
+    "name": "David Gibbons",
+    "bookCount": 1
+  },
+  {
+    "id": "recyiyT2PdUVK7NuJ",
+    "name": "Ashlee Vance",
+    "bookCount": 1
+  },
+  {
+    "id": "recyuMoFQ5JI6XgJq",
+    "name": "Atul Gawande",
+    "bookCount": 2
+  },
+  {
+    "id": "recz2nMblKpbcrh83",
+    "name": "Mortimer J. Adler",
+    "bookCount": 1
+  },
+  {
+    "id": "reczNvsqjBmO3LRCE",
+    "name": "Joseph Henrich",
+    "bookCount": 1
+  },
+  {
+    "id": "reczYnfL9IU484d4r",
+    "name": "Arkady Strugatsky",
+    "bookCount": 1
+  },
+  {
+    "id": "recznu0YIhsPOm8rJ",
+    "name": "Tim Parks",
+    "bookCount": 1
+  }
+]

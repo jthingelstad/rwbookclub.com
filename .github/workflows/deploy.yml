@@ -1,4 +1,8 @@
-name: Build and deploy
+name: Deploy
+
+# Builds the static site from data and images already committed to the
+# repo and deploys to GitHub Pages. Does NOT touch Airtable. To refresh
+# data from Airtable use the "Refresh from Airtable" workflow instead.
 
 on:
   push:
@@ -10,8 +14,8 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deploy; in-progress runs finish but new pushes
-# queue behind them.
+# Allow only one concurrent deploy; in-progress runs finish before new
+# pushes start.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -22,24 +26,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.14"
-          cache: pip
-
-      - name: Install Python dependencies
-        run: pip install -r requirements.txt
-
-      - name: Fetch Airtable data
-        env:
-          AIRTABLE_BASE_ID: ${{ secrets.AIRTABLE_BASE_ID }}
-          AIRTABLE_PAT: ${{ secrets.AIRTABLE_PAT }}
-        run: python scripts/fetch_airtable.py
-
-      - name: Process cover and member images
-        run: python scripts/process_images.py
 
       - name: Set up Node
         uses: actions/setup-node@v6

@@ -1,0 +1,943 @@
+[
+  {
+    "id": "rec0unNzGOt24JKLj",
+    "name": "Nick",
+    "slug": "nick",
+    "isCurrent": true,
+    "website": null,
+    "hasPhoto": true,
+    "pickedCount": 16,
+    "pickedBooks": [
+      {
+        "slug": "heart-of-darkness",
+        "title": "Heart of Darkness",
+        "year": 2025,
+        "date": "2025-09-30T23:30:00.000Z"
+      },
+      {
+        "slug": "the-power-law",
+        "title": "The Power Law",
+        "year": 2024,
+        "date": "2024-05-29T23:00:00.000Z"
+      },
+      {
+        "slug": "men-without-work",
+        "title": "Men Without Work",
+        "year": 2023,
+        "date": "2023-07-11T23:00:00.000Z"
+      },
+      {
+        "slug": "nation-of-takers",
+        "title": "Nation of Takers",
+        "year": 2023,
+        "date": "2023-07-11T23:00:00.000Z"
+      },
+      {
+        "slug": "aeschylus-i",
+        "title": "Aeschylus I",
+        "year": 2022,
+        "date": "2022-06-01T23:00:00.000Z"
+      },
+      {
+        "slug": "the-florentines",
+        "title": "The Florentines",
+        "year": 2022,
+        "date": "2022-06-01T23:00:00.000Z"
+      },
+      {
+        "slug": "nature-walking",
+        "title": "Nature & Walking",
+        "year": 2021,
+        "date": "2021-10-12T23:00:00.000Z"
+      },
+      {
+        "slug": "unflattening",
+        "title": "Unflattening",
+        "year": 2020,
+        "date": "2020-11-24T01:00:00.000Z"
+      },
+      {
+        "slug": "the-roman-republic",
+        "title": "The Roman Republic",
+        "year": 2020,
+        "date": "2020-03-25T23:00:00.000Z"
+      },
+      {
+        "slug": "the-hundred-year-marathon",
+        "title": "The Hundred-Year Marathon",
+        "year": 2020,
+        "date": "2020-03-25T23:00:00.000Z"
+      },
+      {
+        "slug": "zen-and-the-art-of-motorcycle-maintenance",
+        "title": "Zen and the Art of Motorcycle Maintenance",
+        "year": 2019,
+        "date": "2019-08-15T23:00:00.000Z"
+      },
+      {
+        "slug": "life-after-google",
+        "title": "Life After Google",
+        "year": 2018,
+        "date": "2018-11-20T00:00:00.000Z"
+      },
+      {
+        "slug": "peak",
+        "title": "Peak",
+        "year": 2017,
+        "date": "2017-08-24T23:00:00.000Z"
+      },
+      {
+        "slug": "the-vital-question",
+        "title": "The Vital Question",
+        "year": 2017,
+        "date": "2017-02-23T00:00:00.000Z"
+      },
+      {
+        "slug": "american-nations",
+        "title": "American Nations",
+        "year": 2016,
+        "date": "2016-05-02T23:00:00.000Z"
+      },
+      {
+        "slug": "the-world-until-yesterday",
+        "title": "The World Until Yesterday",
+        "year": 2015,
+        "date": "2015-10-26T23:00:00.000Z"
+      },
+      {
+        "slug": "the-structure-and-dynamics-of-networks",
+        "title": "The Structure and Dynamics of Networks",
+        "year": 2015,
+        "date": "2015-01-20T00:00:00.000Z"
+      },
+      {
+        "slug": "the-everything-store",
+        "title": "The Everything Store",
+        "year": 2014,
+        "date": "2014-07-21T23:00:00.000Z"
+      },
+      {
+        "slug": "quiet",
+        "title": "Quiet",
+        "year": 2014,
+        "date": "2014-01-28T00:00:00.000Z"
+      }
+    ],
+    "photoWidths": [
+      159
+    ]
+  },
+  {
+    "id": "rec1ov9Osp68C7uD3",
+    "name": "Erik",
+    "slug": "erik",
+    "isCurrent": true,
+    "website": null,
+    "hasPhoto": true,
+    "pickedCount": 35,
+    "pickedBooks": [
+      {
+        "slug": "how-to-do-nothing",
+        "title": "How to Do Nothing",
+        "year": 2025,
+        "date": "2025-05-27T23:30:00.000Z"
+      },
+      {
+        "slug": "through-the-language-glass",
+        "title": "Through the Language Glass",
+        "year": 2024,
+        "date": "2024-10-29T23:00:00.000Z"
+      },
+      {
+        "slug": "dawn-of-everything",
+        "title": "Dawn of Everything",
+        "year": 2023,
+        "date": "2023-12-21T00:00:00.000Z"
+      },
+      {
+        "slug": "mni-sota-makoce",
+        "title": "Mni Sota Makoce",
+        "year": 2022,
+        "date": "2022-12-15T00:00:00.000Z"
+      },
+      {
+        "slug": "caste",
+        "title": "Caste",
+        "year": 2021,
+        "date": "2021-12-15T00:30:00.000Z"
+      },
+      {
+        "slug": "the-weirdest-people-in-the-world",
+        "title": "The WEIRDest People in the World",
+        "year": 2021,
+        "date": "2021-02-19T01:00:00.000Z"
+      },
+      {
+        "slug": "benjamin-franklin",
+        "title": "Benjamin Franklin",
+        "year": 2020,
+        "date": "2020-06-04T00:00:00.000Z"
+      },
+      {
+        "slug": "genesis",
+        "title": "Genesis",
+        "year": 2019,
+        "date": "2019-11-08T00:00:00.000Z"
+      },
+      {
+        "slug": "craeft",
+        "title": "Cræft",
+        "year": 2019,
+        "date": "2019-06-10T23:00:00.000Z"
+      },
+      {
+        "slug": "growing-a-revolution",
+        "title": "Growing a Revolution",
+        "year": 2019,
+        "date": "2019-06-10T23:00:00.000Z"
+      },
+      {
+        "slug": "a-crack-in-creation",
+        "title": "A Crack in Creation",
+        "year": 2017,
+        "date": "2017-10-25T23:00:00.000Z"
+      },
+      {
+        "slug": "norse-mythology",
+        "title": "Norse Mythology",
+        "year": 2017,
+        "date": "2017-04-24T23:00:00.000Z"
+      },
+      {
+        "slug": "ancillary-justice",
+        "title": "Ancillary Justice",
+        "year": 2016,
+        "date": "2016-09-27T23:00:00.000Z"
+      },
+      {
+        "slug": "superforecasting",
+        "title": "Superforecasting",
+        "year": 2015,
+        "date": "2015-12-22T00:00:00.000Z"
+      },
+      {
+        "slug": "no-place-to-hide",
+        "title": "No Place to Hide",
+        "year": 2015,
+        "date": "2015-04-20T23:00:00.000Z"
+      },
+      {
+        "slug": "far-from-the-tree",
+        "title": "Far from the Tree",
+        "year": 2014,
+        "date": "2014-09-22T23:00:00.000Z"
+      },
+      {
+        "slug": "the-martian",
+        "title": "The Martian",
+        "year": 2014,
+        "date": "2014-04-22T23:00:00.000Z"
+      },
+      {
+        "slug": "this-machine-kills-secrets",
+        "title": "This Machine Kills Secrets",
+        "year": 2013,
+        "date": "2013-09-23T23:00:00.000Z"
+      },
+      {
+        "slug": "the-signal-and-the-noise",
+        "title": "The Signal and the Noise",
+        "year": 2013,
+        "date": "2013-03-12T23:00:00.000Z"
+      },
+      {
+        "slug": "a-canticle-for-leibowitz",
+        "title": "A Canticle for Leibowitz",
+        "year": 2012,
+        "date": "2012-09-25T23:00:00.000Z"
+      },
+      {
+        "slug": "the-devil-in-the-white-city",
+        "title": "The Devil in the White City",
+        "year": 2012,
+        "date": "2012-09-25T23:00:00.000Z"
+      },
+      {
+        "slug": "republic-lost",
+        "title": "Republic, Lost",
+        "year": 2012,
+        "date": "2012-01-25T00:00:00.000Z"
+      },
+      {
+        "slug": "never-let-me-go",
+        "title": "Never Let Me Go",
+        "year": 2011,
+        "date": "2011-06-20T23:00:00.000Z"
+      },
+      {
+        "slug": "don-t-make-me-think",
+        "title": "Don't Make Me Think",
+        "year": 2010,
+        "date": "2010-03-22T23:00:00.000Z"
+      },
+      {
+        "slug": "sustainable-energy-without-the-hot-air",
+        "title": "Sustainable Energy Without the Hot Air",
+        "year": 2009,
+        "date": "2009-09-17T23:00:00.000Z"
+      },
+      {
+        "slug": "the-nine",
+        "title": "The Nine",
+        "year": 2009,
+        "date": "2009-02-04T00:00:00.000Z"
+      },
+      {
+        "slug": "shaping-things",
+        "title": "Shaping Things",
+        "year": 2008,
+        "date": "2008-07-22T23:00:00.000Z"
+      },
+      {
+        "slug": "beautiful-evidence",
+        "title": "Beautiful Evidence",
+        "year": 2007,
+        "date": "2007-12-27T00:00:00.000Z"
+      },
+      {
+        "slug": "watchmen",
+        "title": "Watchmen",
+        "year": 2007,
+        "date": "2007-06-13T23:00:00.000Z"
+      },
+      {
+        "slug": "understanding-comics",
+        "title": "Understanding Comics",
+        "year": 2007,
+        "date": "2007-06-13T23:00:00.000Z"
+      },
+      {
+        "slug": "the-omnivore-s-dilemma",
+        "title": "The Omnivore's Dilemma",
+        "year": 2006,
+        "date": "2006-10-30T23:00:00.000Z"
+      },
+      {
+        "slug": "democratizing-innovation",
+        "title": "Democratizing Innovation",
+        "year": 2006,
+        "date": "2006-03-22T23:00:00.000Z"
+      },
+      {
+        "slug": "the-plot-against-america",
+        "title": "The Plot Against America",
+        "year": 2005,
+        "date": "2005-06-10T23:00:00.000Z"
+      },
+      {
+        "slug": "sailing-alone-around-the-room",
+        "title": "Sailing Alone Around the Room",
+        "year": 2004,
+        "date": "2004-12-06T00:00:00.000Z"
+      },
+      {
+        "slug": "quicksilver",
+        "title": "Quicksilver",
+        "year": 2003,
+        "date": "2003-09-26T23:00:00.000Z"
+      }
+    ],
+    "photoWidths": [
+      240,
+      480
+    ]
+  },
+  {
+    "id": "recHnn6fa3iB897UK",
+    "name": "J Rauser",
+    "slug": "j-rauser",
+    "isCurrent": false,
+    "website": null,
+    "hasPhoto": false,
+    "pickedCount": 0,
+    "pickedBooks": []
+  },
+  {
+    "id": "recLaMxXUJ9RiaGyM",
+    "name": "John",
+    "slug": "john",
+    "isCurrent": false,
+    "website": null,
+    "hasPhoto": false,
+    "pickedCount": 24,
+    "pickedBooks": []
+  },
+  {
+    "id": "recV1qzmp3Yqy9zK1",
+    "name": "Scott",
+    "slug": "scott",
+    "isCurrent": false,
+    "website": null,
+    "hasPhoto": false,
+    "pickedCount": 1,
+    "pickedBooks": []
+  },
+  {
+    "id": "recYQIsNRskrqlIAx",
+    "name": "Brad",
+    "slug": "brad",
+    "isCurrent": false,
+    "website": null,
+    "hasPhoto": false,
+    "pickedCount": 1,
+    "pickedBooks": []
+  },
+  {
+    "id": "recZFEitAkzW2VwaZ",
+    "name": "Jeffrey",
+    "slug": "jeffrey",
+    "isCurrent": false,
+    "website": null,
+    "hasPhoto": false,
+    "pickedCount": 0,
+    "pickedBooks": []
+  },
+  {
+    "id": "rechNL5xOnYd7aE5c",
+    "name": "David",
+    "slug": "david",
+    "isCurrent": false,
+    "website": null,
+    "hasPhoto": false,
+    "pickedCount": 5,
+    "pickedBooks": []
+  },
+  {
+    "id": "rectfpnvCHhjL7aLx",
+    "name": "Tom",
+    "slug": "tom",
+    "isCurrent": true,
+    "website": "http://tomeri.org",
+    "hasPhoto": true,
+    "pickedCount": 33,
+    "pickedBooks": [
+      {
+        "slug": "enshittification",
+        "title": "Enshittification",
+        "year": 2025,
+        "date": "2025-11-26T00:30:00.000Z"
+      },
+      {
+        "slug": "army-of-none",
+        "title": "Army of None",
+        "year": 2024,
+        "date": "2024-09-17T23:00:00.000Z"
+      },
+      {
+        "slug": "otherlands",
+        "title": "Otherlands",
+        "year": 2023,
+        "date": "2023-08-31T23:00:00.000Z"
+      },
+      {
+        "slug": "addiction-by-design",
+        "title": "Addiction by Design",
+        "year": 2022,
+        "date": "2022-09-22T00:00:00.000Z"
+      },
+      {
+        "slug": "klara-and-the-sun",
+        "title": "Klara and the Sun",
+        "year": 2021,
+        "date": "2021-06-16T23:00:00.000Z"
+      },
+      {
+        "slug": "mama-s-last-hug",
+        "title": "Mama's Last Hug",
+        "year": 2021,
+        "date": "2021-01-07T01:00:00.000Z"
+      },
+      {
+        "slug": "replay",
+        "title": "Replay",
+        "year": 2020,
+        "date": "2020-04-29T23:30:00.000Z"
+      },
+      {
+        "slug": "how-to-read-a-book",
+        "title": "How to Read a Book",
+        "year": 2019,
+        "date": "2019-09-18T23:00:00.000Z"
+      },
+      {
+        "slug": "scale",
+        "title": "Scale",
+        "year": 2019,
+        "date": "2019-01-23T00:00:00.000Z"
+      },
+      {
+        "slug": "how-to-live",
+        "title": "How to Live",
+        "year": 2017,
+        "date": "2017-09-26T23:00:00.000Z"
+      },
+      {
+        "slug": "all-art-is-propaganda",
+        "title": "All Art Is Propaganda",
+        "year": 2017,
+        "date": "2017-03-21T23:00:00.000Z"
+      },
+      {
+        "slug": "the-metaphysical-club",
+        "title": "The Metaphysical Club",
+        "year": 2016,
+        "date": "2016-08-22T23:00:00.000Z"
+      },
+      {
+        "slug": "amusing-ourselves-to-death",
+        "title": "Amusing Ourselves to Death",
+        "year": 2015,
+        "date": "2015-08-17T23:00:00.000Z"
+      },
+      {
+        "slug": "the-age-of-cryptocurrency",
+        "title": "The Age of Cryptocurrency",
+        "year": 2015,
+        "date": "2015-03-16T23:00:00.000Z"
+      },
+      {
+        "slug": "thinking-in-systems",
+        "title": "Thinking in Systems",
+        "year": 2014,
+        "date": "2014-08-26T23:00:00.000Z"
+      },
+      {
+        "slug": "a-history-of-god",
+        "title": "A History of God",
+        "year": 2014,
+        "date": "2014-03-13T23:00:00.000Z"
+      },
+      {
+        "slug": "the-real-north-korea",
+        "title": "The Real North Korea",
+        "year": 2013,
+        "date": "2013-08-21T23:00:00.000Z"
+      },
+      {
+        "slug": "join-the-club",
+        "title": "Join the Club",
+        "year": 2012,
+        "date": "2012-11-29T00:00:00.000Z"
+      },
+      {
+        "slug": "count-zero",
+        "title": "Count Zero",
+        "year": 2012,
+        "date": "2012-05-29T23:00:00.000Z"
+      },
+      {
+        "slug": "the-selfish-gene",
+        "title": "The Selfish Gene",
+        "year": 2011,
+        "date": "2011-10-17T23:00:00.000Z"
+      },
+      {
+        "slug": "the-master-switch",
+        "title": "The Master Switch",
+        "year": 2011,
+        "date": "2011-03-02T00:00:00.000Z"
+      },
+      {
+        "slug": "wetware",
+        "title": "Wetware",
+        "year": 2010,
+        "date": "2010-07-21T23:00:00.000Z"
+      },
+      {
+        "slug": "influence",
+        "title": "Influence",
+        "year": 2010,
+        "date": "2010-01-11T00:00:00.000Z"
+      },
+      {
+        "slug": "honest-signals",
+        "title": "Honest Signals",
+        "year": 2009,
+        "date": "2009-05-29T23:00:00.000Z"
+      },
+      {
+        "slug": "traffic",
+        "title": "Traffic",
+        "year": 2008,
+        "date": "2008-11-04T00:00:00.000Z"
+      },
+      {
+        "slug": "cheating",
+        "title": "Cheating",
+        "year": 2008,
+        "date": "2008-04-14T23:00:00.000Z"
+      },
+      {
+        "slug": "the-box",
+        "title": "The Box",
+        "year": 2007,
+        "date": "2007-09-28T23:00:00.000Z"
+      },
+      {
+        "slug": "the-long-tail",
+        "title": "The Long Tail",
+        "year": 2007,
+        "date": "2007-01-27T00:00:00.000Z"
+      },
+      {
+        "slug": "bowling-alone",
+        "title": "Bowling Alone",
+        "year": 2006,
+        "date": "2006-06-30T23:00:00.000Z"
+      },
+      {
+        "slug": "the-search",
+        "title": "The Search",
+        "year": 2005,
+        "date": "2005-11-24T00:00:00.000Z"
+      }
+    ],
+    "photoWidths": [
+      240,
+      256
+    ]
+  },
+  {
+    "id": "recuT1LiVs6I0u4zR",
+    "name": "Jamie",
+    "slug": "jamie",
+    "isCurrent": true,
+    "website": "https://www.thingelstad.com",
+    "hasPhoto": true,
+    "pickedCount": 33,
+    "pickedBooks": [
+      {
+        "slug": "co-intelligence",
+        "title": "Co-Intelligence",
+        "year": 2025,
+        "date": "2025-06-24T23:30:00.000Z"
+      },
+      {
+        "slug": "medici-money",
+        "title": "Medici Money",
+        "year": 2024,
+        "date": "2024-02-29T00:00:00.000Z"
+      },
+      {
+        "slug": "to-shake-the-sleeping-self",
+        "title": "To Shake the Sleeping Self",
+        "year": 2023,
+        "date": "2023-04-11T23:00:00.000Z"
+      },
+      {
+        "slug": "the-blocksize-war",
+        "title": "The Blocksize War",
+        "year": 2022,
+        "date": "2022-01-25T00:00:00.000Z"
+      },
+      {
+        "slug": "a-man-at-arms",
+        "title": "A Man at Arms",
+        "year": 2021,
+        "date": "2021-07-30T00:00:00.000Z"
+      },
+      {
+        "slug": "running-with-sherman",
+        "title": "Running with Sherman",
+        "year": 2021,
+        "date": "2021-03-19T00:00:00.000Z"
+      },
+      {
+        "slug": "the-rise-of-big-data-policing",
+        "title": "The Rise of Big Data Policing",
+        "year": 2020,
+        "date": "2020-08-13T00:00:00.000Z"
+      },
+      {
+        "slug": "the-master-algorithm",
+        "title": "The Master Algorithm",
+        "year": 2020,
+        "date": "2020-01-31T00:00:00.000Z"
+      },
+      {
+        "slug": "the-nordic-theory-of-everything",
+        "title": "The Nordic Theory of Everything",
+        "year": 2020,
+        "date": "2020-01-31T00:00:00.000Z"
+      },
+      {
+        "slug": "craeft",
+        "title": "Cræft",
+        "year": 2019,
+        "date": "2019-06-10T23:00:00.000Z"
+      },
+      {
+        "slug": "growing-a-revolution",
+        "title": "Growing a Revolution",
+        "year": 2019,
+        "date": "2019-06-10T23:00:00.000Z"
+      },
+      {
+        "slug": "how-to-change-your-mind",
+        "title": "How to Change Your Mind",
+        "year": 2018,
+        "date": "2018-10-01T23:00:00.000Z"
+      },
+      {
+        "slug": "daemon",
+        "title": "Daemon",
+        "year": 2017,
+        "date": "2017-12-22T00:00:00.000Z"
+      },
+      {
+        "slug": "stuff-matters",
+        "title": "Stuff Matters",
+        "year": 2017,
+        "date": "2017-06-06T23:00:00.000Z"
+      },
+      {
+        "slug": "hillbilly-eligy",
+        "title": "Hillbilly Eligy",
+        "year": 2016,
+        "date": "2016-12-07T00:00:00.000Z"
+      },
+      {
+        "slug": "elon-musk",
+        "title": "Elon Musk",
+        "year": 2016,
+        "date": "2016-02-17T00:00:00.000Z"
+      },
+      {
+        "slug": "the-innovators",
+        "title": "The Innovators",
+        "year": 2015,
+        "date": "2015-06-15T23:00:00.000Z"
+      },
+      {
+        "slug": "far-from-the-tree",
+        "title": "Far from the Tree",
+        "year": 2014,
+        "date": "2014-11-04T00:00:00.000Z"
+      },
+      {
+        "slug": "antifragile",
+        "title": "Antifragile",
+        "year": 2014,
+        "date": "2014-06-10T23:00:00.000Z"
+      },
+      {
+        "slug": "powering-the-dream",
+        "title": "Powering the Dream",
+        "year": 2013,
+        "date": "2013-12-21T00:00:00.000Z"
+      },
+      {
+        "slug": "behind-the-beautiful-forevers",
+        "title": "Behind the Beautiful Forevers",
+        "year": 2013,
+        "date": "2013-11-05T00:00:00.000Z"
+      },
+      {
+        "slug": "the-willpower-instinct",
+        "title": "The Willpower Instinct",
+        "year": 2013,
+        "date": "2013-04-17T23:00:00.000Z"
+      },
+      {
+        "slug": "a-canticle-for-leibowitz",
+        "title": "A Canticle for Leibowitz",
+        "year": 2012,
+        "date": "2012-09-25T23:00:00.000Z"
+      },
+      {
+        "slug": "the-devil-in-the-white-city",
+        "title": "The Devil in the White City",
+        "year": 2012,
+        "date": "2012-09-25T23:00:00.000Z"
+      },
+      {
+        "slug": "the-most-human-human",
+        "title": "The Most Human Human",
+        "year": 2012,
+        "date": "2012-03-09T00:00:00.000Z"
+      },
+      {
+        "slug": "ant-encounters",
+        "title": "Ant Encounters",
+        "year": 2011,
+        "date": "2011-07-26T23:00:00.000Z"
+      },
+      {
+        "slug": "hegemony-or-survival",
+        "title": "Hegemony or Survival",
+        "year": 2010,
+        "date": "2010-11-12T00:00:00.000Z"
+      },
+      {
+        "slug": "the-golden-age",
+        "title": "The Golden Age",
+        "year": 2010,
+        "date": "2010-04-19T23:00:00.000Z"
+      },
+      {
+        "slug": "creativity",
+        "title": "Creativity",
+        "year": 2009,
+        "date": "2009-10-19T23:00:00.000Z"
+      },
+      {
+        "slug": "money-driven-medicine",
+        "title": "Money-Driven Medicine",
+        "year": 2009,
+        "date": "2009-03-03T00:00:00.000Z"
+      },
+      {
+        "slug": "animal-vegetable-miracle",
+        "title": "Animal, Vegetable, Miracle",
+        "year": 2008,
+        "date": "2008-08-14T23:00:00.000Z"
+      },
+      {
+        "slug": "the-world-without-us",
+        "title": "The World Without Us",
+        "year": 2008,
+        "date": "2008-02-01T00:00:00.000Z"
+      }
+    ],
+    "photoWidths": [
+      240,
+      480
+    ]
+  },
+  {
+    "id": "reczR2kRhTW8h4Htz",
+    "name": "Loren",
+    "slug": "loren",
+    "isCurrent": true,
+    "website": "http://www-users.cs.umn.edu/~terveen/",
+    "hasPhoto": true,
+    "pickedCount": 16,
+    "pickedBooks": [
+      {
+        "slug": "the-origins-of-totalitarianism",
+        "title": "The Origins of Totalitarianism",
+        "year": 2025,
+        "date": "2025-08-26T23:30:00.000Z"
+      },
+      {
+        "slug": "dictionary-people",
+        "title": "Dictionary People",
+        "year": 2024,
+        "date": "2024-04-23T23:00:00.000Z"
+      },
+      {
+        "slug": "a-supposedly-fun-thing-i-ll-never-do-again",
+        "title": "A Supposedly Fun Thing I'll Never Do Again",
+        "year": 2023,
+        "date": "2023-05-30T23:00:00.000Z"
+      },
+      {
+        "slug": "empire-of-pain",
+        "title": "Empire of Pain",
+        "year": 2022,
+        "date": "2022-04-14T23:00:00.000Z"
+      },
+      {
+        "slug": "evicted",
+        "title": "Evicted",
+        "year": 2021,
+        "date": "2021-09-01T23:00:00.000Z"
+      },
+      {
+        "slug": "the-horse-the-wheel-and-language",
+        "title": "The Horse, the Wheel, and Language",
+        "year": 2021,
+        "date": "2021-05-13T00:00:00.000Z"
+      },
+      {
+        "slug": "bending-adversity",
+        "title": "Bending Adversity",
+        "year": 2020,
+        "date": "2020-09-16T23:30:00.000Z"
+      },
+      {
+        "slug": "the-master-algorithm",
+        "title": "The Master Algorithm",
+        "year": 2020,
+        "date": "2020-01-31T00:00:00.000Z"
+      },
+      {
+        "slug": "the-nordic-theory-of-everything",
+        "title": "The Nordic Theory of Everything",
+        "year": 2020,
+        "date": "2020-01-31T00:00:00.000Z"
+      },
+      {
+        "slug": "educated",
+        "title": "Educated",
+        "year": 2019,
+        "date": "2019-07-17T23:00:00.000Z"
+      },
+      {
+        "slug": "freedom-tm",
+        "title": "Freedom™",
+        "year": 2018,
+        "date": "2018-08-30T23:00:00.000Z"
+      },
+      {
+        "slug": "sapiens",
+        "title": "Sapiens",
+        "year": 2018,
+        "date": "2018-06-06T23:00:00.000Z"
+      },
+      {
+        "slug": "walkaway",
+        "title": "Walkaway",
+        "year": 2018,
+        "date": "2018-01-24T00:00:00.000Z"
+      },
+      {
+        "slug": "the-epigenetics-revolution",
+        "title": "The Epigenetics Revolution",
+        "year": 2017,
+        "date": "2017-07-20T21:00:00.000Z"
+      },
+      {
+        "slug": "shadow-elite",
+        "title": "Shadow Elite",
+        "year": 2017,
+        "date": "2017-01-17T00:00:00.000Z"
+      },
+      {
+        "slug": "the-rise-and-fall-of-american-growth",
+        "title": "The Rise and Fall of American Growth",
+        "year": 2016,
+        "date": "2016-03-22T23:00:00.000Z"
+      },
+      {
+        "slug": "roadside-picnic",
+        "title": "Roadside Picnic",
+        "year": 2015,
+        "date": "2015-07-22T23:00:00.000Z"
+      }
+    ],
+    "photoWidths": [
+      200
+    ]
+  },
+  {
+    "id": "reczXGhA4xwgX91Jc",
+    "name": "Dan",
+    "slug": "dan",
+    "isCurrent": false,
+    "website": null,
+    "hasPhoto": false,
+    "pickedCount": 21,
+    "pickedBooks": []
+  }
+]
