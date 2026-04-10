@@ -824,6 +824,53 @@ body.shelf .page {
   letter-spacing: 0.04em;
 }
 
+/* ─── Members hub ────────────────────────────────────────────────────── */
+
+.members-hub h1 {
+  font-size: var(--type-h1);
+  font-variation-settings: "opsz" 144, "SOFT" 30;
+  font-weight: 400;
+  margin: 0 0 1.5rem;
+  letter-spacing: -0.02em;
+}
+.members-hub .lede {
+  font-size: 1.2rem;
+  color: var(--ink);
+  line-height: 1.55;
+  margin: 0 0 1.5rem;
+}
+.members-hub p { color: var(--ink-soft); max-width: 36em; }
+.members-hub h2 {
+  font-size: var(--type-h2);
+  font-weight: 500;
+  margin: var(--gap-lg) 0 1rem;
+}
+.resource-list {
+  display: flex;
+  flex-direction: column;
+}
+.resource-list li {
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.resource-list li:last-child { border-bottom: 1px solid var(--rule); }
+.resource-list a {
+  font-weight: 500;
+  text-decoration: none;
+  font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+  font-size: var(--type-small);
+  letter-spacing: 0.02em;
+}
+.resource-list a:hover { color: var(--accent); }
+.resource-desc {
+  font-size: var(--type-small);
+  color: var(--ink-faint);
+  line-height: 1.45;
+}
+
 /* ─── Misc ───────────────────────────────────────────────────────────── */
 
 .empty {

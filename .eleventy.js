@@ -91,6 +91,19 @@ module.exports = function (eleventyConfig) {
     return arr.slice(0, n);
   });
 
+  // Topic distribution summary for llms.txt — returns a formatted list
+  eleventyConfig.addFilter("topicSummary", (books) => {
+    if (!Array.isArray(books)) return "";
+    const counts = {};
+    for (const b of books) {
+      if (b.topic) counts[b.topic] = (counts[b.topic] || 0) + 1;
+    }
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([topic, n]) => `- ${topic}: ${n} books`)
+      .join("\n");
+  });
+
   return {
     dir: {
       input: "src",

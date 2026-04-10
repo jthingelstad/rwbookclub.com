@@ -1,0 +1,42 @@
+---
+permalink: /llms.txt
+eleventyExcludeFromCollections: true
+---
+# {{ site.title }} — Reading History
+
+> This file is designed for LLM consumption. Paste this URL into any AI
+> chatbot to give it full context about our book club's reading history.
+> Human-readable site: {{ site.url }}
+> Detailed version with synopses: {{ site.url }}/llms-full.txt
+
+## About the club
+
+The R/W Book Club has been meeting since April {{ site.founded }}. The "R/W"
+stands for Read / Write — the members are technically minded and many blog.
+The club reads about 8 books per year, mostly non-fiction (~88%). Members
+rotate picking the next book and hosting the discussion.
+
+As of this build there are {{ journey.totalBooks }} books across
+{{ journey.years | length }} years of reading.
+
+## Current members
+{% for m in currentMembers %}
+- {{ m.name }}{% if m.pickedCount %} ({{ m.pickedCount }} picks){% endif %}
+{%- endfor %}
+
+## Topic distribution
+
+{{ books | topicSummary | safe }}
+
+## Reading history (compact)
+
+Books are listed newest-first, grouped by year.
+{% for yr in journey.years %}
+
+### {{ yr.year }}
+{% for book in yr.books %}
+- **{{ book.title | safe }}{% if book.subtitle %}: {{ book.subtitle | safe }}{% endif %}** by {{ book.authors | joinNames | safe }}
+  {{ book.topic | safe }}{% if book.fiction %} · Fiction{% endif %}{% if book.pageCount %} · {{ book.pageCount }}pp{% endif %}{% if book.publicationYear %} · Published {{ book.publicationYear }}{% endif %}{% if book.pickerName %} · Picked by {{ book.pickerName }}{% endif %}
+
+{%- endfor %}
+{%- endfor %}

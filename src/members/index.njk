@@ -1,0 +1,42 @@
+---
+layout: layouts/base.njk
+title: "Members"
+permalink: /members/
+---
+
+<article class="members-hub">
+  <a class="back" href="/">← Reading journey</a>
+
+  <h1>Members</h1>
+
+  <p class="lede">
+    Resources for current R/W Book Club members.
+  </p>
+
+  <h2>Current members</h2>
+  <ul class="member-list">
+    {% for m in currentMembers %}
+      <li>
+        <a href="/members/{{ m.slug }}/">{{ m.name }}</a>
+        {% if m.pickedCount %}<span class="pick-count">{{ m.pickedCount }} pick{% if m.pickedCount != 1 %}s{% endif %}</span>{% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+
+  <h2>AI / LLM context</h2>
+  <p>
+    Want to ask an AI chatbot for a book recommendation based on our reading
+    history? Paste one of these links into any conversation to give the model
+    full context about what we've read.
+  </p>
+  <ul class="resource-list">
+    <li>
+      <a href="/llms.txt">llms.txt</a>
+      <span class="resource-desc">Compact — titles, authors, topics, and pickers. Best for quick questions or smaller context windows.</span>
+    </li>
+    <li>
+      <a href="/llms-full.txt">llms-full.txt</a>
+      <span class="resource-desc">Detailed — includes synopses, reviews, and all metadata. Best for deep recommendations.</span>
+    </li>
+  </ul>
+</article>

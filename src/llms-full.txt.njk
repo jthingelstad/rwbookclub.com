@@ -1,0 +1,73 @@
+---
+permalink: /llms-full.txt
+eleventyExcludeFromCollections: true
+---
+# {{ site.title }} — Full Reading History
+
+> This file is designed for LLM consumption. It includes synopses, reviews,
+> and all available metadata. For a compact version: {{ site.url }}/llms.txt
+> Human-readable site: {{ site.url }}
+
+## About the club
+
+The R/W Book Club has been meeting since April {{ site.founded }}. The "R/W"
+stands for Read / Write — the members are technically minded and many blog.
+The club reads about 8 books per year, mostly non-fiction (~88%). Members
+rotate picking the next book and hosting the discussion.
+
+As of this build there are {{ journey.totalBooks }} books across
+{{ journey.years | length }} years of reading.
+
+## Current members
+{% for m in currentMembers %}
+- {{ m.name }}{% if m.pickedCount %} ({{ m.pickedCount }} picks){% endif %}
+{%- endfor %}
+
+## Topic distribution
+
+{{ books | topicSummary | safe }}
+
+## Reading history (full)
+
+Books are listed newest-first, grouped by year. Each entry includes all
+available metadata, synopsis, and member reviews.
+{% for yr in journey.years %}
+
+### {{ yr.year }}
+{% for book in yr.books %}
+#### {{ book.title | safe }}{% if book.subtitle %}: {{ book.subtitle | safe }}{% endif %}
+
+- **Author:** {{ book.authors | joinNames | safe }}
+- **Topic:** {{ book.topic | safe }}{% if book.fiction %} (Fiction){% endif %}
+{%- if book.publicationYear %}
+- **Published:** {{ book.publicationYear }}
+{%- endif %}
+{%- if book.pageCount %}
+- **Pages:** {{ book.pageCount }}
+{%- endif %}
+{%- if book.pickerName %}
+- **Picked by:** {{ book.pickerName }}
+{%- endif %}
+- **Read:** {{ book.meetingDate | monthYear }}
+{%- if book.isbn13 %}
+- **ISBN-13:** {{ book.isbn13 }}
+{%- endif %}
+- **Open Library:** https://openlibrary.org{{ book.olKey }}
+{% if book.synopsis %}
+**Synopsis:** {{ book.synopsis | safe }}
+{% endif %}
+{%- set bookReviews = reviews | reviewsForBook(book.id) -%}
+{%- if bookReviews.length %}
+**Reviews:**
+{% for r in bookReviews %}
+- {{ r.reviewers[0].name if r.reviewers.length else "Anonymous" }}{% if r.rating %} — {{ r.rating }}/5{% endif %}{% if r.dnf %} (Did Not Finish){% endif %}{% if r.wouldRecommend %} — Would recommend{% endif %}{% if r.discussionQuality %} — Discussion quality: {{ r.discussionQuality }}/5{% endif %}
+{%- if r.review %}
+  {{ r.review | safe }}
+{%- endif %}
+{%- if r.favoriteQuote %}
+  Favorite quote: "{{ r.favoriteQuote | safe }}"
+{%- endif %}
+{% endfor %}
+{%- endif %}
+{%- endfor %}
+{%- endfor %}
