@@ -1,5 +1,5 @@
 """Download book covers and member photos referenced in src/_data/*.json,
-resize them with Pillow, and write WebP + JPEG fallbacks at multiple widths.
+resize them with Pillow, and write progressive JPEGs at multiple widths.
 
 Strips the ephemeral signed URLs from the JSON afterward so the templates
 only see local filenames.
@@ -19,7 +19,6 @@ from lib import COVERS_DIR, DATA_DIR, MEMBERS_IMG_DIR
 COVER_WIDTHS = [240, 480, 960]
 PHOTO_WIDTHS = [240, 480]
 JPEG_QUALITY = 82
-WEBP_QUALITY = 80
 
 
 def process_image(url: str, base_filename: str, out_dir, widths: list[int]) -> list[int]:
@@ -38,9 +37,7 @@ def process_image(url: str, base_filename: str, out_dir, widths: list[int]) -> l
             actual_w = w
             actual_h = round(w * aspect)
             resized = img.resize((actual_w, actual_h), Image.LANCZOS)
-        webp_path = out_dir / f"{base_filename}-{actual_w}.webp"
         jpeg_path = out_dir / f"{base_filename}-{actual_w}.jpg"
-        resized.save(webp_path, "WEBP", quality=WEBP_QUALITY, method=6)
         resized.save(
             jpeg_path, "JPEG", quality=JPEG_QUALITY, optimize=True, progressive=True
         )

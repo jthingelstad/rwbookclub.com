@@ -14,17 +14,13 @@ eleventyComputed:
 
   <header class="member-header">
     {% if member.hasPhoto and member.photoWidths %}
-      <picture class="portrait">
-        <source
-          type="image/webp"
-          srcset="{%- for w in member.photoWidths -%}/assets/images/members/{{ member.slug }}-{{ w }}.webp {{ w }}w{% if not loop.last %}, {% endif %}{%- endfor -%}"
-          sizes="(max-width: 720px) 40vw, 240px" />
+      <div class="portrait">
         <img
           src="/assets/images/members/{{ member.slug }}-{{ member.photoWidths[0] }}.jpg"
           srcset="{%- for w in member.photoWidths -%}/assets/images/members/{{ member.slug }}-{{ w }}.jpg {{ w }}w{% if not loop.last %}, {% endif %}{%- endfor -%}"
           sizes="(max-width: 720px) 40vw, 240px"
           alt="{{ member.name }}" />
-      </picture>
+      </div>
     {% endif %}
     <div class="member-header-text">
       <p class="kicker">Member</p>
