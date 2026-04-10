@@ -1,0 +1,130 @@
+---
+layout: layouts/base.njk
+title: "Statistics"
+permalink: /stats/
+---
+
+<article class="stats">
+  <a class="back" href="/">← Reading journey</a>
+
+  <h1>By the numbers</h1>
+  <p class="lede">
+    {{ stats.yearsActive }} years of reading together — {{ stats.totalBooks }} books
+    and {{ stats.totalPages | localeNumber }} pages since {{ stats.firstYear }}.
+  </p>
+
+  {# ── Summary cards ─────────────────────────────────────────────────── #}
+  <div class="stat-cards">
+    <div class="stat-card">
+      <span class="stat-value">{{ stats.totalBooks }}</span>
+      <span class="stat-label">Books read</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">{{ stats.totalPages | localeNumber }}</span>
+      <span class="stat-label">Total pages</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">{{ stats.avgPages }}</span>
+      <span class="stat-label">Avg. pages</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">{{ stats.yearsActive }}</span>
+      <span class="stat-label">Years active</span>
+    </div>
+  </div>
+
+  {# ── Books by year ─────────────────────────────────────────────────── #}
+  <section class="stats-section">
+    <h2>Books read per year</h2>
+    <p class="stats-desc">Book count shown as bars, total pages as the line.</p>
+    <div class="chart-canvas-wrap chart-canvas-wrap--tall">
+      <canvas id="chart-by-year"></canvas>
+    </div>
+  </section>
+
+  {# ── Topic treemap ─────────────────────────────────────────────────── #}
+  <section class="stats-section">
+    <h2>What we read about</h2>
+    <p class="stats-desc">Topics sized by number of books read in each category.</p>
+    <div class="chart-canvas-wrap chart-canvas-wrap--tall">
+      <canvas id="chart-topics"></canvas>
+    </div>
+  </section>
+
+  {# ── Publication decade ────────────────────────────────────────────── #}
+  <section class="stats-section">
+    <h2>When the books were written</h2>
+    <p class="stats-desc">Publication decade of every book the club has read.</p>
+    <div class="chart-canvas-wrap">
+      <canvas id="chart-pub-decade"></canvas>
+    </div>
+  </section>
+
+  {# ── Fiction vs non-fiction ────────────────────────────────────────── #}
+  <section class="stats-section">
+    <h2>Fiction vs. non-fiction</h2>
+    <div class="split-bar-wrap">
+      <div class="split-bar">
+        <div class="split-bar-segment split-bar-nonfiction"
+             style="width: {{ (stats.nonfictionCount / stats.totalBooks * 100) | round(1) }}%">
+          <span class="split-bar-label">Non-fiction</span>
+          <span class="split-bar-pct">{{ (stats.nonfictionCount / stats.totalBooks * 100) | round(0) }}%</span>
+        </div>
+        <div class="split-bar-segment split-bar-fiction"
+             style="width: {{ (stats.fictionCount / stats.totalBooks * 100) | round(1) }}%">
+          <span class="split-bar-label">Fiction</span>
+          <span class="split-bar-pct">{{ (stats.fictionCount / stats.totalBooks * 100) | round(0) }}%</span>
+        </div>
+      </div>
+      <div class="split-bar-legend">
+        <span>{{ stats.nonfictionCount }} non-fiction</span>
+        <span>{{ stats.fictionCount }} fiction</span>
+      </div>
+    </div>
+  </section>
+
+  {# ── Pickers leaderboard ───────────────────────────────────────────── #}
+  <section class="stats-section">
+    <h2>Most picks</h2>
+    <p class="stats-desc">Members ranked by number of books they've picked for the club.</p>
+    <div class="chart-canvas-wrap chart-canvas-wrap--pickers">
+      <canvas id="chart-pickers"></canvas>
+    </div>
+  </section>
+
+  {# ── Fun facts ─────────────────────────────────────────────────────── #}
+  <section class="stats-section">
+    <h2>Superlatives</h2>
+    <dl class="fun-facts">
+      {% if stats.longest %}
+      <div class="fun-fact">
+        <dt>Longest book</dt>
+        <dd><a href="/books/{{ stats.longest.slug }}/">{{ stats.longest.title }}</a> — {{ stats.longest.pages }} pages</dd>
+      </div>
+      {% endif %}
+      {% if stats.shortest %}
+      <div class="fun-fact">
+        <dt>Shortest book</dt>
+        <dd><a href="/books/{{ stats.shortest.slug }}/">{{ stats.shortest.title }}</a> — {{ stats.shortest.pages }} pages</dd>
+      </div>
+      {% endif %}
+      {% if stats.oldest %}
+      <div class="fun-fact">
+        <dt>Oldest publication</dt>
+        <dd><a href="/books/{{ stats.oldest.slug }}/">{{ stats.oldest.title }}</a> — {{ stats.oldest.publicationYear }}</dd>
+      </div>
+      {% endif %}
+      {% if stats.newest %}
+      <div class="fun-fact">
+        <dt>Newest publication</dt>
+        <dd><a href="/books/{{ stats.newest.slug }}/">{{ stats.newest.title }}</a> — {{ stats.newest.publicationYear }}</dd>
+      </div>
+      {% endif %}
+    </dl>
+  </section>
+</article>
+
+<script id="chart-data" type="application/json">{{ stats | dump | safe }}</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap@3.1.0/dist/chartjs-chart-treemap.min.js"></script>
+<script src="/assets/js/stats.js"></script>
