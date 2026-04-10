@@ -1,5 +1,83 @@
 [
   {
+    "id": "recCg7pHVMkAkgH54",
+    "bookId": 179,
+    "title": "The Idea Machine",
+    "subtitle": "How Books Built Our World and Shape Our Future",
+    "slug": "the-idea-machine",
+    "authors": [
+      "Joel Miller"
+    ],
+    "topic": "Essays & Literature",
+    "fiction": false,
+    "publicationYear": 2025,
+    "pageCount": 344,
+    "isbn13": "978-1493088935",
+    "olKey": null,
+    "synopsis": "Books are our first and most lasting form of information technology. Books preserve ideas, yes, but they also provoke new ones— they are true tools for thinking. In The Idea Machine, Joel J. Miller shows that books are one of the most important but overlooked factors in the making of our contemporary world. And they still have lessons to teach us.\n\nPolls indicate reading is on the decline, but as we deal with concerns about artificial intelligence and social and political division, the history of the book offers a path of understanding and patterns for engagement. They can even help us navigate what’s coming next. Starting with the surge of book culture in ancient Athens and then moving through the centuries, from monks and militaries to rebellions and the Renaissance, and even to more modern-day implications of books as tools of liberation and the novel’s impact on our humanity, Miller highlights the features and functions that make books indispensable to cultural evolution. Subject to its own periods of technological upheaval and social unrest, the history of the book can point us away from failed past responses and toward more fruitful adaptations that will benefit us all. The Idea Machine reframes the history of the book as the eye-opening story of humanity’s first mobile information device. Books do more than record thinking; they serve as tools to facilitate it.\n\nMore than a history of the book as an object or a simple consideration of the literature it has contained, The Idea Machine is the history of the book as a technology that transformed the peoples and societies that embraced it, and which maintains a vital role in a world where technological advancements seem to render it obsolete and ideological division might render our shared future untenable.",
+    "meetingDate": "2026-05-27T00:00:00.000Z",
+    "year": 2026,
+    "pickerName": "Jamie",
+    "pickerSlug": "jamie",
+    "meetingNotes": null,
+    "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/heZ_K0iUpXwyfzIvz9HN7A/LjrB3s_opwedob_QqTWCBB7OQXw3S4D3ZmDfsBmdLE7oJe8VDaZHdEUDfLGkyK2SVqza_3-n3zB5Z6OM74GD0RW0WWDBhMO3ywwFC78QneWvduZ3P2AMTy1LDFGwExP4hmjBR2Q9lrJJUkhi7xp5Fg/dRWYaKOz1rf1agusmdmg-f5ewmniObCntywYNyIEveY",
+    "hasCover": true,
+    "reviewCount": 0
+  },
+  {
+    "id": "recKQD3gDqKjzqnAw",
+    "bookId": 178,
+    "title": "Patterns in Nature",
+    "subtitle": "Why the Natural World Looks the Way it Does",
+    "slug": "patterns-in-nature",
+    "authors": [
+      "Philip Ball"
+    ],
+    "topic": "Science and Math",
+    "fiction": false,
+    "publicationYear": 2016,
+    "pageCount": 288,
+    "isbn13": "978-0226332420",
+    "olKey": null,
+    "synopsis": "Though at first glance the natural world may appear overwhelming in its diversity and complexity, there are regularities running through it, from the hexagons of a honeycomb to the spirals of a seashell and the branching veins of a leaf. Revealing the order at the foundation of the seemingly chaotic natural world, Patterns in Nature explores not only the math and science but also the beauty and artistry behind nature’s awe-inspiring designs.\n\nUnlike the patterns we create in technology, architecture, and art, natural patterns are formed spontaneously from the forces that act in the physical world. Very often the same types of pattern and form – spirals, stripes, branches, and fractals, say—recur in places that seem to have nothing in common, as when the markings of a zebra mimic the ripples in windblown sand. That’s because, as Patterns in Nature shows, at the most basic level these patterns can often be described using the same mathematical and physical principles: there is a surprising underlying unity in the kaleidoscope of the natural world. Richly illustrated with 250 color photographs and anchored by accessible and insightful chapters by esteemed science writer Philip Ball, Patterns in Nature reveals the organization at work in vast and ancient forests, powerful rivers, massing clouds, and coastlines carved out by the sea.\n \nBy exploring similarities such as those between a snail shell and the swirling stars of a galaxy, or the branches of a tree and those of a river network, this spectacular visual tour conveys the wonder, beauty, and richness of natural pattern formation.",
+    "meetingDate": "2026-04-28T23:30:00.000Z",
+    "year": 2026,
+    "pickerName": "Tom",
+    "pickerSlug": "tom",
+    "meetingNotes": null,
+    "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/7BmxgVSWcdGn4p2ZEFhDDg/4joQ4wXVyBeAnRdJjMQCM1NP_ZGyANCevgI-z-7xhhKWt8shdW9sM7w_ihIM-yquT-k6y5J4ZUGr5zVuV1db1stsbzLCqkKmGXFYU20g12efXJtnYlQpJPBRzoYJJh7ncQGbfTOCDEEmIkS4J7p42A/vifa5y8CozCUWTIVY5C4ekJEnwtCeitaSdfccvCCF7I",
+    "hasCover": true,
+    "reviewCount": 0
+  },
+  {
+    "id": "recbadI3lRakd5dWQ",
+    "bookId": 177,
+    "title": "The Overstory",
+    "subtitle": null,
+    "slug": "the-overstory",
+    "authors": [
+      "Richard Powers"
+    ],
+    "topic": null,
+    "fiction": true,
+    "publicationYear": 2019,
+    "pageCount": 512,
+    "isbn13": "978-0393356687",
+    "olKey": null,
+    "synopsis": "The Overstory, winner of the 2019 Pulitzer Prize in Fiction, is a sweeping, impassioned work of activism and resistance that is also a stunning evocation of―and paean to―the natural world. From the roots to the crown and back to the seeds, Richard Powers’s twelfth novel unfolds in concentric rings of interlocking fables that range from antebellum New York to the late twentieth-century Timber Wars of the Pacific Northwest and beyond. There is a world alongside ours―vast, slow, interconnected, resourceful, magnificently inventive, and almost invisible to us. This is the story of a handful of people who learn how to see that world and who are drawn up into its unfolding catastrophe.",
+    "meetingDate": "2026-01-28T01:00:00.000Z",
+    "year": 2026,
+    "pickerName": "Erik",
+    "pickerSlug": "erik",
+    "meetingNotes": null,
+    "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/D1Fjyy-3M6wfOKme7mPt2w/dh1Xyg7CN_07H0P_1XvHZnbSan6mcR99HR07xflyKEP8MNLQ3of93W0gYi_jBf_0jNpvOBAX0JP82_sKSnHP0ZD_vHb1FC5muRJUFlZ_1SQZL3tW5JcgGy2bprC_GsRMBnCuefQI5ldIU6bV4L9SMQ/NdM9gUweqWxU34Q71JlzQ-TJNV2Sg0HpNWjGmz4fL_g",
+    "hasCover": true,
+    "reviewCount": 0
+  },
+  {
     "id": "recRJNBhMPa4IGYli",
     "bookId": 1,
     "title": "Enshittification",
@@ -21,8 +99,8 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": "Waterbury Restaurant",
-    "coverUrl": null,
-    "hasCover": false,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Ac7c95bwZKooDKZxPdxP9Q/KqBagmebXuBQNiFzCSbqS5W-MA5o9CuTeBzT7UGx4nrjXsE3E8f7zkC1vFgWvmD1ueW9FczeCblw_F74b3ZIgyE1bRiyXwOKIEddVHPZXm-t9YtEKAeBXzD9lI5mNh2-Fo3YhWOJhc0neWRr_cwQ4w/Y-NeITpl0V-MXXUgAbLLfg1ya6NGqopVDLmzbpB0e6Y",
+    "hasCover": true,
     "reviewCount": 0
   },
   {
@@ -47,6 +125,7 @@
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": "Waterbury Restaurant",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/i9805lt-9t1iO11fPeJucw/tVGpK6WDqGT5MWNWtqcqPgQ76K3CVSPfvLVFp1e_zjou08vBf64G1HBNOGjWU_ge-_2HTujfPlq8j7gcDN_ddD54R6FWDAJwRO0cf6vjYAnNVHRGyTbl2VQl7OGJsBZAoYeJXhG6-5GanRlPIZ-6Wg/cjhmiEmzMKT1kZdSHxVugbIXL3KR_LX8NVsaBgtd5yw",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -72,6 +151,7 @@
     "pickerSlug": "loren",
     "meetingNotes": null,
     "meetingLocation": "Waterbury Restaurant",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/PkBdIZ3IWIMfNKkL0DDXdQ/Pq42I6eteS27M4_HdF5wZfvcu01_WX3LDtmvuE1WsF40J8IyUxJHtW6T8hbRyBLKLOS0U-SejB88zuIRyuH_TniSixyFle9plPDMss6jPJB5ZczwyNDeIii9_4Zh-LnyK_YrCgGDXWAbDOLzQ2lkOA/OYuJZasJXuiaPwWINoYuPyD6Ql-LzpbRLBIeyDVx740",
     "hasCover": true,
     "reviewCount": 1
   },
@@ -97,6 +177,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": "Waterbury Restaurant",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/ZlgSYpBgRGg9266QWOkH_g/Cq9uqKzIEFbVgjx_FySlt0xRgzGvwN6dILoq6tX4p9ahbNYCiCCaeXA3HaUCtUMZbzOSRuE4qr3R-RcAvCFPR7Z9Ghaj_Wq1JBcsrlLNQrghAyk2SNC4xHkcZ34FG6qFhFaCFrxrcacEiZYC_3EJRw/o-1Jjg1As4_J5YVLSEaDOtUf5L53zWKkN-9An0Tx4I8",
     "hasCover": true,
     "reviewCount": 1
   },
@@ -122,6 +203,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": "Waterbury Restaurant",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/66ZmNzt1Oz4zI9yuVobmxg/JK3FdNXLqckVA1LAcmnv3dbTdeiKQcFecv5LGP2qmGnLHuiht8kI8GwWtD6nsN8ImgsbYcfjZUrSNdJqQBbnWCYoVmh5uLCdZ0E8IhFfdjmvSEt__jVAWsSX2ByEZwMgzzlNtka1L0O6ht_lF6vjRQ/zTVcSdKGLG0yh0CsHwRtKdyPE927IJqStJOFoEkT4Ps",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -147,6 +229,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Xq6pR3uX-9izkjId64O5gA/a84NMYOQNv7qHB0qQcfQSSXncM1FGqthkQmZuHrOdOcw4YGOx3cpv-xinrSlKNY4zt_-59Zkzjlhwl3EtlgsA2HzBLz1zb69Pau1UpGf71Ouk_yy7QF35mXt571Vc-cBEBl6IUJ_gJxZ4hqD91QWnQ/zB45lwxUtz7H4iEI0uikmI8vlXKkbjJVuv72lExBmvw",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -172,6 +255,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/b2pgCO8CDH26vr3nqGCCOA/rczW4exDlZ1DtyeDtgbGA4f-zxHUeoxsnM4NLWC7fWj1F0Xzgz2nXpJ0wwaaPgqaL7VcHxsqvwm-w9PEQEIhZn6rtm6eQIVSi2MxI2U-NuROiwcjYnJR_JkZLP7QgDViC4VXRg-VjsQlpknxb8jGxIrbvpv30_rTMimDcyurUWK3AARRm6Mkhb7Vbgd65I0TtPqjaYJ62df-m31RowzP2Q/Ny54Lq4nLQ01pAHgSicGC9216CGYLqOIHg_msH2iXGw",
     "hasCover": true,
     "reviewCount": 1
   },
@@ -197,6 +281,7 @@
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/yIMmEmRRvR4msLXOaA8DwA/ZGE-7C6vJm6ILqhGETadZzGeB0n5nGw41weHxqQBKWRYE8hhMgWGstBxGBA_6z69nkKB6As9nfrQuFsHNgeFZg5cUeQjzyHxjEBFhqAeUwI3B2mD1z1VL75BrmIPuL-Hh3yKIdhe5chCSEjwcUKT6DC8yY2NKYW10rEENmBRWesv3YvK-fYOJcOk9Apsj4UEDzBT-z5-zYLc5iedjvVB_g/e5EAz3wr1pFMMs6_scYY7ZqbJSyVZIVMhF0EChdQV4w",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -222,6 +307,7 @@
     "pickerSlug": "loren",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/q2KAIf8jVJBdpWHB1GLaqw/k2dV54mM0mP1Cieo4eOfHZbMISl5FvAQO41Pis55RofBRt_KYPmCVtpArh2Er0C05_6V6TS1zPsdYw84CZhE9ljd75mMy5tK319ZZDsWGa2sUzuSp2zLKUHV49_MCMjwE8VmE3jofd0mtKUWpIDg0iYcMhQfYkx04vR0Iich4-f10TlNZTjgdlSFeNS_ADFz7-YiUn5R28_NYfuZFXHy7g/taWxVd19AfPmF5ZmpGVzSR0upAqWqgI67fhHrVd4FoU",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -247,6 +333,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/AGAD21p3e-_G-Z3shZa1qQ/uR_m65T23fMQxmYwba6oMWdTJosyOif4I9wguaW1RA_o0btWNgHpxfueOI4jgi5b1MLFRES3_NiTu-8T1feN7U9i2tgerDBD7opa4f1beLHLcvV2FyhdAJH2iIzmX7IKlia8odAbB3y8FP1y6fD8Q0Mjpw8-cDopLF0l0Q3oAxd1wrp-jMlcpEcaUEjG5YeQgsbfZVtNm467RtnjZH9Xpg/wUwrk8dyJ1LIHCW_H2YhAYB-0aQsyyX4yyEWpqr4PLc",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -273,6 +360,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": "Monte Carlo",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/3lnKa1qqyEzRn14lpDH7yQ/kqdFYBeTUjxXi0HbKhl2ZneUhbUyF8h4H2pTnDnNQxBLDuqs_azob6JvVIoe-pij1BxNYrfAyH5tObdsfX_ZW7c1hs9fjMqGUpoF322t39fblQbXL9W250DC4IFA1V4lq9kjgHRQm_jsBUihsJo1UZ0IaTobAtbz9NXHODoUlI4cQRNPO4uTWV2P5g8A4bGeeCezSsCYFqOYd_BSQuo-lA/77EHTMXLSyXsU-hqvsGNfsfr9iD8UdTX47Bq-WHvosE",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -298,6 +386,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/bL53PGXv3OYX5EYbhd-BjA/kTPhjawes-DQgmY6Aj8kr1qfz_30hggbG6mJzeNh_v_zuvnp4531SShCeTtHg76PiPyPj236RvMFGPe0HByfEO3ie47lyN0XUeyR78Y62jgvWj5HJcqK3RsMFDSUkpcgn89sOtjAevdRxyUCvRlDDuTryqsIFanOvjrxa6HXoH_hjgl20N7tnZSJ9fozwckwgQAZPObF-heTbeipO0xjxA/ndfTFCt-kgzUgPjXyBiUVmyHtSOpiWFLoO3ux8fy7hs",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -323,6 +412,7 @@
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": "French Meadow",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/m0NABN_zqZ3moJxeDWLUrg/UaWIOyxq2B1w1QlhzaAbt-O006oCnowgBZ1zWA_6k5OiquF5-ZwwPT9CgypD5Hkk4Iu_V-9N0NOZRQd2ZA3c4v19lgehskawffk9sNFMwoA-VzlC3f30UWgDwag66hv_8qXD-HYBeqS3iR1OOESxQIG87dRNYdbFo9JbAvrfmW04WuiMVqMKIC_NafCa6ZzhyDDJuX97oLpYim89gN7-HQ/dzK7Dwn6CN3fu9pZyNgXjRfDhO2bTTnWQqmXbaNetgI",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -348,6 +438,7 @@
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": "French Meadow",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/YWs9ZN96ivhRTNsF32B_-g/o_SZbqhskXxJebNaKyilrKojXoFcqdUw08cjRsdxSpt06gIpWL8dsPPhbAr7oAFC0_8mozY0jzbDHHDN3thKr59RJOHJ8uu2GuQRmhddOQOVFdg1p6V1b5rxhkYeV7aEM2e2Hxlv1J5xYSvqxFJvGkLhHh5dnw7mYY_ToqpYrbCP5qwqiXb6yHds7aNpt-HjTRzFyZ3NV9cdKh6SgHCZXg/BeeTXJ85d1vaMLeIfTUa5id8HO5yYCmLaxCVMqUMvYI",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -373,6 +464,7 @@
     "pickerSlug": "loren",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/DwA86FhXlhIuk67v1IzCoA/Ee1kOUD3looSjo5Y4FuoN50iqZuMhzk1RZVqVdDBn7e4LT9-mBxUnHWTKrkp7WQvGugN38mYsMNMV8ZCqS-NQ8kyunI5Pe1XaM2lohnjHOwMo6jiegcqOy-LDXlDOh9DvU5kWufBVESMSTsg9ASznQ2p_mSzcpv74_rlsHgbzfKyaIymwoLlUq4g08xsGbC5SebXfwmqJdWpIzoFpb-ITA/c1IJ1Pml5sY5wSk0zs4rq4ge769aoj7bSgiQSFflH30",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -398,6 +490,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/9wGN8GiRjf9Ix3zLsxGrfg/QXcbS8_5R5HeSnopVVP7U8SNyhVjMn3c34H-IhJglvroSwIfCVdJfVvA5n_dwtEhNOgnXGnpuhLq49Vf9jEOCJ_zc6mXN5FaCCCzvhFvSJgpoJvHvZVKNijWtur21KbvD8LSXZrA88NRZkr5ItBJtKrLPsph9YfDZekyUtW6DqFFSzny6lfPWKITxx8X4W7psKC2_WJ3sHF-MmDPGHQ4MA/lrYqgHHAANg-2eKTvbR_mLgaCfypI4lAvpxaxJ4fggo",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -424,6 +517,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": "Erik's Apartment",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Y9stolVQMbN0voGReYhbjQ/mulLA_RYEPwZvB17yTf7FJ6Jvxl6QVm1IqEKtXnlBuPbgHfQUW86LWqW0vJuyn4EgypTaRSlrurNXhPgIYsG1B-425tIryo_3-ipcbq-AZLvid25ArObnjF7JjHb5YY8fFsgbkgjhqtKyAD7ATwzVRnUqogBkUxEjOhJOReBnkH1HV57tHDBu116GRA0yptMUATPzqlK9y_o0qUPyV8BfA/6m3bx2dt3tZGMBgGcJ_BARCVevXzGyjfm-SNk_QXQ9A",
     "hasCover": true,
     "reviewCount": 1
   },
@@ -449,6 +543,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/nIR-xm9E0zf37Y80acC6HA/rHTEP8H7ME-FkwoajOzsd71NjJeEDKrw8BJVGvowq7HEcxYQQq0jKft53sHseHbw0ywkCthYAAcKC5HXjL0qr2-YI4dDLMMtDtuUl7VSoiuhpJVTckc5FGvAvNEho1X_vpv2wlhNLfsa5268jVUoo2Z6tFiDYBkYailPJkkmFLmTl8g_LkmNdgLiQrYsHMEI/XI7_XKSEDmQyZyy_LDqj0eOHXs5eOa39T__qCI5Vtow",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -474,6 +569,7 @@
     "pickerSlug": "nick",
     "meetingNotes": "Only reading \"Prometheus Bound\" from the Aeschylus I.",
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/5hzSmz2sIX5fhVKdZFoHWQ/bfvJTKz3H0vZwqCLAx51-423klEuxT96V8_ZKo_6LxOtW-m35oRDtkM7nsVlO6OmlPzL0U0TxF0Gcw011itt_enIb8vwuhBry-fCvB_d040T3ZtDVJEJ2uBJlgaOFDaDJC_1_wxboXypgHN2UQGHp27qOq5yPFrrr7RyXtREbRQM3vEZgwKBr1ZlcX81aCKy4a8OkPUeDc5jwOiyiovvQA/s8B4YWnUaUQzluFrDr16IvgfT-g8PppGX8jsPM3GqAQ",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -499,6 +595,7 @@
     "pickerSlug": "nick",
     "meetingNotes": "Only reading \"Prometheus Bound\" from the Aeschylus I.",
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Q_a76Zx1BSteldLAlSknBg/3NwYLfRHz7YDt59vsbORGBAh-JEuHLY-H_FzYgbvUSz_dY7aFrGFCv_z1N56Fq47znS21ie5ggBGyaHqT4As3ekqkI0WE0yj_lCDCbHFez5IVxM9piIzZAGG2_aYeJ-TRAm8n8-ncQEBSel-CHIGfyA6R922TkXywmy-8rHgMO_qkobVD3u-eblLBhIiWSwGoXbKFPAhBGIsex_eN-FDQQ/D2c-DWj4W6rRe28mD1eERib1agQ3D91zV5PgS-nC6CM",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -524,6 +621,7 @@
     "pickerSlug": "loren",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/9fhOuZmy6ZicSy0AfybuDQ/bWuPOa44HRXkX8q-Zlyk0UbLQaPH9t79qlz0q8fOd6pW61h-qPvQswkg6HBzJH4r7QxDtn_5zVZ9c3Ega3HWi0aDdQ1v84g-nsA2YOayvaJ74PIM90kTkaGO--VcFn5lIuPfD5btuEW97XutWLaxBMb1MU5jr7LZeNLIiwmklVtD3Kl-KQO8VEvtxRynDbrZ8Z_vxe1fXy3h5J23a3veOg/ra0-OBy_7-19jtziQ3A51F86pKuMJFJ6hq6tjtGJsHY",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -549,6 +647,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": "Special guest: Hector Fernandez",
     "meetingLocation": "Zoom",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/9z0-hUeUkkHv0CYZZKzlsA/luB3ijf0DHWLV-lTxDo4qg2DgHUDhS6NgQAyOTaYLMMpSEj0P0Hy7BtVbVNnFx6jLWNssW37Q4sBDGRIgRnmQWdQWn9xemZgH5LuCiwGMolNd7Nl_gj75Jn8Lni7PAUDBitEEoQHndSZDfDGK-QXrCA7Xp_1_RNn5KbI_8QSDRAam6Cj3Siufn4MAdq9NH5HzUwNd7GKNCl16NCaNdf4Xg/YFceEcf6UzZ3mBp9PF0SyEcFN2Ioa0gBeCeheyVZa10",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -574,6 +673,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": "Erik's Home",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/lY6KfVM0c50f76xmTMtgOw/_zkj0t_6pgTXeJctlM0cjydPPXOKlup2KhdFgw43EcewedTqXlloMT97YE1Au_nXH_1dISzRkPMTGiqObnReVXGgKf7f1osFdkE7MUY15hDo-IwLsm2Njrnc-Hw25zujGA_sCONjlg138djYSozI2T3c9irc8AxgXG2mLEipxbeOVgb51hpQRwQJJyQSRa9wUH4mCcf3T2cBhgzhDuSiPA/0ElktiB_-6BofouoQjGhhzsTkeT_UoniJL4IqFNkVxs",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -600,6 +700,7 @@
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": "Walk in Woods, Birch's on the Lake",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/wju5tMngUnbhqznuIEQcnA/qZAUSN-Vla-_ZAGRJDnOgWZdav-s9bqQq63lN-BOU0tF9ogS1tGtiwAYW8NaJY7y5qde7CgSk0lOHoOIdyfBVWLB3yKvDA8XjpHU3GEdsE4nSYhwYbrOsg_ivW8W-Regaj1DNdwVk7KpqZPiE63jX2wmnG1OBC7E8bZhhhPEHwy1mv1u3WuX0Ls8aKCz2VPxCoEwj01-OzumXOMHeMNSkg/MxT-XK9QpZwNHRNACxVzmQ1pV_6gRdWE2IiSbhww-zQ",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -625,6 +726,7 @@
     "pickerSlug": "loren",
     "meetingNotes": null,
     "meetingLocation": "McCoy's Public House",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/lQ4tXytX9SXH5dEQcrYgSg/9pU5EPGZ7AxJF6LHe4rZpCAYXwgjO6OpBl-_zfItn2zDdqiRgxw5187QzAlqEtSC3tnq_YOufXmB59lFLciCvySTYtEfGf__L1qnN8p3IN0KjbN_A0FplBnNnhEDK3rNjmOP4D1qe6-IYRaXiHkaLUPf7Fc-4W0aADFRA9TNCg8dHNOL5fPScFOt0vHuLzQz3Y7AqxNAtYGHxxsD_6z3Sw/3cbWlewDH57G98iFuk8WWdPV385D2IKy0-eUyRyK8Mg",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -643,13 +745,14 @@
     "pageCount": 336,
     "isbn13": "9780393540970",
     "olKey": "/works/OL21971441W",
-    "synopsis": null,
+    "synopsis": "Jerusalem and the Sinai desert, AD 55. In the turbulent aftermath of the crucifixion of Jesus, agents of the Roman Empire receive information about a pilgrim bearing an incendiary letter from a religious fanatic calling himself Paul the Apostle to insurrectionists in Corinth. What's in the letter could bring down an empire.\n\nThe Romans hire a former legionary, a solitary man-at-arms named Telamon to intercept the letter and destroy the courier. Telamon fights for money, not principles. He's been promised a rich reward; should he fail, the punishment is death by crucifixion. But once he meets the courier, Telamon experiences an extraordinary conversion, and instead of carrying out the mission, takes on the Empire.\n\nIn his first novel of the ancient world in 13 years, the best-selling author of Gates of Fire and Tides of War returns with a gripping saga of conquest and rebellion, bloodshed and faith.",
     "meetingDate": "2021-07-30T00:00:00.000Z",
     "year": 2021,
     "pickerName": "Jamie",
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": "Lake & Irving",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/l7aKZJEFpKP78jtJ-JO2uQ/Uyyzj35K7K7vTSZG6CUsLxMLEh80-uNihcQD4iEyHThXl0f-3pufkFxP-BFxNaxs3a5hMntC02LL6QHxR_CDl2-c13Ft5ZxBD-CMpjI9oyWB4IEDZ69L7D3JHRpmh9uvPGaiynyDDCkUMAuqkJYyaEq15BF-jcW_d1A5rtSi0l8/jTkFY-YLSy4EYaBLSJHVAB0avBwVQdgWIKl5VlpVWMA",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -668,13 +771,14 @@
     "pageCount": 419,
     "isbn13": "9780593318171",
     "olKey": "/works/OL20883297W",
-    "synopsis": "\"Klara and the Sun, the first novel by Kazuo Ishiguro since he was awarded the Nobel Prize in Literature, tells the story of Klara, an Artificial Friend with outstanding observational qualities, who, from her place in the store, watches carefully the behavior of those who come in to browse, and of those who pass on the street outside. She remains hopeful that a customer will soon choose her. Klara and the Sun is a thrilling book that offers a look at our changing world through the eyes of an unforgettable narrator, and one that explores the fundamental question: what does it mean to love? In its award citation in 2017, the Nobel committee described Ishiguro's books as \"novels of great emotional force\" and said he has \"uncovered the abyss beneath our illusory sense of connection with the world.\"\"",
+    "synopsis": "Klara and the Sun, the first novel by Kazuo Ishiguro since he was awarded the Nobel Prize in Literature, tells the story of Klara, an Artificial Friend with outstanding observational qualities, who, from her place in the store, watches carefully the behavior of those who come in to browse, and of those who pass on the street outside. She remains hopeful that a customer will soon choose her. Klara and the Sun is a thrilling book that offers a look at our changing world through the eyes of an unforgettable narrator, and one that explores the fundamental question: what does it mean to love? In its award citation in 2017, the Nobel committee described Ishiguro's books as \"novels of great emotional force\" and said he has \"uncovered the abyss beneath our illusory sense of connection with the world.\"",
     "meetingDate": "2021-06-16T23:00:00.000Z",
     "year": 2021,
     "pickerName": "Tom",
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": "Jamie's House",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/nfqkEBBe4H12e5kdKJlrDQ/JiXtKXL4aQHgogru9aM4hqc7RuIXu8vNILWUFY-QcdeFf2edresRdCs7V1-Yxy7opePcgN982gqRLer3XweKkjx_4Pu8ynQ0bgojXTX_cyGN8XVPDnDFsHhm8oGk_rWURToNpJAnSCpbNLYI5WVUoIq3K5Lbv3sx4P4pqa75-D35LOrYtjJFEf2Z6aXCjGnLJFr9DbOM6stKRWhaC_ymYg/femsC-5RU6K0HecRjJT1dTs8g2Lr4JPC4NStSyVssVM",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -693,13 +797,14 @@
     "pageCount": 568,
     "isbn13": "9780691148182",
     "olKey": "/works/OL19366956W",
-    "synopsis": null,
+    "synopsis": "Roughly half the world's population speaks languages derived from a shared linguistic source known as Proto-Indo-European. But who were the early speakers of this ancient mother tongue, and how did they manage to spread it around the globe?\n\nUntil now, their identity has remained a tantalizing mystery to linguists, archaeologists, and even Nazis seeking the roots of the Aryan race. The Horse, the Wheel, and Language lifts the veil that has long shrouded these original Indo-European speakers and reveals how their domestication of horses and use of the wheel spread language and transformed civilization.\n\nLinking prehistoric archaeological remains with the development of language, David W. Anthony identifies the prehistoric peoples of Central Eurasia's steppe grasslands as the original speakers of Proto-Indo-European and shows how their innovative use of the ox wagon, horseback riding, and the warrior's chariot turned the Eurasian steppes into a thriving transcontinental corridor of communication, commerce, and cultural exchange.\n\nHe explains how they spread their traditions and gave rise to important advances in copper mining, warfare, and patron-client political institutions, thereby ushering in an era of vibrant social change. Anthony also describes his fascinating discovery of how the wear from bits on ancient horse teeth reveals the origins of horseback riding.\n\nThe Horse, the Wheel, and Language solves a puzzle that has vexed scholars for two centuries - the source of the Indo-European languages and English - and recovers a magnificent and influential civilization from the past.",
     "meetingDate": "2021-05-13T00:00:00.000Z",
     "year": 2021,
     "pickerName": "Loren",
     "pickerSlug": "loren",
     "meetingNotes": null,
     "meetingLocation": "Zoom",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/CI8S8gwdT1dI_aiSM-pByQ/ozuLlUIJ0O0G0fqon-qalNo5efKDgljQgXv6sU3LEpFEw8MbXPIyQ8Ov_dHcKnQGxJfCj4jPA5L4Sp3flJiQWLEy-wRSCkqO3wlLryiBpLLVrOoiKWUKboxxj8U37AfkXfpXELoVV25IXpiVM5RVutuVYjAQxSfdTJbvSNSbbvxqXXeAnM-j6uHiFREH-Noy_Mf6CWTmtfEV8Y-sBbPFfA/9CkCjxiggNAZ6eO12AcFItvvarpSWhAYKZr2i1VQtFc",
     "hasCover": true,
     "reviewCount": 1
   },
@@ -718,13 +823,14 @@
     "pageCount": 496,
     "isbn13": "9781524732363",
     "olKey": "/works/OL20334758W",
-    "synopsis": "Rescues donkey from dying.",
+    "synopsis": "When Chris McDougall agreed to take in a donkey from an animal hoarder, he thought it would be no harder than the rest of the adjustments he and his family had made after moving from Philadelphia to the heart of Pennsylvania Amish country. But when he arrived, Sherman was in such bad shape he could barely move, and his hair was coming out in clumps. Chris decided to undertake a radical rehabilitation program designed not only to heal Sherman's body but to heal his mind as well. It turns out the best way to soothe a donkey is to give it a job, and so Chris decided to teach Sherman how to run. He'd heard about burro racing--a unique type of race where humans and donkeys run together in a call-back to mining days--and decided he and Sherman would enter the World Championship in Colorado.\n\nEasier said than done. In the course of Sherman's training, Chris would have to recruit several other runners, both human and equine, and call upon the wisdom of burro racers, goat farmers, Amish running club members, and a group of irrepressible female long-haul truckers. An entire community comes together to help save Sherman and, along the way, Chris shows us the joy of a life with animals.",
     "meetingDate": "2021-03-19T00:00:00.000Z",
     "year": 2021,
     "pickerName": "Jamie",
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": "Zoom",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/24QkxLZS_WHDAySne-4kYg/AZXRbnbrpzahN_ZSOlyUHjFYppFaQvqyGu0HycCaRMEKYlbVctwIXtrM6O2D16yT9Z62JstiEBnvs0hyJFI7gKlIboyVl8NylXRRLSOq9webjwoltQDPQpj5u6nc9Q4EvRp0tdbhf-HjVwe_1BlO1f1ntgnLUZk-rGBVPeJ-09NL3XoBV72OvUKVSrX_RhRoxH0sBKqR12y8QcqNWQJUdg/M68Ue5Wl9bulBXj0lypcKw1esYJ9A5WCfui6DeSS4KQ",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -743,13 +849,14 @@
     "pageCount": 704,
     "isbn13": "9780374173227",
     "olKey": "/works/OL20844844W",
-    "synopsis": null,
+    "synopsis": "Perhaps you are WEIRD: raised in a society that is Western, Educated, Industrialized, Rich, and Democratic. If so, you’re rather psychologically peculiar.\n\nUnlike much of the world today, and most people who have ever lived, WEIRD people are highly individualistic, self-obsessed, control-oriented, nonconformist, and analytical. They focus on themselves—their attributes, accomplishments, and aspirations—over their relationships and social roles. How did WEIRD populations become so psychologically distinct? What role did these psychological differences play in the industrial revolution and the global expansion of Europe during the last few centuries?\n\nIn The WEIRDest People in the World, Joseph Henrich draws on cutting-edge research in anthropology, psychology, economics, and evolutionary biology to explore these questions and more. He illuminates the origins and evolution of family structures, marriage, and religion, and the profound impact these cultural transformations had on human psychology. Mapping these shifts through ancient history and late antiquity, Henrich reveals that the most fundamental institutions of kinship and marriage changed dramatically under pressure from the Roman Catholic Church. It was these changes that gave rise to the WEIRD psychology that would coevolve with impersonal markets, occupational specialization, and free competition—laying the foundation for the modern world.\n\nProvocative and engaging in both its broad scope and its surprising details, The WEIRDest People in the World explores how culture, institutions, and psychology shape one another, and explains what this means for both our most personal sense of who we are as individuals and also the large-scale social, political, and economic forces that drive human history.",
     "meetingDate": "2021-02-19T01:00:00.000Z",
     "year": 2021,
     "pickerName": "Erik",
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": "Zoom",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/0AxaF06CZZKuZwdP3wwZwA/65_PRB-aF75p0s8jenByEOGyXsfe3vBZO2kECkxs1xN1UkNbB70vB30v4EbuwHKqHdIFXOuzeJBI3nwnwKnsoEZATgbfJImJQ0rlRJHYKyQA3Y0lc6QFZiacxio9NEakB1bMjjPrAco-cV36RyqTQf4Y21H2NQHjq_DWrhKFqgw0uZ2_DHaybILIp_KiuReAKir2VrFvq1CCzptWOG0xFA/mxn1WeqTO1tZvnWIVrg8-sh5GC9ZTVW6wn7yPqKVzgY",
     "hasCover": true,
     "reviewCount": 1
   },
@@ -768,13 +875,14 @@
     "pageCount": 396,
     "isbn13": "9780393635065",
     "olKey": "/works/OL20162907W",
-    "synopsis": null,
+    "synopsis": "Mama's Last Hug opens with the dramatic farewell between Mama, a dying 59-year-old chimpanzee matriarch, and biologist Jan Van Hooff. This heartfelt final meeting of two longtime friends, widely shared as a video, offers a window into how deep and instantly recognizable these bonds can be.\n\nSo begins Frans de Waal's whirlwind tour of new ideas and findings about animal emotions, based on his renowned studies of the social and emotional lives of chimpanzees, bonobos, and other primates. De Waal discusses facial expressions, animal sentience and consciousness, Mama's life and death, the emotional side of human politics, and the illusion of free will. He distinguishes between emotions and feelings, all the while emphasizing the continuity between our species and other species. And he makes the radical proposal that emotions are like organs: We don't have a single organ that other animals don't have, and the same is true for our emotions.",
     "meetingDate": "2021-01-07T01:00:00.000Z",
     "year": 2021,
     "pickerName": "Tom",
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": "Zoom",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/nc4IEQ526D6b8BJ1p3jLLg/Rzou8qb8CSDCh4848e0wUmne49dBB9w1o6rmYV22ANWrpn4nJ8_rs_WwvBLuH2uRaNO9l4zD5gOpCn4VBXNB6rdV9XGIsk3xZ6VANbXV-N4UQGtX73aiMYG403JAs2nMzE9Mtz6nvpdC2keY9UUyv3RqgE9AbdgN9ErRoBnE2RkYbn5KpBDq5_cgGpI347_YWSUY3kcesE0blJjIU6w_DQ/lNZtTmb4IxDfBxx9WiMYd5Z5wcnSOGipCXPraoRjAOo",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -793,13 +901,14 @@
     "pageCount": 208,
     "isbn13": "9780674744431",
     "olKey": "/works/OL17924067W",
-    "synopsis": "The primacy of words over images has deep roots in Western culture. But what if the two are inextricably linked, equal partners in meaning-making? Written and drawn entirely as comics, <i style=\"mso-bidi-font-style:normal\">Unflattening is an experiment in visual thinking. Nick Sousanis defies conventional forms of scholarly discourse to offer readers both a stunning work of graphic art and a serious inquiry into the ways humans construct knowledge. <i style=\"mso-bidi-font-style:normal\">Unflattening is an insurrection against the fixed viewpoint. Weaving together diverse ways of seeing drawn from science, philosophy, art, literature, and mythology, it<i style=\"mso-bidi-font-style: normal\"> uses the collage-like capacity of comics to show that perception is always an active process of incorporating and reevaluating different vantage points. While its vibrant, constantly morphing images occasionally serve as illustrations of text, they more often connect in nonlinear fashion to other visual references throughout the book. They become allusions, allegories, and motifs, pitting realism against abstraction and making us aware that more meets the eye than is presented on the page. In its graphic innovations and restless shape-shifting, <i style=\"mso-bidi-font-style:normal\">Unflattening is meant to counteract the type of narrow, rigid thinking that Sousanis calls “flatness.” Just as the two-dimensional inhabitants of Edwin A. Abbott’s novella <i style=\"mso-bidi-font-style:normal\">Flatland could not fathom the concept of “upwards,” Sousanis says, we are often unable to see past the boundaries of our current frame of mind. Fusing words and images to produce new forms of knowledge, <i style=\"mso-bidi-font-style:normal\">Unflattening teaches us how to access modes of understanding beyond what we normally apprehend.",
+    "synopsis": "The primacy of words over images has deep roots in Western culture. But what if the two are inextricably linked, equal partners in meaning-making? Written and drawn entirely as comics, Unflattening is an experiment in visual thinking. Nick Sousanis defies conventional forms of scholarly discourse to offer readers both a stunning work of graphic art and a serious inquiry into the ways humans construct knowledge.\n\nUnflattening is an insurrection against the fixed viewpoint. Weaving together diverse ways of seeing drawn from science, philosophy, art, literature, and mythology, it uses the collage-like capacity of comics to show that perception is always an active process of incorporating and reevaluating different vantage points. While its vibrant, constantly morphing images occasionally serve as illustrations of text, they more often connect in nonlinear fashion to other visual references throughout the book. They become allusions, allegories, and motifs, pitting realism against abstraction and making us aware that more meets the eye than is presented on the page.\n\nIn its graphic innovations and restless shape-shifting, Unflattening is meant to counteract the type of narrow, rigid thinking that Sousanis calls “flatness.” Just as the two-dimensional inhabitants of Edwin A. Abbott’s novella Flatland could not fathom the concept of “upwards,” Sousanis says, we are often unable to see past the boundaries of our current frame of mind. Fusing words and images to produce new forms of knowledge, Unflattening teaches us how to access modes of understanding beyond what we normally apprehend.",
     "meetingDate": "2020-11-24T01:00:00.000Z",
     "year": 2020,
     "pickerName": "Nick",
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": "Zoom",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/WG-bUHPqQmoTfCnDHmEtAw/qmBvaTHcNeyHBtDByORZ1fQB_C1bZ6Yxa6UzLg8SxtHPOs1YC33__ZwXGSGyUaV1CxIlc-eLET7Jd9Qt8aiXSFfUGDYU_zYNVCDDTQDazDpUB-5dLOrWOmJboG5nO30zrDV9FNH-Wfp91oW1aMKRWDpwScV7wwADGEoVgz3O17LGc8nAm2X7MReVKyYOf92Shk8J5GvsTZMtR-BIQ1vdjw/TLLAECVh31tX74EE53Eg9rLeLsg1a8C1Ji7KWbVA2rs",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -825,6 +934,7 @@
     "pickerSlug": "loren",
     "meetingNotes": null,
     "meetingLocation": "Zoom",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Ak9LGUE3i26CtRZ-ETOVdw/HfOfQwt0bfwXW9g-maNg5TfLxGbqX8l5ZO8LLx1aET_za9KR4qB2IMxjHsbRcSOu_ROPqgpqg1lxLiGMYPTde7fhvqqhBrpQGbu2Ud1b0e6Cffb518bwlizLliJueUz3lYY8OM_QRK1vLIygcUv8hUr5mzFjpsPZFnOECwNwAmCsw-iZGkEDiJP6mrCvcttERIPh7-7gr0suDMnqJ5nZRQ/YCAT23360inQxgtNwW4o-dEo4Ms01n-76RXI2ndLKSo",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -850,6 +960,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": "Zoom",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/EwKncDoySwBY5CcKSPwz6g/ycNTaptzJUDNLEhT4VIymwYo8qtqo9G1sAl-gDBUOf8HSNJXujEeIk2daxIdrTDYZ2m4IcWS1aRfB8DW_zsRBhECmqXgwyd22YVbPdwlgRs-AcTkJ6-79QogGwCZUvAoWd-spsyfTVWvzphDSj1kiw6JZ2ZPrUcArsWxXYMp2YwxY2mPYwhz9tCjmfhiJywr4uLPvRDNct5sXg40y-MoIg/UTMQDy6j1QEWF-DDWSa4YW8-cUDtd9i7fCbYI33-UUY",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -875,6 +986,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": "Zoom",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/_QDsUhKYQyITYP7L4XpUOQ/0ZhOT-YYMPnYax3Wwub7ZIoEMYBsRoSmW4jb1Ks6eVKVp3-Fz6m10d2yqrd6-QZJRgOYl5C5ecNLoMeoZ2jHssz6fRVIHrMhwHF1V9pXWyYX4DD8hqt2z3QL-97dGgWaJx0m7_cDNc8wtHFdg5fU9yiI6IPt3PVuZ1HGEFWaHoZ6135KpCEi21SyiWHNu_BjGet3lul4uLNIHGvzK8iiBw/UNX5EbhERT624_l29xDl-28zMUWYOzEsujjr2RlrVXA",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -900,6 +1012,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": "Zoom",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/ieqMdNwEid8uSk0G_Gre3Q/zAqRAnEE8q_yX-sBl7hy9JoqBFx70uE0S_3jZP17JiVBPGKfun3Z7SH205_v2fyrOqRCBCYC35_ErcmF5t3KMroptGgVNAmfRrdazekb1HoXMvz30UfXpE205Jrdppd2QX7CjU6zTK1wHA7Gi4AZbvNyq08tUnOdiVmUwkD3Zw-QC2x197Z2VqqHtrDvq3Waa3SXLMsr2caq0jGDw43OfA/EDYkPizLSUuBuBdvlO6qVOSMKdeAFrRHhOsptaNrmIE",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -925,6 +1038,7 @@
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": "Zoom",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/ucbTU3C6HAAkhH5wM1OmOQ/MOmnEIJKgJOmb5ZkaJ4cUMcGQVe2UHNLVvQ38LHv1Ep5odtci6hTw1CNAFrPuMJsUy3IBjWp3dxqIHoKYEYMMeeJgiH-Q0RR7vfkiCaA0PYoHY99U3xKg-GCSRQrsa56PhV81LfiJBd2j5HRpdbUj7N0bNv0k-o3LE2Q0a0i765f1EU9gGljfnstHzRjmsWM2BovXC9io7TJFm6mYnEPTQ/vdHgRSKMmwl9uiNhMo46P6W0ATNKFEzhe0n1VlnMtMo",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -943,13 +1057,14 @@
     "pageCount": 352,
     "isbn13": "9781627790109",
     "olKey": "/works/OL19994559W",
-    "synopsis": "\"For more than forty years, the United States has reached out to China, helping it develop a booming economy and take its place on the world stage, in the belief that there is little to fear--and everything to gain--from China's rise. But what if the Chinese have had a different plan all along? The Hundred-Year Marathon reveals China's secret strategy to supplant the United States as the world's dominant power, and to do so by 2049, the one hundredth anniversary of the founding of the People's Republic. Michael Pillsbury, who has served in senior national security positions in the U.S. government since the days of Richard Nixon and Henry Kissinger, draws on Chinese documents, speeches, and books (many of them never translated into English) to reveal the roots of this strategy in traditional Chinese statecraft and track how the Chinese are putting it into practice today. Pillsbury shows how American policymakers have been willfully blind to these developments for decades--and he includes himself in that critique, as he was once a leading voice in favor of aiding China. He also calls for the United States to design a new, more competitive strategy toward China as it really is, and not as we might wish it to be. The Hundred-Year Marathon is a wakeup call for all Americans concerned about how we have misread the greatest national security challenge of the twenty-first century\"--",
+    "synopsis": "One of the US government's leading China experts reveals the hidden strategy fueling that country's rise - and how Americans have been seduced into helping China overtake us as the world's leading superpower.\n\nFor more than 40 years, the United States has played an indispensable role in helping the Chinese government build a booming economy, develop its scientific and military capabilities, and take its place on the world stage in the belief that China's rise will bring us cooperation, diplomacy, and free trade. But what if the \"China dream\" is to replace us, just as America replaced the British Empire, without firing a shot?\n\nBased on interviews with Chinese defectors and newly declassified, previously undisclosed national security documents, The Hundred-Year Marathon reveals China's secret strategy to supplant the United States as the world's dominant power and to do so by 2049, the one-hundredth anniversary of the founding of the People's Republic. Michael Pillsbury, a fluent Mandarin speaker who has served in senior national security positions in the US government since the days of Richard Nixon and Henry Kissinger, draws on his decades of contact with the \"hawks\" in China's military and intelligence agencies and translates their documents, speeches, and books to show how the teachings of traditional Chinese statecraft underpin their actions. He offers an inside look at how the Chinese really view America and its leaders - as barbarians who will be the architects of their own demise.\n\nPillsbury also explains how the US government has helped - sometimes unwittingly and sometimes deliberately - to make this \"China dream\" come true, and he calls for the United States to implement a new, more competitive strategy toward China as it really is and not as we might wish it to be. The Hundred-Year Marathon is a wake-up call as we face the greatest national security challenge of the 21st century.",
     "meetingDate": "2020-03-25T23:00:00.000Z",
     "year": 2020,
     "pickerName": "Nick",
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": "Zoom",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/XgKzUa-iR7vlAex2ooMpvw/3NGpRkNZ9O-4tlxLUqHTZpoCzWigeMC_K84sBDQ7RTaehtIPq-4011O4n6DGaKwafPPorxGKYxkwiKgob86ibfdW4ayjwSDQXkGBAz94Rq0ThRJgKN78CWxP7Zy3XasyBj3IB9Q9z5pYpRdwdZxCQYNVEyjmfZ1HeAocCdox58Yhk0de1JA6jieNYHYIf9e1Jym3ibOav4VTwUwS55iwWw/vzw5dBDW9CBP7OzpBCKN4wLqwUHPhN5f2YsAleQqsvI",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -975,6 +1090,7 @@
     "pickerSlug": "loren",
     "meetingNotes": "December meeting was cancelled at last minute and two books consolidated into January meeting.",
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/a0HAQ4rOdhfn7orqkVOY4A/WyY1_JjUcJHyNShAKbVz44Evjvc4NPe5GAGQGh8tQIN3orRZX0gCSw7UnAuAv_DN5-M9Ux5MhierRmzIUj_HqPbcjCuSC3nxYWY0Gv1HkQuoyY6cxFpneQIPEXtQCaTsMgZ9yGQT9q87KzM2U6ZUAAwsY7YycIOvpCBCoJKBhKgo_NONweChoHuW1bCxYx1tBkWVE8WiydXNZ0zTRR1YAA/IwsNKFpmg7BMZck7tprmzfH1xHXQskFOIg0j-K4q2wo",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1000,6 +1116,7 @@
     "pickerSlug": "loren",
     "meetingNotes": "December meeting was cancelled at last minute and two books consolidated into January meeting.",
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/LbATX62fY7oeQ6FdB6_cEA/TBbuczlcY1Ue85fV858FIkhd22vTrSpm5Qp6av22y1w8mZIN8YEzr_WJkcrjSAW7LUOpHyrl0dP9GD1HtJMBz4FFNbdcNbfzdOMscfwhiZ_Sz7rB-qnl1c36kube6HwW_p_uDtC1IBpqYaiUHkgNv1iqZBlqxxZykfa37-Sa-zxTbwqBQjuYjx3P-1rEzt3LADUemSKcR4iWFDG-1Giw_Q/IjMwVCqh9Hu2zM_6jzVY1MhbzAmKp1PclWZ5rf10Dw4",
     "hasCover": true,
     "reviewCount": 1
   },
@@ -1018,13 +1135,14 @@
     "pageCount": 160,
     "isbn13": "9781631495540",
     "olKey": "/works/OL20148876W",
-    "synopsis": null,
+    "synopsis": "Asserting that religious creeds and philosophical questions can be reduced to purely genetic and evolutionary components, and that the human body and mind have a physical base obedient to the laws of physics and chemistry, Genesis demonstrates that the only way for us to fully understand human behavior is to study the evolutionary histories of nonhuman species. Of these, Wilson demonstrates that at least 17 - among them the African naked mole rat and the sponge-dwelling shrimp - have been found to have advanced societies based on altruism and cooperation.\n\nWhether writing about midges who \"dance about like acrobats\" or schools of anchovies who protectively huddle \"to appear like a gigantic fish\", or proposing that human society owes a debt of gratitude to \"postmenopausal grandmothers\" and \"childless homosexuals\", Genesis is a pithy yet path-breaking work of evolutionary theory, braiding 21st-century scientific theory with the lyrical biological and humanistic observations for which Wilson is known.",
     "meetingDate": "2019-11-08T00:00:00.000Z",
     "year": 2019,
     "pickerName": "Erik",
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/6_Wa1yLHC5HvkVqtF_PzXw/_WhJbCuXTm-iTklUEZZgbmJDg8IRo9WcrR-TS-K6GzHOkmJ6jrgJjRQAf2MSbafhs5i7W_ZCRvqt5A91m_YYz06sDLcafyB9nz24r2Xwr8R9rkUYd0lo4EtrUDWFt_A-vf8qPM86j-axO98KSO5xzoN5wxG4JzVbtokPo3NPNF555CAURO_M6kjjiYMdcX0tkLZY7Hn4IpItUeX2vkB-mw/gm95Wzar67eqEZruIISv0dS5BHJf31VaWlGyMdKJkXQ",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1044,13 +1162,14 @@
     "pageCount": 385,
     "isbn13": "9780671212094",
     "olKey": "/works/OL487444W",
-    "synopsis": null,
+    "synopsis": "Originally published in 1940, this book is a rare phenomenon, a living classic that introduces and elucidates the various levels of reading and how to achieve them—from elementary reading, through systematic skimming and inspectional reading, to speed reading. Readers will learn when and how to “judge a book by its cover,” and also how to X-ray it, read critically, and extract the author’s message from the text.\n\nAlso included is instruction in the different techniques that work best for reading particular genres, such as practical books, imaginative literature, plays, poetry, history, science and mathematics, philosophy and social science works.\n\nFinally, the authors offer a recommended reading list and supply reading tests you can use measure your own progress in reading skills, comprehension, and speed.",
     "meetingDate": "2019-09-18T23:00:00.000Z",
     "year": 2019,
     "pickerName": "Tom",
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/-dsOqLRHaCSNxKhTgOu2Yw/-vOGtRvGwwcF943qKJtlGz9PGhmPUZIlhm26LLaY4anP2Yn3tUcxiw7-8yMnbFtqH6ZQ0JXoNJ4eyX3NygslODYrM499dWdLk5yCvs6WMGZcAq-05jc0_4gtDnmGoBYdX2dHPj7tTq734Tzue_JrSiQUb6BwlB3KJ0sjy_bAdLP2AAEsmUE6GIZQEAf43QWZv7G03uryGGE7w64UIrUzwg/DQYqujfnkCNGe8jMi9ESf_-aaVdyZKY2Qrb9cgGYvI8",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1076,6 +1195,7 @@
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/cDcMUJ-tkOaT_aTf_yKLIQ/GdZ47g4Uxi0vHCW8jOysI28F-6H1Rvb9o_nHMUXXJP-_EYl31jUfhB8b0-hewGYJ5QEZohdXVBM9AkPuvA9sHnLH-ipYlC2gbVYrhRqs2C91ebZ_os1kfD63y7HaT1w__uoy5x2RWawwlQhms5QWnUHucdOn2ljnl-bZW6itYkCnWAkG3BRmzcI8CzqJAkt6BprUvH8W6kXzpx6VcdNxdw/WnoBHpL2iAbl_7pdXyiXaY625_yW4K6EDphhbCakhVw",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1101,6 +1221,7 @@
     "pickerSlug": "loren",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/QpRwcsSAVUH3CuNoDYE8xA/umYFTBCfLdFurGuDqBFoIqC-Q6q6TgXz44hA1_0umSODpqudFtK_RFDVy0erT7EE0pZa6zXtC2TPJtSuVNfJK7Uaus5xeUqICnKXLXX_kbxekyuklLfOyYZhhxEl_N1v5VMY66tffCiH_pmldVw43byd0s9xsHoqYtLOS8Eqx36rsrHqf7B84MS_K-QnbGNTo3pjmkclNtuPleVJeEBNUA/koWC1_RuGexG3Wg4BKKgSZHugq56QBtbx2Wm2VEVsO8",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1126,6 +1247,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": "Lake & Harriet",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/p_LqDbkdWofcZYoRT5dEkQ/Omzhcz7NJFN6RsnqdpWoJwN3deTFKVWKPX1p3gUUa_P5Hi5rTiW5O5nucEz5ZwLqEpgUY9Wp4PtUPNojkktGp5aBl9yxKRQHod7hpqkMn9As4eIJMrOiWgGZWOUnioYrnxU5UiMM37nZIGIsyVvw-48JCKpmWGus1oRFA4d3sZajjq6uRiuu1cSy_3_jG-nUWNqvYkFz3S9d3J-f32-flQ/zzXH7t6SSe7mZHWy1Rq0OjaZeXKZsFtxT2F5RH04QaQ",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1151,6 +1273,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": "Lake & Harriet",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/2YBdiStMxrLGWtNpjsB2bw/uK-gyAY-kvOXbGrd3SCMsOqVxyzud-tNhp3f-Y7UH1q7Bk2OOI-ZU-qPz0ANsoiLbLApMUYPvrdecvDx-WuCOS01vKrGjKP2bMPXX9vtvT_zRFKI7QgUC19RfXHIjHyDxeMC4K_s7JW3FyjIs1bfgQ/3kA2KAlh5ebhdUdV9OEsOEXuHp6HilCdYMrJB7OQDoI",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1176,6 +1299,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/CO_EKpgvT_YPZ8EWTbf9CA/Jw78oNk4j4bSil2LL4bQJr980DwOM379qHzPUVjBv-oAwMfoXMnbceKoUFjUOB2dCf5ixh2Lf8MdyFjC6AjkOW3FUnUlbCxvkrFKLnSOb9L8jnvb38AowHYEX98EPZNvLZyjIX1VMEM7u5MraUhh0Sda6rk2VA-fDDOqDiELooCANQqzdikD91GsiRhb8R5EsW_02Ug_Xo96r7pqywMcYQ/DyEOhpnlSbBAJ757PyRacua70rvXMZotl1D022CLfGY",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1201,6 +1325,7 @@
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/YZLfturFFsH77XyjyFVFIQ/ILsOmlKS_1aZoomzgZIpsjmJRi_6uOlW0Aqan8P85c8HpcGU5_k5FyUnxa9LL8n8eKu4M5nBO28x2a_5QXeSxdtmNS-pp1DeGEWRyFH3FYDntB_Li2ULdtFLl3AWSA9tgCTjdK6E7XaGHNI6Cl5i_0QmHNkVkrtJ3cRPt_ZfCggO5sewbyiZxv-UFmFEXGr2BAT9vfTzZ9ohmcHW4ELdoQ/F9218N_5sEk5vFE6huMKyPAwcMiM-YLgCK7nTmwvgfU",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1226,6 +1351,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/kr2x1sgZkpltsE5IcaWyAw/mw47Jyaj_p-IDnOtaKzZjpd9Jl4WhUB2qZ2pKHCW8CRowI0B-zOmq5zBOLUZGZ8OpJBJKFUfN-UZyaEFK-jnHytNUa26Quj8NwYT8nHSo-_AoGh0-L09QhriCqHL06YcNueFn8MN7fXFsSD5LsMTPf0DOQ6hVBISCTV2b-deNVBZTRkdvu_11hrJQVcqh8HfiXOYKk0dFhQG0bVb5NT94g/kBW99jCdnBFDlApNPtBbC4UchWT6b5-qtsL2pJeu5N4",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1251,6 +1377,7 @@
     "pickerSlug": "loren",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/YhWD9CKQ69c_jRtE8FaFvg/wYUsF_YfXiBtAQGSTeuECe7JvWn-rDzqFrQtEDJZCtHylZ7rfjo4WKddFHCLo9Sb7465mjsYp13rlBpII47XpYlp2adkxaV5A6wdKBaLYVBdgeBavb2PNLrXpILdm6w7t_RfFc2gOvXGfgv2gjG2Mtp3Y8Mq4-PBrvZqLiuOhms/JNZkYWsdz7IRCnYS3WXvBn5ZSybeO68TJR2qSjevuWU",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1272,10 +1399,11 @@
     "synopsis": "\"In his Pulitzer Prize-winning bestseller Guns, Germs, and Steel, Jared Diamond examined how and why Western civilizations developed the technologies and immunities that allowed them to dominate much of the world. Now, Diamond probes the other side of the equation: What caused some of the great civilizations of the past to collapse into ruin, and what can we learn from their fates?\" \"As in Guns, Germs, and Steel, Diamond weaves an all-encompassing global thesis through a series of historical-cultural narratives. Moving from the prehistoric Polynesian culture on Easter Island to the formerly flourishing Native American civilizations of the Anasazi and the Maya, the doomed medieval Viking colony on Greenland, and finally to the modern world, Diamond traces a fundamental pattern of catastrophe, spelling out what happens when we squander our resources, when we ignore the signals our environment gives us, and when we reproduce too fast or cut down too many trees. Environmental damage, climate change, rapid population growth, unstable trade partners, and pressure from enemies were all factors in the demise of the doomed societies, but other societies found solutions to those same problems and persisted.\"--BOOK JACKET",
     "meetingDate": "2018-07-25T23:00:00.000Z",
     "year": 2018,
-    "pickerName": null,
-    "pickerSlug": null,
+    "pickerName": "Erik",
+    "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/yE0fCjYU0vYWDRq0AZ2pjw/KRZTbMuHj4W_X01OEdbtvkk4O9ejGxj_3_rylpsDgCtOmcZl9wdqO_toYQniyp34fWUg3uKYdLATZDJwBE40GfYH0ECrXZP26vEqAYt9i7AaLjYjb0QcCOqyYp7fT-7i49m3-nAJhBHFRGRsti6ySDV2Vsi88Q2QVpOUEVr9jZdYXq4CNHFXV25YqHfGi5FUyWGCk6v2Yn2XEigg8MHKgA/tfvSAK5wYhcw8-zNU1vodFpNnAALvKKXQzhblnrFqyM",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1301,6 +1429,7 @@
     "pickerSlug": "loren",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Z6Sieztwy5trzJWo0kz1KA/mvzT3FPiZRwT4471tZyiA0_82pSgh27uW1uAFenOOIBYTzlkRyj6bR_cntSduh_IonufAZshTcOsh6LqVjIv57wArNJH6XVATBxKZTFge2-7hnmeeEMMQq3tNLodxti9ug1kA8VXSc_lNhcuDdZLA3ArgZK8_DZV4cLZjHceaSSctwMSJVHkbfU_UthOR4YmLCCC4h5W_oCeOzJSfHk8eA/DUyB89EXCHD23yBba1HD88VeS4FkQsXVkYMUsyPiVrw",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1322,10 +1451,11 @@
     "synopsis": "With two appearances on CBS This Morning and Fresh Air's most popular interview of 2017, Matthew Walker has made abundantly clear that sleep is one of the most important but least understood aspects of our life. Until very recently, science had no answer to the question of why we sleep, or what good it served, or why we suffer such devastating health consequences when it is absent. Compared to the other basic drives in life—eating, drinking, and reproducing—the purpose of sleep remains more elusive. Within the brain, sleep enriches a diversity of functions, including our ability to learn, memorize, and make logical decisions. It recalibrates our emotions, restocks our immune system, fine-tunes our metabolism, and regulates our appetite. Dreaming creates a virtual reality space in which the brain melds past and present knowledge, inspiring creativity. In this “compelling and utterly convincing” (The Sunday Times) book, preeminent neuroscientist and sleep expert Matthew Walker provides a revolutionary exploration of sleep, examining how it affects every aspect of our physical and mental well-being. Charting the most cutting-edge scientific breakthroughs, and marshalling his decades of research and clinical practice, Walker explains how we can harness sleep to improve learning, mood and energy levels, regulate hormones, prevent cancer, Alzheimer’s and diabetes, slow the effects of aging, and increase longevity. He also provides actionable steps towards getting a better night’s sleep every night.",
     "meetingDate": "2018-05-09T23:00:00.000Z",
     "year": 2018,
-    "pickerName": null,
-    "pickerSlug": null,
+    "pickerName": "Nick",
+    "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/wmDaRk07WjIN6Os630bbcg/pl6-Rw07uFP2cImUIceZkxuokRjhnew4d_pkpnqd8y3hIkxGJbk8j0JDAb2-iCZZ2KkEuu2MnTRyEmdP0P1lq3BMY73Q6aVF3FPgGQo5Y6qcKrXVSv5ZCa3DkwMwlSeK6FitdDNrJXrQgKQ6aQyqZgVbMIYJ5L4EOnCY3Otx_VHMzXekEmaIZIi0AFnMW-0Sw25o0X_Ly0R6OCakBjc0vQ/bOe0Bv-3hIwReTHZo3EPFuVRzBtvOKLTnAD_AezDLQc",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1347,10 +1477,11 @@
     "synopsis": null,
     "meetingDate": "2018-03-26T23:00:00.000Z",
     "year": 2018,
-    "pickerName": null,
-    "pickerSlug": null,
+    "pickerName": "Tom",
+    "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/D98qaZ6EqP2nHHhSjZG5rg/MsafPzbYwYzPZU5bXU_35rbFcGCLDGOSVwE-a0FQlNN6ziwtidn-dWsiulXMoBa-50HtAAqj7LEONMEz38pxB2qRPAF6L0Njx7KZgKwkAAyNlpPbghw-AYnoZ5YS08Paiq-6D_OU1ErJGvAf1YGmo5rEJGea1Z-MN3CMfOJ9uoODyuT44UjUY0HipUCGrfQwv4tlcNggf0IrXhQ9SZlRAA/KaKq0U7jB8Itnwxp0C4TmM_heICkQDdGN1IeVtCDhJE",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1376,6 +1507,7 @@
     "pickerSlug": "loren",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/gqBeAz6sZq-fl13qm35u8w/IBlSJY6WDT14_M_I36YETE7tRCMbHp6T3_qHCSI5oncZBnikqzWxU2blQI2a-crWYeE9zuPifpTo64FNM-4XAh5_VxhjujHTJDMCSkmEBXmGGB8MdbQgWrDU22944Nzsh3AZILpxOumsy7HBxHQTzb-ldDtrjiKXjazuVp7YMTDS_2OesmHN35_UMN-hE_KbcGjATeGbpM-bATbMNdNS4g/_XsNNQoIwFdZp5YiLKUoJ9T5g0Qlbdt21lo5Ty0Y3QA",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1401,6 +1533,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": "Cafe Alma",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/JTino3-hGdOWc7xdWYPWEA/t94y8OQb0SqbGV1KB6qiWTrEDhp4KFEic6xc82D40eSIsnkUlXICrl7uAsbqWAFWsLJRriVTf-GejkkKwo2jjDHLQrlocrRAodYhnT_ZzM4/x7LDMoCdgfw9eVL_9pJXXBdnXuRP-4wjXFe_exy2mVc",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1427,6 +1560,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": "Surly",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Qbk0uROUppwSskjJMUZMJA/sHSbBmX2PT3POQNjsCywHLY4lXVH39woe5QxHo9lAMHMBtm89NJDjW_ANfWAG02sPzVaRI2OL47bSsyPT9Ye39A5YRo4FbwuPHVq3VOW2R861AV9O2y41Wbx7IqzFKDx/BskU-BJP3h92_i2oFqWbU1iY8GF9CFJ_TRNTY59cXnE",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1452,6 +1586,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": "Lake and Irving",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Tp69c6EDFWm1PTAwod9n0g/XbdxfEyJGMUguO2nEtOARH_tIx4l_SpIxhLlr4Yppnjj4i1OrZ8yOcFbg2gHAmRtgLE9dARZbvXWEmqzNdiaKJ3i8lXzfinzSkxdVA2gAyHjpFgY_3JM-wgLqCa7Z6Ew9TpYKIylj-ac1LC7PYQSsO76yqtaZZSKFkBB5-JO8XBa7uIoJW5rtTJOmgy1vv415ycIRpfQjRlEOErA0bpFOg/93SfMmqZl8MTgBBOqfpTp1hy4r4aAW4ymGC8KM_O0SI",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1477,6 +1612,7 @@
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": "Heyday",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/RUMyHBfazlC0CUihHAa0Xw/MV35-Hn-GU7HzHiooHZOSeJaKB16I4RaXLZ10TMK6QuqrBLXN45V7E6TEOEUvOyFugfeoWBhslx2vsDnerQbIauRRtzh17NsXm6HnMt4mygvQLz_wnb6gwB0eLQy1FUHU1X-fFjsPbPeiH3F1FWQcg/WmsqFVX_okNAC2RJzfm9ikuEJ6GGsyiX5ZKEF2rVrG4",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1502,6 +1638,7 @@
     "pickerSlug": "loren",
     "meetingNotes": null,
     "meetingLocation": "Nick's Cabin",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Ua3sBJbsVTS9PyjPuCPfrg/20gomyEu7Le9r3aAsfz3WGzRj5tjCfnBSCODDs-FMGiFoVioXiSMVT28Lxd4XaKzQwzU4iICLx_JLynhWPUywUETCLLefugaeahgQrF4qHg/tuT7BlKznzy6qvBg3WSqTgZBgFfmP8ia3GaFZoR3RJw",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1527,6 +1664,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": "Agra Culture",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/VZIAK_jZindkIJcD3myTkQ/Xm7qMLaB8rJR7WmO6zvzlt6jT9YD6GOfjh2o2SqTuKJMt0Q1jjeJkPT8zzxEbT7a2pXCUUzFy68Vgsna-rufNqIL5QOLHHGLpGIMiLp6KjkbQxcg8lKqHIBb8ZhWTMifz_g5inDIcXHUGCmuwguMPbU5X0XrrVpHio3-Zka7-OSE8jW6Dhs7-93ic37EWT11/wvAY26FwsG0bKrdw1DM16wA9HJUBL2CDIosQGF5Hpw8",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1552,6 +1690,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": "Surly Brewing",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/TWdKoawk-gYHQBpKe6FaHw/-2mRjKTjcMgD4jenFB4lP-RKlcVrSvjDDc48SZ2cBirVeywnj_gZNwtXwIgHNoMga-8BGdY_giTi_7MDoecLKsBEgpEHh5xvkk4_z0o-u8w/QOzngcySUqZIKFLmbdCCB_d5CBqolSzhUWHwy8pR-qI",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1577,6 +1716,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": "Lake & Harriet",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/N0jDoqFV2_BCeLBDwlHj_g/SS_5MaQhgbdTyWlK9ZT8nhiwmiFQR9y0rbjGLcQUM7Mkazm0eCNDKXte4ThCxSZ7RaZv62xz8egahpbkTgBHTCu6hBbPptjJ7CpRBIo1eTKUIWh84agJ9nkXMipf3zXa/Lgnk3jMVyPpgzUDOajhpFWq3i3vJXCdxwsSnPcv_f3g",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1602,6 +1742,7 @@
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": "Lake Monster Brewing",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/i5wSPyRZcVYXdBnNEwiGiA/0pva816fa2RQs4l8Zmjp4n8F5oFmjCYgSkfclIkrjpCZdEeOuSCOeqW-XTufYmApJut-i3y6xEQji-pyx93dVm1UI0UQrrx4B1ubbYr7QOUM9NqaZZlMm_jflKgkCHJb/iTwGCu9YsN-slYdPS77cEzJO1nUMG6yczYiMmn9_zaU",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1627,6 +1768,7 @@
     "pickerSlug": "loren",
     "meetingNotes": null,
     "meetingLocation": "George & The Dragon",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/YWbOVK1U8B1T8SgFqOAGUQ/bq5RBE-7K708p9ka4rQPXjnmKshL-rA0M-pAaL4YXhmuUIJoVkXghq5rHpeQNha2gKEXvWKgiGs7sQt6pgMxoyHLISNfirWXFr-t35oj4Xs/bqF0w1N5hmRUn7xWuNyJJYL9UYn-7zuN4dm_gIDtKc4",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1652,6 +1794,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": "Lake & Harriet",
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/1jhRv1K7X6F3iULpZ3DjuA/eLXo4bvquffU90R0IZ3GwG8CWW_4fdZtyx4ktYd2aWgJmaLtCpmmhpWWKXS6b0pMYnNBVGn-iIQ_Q124YpRffEg5951o2m4lPcjYFib30oE/RGtjzdXJiKAlFmgKS56IHbnnoApNP8PUonUj8PdEiJo",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1677,6 +1820,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/18_QsoxHfW5RnCyteg0K3g/fK0_lnHoP-Z_7BFZnzEe0Au4SQ-02Hj_AtxScmnHNnuW4KdS8DKS4jBccms8Wd0e3qd4YfHlPaxJnTW6OsTo50taae362fVm2WzOdU3VdCA/Fz85BxKkSMlHfhJlIFklrQlcUFUaiNzonLTaHe6hPiw",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1702,6 +1846,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/twLa-uRIstTNaSncvnCL_w/eVv4GVOlCNh1hN_qscBo8yLSde6qMqm1_-Dp4BeVdE-8EbtackZioR8cKDWRdj_MOPDEoPWfSmW0wM_6omV5_lTKqHId0gpCmmlKoNe4u8Rz6owu7eaWVT_p6wfLEEMZ/xjk6ZdPMdc0mL-lTXmiIvSAGTr-kNnLM0FmTHYEWQx8",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1727,6 +1872,7 @@
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/J3T3_B3Enn2zqDXDHlPPGw/P2x3pNiOLcH3TiDL17BNl7Jjtn83Kxg38Pq0uFXWpgHrsDNbIigqQKr9jXAU9sHTkteKBLBrWDz9VE3OGW_Jl05vqiPz2gO81ARxLFD1wdI/RQ1n14e0RlmoX-07rm5fNhqzz-6qchBB4OAde1c4-h0",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1752,6 +1898,7 @@
     "pickerSlug": "loren",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/-o-B-gJxVWzo2f2A6vsaGQ/5AGiBIb2r8cm9FObvYNYKBtMxpxQMoOqXI84kMycrNuSU8fYZKacb4k5lQryTgMwMKQFmv9gR8-3OLBSZ3SQpb3KobghBTPN6CH4ccqDkpdOOWzAW8tnbOvczhrAfXbjcGVA_EW_SPqDOQTHP5cl2A/hIJWgujKtvVXmPLk9rTUBUsJTmstJqJIEqnvrDHjOOg",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1777,6 +1924,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/e1Ytdfww8Clrh-ia-V27Gw/Xb_oDvKS-Xh4aIksEe8qGYa3Di1loqnPlLCKD89I_vbOWtnOKeAybSJ-ldGCwN75bfHmLHFozfhMUMyqdE2tNgrC9jF5feQTrr3b5UiMcto/8xVl4OJHbS48KSKrUgcWceELY29KTYYRujeaK5dhuA0",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1802,6 +1950,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/hg3FNetV2GdW3gs15nkJhA/ecM5LUKTni9RFlgPwjdiZUdpk3fWUsjGl9fgKkD2LexuolJcmXein5D06bYs3stfAtwaoLIh6AVbBSnrHsIWwqghBtGEcBVtBpm2aDYZzsE/C8CIw50iQrOBZRgPXquTo4v4KqD18YM59zXBf3a7rXA",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1827,6 +1976,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/gRdGPTCcjSxo6NdMlw950w/UEONNDdu1eXhsw2hJmSK-AiDLOgX3mZvTvauBJlgWPSN93OLrR_qd1gWKI_jrpG4JKzX8p6Q5oVbgrul1u7qnhOOmzkfjHMWTNU4-kFoGzs/6iB6X_Lfn0E65OBHZuSln7fmkC9wVRnQ_P2QT7TVD64",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1852,6 +2002,7 @@
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/hk-VcDCcFKms2dEfHq5Gdw/-h5IeGqEJyzCm3zM1RgNmrcCePSXdmgm7mFmmukobpA8TIBVbBweN9QVI1peWkCKN2SXarkMrL4-q3R5gN2rGRYMrWCmvq_Hk0GIr06bY8tnXS8uOC15wVW4ABsoICBK/MXA4FULswUV-DQMnVZFOFUy6GkfwKe78ojpYnZTpDmo",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1877,6 +2028,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/cgQs5uPn0dvnS76pwIy3ow/YyQxHLJYI0YET6rK5udMfW-tr_WcfP4qGfJEysull_6L3fZEKiGVaMnba3jBehEtXNJucGIffEPrZyfnpNMfvsoWjZfvDLBvgLrE6obbVhdhNNUYqfGZPqvj6k9yWNWpQ9ysliZ_qkquN9zEs8I07ZGiHnDa1_kgw6KTDL380CZAuWNpO7v8sAQ_LQHuPeyj/yiXceFGbm6YGzMAQ4OGOc505ImBRUm6X1Nyef3dkcuI",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1903,6 +2055,7 @@
     "pickerSlug": "loren",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/C9KcYkjBDNfo62Ju63zo_A/U1J-jXmIO7TM3X3IPdmSCcFSkS7HwMNPmB0dvDRy33R8glgv_Ho0F-8Q0o4mb4DGDF7YsY68UG-f-N89yWmb1Q7_I5cMD3COWxQ7oFZfVSeQAVXeRgoMH3NCkYq7ldBn/5T-Lc8V2wovZO6QxT-fBxiExEe1VyffpOseQaqtloG8",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1928,6 +2081,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/P55N4A297u67MBPSuPqQZQ/swhDO6UYbgHcnotJP1IWYkzGpQDB1LX4DjhXAgJ40x9tRYO_BY45Y6aIMq9GN5vlw1UzbHOuekU_1EERJyju9Gxh9A16bzU7_mqPMat2saiFOma_q91JHqB4rpDSWVY-2UbrbNk2JH5T9eA24Lmbpm_qi3PAWBy--nYcLIDZBtGMCBrXo3j7OFfnFEWDAfJj8QHcZvIYoZECLGeCwJ0cRoLo-XtAEMGMEPQRgJp9wbE/kbDO2o-QPAZeHP7Ym1S1grxYRUHIzdEHiwNnocwmRbg",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1953,6 +2107,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/KX5ULKmX90bfuoHJ3WleXQ/mWSFHoTB90tSUicLjvL3DZo__zn3zzYcn8_8CRUEFVQT_lUZpCS_kYp_K-awLD8nw0kn8ToKK4GqahzzxzBzFM5RaxpsRUV_frXg81sX-ccB3yiyM9SEphWNrn0MAkJ92htoZ6gHY7zSCgbkEdSLYA/r8S8umGlNhyF-psmfoZ8DqkOwRmsz-5ASoz_G_cRFP4",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -1978,6 +2133,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/if6HmhYig1TN26OCW8Sskg/mWbIwxvi1QM456GPTP82gwpr7Nc-JFnuqeA4AsnXNmTNONxvd3MjJAMMIj9lQD7eKJpAojl7C_5pjPsNtGnrOP6jCVRC6YLGP48qkPRASIXqIiGMr2NuiQxfR80_Vj0x0DkfQJNGg4uS4cUN_uEmebL0-h4DQ2wojdv12J5hiWnttg8tAqQ5ddl4CrdXt01gh40xgHtxdh8G2K9jbWnFGg/2B6OmWP0qb3m-rwiac921ItNOLbFvFkidiWMPn8WLAs",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2004,6 +2160,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/OFFtUzUyXR2BkkCnyL8n6w/q1l9OxWmvRDlCpxc28n4Alwca4eNzg_U8ONle-eWWu0AqeIItqLWipgCPOWTQLrTMTRnf040bJRlhB6YIbbSlLlrZZHcPdtU9zn9wAJq-LITQES0ChogSa5RpRwh66Cp/CGsFDHW4AOeLWSKou4omVoCvcQvNJwoJ_NGvELxogKU",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2030,6 +2187,7 @@
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/FxfJEH6TH1w9FUYghCVQNw/na38Kx2LOBeBlQt28PRWiFGLOa6Ux839An1ql7OcwrJHITyIZ-dd0n6nJVHaOkyOgmHh5SWPCeX-fKUEHvXWSPymWJ0_0fWlnz4MtoXR2kDr0RATyfRVhphNGxY6bW6xrplAE7Ua16AztO6-UqriFg/H3sMXHDqJT9cwNHhR0hwl6gSl9Bc-vZQveBRVORuFAg",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2055,6 +2213,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/QyFbGl-0JwDe1qv7zMAufA/aRm6PGGpUhbeQoHBnZjUkYtj-DjdhEMIyG2xRYqTFs1_mkhndhstiMoEXww7cemVhRbi5d4sC7RVTgjKgT_KZUlJzg4SleWEksJdpUgATKChuslY2rm-ED-cPdLhqcccSBowLtwL677IS6rpzrLYC8dngD6EopaTJKSgc3lsDas/O_S-xP6PpllM9cMIlfxgI5MIkOX9XSHPN07EnqwF1BI",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2080,6 +2239,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/evB6PpE2qOapr3AmcMjx_A/AaN0DLZHdELbG80pvRlhytC461-3TO7Vgmb1nT_m3g28ipuICvZxKfYxCvUKgJL3q3oDlZY9vvVICgeTChIsBcOmJpy-jqF6wlBxSIJsWMg/sDBd3qwVudnYDEsPXY04FTfJqrcpiXWj2SgngiuwtXU",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2105,6 +2265,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/TNX-VcVzQprsbNwvoOjNNA/xexwmaAxtTZf6FJYelyp5PIhkFNAuElWCRBQYHUFdQQGiIloueOUrliMpLRXWuK2yQJJX1koWRme0Y8FiIhl-ijoFxJ_u-JzRBd1MwTl0OSsJGPVPpbrsOszMx2Bf5oY/65Hgpnioxb2lwELfurcYE2n7Y2p3lDmdRGa7i40D-2E",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2130,6 +2291,7 @@
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/kom6VH56Ej3KFRLfaxqOlA/NrH4gYHWvNvnZzdLqMTd5z-OtjH_oPv5Qunrz8cOH7woixGY4RkZ9yXTRO4yqDelYT1ey4u_2WgciEm32us8PlhpPC_6yw5NCWo9XuIXzKBkFjDvliYroo6ZfqC-7LVbw8AzEwPrAHY_PhB_qAaoN6NpAhtVYlFxovlyxxsMqzY/xbUSkAmmtNclMPE5o08TlIPaUzkCmtUL6vbJCXHHLsQ",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2155,6 +2317,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/gDAUaL57qSeRnZEn6FV_Ng/kqK2E-4JgUzlRdT8J-HLQZI2tvczigQY_9Vv0M_jAuljd6az0e-_EenrkjHR-GtZ_g74E1pwywQVIIllhyEzJx8B29KUQA3m4vVSxd8xtZ4eOWvCX-o7fGiJWfdDDDh1/j39Rr5MR9SN-fCBQFNV3r3OhEcyzp8qtwbOmMj9NiCM",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2180,8 +2343,9 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/7tchvYeojK4GzEruMgsFzA/PevGgO9_jQAMcdiZzFIS6SWKuLjLagA2EBV3op1SYk-WxE9Bw4xt1vY6woKNKTL6GDxjah28HzKBfiN-6DbAco2cblI3GW0re_4JRcSzOCi9vll5tJ9RrvuaPTFZJ8iT/ZM64szvaPSsdLgnLBzSzek116dq2tUNRd1XrIVpjuOk",
     "hasCover": true,
-    "reviewCount": 0
+    "reviewCount": 1
   },
   {
     "id": "recUTffAMOlFqicvI",
@@ -2205,6 +2369,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/vBxKFH1WtzZ3z8B5XubhoQ/D98Nqh4e2dtqxJ7VGIwMF8v389OffPAY776C5erjp3YM6AOXg8ehm7x0A7144NT_ZWcFXVlAR87dP8ENrdCvpDoBb7ZnKRz2k2qUree30xHJp-vdFzcCS2M2IWsy0YpbQP7TYz4b7XJxKSfHng6vMGTf-WKuXb2llWEg4-ZSug1s1hkHokrOdJ81x5i2SlEDOugSqjVwpEZUxo72woKQPw/UOttEzL44aWMwt5NlGwXYodMAE8MWjal-4J09_dBd-A",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2230,6 +2395,7 @@
     "pickerSlug": "nick",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/cSv6-_qH6aI0eiqZQ2rX-w/BNfPWMRt2GRu1Q1lTk4YzOptzhy-M97G1hKwdKRf2GWiU8jwDj3Mv1wA6ngv_IAjK8qguRvzLjJ58i1WgzY3td8GnYKoKoDGEiuo7J8o4-v6_Y6KaIj9F9i0OK1-U-fhYJ59biMifIm3dqNKjNLG-5U8Bt6pTas1_6m7fuIGdSCFTPBYvw1r23APgqselYGD/S8zljKzLg5bQ7FshnCB4MS8ow5lYyQa6z5KWesLDLrM",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2255,6 +2421,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/EJM2UXrfvf0QfLk0f6kFwg/A9axaTiQmCFhLxDGlQlBwyb1F-g355dn1NFcN7fPkh2kdKzgmKStSr4BLcYpuDeWI6XruELseBDWCpaAixA3-EyDbcJBWdYj4-a9YTHZTiPcn4brdHGmaGvDz1QnzXxF0E192jI0clVCvQBIPMC-K3eCtahh1ioX3KX7i6NZ0mmYl-l0aRClN_9Q3FlOb8CG/PJt8afvMS3nlmQOP7SScgA06NYp6_cfeLLKqOrypQks",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2280,6 +2447,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/FJ3iTDcsGoAd4OHF_0iCQQ/6DOkhwf78PHAm3K1LAuhxEDOdQiHoM3aw6ma_kLngs1fPVjK_7Y3MwNW9dk6Drlnwwc_916mJv3qRkNYWa8_6dWa9vUuOSgj363LS8JNj0RQc30WEA0Ts_QAyqLz6o-H/oiKLz2Ph5zasfikvwVEsEHgiIUUjeriLLjd8NWF2Dso",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2305,6 +2473,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/torrHZNYtWitOAHqB-XwSw/qnF_MVkWnhYDG6ZPRpiB4bxPSb5JxL_nf-esPrfu0F88UnIS7Etn0iXJLLBlkaWnZtiIpteiROMKG0D4IP4q2SKRU5uLuVHbp7sjfC90aTFTuDnOeRrwf9HETJ7DRF4W3gFwxEscFUL654uGc7mmbg/kdQt5Cx_zxgLjuK2-vVzjmwkonHwvzE1gYve8C0JZT8",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2330,6 +2499,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/bebltz0047Yo-qsHZ-z2uQ/xpv2hc6ohP1YiMUJB17O6uYB0lhA59y6L0r29uTEDtiUd9WxIVNqyooYNe9TMhaRnnNqPJd90xt-TQnDYpqR4SMM4ObqXMQ8sZYBiZH3Oumm9e69RpWmBzU1IkHQLILdPs2f7TI5SGtZ0yZ0fv8BGb1Si95MQRx4kNVvSvhUIFIl4cbXB86qgzv0AjmjfgnzCaN17GXpXEnNjvEAx8IubxjBGQ9LCPR1VBG_yqIEt8GEf1UxPDWH89ff8F3wOmNq/X7Udrv7br4_12h3YKSdTktJcPGm45by83JNnHZA8b5Q",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2355,6 +2525,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/W7DMscN9rUnU1FVKVfy_Fg/qznSU2RVHtHQ2z-IQjB7pwEBly5TFd5qlm7eaHqBpJLgpNXJdh8nEetg6iZ8xeaajh8mZu02HEFrDVb0qSQOKhzwCdZU9fvnhII5PmeD2OYnVf2RqRlNEqktN7hehZ-c1ix_dEvTqHuXubR6CDgkZpKyMmlUGnxo7JK8GPzjadjP8zf3vR8wfNwBrjGEuwQ3/acYD6cMRAYYvTblzCXcpktJc3fcGei42AXF6wwY8APo",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2380,6 +2551,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/qUaEY71jeaWrA21S3vqlYw/45VnAsoX9gaCt6cgeF_xMa3toQCEgIROKmA_1kLzG91CgdyuCRRJCVdS59Lt4L2Ox_LE1wPN-nch-FJV6pkYL-UBR3GOoSjO2My7EwaakkARi7VZOnOEfcJ0uRJZxdckAevxdIQrBhLVFkVmpfUvK5sJ_1wmlGplTPEIjHTcuEL--XQ6F9apgwpV5LYTOJLQ/Qk0tOjv2poIRtVHoPQ3mT5KJWMJlb5r4beEkbk9tnlA",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2405,6 +2577,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/ZD28oNWJbLUmX2_XOQ7IYA/ql7Et36SQJhpak5dEQlR0T6-lmPca2T0Bdxv-usrJ2r_qabNzbJEzrnh2xD65h8NFgPSUWuihefFRbCBcqgX5Nw9hqGNlEuVZND6XfcKVX-3qo-GtopCTWaoO5jMGAoSlI7jHV8thBXnOtmWaAWLbnC5HfQYH0XphVDQM5HP9ncprol6wSgA5Q9rBL_Shz-mm_6AKQY7x9gmXbm6n-C1UG1hWSBt05p0huMxhpwxqWM/jJYWpgfRX0ZuExV8WFh9Fw-lePDg88G6U7wPR2rhdTA",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2430,6 +2603,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/7U2Gwd9Vs-m9KPXnV42M6A/xnmIAZIa8Pi-z_a8Ilyas0Y7T-KNWjIPcKvbSThvCbF1YQy2-LAdEJ_vCnej8riWkgNeOFmitbNnpu1QdOZfLVRMpXuubulwUV5EPAh7nOA4kUc_hF671umxWUfS1ylW/Ge3yClABNcs1IpAr1ulEaCTn2wZ-PFetHT_H6nPeDaQ",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2455,6 +2629,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/lN9zIJK3srSw9Es41wMyIQ/oBkpHhJP4WX5t-U3i-cx3fGejOmldonkKwzFcpyB-LgAoh5d3pZ5zaOgmaHbwsbzE9VVy85jS297IaBvQjmyqD6KL_jfKbc2tcqbXlsi6BIQFCDiVxLLD9p99zZd5TRKyolnOE-Y3RWVpxi_gKdiVw/E0FNyZNlRdjazqp0Jwg_jn9jPcM913ZWtn-Kza7t7L8",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2480,6 +2655,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/rdCAAnYmwEXVsTyB9LVwuw/i8hrkd-nDHu4YkbEsPHBZlqfY_83q4w84n05KSdchfs4MS8TTWrZiXWbcz5FB3DaCBTfTgt1FkSzNNzyj6NjIE7gE44YxcF1YobQSf8t3c2muPnCO8_lmCvV-C9gH0oLlg-JbP7PzKZclh8NZccCb6aR6RIUebOAIE2hZtWp_fQROz7LmX-5xFoY9aAxQPce/dw6pOFVCw475QEY80MaI8WlTtghgSjoqOoNdIS_eADc",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2505,6 +2681,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Yz7cz-cA_D3Oo3QBIZkKzw/LNUHhNAOBWPkG76lXLx3WO-cwSwOD8Yp1mySg5jdwLbIvkmqiupOVIIypA_bWqFadlqG-j9OpwnsQOK-Le7Hr7iDRbEXJanhnUUjg3RXt2gqHBBeaFmKgB1OIkftBHr1/NHdxH33jCclz701jADNXtigtJJsLYhYLbGLFZdsLu8o",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2530,6 +2707,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/9mgij9hjomZ0b395CSmWXg/TbRjhtGbjpYjKCfRiWYMjl7eB13YWXsWMQh8Q5NlDt9pLYNx6ulEfbkpADVEH2LkSeOLwc4cLRQWPOLucIzcImSaC2S1Kf7xyeuJleT3kKC9cCT6BsFOSmK__1Vzta4YQCK_HArmTg62szyT62YbEXXiaKRTHCB7D-Yj2Rh4N3I/FVUWNiaz9yo_5fFZRbrCrWzSkebAjfM9T40lx_71m2U",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2555,8 +2733,8 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
-    "coverUrl": null,
-    "hasCover": false,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/ahxIqrlIhUOnQQqL913LSw/uL-nhM-RylocC-R6y3tMe-BqKxPzvo8z2A3qA64CP_fTPTxbuOmdTwWlYunXw_3ZKpfMTmsl2fl_fiOHWC6zu4O-Zt2NL9AePm1Jgu3Nt4bgJZorIACF4xJaQlRXH9sIMoxT0pTJ4cIhdtPmcuH0BA/7QYKZ7HE8GnTdbRJoDDxJLqwE8GSzU5qcorBH9PVEjU",
+    "hasCover": true,
     "reviewCount": 0
   },
   {
@@ -2581,6 +2759,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/lfXOaaIaTfd9-HXHM3BabQ/UBY2L7xkY99utFDQHSoSatpVmaA2AsY6lWCd7K8pqCqKB_MEL9vZUOa9Qe_1Y1Nnq7PQujCWnMDtyEbcNhkc_rQab1C33mjhjkWMJT9GalJMXOHiyZgu03oi0Zdgj7Wd/4fD3AhbRtYjKzAcU_o7CcrzJHz0xnhk_PKpNNm9GGCU",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2606,6 +2785,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/iLLK9wCfhBHsehWkLbcRyA/nW7cZ2l5r2R4Z9hU8KKkd5ncEtcUiNtuC2tMGbJpEJ15vRr5bCBO0MZ3UGHG2y-kK49D0-XwfBlb73AIzX5GZX1uPRA_RBB26LufamXBVC6ipF2J1x6kbSyDjAuHJufM/WnuzU8XDMxx9CKvK6vk9lC7hGIjIlpoCFw4Ncrn1a1g",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2631,6 +2811,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/lB_pz9wLZafKDrQg6jKFUQ/2lfPmVwKYZ0Ct5FU5T0P8B5Zh--eoKmkQP0HBK9ARM4cLauhjTct4YU5MOR3k7aefq_OqGw4WaRvbdoFiyteAYnR45nLUdIy7rXsW8ojldR57iSjnC5sBhOyXKQcsiNv/480Jw_F2UV2m_lfD6z-GW6zDJ0Prcps-nWdRnM9ADlk",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2656,6 +2837,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/2zlGUkjS4v8NrgS5BEZP1Q/S3NGkidjOPxhrBqt1hft028Guik444V63KR6v3NhTdfAoK5RIVckWK-kI3IzVJrOtwQjSghFrHcvcvQNXa3uDzFNRHwPqdhcKr7eSm2U71kPT6N1H8x6LSb2m01iXyEI/Fvv7g1sxA7wi7DMZlhxmm5m6O2rzyu7Z1iqo3XkEHDY",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2681,6 +2863,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/5OvSkYmVsH0k72koHZNdfw/OUPVSAFZ7GspHMWNr4xmnk1u71i1DsaVwH-2N8G3Kn0mYSKQBe7uCh6J3WJcrezoAx8Fcyvj2tiaZug5BpgbyUAIr2NrX4jQbWpnFxG63arAJ-wVB7xtGD-2ufrbPEet/8Y8Y9EcSMOgV9czbLaF2lnyh3PVjN37PI7MBBoSqomc",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2706,6 +2889,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Xv0dgrX5lGkkTVLdA9N6rg/zXGTalFnAC-S2tFij82_-dLP2F3Ghs4d4OjyXLX1N6rJi3jZ6aJ2J-ueZEWCT1pKNLKEHl8mMK9GtyWc9mzU_GPaXx6oR-GhLQPwimBOd8Q/rhgqz60xsxps6QGXOuQNIT5zu2AuI1dEmEa-V90WnNs",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2731,6 +2915,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/0qqZL-adF3k_njP_kUcMAA/bYKtjsmo40cdoEsWVJ5DOMozYKUVbRQTF2Rkf-biJGB6URaz0almaQnVRU8jmQkMIvHiSIAGVwQBIPyQMavuus6l5feGYmB9V35U98oIXB7APqmAICO2KuBze8uZMn4B/q_gbupO_zDdpkxNd9W7DixjTX-c2ZEN_SgP_xJ1R_IQ",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2756,6 +2941,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Qv39mW1HJ56gobdJbX6UbQ/XybBPHAIGcq_EMa65PXTsg5do6Bf9RgzK9tw235VdFNg8cbhKUNXhWITbVFiZ4XKSd-k9hg7cbT2rqqhuo-c0qofc5oi-LdoLim63M1lMD2pkzgPOCm_GsPuglgHV8At/1WYM--k_zYUwvj6dd7hux89rPUbzgfL0FuGdkGFC4fo",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2781,6 +2967,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/wJKZoMU2vRpN92OSEMS2-A/vpGzs1E9y-Cozytqn4hAP9kOINpF4P5SdlLImz_ZulBKKyuMeKgHpSTULqZKQhoIS08QVvbxTJx9f49NLc_gn1xaqQ_Y1IiobwxKc4Y5mDKENBSotxwR2_Q3JXtIxwRo/HZz0avAR4Wgw093TUSc_BS4q8UD2WFhJq6iJ4hGtfvY",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2806,6 +2993,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/z2-DSPQefvDLyJk-Vt2ADQ/Pykt3ZB_hQEMpCp6jAKfQ-AmvhrqG110ySqkoxDgCuvti6UvEWD5UqbenAY7vSL7HqBTA0f7HXdb2kloAEFMB3NiS9dpTHtrAxv7WywHq97WJY8SYpvCILiIaAZd442s/RiCXMIChqEEtp96XNGs88LRNmAGWFRLb2METR3euREk",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2831,6 +3019,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/s2cWORJOuyL127NnOOhvfQ/BZJQ-0LVSQQYwZcyRWlwcGCTf5-jQe0aPaBU_EH9JCkURPSPx-UWhwg_3rh3YFpIHWi_TCa0tasu4XZNk8iAC-1nNqPiZiGuo4JHNXUJ9Xa939HKWg6U81637mGiX1RD/iHqFTOJJn2ISDaHAEQPYjfz2WrATJ9pjuxFngqIuWPo",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2856,6 +3045,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/3HFRz_keuJcmll0-cvHLhg/rwWGc6efcvgoRewxJLOfuuhHnaQeYmFF_dA9uIDv3EMezfva0YYVVMAAE9UMdSYiyaPd7e-H6__rBLwI-dSSPPgXkaBQtxvTigsmRBwjWG8/mW8ZfB20b5wHNL1X_xY8t_zoMhYG_85E6mKogc542xo",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2881,6 +3071,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/rhG--fKryYbxYEWhGMwvow/CheQ6Qz9aR_gG-GhsdcpB9GhF5Z8z92HjP9WPnvCttUFygPx-zm0Xfwep6hfADeZHZXGzB10whF9wjvqBiqtSygPBDYZKHHOf-zcjMqCNro/gwSSGqbPIp2zJlahFbLs_mnWLNdn8HG22M-qbumN_FA",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2906,6 +3097,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/1qOCxqbL7ic2mSc8Q2UP2w/asdB8MUygYwx-dq0qVPwtmZpf8HK10NBsaOmUueoG6smHnh0W9kguXGbYUzzio55p__XZp-ur1YYFKcUx5Fz66HA6qpdT30Z4TCgj8MqnGw/KnZhHLNWVvk6TuxuKVhCcTKXwU65qSZaKzwfvarx9J8",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2931,6 +3123,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/OqINUBFqmbsOpPqNPCr5Ag/jTvmOa1qLqDmFHLFFhjcufrNnrPBLEZlqFU8ZUMdNeV69qvStk893RnaiwlYPaa0VMK5Ns4SMdJKJ477bEIugOIAlg7QzPe9qqHsRHTrbvBi4za47qxCJeb-KkJb8A2b/uufyAwp0YCrHsalhKJ6xB1IaL6Nj8L1Yf9ebZfqOO1Q",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2956,6 +3149,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/6HBQ-7H0zZNfHCI6__ed_A/j3WmlWsfUVAuTTL5-Gxm_DRIL-Lq2tyMmjayuVm2mAu3bF_oqp6Bu9dKrhVAlD_Ltu-ABHZN61ARE1oPca_LX0aJFjLQ3LyOkEnxhnj5vh_oRg55TJ9M88w1C8rInPuc/h5e8x3T2ahP2ee4kYqUFl8jasfqSFcWNgtFnoMBvyjQ",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -2981,6 +3175,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/wWuw-I9IGSP2ylXWNsMAPQ/mdnHQK0Zh239vGPSuRbfqw6aT0e0lHBqGH-Wbegqv11UFAzLlciKzOBXrbHq-orMv2EARAdvKhwoyIJqBuRFSKC9mvlf13f-Chn1JhP9J48/qpuIkWOO1j02w5lRjhQaXwlKG9bx0PIGBTyQM5zebb4",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3006,6 +3201,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/UoASkxRDYeS1Vx5uqcK0KQ/qqeQ3Hv5oPq49nbr-wbpAHV9rgM_uDqD_tglekKb3tVlvYkzMoKnupNkCUDkd1uaiC3Lx4fAB58by6kdPdjJRApj9FLNAUd8eLXBHetUY9w/6YDrkDvCguREaxnOp7zzezLCOa13xtBK-kbYaOeuid4",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3031,6 +3227,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/9MR-wPE8SQG2YbfGCSWJ2A/ECdG_R_cPHg36yKnt_bl_xUCwQpVi9X7Z4pkOxbLGEsr0Z15Ywl-rePxiqM0ss_Pgwfocuhrt_8Aj3hiv5-tm8CHM-1Gu_VT9bTgug9mnz8/7z9qA47o9kJFDplk95QO5GqhgVmcx96PHJUOGnV3D9s",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3056,6 +3253,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/RFZGrqlNhVQji7RhoZr59w/KuhncJoem9AeghRkRlbGsDublxeNNWWEf37piB9x-sx1X_pgWFwxbpbUSdzlaV_cww0UwcatFqocMQlT0WaP-F4a7jX8k0El8NlIN6SG-rI/Uc-U64rMMcrepG-WQ4Q1D3PErz9pqB896goBEruC2z0",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3081,6 +3279,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/RSy5bGsE8PyQcD1_R7CUOA/x5AB0xhT-dcq3u2BVBOrVBoFeLzN41Uhp_B22PVNh6lOt3TuqGxtX0c-f6lfW6dTdv2XDuzB6u-PfQG6kVXGBNzii1l1jRgUHHAjiXho-juEWQP93p9ggDHSk-7bk2b7/31N_u4d09VjqGvQfx1zAXhw8hyi908regIj6eJC-Pds",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3106,6 +3305,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/4DN0SUr4Iq_O6-m19iDOkg/JEcw-TLXaPqpPkeBxl6SqoTpuPR7zjBu4mfgDcNNCfCwHFR69sKmdyqPS1Ew94-oNRtC1yb5LvbnZcjcPj3FcDrBNZ8EjRP0oxmKv_yE5ME/I8iMeXpFgmra1MuWu1HwDf8R2rZQZkaQJ8JDHrA5REg",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3132,6 +3332,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/k-qR4hV-aF_GzrMZBkwhzw/fuLbD0IAS6FCRpzGThz_K167pjr3bdlCc4VxX346TyDSVklXZbcQiJGTecE0JtmBaojCO-iMyQPh4_UL6vu7c-npz7K6Wi5QCk1DTol8xEM/msosvun8WgDAIXAtZr5ViEeXPkXonYlXB0qQKOUTjnE",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3157,6 +3358,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/g-I54YzwEh36hvM9Rm80TA/Hc8vGZ9mXh8pOwYYv3pMepkQggQjzZ4ioBnIvLHv6XhZC8NiA4azcmjJEZROq6bJiK5sUJQYnzYjSNkXutSpK5PxwmkhYG-F1kYNtqNRrsI/p9Ukte2qBvzZl_oJwpXgrOp6JjPULLi4r32-BCJMOtI",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3182,6 +3384,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/3dm37Ox8TT4GHmLpXGIYWw/MMo1X1fbejp3ShfDpuQoqxD8tB81pjVg31-fcEaFBvgsZB3T7VT5DVhRJmcP7ukdNEL2YD-1XigqTJlncxRg43C0naQ1vhXW4Mzse_omKWQ/pMLf-lMqb0zHZRWencULiO2yEOtwPTexp2u1urjlh40",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3208,6 +3411,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/WuwQCQjdwCSoylR9AO19QQ/k8bMyKDgMLbgEYARAWii5MZVy6ZOKuoiQSiLHp4wnJMmsWjmNeabKNsS2bh9aV72f7vgMBt_70kpXsIwl8NeIz-7ARqGWtYC5pO9Run39HY/UcRrnYFpgcDPlFubeOqLEQcfDh-5ipFPoo935XVlyhU",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3233,6 +3437,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/6m_vmVBLT-bFpNFsHYsKKA/eXjadL69z0A48f9iN5_GDPUQvfGaa1Uz24j9bBUZdTMuFkfDpS5o8-mnexslIw1eaMnl3JqqmFzpQkTXjHJJyoxIEY_g9SdC_6pUGahnZAM/4V5__BrHVClHc6XkY4HYBCCdazapiSc_WEJWB8aB4ic",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3258,6 +3463,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/0EnjzBdM_0ZO0-Pbaz3UbA/w4ncxz2fcjBQEFerUNTb31_3rMEjZ2jjeW_TzUwOTrvlZP0zprpqJa02keTXFX8BzvPJn4EgGAZ6M0VdMF1162FETs12mEuOj_Fj4LVdZ3Y/zXmGh6-6KYb2leIR28bWcmS_eK-_9g71uONa8b9-jEU",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3283,6 +3489,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/OAxbSccogP7OefKxDr4tkg/L-A8MMrbJBGYcm05Q-3KVmG9oAmqvcWY9VaT1XtDHWPNwZHgd-LxJAQNg1lWXhjQMTY3bD0sJISL8CJLtIMtWUoEQi4TExCYIN18d3oE7uS8p06cMM0DntHhcrg0my_4/GEp4fz0QSWO38WY2bw_ahQIsSzCktm-Oo0-P6xVSYgk",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3308,6 +3515,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Qv5A4dgoGyJPGFQpmOc0eQ/58vr4_1fBpdGMJGKoseSB-zdQls6v0b_BunKfEU2VwRo0jhDJkfui7xmUJE12m25YGxrB66s-0Tgj5OM1qtAQxliRuvxl45pd48PN8dQ5NI/EhH_XA5OLKqmMqSuXXoLF4d3okZ3_zhLcO5VQ2FOLUM",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3333,6 +3541,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Skbsf977CqfupWGryAehPQ/GZr2FvTTOG4v0w_RZtP4hFRXC6CTI4RxFL4TtizbcwAATtULfQ5DtBSRQZEbVNUTB3jh4rPLDaDxW81IUeGv0J7S4tPQyYBh8vwpmJnSCfY/PolMKY5qSKGp2yayk1M9Wyi0E1CD9xCXopk-KOYuaws",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3358,6 +3567,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/ZNXG_N1NUSh3D7hhXxDSew/XMxwWwuQyoW8AI5BFfi8u4EHQVde6lzmV-AdfR55jUNJapgv9Jk49C1dv36m_4HemRREVjBvNa1yEn2Cqxhqf_0UF8q37n_UDmLK_4-EM-I/bOCCVbqR7T6nG2eTApp93aPXic2uOZyXsdXsH3jfXTM",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3384,6 +3594,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/rUi1BM5NnKdK4kkcMGfiKw/VmpM9rUNflzvFPkNc_h54TAkxjpulGbDdh17_eFpysiNPdLQIy5WPpF_HTKDrVvahwpZ4vEGRtsSZTYunx6eBccrmEv_zB40HP6Re61x7TE/wk311qxc_6KnpRD1K9LGeuDCSbfGmqkpAwKdlr-lDqY",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3409,6 +3620,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/dviiCpv-EwCunkYW1N1Rlg/NS3Z41w5-Lldj5w646of7FhX9CcPoj_PuHsxBnlCG9ijd9Z6e-OpCjSmHRn3HNJxXQnrYaBMF4Tke5ZmAqvBW7NMLJGREtsU58V60VyN5touvFnOlT1WoG0AFumAMJE9/D3dqtTLt8__CzCwsvLvbZ0rBOhYYgOnr9RPTN7Iwrpk",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3434,6 +3646,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/VAwLekyMAil6FbptjD1Qig/s6wBsSjh1OZ0bfyKHTlDL__I8qQ3GzAJP2Vrbv2Plinm96PlSmFD7BQwO4My_ddo4qzcMJHO8hkA-CI3MWfFBnOYEnfbwJ9oGz8sHWevGQ4/Prv6m0QXgJ8Oh5Vw_wZydyDBG9-Qabux3c0S9JR5rTs",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3459,6 +3672,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/dYwbqxnDo5Rv-qW20hiV7A/gdjhj2bskH3--2OsN_4d4yT8vABJSgSG92KX5c8f4ZrrOK_SmlwLO7-Gfq4VYxRauOk0poAlwaFwS_ujBEdMneBPHjMw4yNVI8J9CYQxFj4/rlAKvxe3KO7w6GwbkG4KlTlWu6nxZLBnBI_1LbiHZJQ",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3484,6 +3698,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/o-Csg8_ZIAp2knWYW_-9xg/NERcnF1jMY9R3lAn4BFE5ZoJQHnGRgC0jFp2F0G527hpG6BasW7QGtaD6SLrYH8cgag3tq2GVaN4MWTT-Yre3cEu87b25ge2Itweg_DiFfw/o9PpkcsRyRIR2NdYKAB6fz4uDxwXnvlPPSe0W473WvE",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3509,6 +3724,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/gF1eBagMY2mn_wYF16o_9Q/oytjRvPcMPGTJmsY8L4xqJKOiBFHUvZpKonGdzKBP91kH3cqqVJFf5OTFPibfr8zNPzDk7FHFyHaQFHNmI6YL7JKUVuvF1Rrg8Us_VWaaBA/3i38HPCeAwF9jxZ01G1zbHzrjjheFDfOFCvrbO-GmQw",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3534,6 +3750,7 @@
     "pickerSlug": "jamie",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/lR_9XtThltk17OAskNhruQ/bvhH4LMLq3uSSb8y-fPV1808CtDZakPa9m6riBzECd-2mJ3idtXO7huK7cYQ2bCMBYrbptpD5pi-Q12IhJAb1TPXgMwr5I-YXeAGrGRgTmY/fxQJGxURcmR-ARvU39FQIZi9wqeLwMKPPk6rfXezMQY",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3559,6 +3776,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/ro7vHnSbYY7QHjYW8Ha3OQ/k5ijylBojf6m12mcUGqSWflvBxAQpuFEqt721u_nkj_1RHf5pHFQ07Y5ffVbJluKXYCbAoplDnHmYBhdD7WoUeiyptLz3CYq1E216MEQVg8/srLk9fXplKob314JzfvKz7EPAmvAun7DuQZJhn7pgb8",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3584,6 +3802,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/0LRu5Mk4BPmIdEnz6I0EOg/Sx4vdkBEYKZEL58g-vZ_L0GkMaGl_lcIXSXNg5kMcawrU8h-CnR5I_rDsf91dSdEXaTZPZkeLXbObVYJrAg4ofXVlCTccaWIrg7mBACl7v0/7eMGy_PjGqwlswuIKiDcLDO-Xkcau_xaRoY53ahIbus",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3609,6 +3828,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/cAiGzJzEcqC9AZO_O8Wdaw/PCeb351ocMRCBA4cBhLX1ISq3qzUQi2UqzSxt12G4X6443sG7g4Tc-Xj8fs2xZUPFHcDJXm1ABSpKEV900gOOuUhhmLuXKAaxdCFp7IXAf8/R8U9bJOx6U77hWQxDn2arpS7XFGX9IpgfRkTC83xGKU",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3634,6 +3854,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/p8xRSzMsAOJIT9EHf0ueqw/154GmDI90ZjzSi6kgHi1RoGWAT6G2VbFj9V8cYhWgLawcrpRPugPZK44DjWhWUIEWQVKuNOSYIlr14rEkM251xsXgrvzZT7wOveqLl8ugrCSeLGgnV6CFwb6qKt6r9da/BshNxsoAlqDORjxGRBiKxRgLOP_8L0b5VGrhmaid3rg",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3659,6 +3880,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/IMnQTdtuTfRjuHf_xLuemw/VqN3JES0qqmmWPv633kv8Wqza0jClRItO6E93UJX3gZg-FDVVVmr7mLhPKB0An-7QjBqIxuOUqPSZLizPkaeMX-NiCkc_CQpw7wfO8oolxpXWniThKu4U4TdGkJVQGRh/k0r46GQ7mZEBz3rvUgV6La9Bi3E0PW_QxopQV8c1-WA",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3684,6 +3906,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/XZQh9KY8_eadiG40L-yMfw/gRQ8tSsVBnGeWxpWjHqOMkteA0Jwdwy1zU1TkSn1ziOZ8Pt20gbbE_9VEIcs6Z6mr_NMm58bMkOb3Mo-8zaKLy80qUXBvDNuZzsfgknWBX8/4yHPmW4t9_aGlhgbe1U4_irH_x4ggwNPVNxQ5h2hPtA",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3709,6 +3932,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/9QT8aSx4Faw2_nCxkVV5AQ/hyGPTnED3xeEg_LCvdLgydIh4-n7I3Mb-Yoq-btJ7yDPAFCjiTqfdNecwyHjalLxHfo2I1T8Q6jB2iMtJBzLcLEnqpr7Q-NnHV1tw53yVyo/WbrWN9CIKqvfWAJTGUsmt19BDVZK3UTKoH3biEfqwV0",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3734,6 +3958,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/RELEAyX1t-ztr45FI4Rx-Q/U5UOhdTgBqV74zwPlVdLnDyzXX75PX9ny7hMKDa4zM2wLDWg5BoaaGYYuXAvEp4pdQg4Pd2fq9iWZ107pDJRqmbACQ3WmQ32iW_e-FzgAig/Zp6egcJ4iNSgwvfZAbpjH0QKM8hiSvno5p_fdIjlRt0",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3759,6 +3984,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/VXHxnk75D_uoQGs2ESShIw/uRatalhdQSsJEMaWIqtHyriDgufXX3Q-f2M5Rv6Zy63fSlHOeEhaPRLBmiViaVNs0Hngsgkeiqaf1vpGOyTEVh19OChxtrLI1r_CJgnXqBA/y2tWmEtQ8XSKkv1ahxbmVGZd9-H_s-ARVbStx29fIh0",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3784,6 +4010,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/N5goZ1hlDuNVUUHbsDp3fQ/IKN5TCh392IiFnXJwlAeIjNh-HI2uxnr3beah1BoXlZKReptSYZSx7Bk1Y5zK-kzvhcmhUu2vh8kjIZFaG5HppTID9Z8Ec1jLyXkKMw8Yd4/9amgQ9OlQrkQjMuvZ8xEwoOFrISQWkG32hikJk_5sM4",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3798,7 +4025,7 @@
     ],
     "topic": "Travel & Memoir",
     "fiction": false,
-    "publicationYear": 2017,
+    "publicationYear": 2006,
     "pageCount": null,
     "isbn13": "9781504044844",
     "olKey": "/works/OL28339036W",
@@ -3809,6 +4036,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/miu_oCMxGEZDdrZWC7U3mQ/DdHreWlNnzy8aLpLinVTnjgbrriy3TWqSiTSogawrmCKtDGbNb7WMn3Ptj4I0Vmja6BzNjeAH4b7wss3W3vXqoUe7wTu54U61mbXM_JSHS0/8x6tfMzMlX2xtdWqZ_JCLBwl72nuxIXCfO2D3HcSXb0",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3834,6 +4062,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/tiVeIUn4a3whCAHLSp6UJw/35gjTR4h1TfDRRRTj6Ivj8xiCzFsNSijZZqHXYV7PgJIliWE-Sh2RMM3ovVLOMXTUtgvJeqZ0-hhuQ7kvCBhRNMmg0uoEy1vgF38Cw-WnHAaX4776Oz1Jn3e_RhgTCGq/FSgfejfwDWpwUM8yoA6Y3BK09UKMvlIs93hLzCDNoUY",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3859,6 +4088,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/uHRgaKd9MtWNUyOBRRfj-w/JY2qM6cCOsRmvYLoHuCXDl6bhyKIochmO5oPYp9wMc8Z1OLiwFTiU90QKWmklYHM-psrgPIMHvTq5lhszNt2nMMNRk5hW__NXcBy3EIcV6E/t6B1YYVME0h_NKEdhIgU8KFUsjka6_1Br3uetWGZnIY",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3884,6 +4114,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/M18Mb7rna6cnHbwkL1RiuQ/BHltOWWMY7QweAyXvumC3Q4B2eXBzhoYKTUsdvYy1YzhP47G4gz0eAK1PPA815fRk8W352YOWPRYlN3f5edUNoFDARLFcJOZ1oIBmMDcJiU/ulMTr17k7m-zPT57UXN6zJvUf6rnr8eG_-YaVLeYpYA",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3909,6 +4140,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/2jJxsYrG5CaQ8BZYPUZBeA/ikDdPbwvNemwPDZCCl7EbIiswgeOYzcK2I1SaC-y036KowcX-Xjl7urHjvsI_FSoooYVsDRSLuZjBGO73KcILXdeo9UwP4MDXoZNr-fANkE/BWyZaFN6OC6Y-Pw6w2uv0uGPhZcjpMf3aKGI9rF-ABU",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3934,6 +4166,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/WWidh_VYV6gENbkLbVt29A/Vu47ruKZaZ9pRv-pmKVONkhJlep7buPfa6p0hw3c7WaZ_qilUR0N5gfvEV_zY3AW_4lnq8Y4UbEtKBTvBwPZ56K_oHkuBx38LVsSkAZBTRQOo54nTYmeHnNKCXV1MpOs/kJtsVPj_kZdjj9M54DBtcHei8ciS8RyC59IuLn_hN0Q",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3959,6 +4192,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/WYrYXtoyqaKsZ20iMAdHlg/5o1YnznlXFUI9IgTM6pQOj9M1Wa1aAgY9p-pA_H4swb3tyzkub_o7WrkH_T0pXI4FIictpOd2b0j89f-i0PghZvGPh85k22xjbzvCq6Q0-jUI0PwjqrgcnhT9nJsV_i8/Y7RGcqiEqr7T_2DwFi0Qjtq7dQNLGuE7ZPOLh4JUqi4",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -3984,6 +4218,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/PFzBfZJXb7AwmFGJZa_w7Q/SUye-jwFJjcnTS6mSGwsut1i71h4DUl96X3DAoHUpeiBCZBWguu0BIJcnnjiXxBSjtqF2UMfB_pSuMdowoaRDIndwefz88DVUlw5pnuTPjI/svvmpYvrrCvidikZ5PqjcW3PDF6aX9-Jb7nMtkBcA6Y",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4009,6 +4244,7 @@
     "pickerSlug": "tom",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/KoFNY4OoZgHoUZ_LV_4YAQ/yd-kanDOO_NMowQBnnRkjPj4S9isMHbBZeVa1Bx2pow5KbIFoESgUoXilvTUhG42ZXdKoa5b4tl5lBrsUZqsm0YyGEJYCaSVXJqsq-fvwFY/_CWcRP0VAbGkjH1v5Z5R2r1qdc-xwkljMuXNca2NJpo",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4034,6 +4270,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/jnn69ZOpwx4fWCsN5ERyCg/zbviZhcujYdla1JZki2AhgbFtfVGyNxTtefnF6fbWuwzMIJfMrc0ETjoGqjWoScOZUKCuB6MfLid8gR2dDPtHY4H7SK62r_0WCra4eJAbcXPgQex6Eshq34EdwI2m25k/CjnUvliKAm_wgUA_0OKJT1LFF986QpTXjrsN8a8YMBc",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4060,6 +4297,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/zuqb-QnQ8N0LSUsppYnTEA/qQWHP6RDFdrMCYRn9oVuO-mF7P_TjKNKpx9_0v0hooDOpm-mx36Wg-qX6YJZhokRfbUlY3-E_esaoseYZ01_5F7w0HA-GDoAjS5uuOKa_Qc/SrmY9V-l8EB53YpTcYywCqVTOwYHzF_LIgmn6hyafOA",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4085,6 +4323,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/u0usVP03hpu2kPfkEB_9VQ/UmTRJ9SBiabPyPSV-F4e4gsT0vlpV7hoY7l9aQdHGzvJ9NpcYnDV5b96ZW22X68-2W57ib6MolmoBuHwH1AyaNKtjlVIg4rn0uwlEn6c7VT6zTbDQXxSMbMDFv_lWAxG/b7OWCWDTciRbFX0Gb6juQMo_njcbfZbmny3aW9_znNo",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4110,6 +4349,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/6F8LLaQrbWnkcbGOePE3dg/XO98FRHDVhuamGeWyxt3jf1685YQ6fNsSNNOP_68LwoUu9-LuoYhUtgKn7_YuvJl5DWYiGFwIRu-jWXt_aWa3vtsPT0Lf7o-Pc4aNs3hO-Q/MVfjAoNsdKLXwjFXQISaEJPmG7DqU7kMCJOyVnfH0n0",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4135,6 +4375,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/rezw7S--wX9ETbeVrTexVg/tPVtMyRH63_BFbtwICMZrJFmmG4n0QqJ_Dl-6A7Vw_oYMA8Yb4rTXEgLjxFUqLKbsWl4l8VtU4ApXmQi6rUw21rqD40U-kp-H_HWLtKw42g/-cjTuP1l8xSFsWsh4eWVmUF6l98Wd4thlFmMxSmlsw0",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4160,6 +4401,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/YjfV5Rnm6FDt7nXUzTP9Tg/SodylMcrgUpcZ2joYJ4GtCM0pWZWcZXR74HzbHmkcuZ6GQmNDDonmsxsAof7O3iCHhx8XsskrKL26DaP5e5IubfxuJieNpzsJ0fEcoy8XZAratWC9itFM3VXwEb7cMQC/qcZDTBXBleAI3gerjrnVpHmfgXw6IIkSjehaRSxykn8",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4185,6 +4427,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/BOkvnXoE0T81GhRTbg03Ug/vPVwAYCkppvuGweKHwQVz51BCcbyRS-q1N9UosDLuuR2cLHRsXw-fy9hcUm_GefuXcondE-xZdIwjUrjTmqi7weMoV0ARBtiELrLDSSHNNU/c0VVchYWVwzADeAD-SRO07tp057BqZUOQD1Rzq2WcWQ",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4210,6 +4453,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/XlRDTgc8HIspCIQ3Rd3lqQ/p32ushCMw9qlXDn3LSObmpHz99Sbt4rBo60wEudebZQX-SidmpYCJwd516KT1TOz2U_q3gOXSnzBIl3n1pfbifFJfzmH4kNRA-qO-YfcioY/rhdexb9B3j4TetHlHRwe6YBOuOpihLmrlx4vmNFoOAg",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4235,6 +4479,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/XtflRFjec4WXNPM2MhRA8Q/PANr6pKttkev2FW2q0KM8AXNNL-hSkDU06emYBrqqU2rX7AFLT_vCVPht16z7ANiSmEh87nMnJfKMZclWbUW6LXZ2NbOQU3t5-zGts4ckbWogQDVXRkaTBqLCJw2QxD_/MLova7Ys7ssobx6-c4UnrXjoTPXbF-sTDpENGEoCuk0",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4260,6 +4505,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/4sXogpRoq2SROVmMT4UBTQ/m_PrVrQVY7j4pl3VKAcfsePVozMLPKnfdpkxn-5T_wpHXNq3Lw20LuczrFRkZPLRO5vts7i9B-gzP1NUv22DdK7FJxGdyJJ3GiaQA4jK05RxNJfhEPzJChb4LDcjNOnv/3QwL3rEW4l1Zd55Jsb7XpQcyJkOtahshBfgT_W1SPyA",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4285,6 +4531,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/-h80mk9sz_tSeMak6nDLjA/AEZRC11gay_5x1meZU20FLw7TYqqSUExvNewv2yh6t0_VFUrKfQDzeP9CQE6wCW4wkTSTxhQmGknCRzVOEqjAD_WYlxZFPThz4oxYz3pyIwQVtfbPqXzPx1IMJNLY3NV/oyxATgMBz5ErhJA7K9wvML_2jiXIM_9UBGi2iCOpmZc",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4310,6 +4557,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/bEwTUvbOyTRvHC8MJPAMIA/yEiTuQvVlUro3g032JO27G1_m-r3a8rg8_RmS2S9cexdgLgX6uSThJF6f5pznwku1kNtUBUHgBGaFtlCs_WrSHGxR01Kre8QmV0mw6px2fU/eTLzQiP2OOYar6FctZlmZW6pvgunR-1lVtaZ5zCF-yg",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4335,6 +4583,7 @@
     "pickerSlug": "erik",
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/cXCTVgfqEvOfS-0fbjphaA/Mqyt1EJu-IIxacY8jeV2kuFYhnX1ARLT9tfKUGmrO4O4cg-78utxzHTuPlsb52sYrtu9WMyu2kBfQpeEJV_uUW6QDi0DosxSTkWl-Z2zHmM/L6crffr-v4JPePVlUgJrjK79Z_UZWBe-IFJhNIHkeSk",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4360,6 +4609,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/OsqkH6sIITMl0pYc5-0uDA/rQphJADZoQFuR9wIMKx46x-BBvB4zBPz8YY-MxHnYrfTrfOgxHxF643XGlS6YqtZUafWOrnP-aQWX2MYisep2qFW-3sRslRPU4MvaeL5X90/XEFEH93gfzRxEf8uHE9GYL0RRpLTNlhPYRhA0UW2UYI",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4385,6 +4635,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/K73-TyfwYesgvD1cDqZqTA/mbiMitRKRL01NUhTeSgLM1wzr5nC_2SnShE1rW3OI42POKinKjo2x782Jbt68PeavIsJ3rqZWZxSVGO5_EnrnhPoPDaESuXsMc6jlnFxZr4/nQZBgvxEuMM-YdCsneVaYPDBTtVZI06GOi8-2nLv-ZI",
     "hasCover": true,
     "reviewCount": 0
   },
@@ -4410,6 +4661,7 @@
     "pickerSlug": null,
     "meetingNotes": null,
     "meetingLocation": null,
+    "coverUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/XneE0Q808-ynKPCSv-_dxA/hrTj30MTIXban3aJUOWjMKlVvqTbuGA0bc3qCr7mG6RJtCquZqW155aVXHqtc4pX3nzuDvaPToOk_R2R5D1cbwN687cB9t7nLCciCMlCC_yVPPyY9T01guf2nrcmKkt1/8V2iZy-IxszSjsSG2ybrjUwIQ1wKx6Fx5wyio8-17Kc",
     "hasCover": true,
     "reviewCount": 0
   }

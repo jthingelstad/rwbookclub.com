@@ -5,9 +5,9 @@
     "slug": "nick",
     "isCurrent": true,
     "website": null,
-    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775800800000/B-vrCK7gN6THpucfWgvsiw/-v-Nc2yBIvtXZJ0xU40p6ZIbdkuHudqab_xbYz-o_zrcFNwAfCMCgZn8-fRJsk5sJvGrDOIZwW87kObgwjRJ8mYhQHM7FgK8hoSsvHMsqBw/x5P42tFd_tD7B2rrlaheKDpUhbNio5j033jTDWXXcS4",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Ew7hDcvm-aZ_OtonpmGUcw/5QuVg9bBZBwKjm6cndVRFvl-FmDz7XanagxlZOj_RauuqiCmIZZ2UYI0MTQNnSI9gB1-NApgKaECxHiFQC_hqNL4kvInv0jbCmJTFR8EBrw/vpBFzdOrA8oPTikhIdZFHnw85NCKEGzzFSCySlFsGCk",
     "hasPhoto": true,
-    "pickedCount": 16,
+    "pickedCount": 17,
     "pickedBooks": [
       {
         "slug": "heart-of-darkness",
@@ -82,6 +82,12 @@
         "date": "2018-11-20T00:00:00.000Z"
       },
       {
+        "slug": "why-we-sleep",
+        "title": "Why We Sleep",
+        "year": 2018,
+        "date": "2018-05-09T23:00:00.000Z"
+      },
+      {
         "slug": "peak",
         "title": "Peak",
         "year": 2017,
@@ -131,10 +137,16 @@
     "slug": "erik",
     "isCurrent": true,
     "website": null,
-    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775800800000/-DnK5KazakSIHDnmE2bLuw/fGovvYKlOFBJ-wCWurHxBGjlR5QqLB-u3eZohegmAJrQdqd-wnxgMZTjwyFKzOm6PhzeWJTKTBuLrW6RPXZ4f_hwh6SqVv_Rc8q_gLNwYsE/sTfEssMh1BOrF3W699opnoPbqT68g81l6WpVlWmwSX4",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/YfXJlyC3w5cO6Mi3CeuWaw/YVVyZ5Q0F5tN_VwGIb3Mw-G9wBvR1KTU6N9eM_5BQjTss56NO_CRYao_SJLJL8zkK9vOf7gGHFT3zbIwhBYrlIoziV2KRHLHDstwNo0snSY/wVzvlt6aw8GJxqi83DtGFHKww3yF7BRnxxaw7iXEU-M",
     "hasPhoto": true,
-    "pickedCount": 35,
+    "pickedCount": 37,
     "pickedBooks": [
+      {
+        "slug": "the-overstory",
+        "title": "The Overstory",
+        "year": 2026,
+        "date": "2026-01-28T01:00:00.000Z"
+      },
       {
         "slug": "how-to-do-nothing",
         "title": "How to Do Nothing",
@@ -194,6 +206,12 @@
         "title": "Growing a Revolution",
         "year": 2019,
         "date": "2019-06-10T23:00:00.000Z"
+      },
+      {
+        "slug": "collapse",
+        "title": "Collapse",
+        "year": 2018,
+        "date": "2018-07-25T23:00:00.000Z"
       },
       {
         "slug": "a-crack-in-creation",
@@ -419,10 +437,16 @@
     "slug": "tom",
     "isCurrent": true,
     "website": "http://tomeri.org",
-    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775800800000/ChE2urLsaskgru4BM34L2w/Mo_4ONUHYuOFO0tt2Wl62UQw0U6_Awwlp6QIeLgdckJQdtTwyfc5f0eINBsF1nAEH3nQs2DiUMQU6pu6AFVCZe88hV4GMpNRltUMcKren9wLV3w8shOXdp1m-dDWtqDdmU0G2OjANbDDys_euWbggw/v0dxyv90PmblwkkELtWngbXAtxiHLOepputYl7bxKWQ",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/IBXRaY16J8JBVMOj7wjeng/RqGWQqVc-Dj5e1dblRB8Rj0g1BCN4BGGxF5bmlD_zd2FrJdfKpbOxSgxdPrgavWLFHaJpZgQmUgNh2lnxHOTMmJ-eMwkpI9jR2VnCnL_JxFWNDNFOiJMajNHuZKfWOtsWli5WznPAM9_LsylIM2bRA/AI7q0iCUJSFOhJpYxsp7gbfscEW51Kht66UWQ49vJ-w",
     "hasPhoto": true,
-    "pickedCount": 33,
+    "pickedCount": 35,
     "pickedBooks": [
+      {
+        "slug": "patterns-in-nature",
+        "title": "Patterns in Nature",
+        "year": 2026,
+        "date": "2026-04-28T23:30:00.000Z"
+      },
       {
         "slug": "enshittification",
         "title": "Enshittification",
@@ -476,6 +500,12 @@
         "title": "Scale",
         "year": 2019,
         "date": "2019-01-23T00:00:00.000Z"
+      },
+      {
+        "slug": "why-buddhism-is-true",
+        "title": "Why Buddhism is True",
+        "year": 2018,
+        "date": "2018-03-26T23:00:00.000Z"
       },
       {
         "slug": "how-to-live",
@@ -611,10 +641,16 @@
     "slug": "jamie",
     "isCurrent": true,
     "website": "https://www.thingelstad.com",
-    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775800800000/G-YylHiZMhApULhy0MfEMQ/82fKoxfPOQig2l5lEV_BoTNy6xEHYVeps80L62mA2R9V9An6ibprqX868dhF_-n9rZkuBEOGbqHUV16BS_DHtjm1Xf428D665pJ8LuL18NM/HmmH9lQtvKkx5GLFQRVsoaWu6M-iME4HjhxHJgp0rXg",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/--qdf3RcY5aRKbpovB0ovw/aG2ZWCUl-knhCyt7oqEOTDqub8M0p0Lqs5bfiBPwLk1Q1iqdcZIB8Cva2CEauhKM6I_wGBdJmrWzvHScjqkrSpEBec812M6uD7P8jn3iOEs/WNn-VDNcYX9eTyf25oMPpEax8VKfgWee8EYQgQJ6wks",
     "hasPhoto": true,
-    "pickedCount": 33,
+    "pickedCount": 34,
     "pickedBooks": [
+      {
+        "slug": "the-idea-machine",
+        "title": "The Idea Machine",
+        "year": 2026,
+        "date": "2026-05-27T00:00:00.000Z"
+      },
       {
         "slug": "co-intelligence",
         "title": "Co-Intelligence",
@@ -815,7 +851,7 @@
     "slug": "loren",
     "isCurrent": true,
     "website": "http://www-users.cs.umn.edu/~terveen/",
-    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775800800000/ezvIT7Xe6vgRDS5F5O1RDw/eLkb33-cTfPHeiwIrrbt4BXuoaKqqw7xBTWeIKWRplFli4-2LsO2uweG1IxMi7nmGe00hJm8SrF3dQsFYUlHVgpuLBccwg15sFQKFXC1VF0/dn4KS3nOKlyax806Ht0vlqJPx-1HaPuQF0uj3nzj42w",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/erYhHHFPdJVHgRxX_15VQg/fZNTlgqRxlPihOPlO0-SV69sY75GC2K0S-kCC9VjX3SJcfY8X9QWThiZhuofayxaC7_L-pG2Amw165pTs9kpf7PSPvNm_ijoD31MbQPU8lI/pZZgDz12nZKhFYHoj0K4BclJ-qtl4eMsedGUHQxESwc",
     "hasPhoto": true,
     "pickedCount": 16,
     "pickedBooks": [
