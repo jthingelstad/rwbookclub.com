@@ -19,6 +19,24 @@ rotate picking the next book and hosting the discussion.
 As of this build there are {{ journey.totalBooks }} books across
 {{ journey.years | length }} years of reading.
 
+## Meeting cadence
+
+- Meets roughly monthly (about 8 meetings per year)
+- Members rotate picking the next book
+- The picker usually hosts the discussion
+- Meetings are in-person in the Minneapolis–Saint Paul area
+
+## Current book
+{% set current = books[0] %}
+- **{{ current.title | safe }}{% if current.subtitle %}: {{ current.subtitle | safe }}{% endif %}** by {{ current.authors | joinNames | safe }}
+  Read {{ current.meetingDate | monthYear }}{% if current.pickerName %} · Picked by {{ current.pickerName }}{% endif %}
+
+## Next up
+
+<!-- The next book is chosen by the member whose turn it is to pick.
+     Update this section when the next pick is announced. -->
+Not yet announced.
+
 ## Current members
 {% for m in currentMembers %}
 - {{ m.name }}{% if m.pickedCount %} ({{ m.pickedCount }} picks){% endif %}

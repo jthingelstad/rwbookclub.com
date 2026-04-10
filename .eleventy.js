@@ -91,6 +91,12 @@ module.exports = function (eleventyConfig) {
     return arr.slice(0, n);
   });
 
+  // Strip HTML tags from a string (for plain-text outputs like llms.txt)
+  eleventyConfig.addFilter("stripHtml", (str) => {
+    if (!str) return "";
+    return str.replace(/<[^>]*>/g, "");
+  });
+
   // Topic distribution summary for llms.txt — returns a formatted list
   eleventyConfig.addFilter("topicSummary", (books) => {
     if (!Array.isArray(books)) return "";
