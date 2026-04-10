@@ -92,10 +92,9 @@ def main() -> None:
 
         # Resolve meetings → use earliest as the primary "date read"
         meeting_date: str | None = None
-        picker_name: str | None = None
-        picker_slug: str | None = None
         meeting_notes: str | None = None
         meeting_location: str | None = None
+        is_placeholder = False
         for mid in f.get("Meetings") or []:
             m = meetings_by_id.get(mid)
             if not m:
@@ -103,16 +102,22 @@ def main() -> None:
             md = m["fields"].get("Meeting Date")
             if md and (meeting_date is None or md < meeting_date):
                 meeting_date = md
-                hosts = m["fields"].get("Host") or []
-                if hosts:
-                    host_id = hosts[0]
-                    picker_name = member_name_by_id.get(host_id) or None
-                    if member_current_by_id.get(host_id):
-                        picker_slug = member_slug_by_id.get(host_id)
-                    else:
-                        picker_slug = None
                 meeting_notes = (m["fields"].get("Notes") or "").strip() or None
                 meeting_location = (m["fields"].get("Location") or "").strip() or None
+                is_placeholder = bool(m["fields"].get("Placeholder"))
+
+        # Resolve pickers from the "Picked by" link field on Books
+        picker_ids = f.get("Picked by") or []
+        picker_names: list[str] = []
+        picker_slugs: list[str | None] = []
+        for pid in picker_ids:
+            name = member_name_by_id.get(pid)
+            if name:
+                picker_names.append(name)
+                if member_current_by_id.get(pid):
+                    picker_slugs.append(member_slug_by_id.get(pid))
+                else:
+                    picker_slugs.append(None)
 
         cover_url = first_attachment_url(f.get("Cover"))
 
@@ -133,8 +138,11 @@ def main() -> None:
                 "synopsis": (f.get("Synopsis") or "").strip() or None,
                 "meetingDate": meeting_date,
                 "year": int(meeting_date[:4]) if meeting_date else None,
-                "pickerName": picker_name,
-                "pickerSlug": picker_slug,
+                "pickerName": picker_names[0] if picker_names else None,
+                "pickerSlug": picker_slugs[0] if picker_slugs else None,
+                "pickerNames": picker_names or None,
+                "pickerSlugs": picker_slugs or None,
+                "placeholder": is_placeholder,
                 "meetingNotes": meeting_notes,
                 "meetingLocation": meeting_location,
                 "coverUrl": cover_url,  # ephemeral, consumed by process_images
@@ -160,24 +168,19 @@ def main() -> None:
         is_current = bool(f.get("Current Member"))
         photo_url = first_attachment_url(f.get("Photo"))
 
-        # Find books this member picked (only meaningful for current members,
-        # since past members don't get pages)
+        # Find books this member picked via the Books "Picked by" link
         picked_books: list[dict] = []
         if is_current:
-            for meeting in meetings_raw:
-                if m["id"] not in (meeting["fields"].get("Host") or []):
-                    continue
-                md = meeting["fields"].get("Meeting Date")
-                for bid in meeting["fields"].get("Book") or []:
-                    if bid in slug_by_book_id:
-                        picked_books.append(
-                            {
-                                "slug": slug_by_book_id[bid],
-                                "title": title_by_book_id[bid],
-                                "year": int(md[:4]) if md else None,
-                                "date": md,
-                            }
-                        )
+            for br in book_records:
+                if br.get("pickerNames") and name in br["pickerNames"]:
+                    picked_books.append(
+                        {
+                            "slug": br["slug"],
+                            "title": br["title"],
+                            "year": br.get("year"),
+                            "date": br.get("meetingDate"),
+                        }
+                    )
             picked_books.sort(key=lambda x: x.get("date") or "", reverse=True)
 
         member_records.append(

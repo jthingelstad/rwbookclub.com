@@ -76,7 +76,7 @@ module.exports = function (eleventyConfig) {
         for (const bid of r.bookIds || []) reviewed.add(bid);
       }
     }
-    return books.filter((b) => b.meetingDate && !reviewed.has(b.id));
+    return books.filter((b) => b.meetingDate && !b.placeholder && !reviewed.has(b.id));
   });
 
   // RFC-822 / RFC-2822 date for the RSS feed

@@ -26,16 +26,33 @@ As of this build there are {{ journey.totalBooks }} books across
 - The picker usually hosts the discussion
 - Meetings are in-person in the Minneapolis–Saint Paul area
 
+{% set futureBooks = [] %}
+{% for book in books %}
+  {% if book.placeholder %}
+    {% set futureBooks = (futureBooks.push(book), futureBooks) %}
+  {% endif %}
+{% endfor %}
+
 ## Current book
+{% if futureBooks.length %}
+{% set current = futureBooks[futureBooks.length - 1] %}
+- **{{ current.title | safe }}{% if current.subtitle %}: {{ current.subtitle | safe }}{% endif %}** by {{ current.authors | joinNames | safe }}
+  Meeting {{ current.meetingDate | monthYear }}{% if current.pickerName %} · Picked by {{ current.pickerName }}{% endif %}
+{% else %}
 {% set current = books[0] %}
 - **{{ current.title | safe }}{% if current.subtitle %}: {{ current.subtitle | safe }}{% endif %}** by {{ current.authors | joinNames | safe }}
   Read {{ current.meetingDate | monthYear }}{% if current.pickerName %} · Picked by {{ current.pickerName }}{% endif %}
+{% endif %}
 
-## Next up
-
-<!-- The next book is chosen by the member whose turn it is to pick.
-     Update this section when the next pick is announced. -->
-Not yet announced.
+{% if futureBooks.length > 1 %}
+## Coming up
+{% for book in futureBooks | reverse %}
+{% if loop.index0 > 0 %}
+- **{{ book.title | safe }}{% if book.subtitle %}: {{ book.subtitle | safe }}{% endif %}** by {{ book.authors | joinNames | safe }}
+  {{ book.meetingDate | monthYear }}{% if book.pickerName %} · Picked by {{ book.pickerName }}{% endif %}
+{% endif %}
+{% endfor %}
+{% endif %}
 
 ## Current members
 {% for m in currentMembers %}

@@ -12,6 +12,62 @@ title: ""
   {% endif %}
 </section>
 
+{% if journey.currentBook %}
+  {% set book = journey.currentBook %}
+  <section class="now-reading">
+    <p class="kicker">Currently reading</p>
+    <div class="now-reading-card">
+      <a class="now-reading-cover" href="/books/{{ book.slug }}/" tabindex="-1" aria-hidden="true">
+        {% set sizes = "(max-width: 720px) 40vw, 240px" %}
+        {% include "cover.njk" %}
+      </a>
+      <div class="now-reading-meta">
+        <h2 class="now-reading-title"><a href="/books/{{ book.slug }}/">{{ book.title }}</a></h2>
+        {% if book.subtitle %}<p class="now-reading-subtitle">{{ book.subtitle }}</p>{% endif %}
+        {% if book.authors.length %}<p class="now-reading-authors">by {{ book.authors | joinNames }}</p>{% endif %}
+        <p class="now-reading-meeting">Meeting {{ book.meetingDate | monthYear }}</p>
+        {% if book.pickerNames and book.pickerNames.length %}
+          <p class="now-reading-picker">
+            Picked by
+            {% for i in range(0, book.pickerNames.length) %}
+              {% if book.pickerSlugs[i] %}<a href="/members/{{ book.pickerSlugs[i] }}/">{{ book.pickerNames[i] }}</a>{% else %}{{ book.pickerNames[i] }}{% endif %}{% if not loop.last %} &amp; {% endif %}
+            {% endfor %}
+          </p>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+{% endif %}
+
+{% if journey.upcomingBooks.length %}
+  <section class="upcoming">
+    <p class="kicker">Coming up</p>
+    <ol class="entries">
+      {% for book in journey.upcomingBooks %}
+        <li class="entry entry--upcoming">
+          <a class="entry-cover-link" href="/books/{{ book.slug }}/" tabindex="-1" aria-hidden="true">
+            {% include "cover.njk" %}
+          </a>
+          <div class="entry-meta">
+            <p class="entry-date">{{ book.meetingDate | monthYear }}</p>
+            <h3 class="entry-title"><a href="/books/{{ book.slug }}/">{{ book.title }}</a></h3>
+            {% if book.subtitle %}<p class="entry-subtitle">{{ book.subtitle }}</p>{% endif %}
+            {% if book.authors.length %}<p class="entry-authors">{{ book.authors | joinNames }}</p>{% endif %}
+            {% if book.pickerNames and book.pickerNames.length %}
+              <p class="entry-picker">
+                Picked by
+                {% for i in range(0, book.pickerNames.length) %}
+                  {% if book.pickerSlugs[i] %}<a href="/members/{{ book.pickerSlugs[i] }}/">{{ book.pickerNames[i] }}</a>{% else %}{{ book.pickerNames[i] }}{% endif %}{% if not loop.last %} &amp; {% endif %}
+                {% endfor %}
+              </p>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
+{% endif %}
+
 {% if journey.years.length %}
   <nav class="years-nav" aria-label="Jump to year">
     {% for bucket in journey.years %}
@@ -34,10 +90,12 @@ title: ""
                 <h3 class="entry-title"><a href="/books/{{ book.slug }}/">{{ book.title }}</a></h3>
                 {% if book.subtitle %}<p class="entry-subtitle">{{ book.subtitle }}</p>{% endif %}
                 {% if book.authors.length %}<p class="entry-authors">{{ book.authors | joinNames }}</p>{% endif %}
-                {% if book.pickerName %}
+                {% if book.pickerNames and book.pickerNames.length %}
                   <p class="entry-picker">
                     Picked by
-                    {% if book.pickerSlug %}<a href="/members/{{ book.pickerSlug }}/">{{ book.pickerName }}</a>{% else %}{{ book.pickerName }}{% endif %}
+                    {% for i in range(0, book.pickerNames.length) %}
+                      {% if book.pickerSlugs[i] %}<a href="/members/{{ book.pickerSlugs[i] }}/">{{ book.pickerNames[i] }}</a>{% else %}{{ book.pickerNames[i] }}{% endif %}{% if not loop.last %} &amp; {% endif %}
+                    {% endfor %}
                   </p>
                 {% endif %}
                 {% set bookAwards = awards | awardsForBook(book.id) %}

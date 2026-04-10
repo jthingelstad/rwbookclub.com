@@ -4,7 +4,7 @@ Project-specific context for Claude Code. The site has not been built yet. As of
 
 ## Project
 
-rwbookclub.com will be a public website for the RW Book Club, which has been meeting since April 2003. The club reads about 8 books per year, mostly non-fiction (about 88%), and rotates picking and hosting among members. As of April 2026 there are 176 books, 181 meetings, 175 authors, and 12 members (5 current).
+rwbookclub.com will be a public website for the RW Book Club, which has been meeting since April 2003. The club reads about 8 books per year, mostly non-fiction (about 88%), and rotates picking and hosting among members. As of April 2026 there are 179 books, 184 meetings, 178 authors, and 12 members (5 current).
 
 The site is rendered from data in an Airtable base that is the canonical source of truth. Do not maintain a parallel content store; pull from Airtable.
 
@@ -41,6 +41,7 @@ Primary field is `Book` (title only; subtitle is separate).
 | OL Key | text | Open Library Work key, e.g. `/works/OL17075811W`. Present for all 176. Use to refresh metadata or build links. |
 | Date Read | rollup → Meetings.Meeting Date | |
 | Year Read | formula | `YEAR({Date Read})` |
+| Picked by | link → Members | Multi. The member(s) who picked the book. Empty for rare "group picks". Multiple pickers means the book spanned two meetings. Replaces the old approach of traversing Meetings.Host. |
 | Review Count | count → Reviews | |
 | Book ID | autonumber | Stable ID |
 
@@ -125,11 +126,11 @@ Primary field is `Award Name` (free-form text). For tracking annual awards. Empt
 
 ## Conventions and Gotchas
 
-### Host = Picker
+### Host = Picker (legacy), Picked by (current)
 
-`Meetings.Host` is the picker of the book(s) discussed at that meeting. The field is named "Host" historically but the data model treats it as the picker: `Members.Picked Count` is a rollup from `Meetings.Host`. To find books picked by a given member, traverse `Member → Meetings (via Host) → Books`. There is no separate `Picked By` field on Books and one is not needed.
+`Meetings.Host` is the historical picker field. As of April 2026 a `Picked by` link field was added directly to the Books table, making the Host traversal unnecessary. The fetch script now reads `Books.Picked by` directly. The field supports multiple members (for books that spanned two meetings/pickers) and may be empty for "group picks".
 
-If you ever rename `Host` to `Picker` for clarity, do it as an in-place field rename. Do not duplicate the field.
+`Members.Picked Count` is still a rollup from `Meetings.Host` and remains accurate.
 
 ### Books-to-Meetings is many-to-many
 
@@ -248,7 +249,7 @@ requests.patch(f"{base_url}/{books_table}", json=body, headers=auth)
 4. 8 authors did not match Open Library at all (Strugatsky brothers, Frederick P. Brooks Jr., Michael J. Casey, Andrei Lankov, Bruce White, Christopher Vaughan, David Gibbons). Looser name matching would catch most.
 5. 6 books have no ISBN-13: Shaping Things, The Complexity of Cooperation, The Success of Open Source, Divorce Among the Gulls, The Rise and Fall of American Growth.
 6. The 4 newest Topic categories are sparsely populated. A sweep over previously-classified books would surface candidates for re-categorization. Do not do this without Jamie's approval per book.
-7. Member bios, joined/left dates, and `Picked By` (as a separate field) are deliberately not in the schema. Don't add them without asking.
+7. Member bios and joined/left dates are deliberately not in the schema. Don't add them without asking.
 
 ## Things not to do
 

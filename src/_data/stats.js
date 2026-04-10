@@ -7,8 +7,8 @@ module.exports = function () {
   const books = buildBooks();
   if (!books.length) return null;
 
-  // Only books that have been read (have a meeting date)
-  const read = books.filter((b) => b.meetingDate);
+  // Only books that have been read (have a meeting date, not placeholders)
+  const read = books.filter((b) => b.meetingDate && !b.placeholder);
 
   // ── Books by year (year read) ────────────────────────────────────────
   const byYearMap = new Map();

@@ -5,7 +5,7 @@
     "slug": "nick",
     "isCurrent": true,
     "website": null,
-    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/Ew7hDcvm-aZ_OtonpmGUcw/5QuVg9bBZBwKjm6cndVRFvl-FmDz7XanagxlZOj_RauuqiCmIZZ2UYI0MTQNnSI9gB1-NApgKaECxHiFQC_hqNL4kvInv0jbCmJTFR8EBrw/vpBFzdOrA8oPTikhIdZFHnw85NCKEGzzFSCySlFsGCk",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775872800000/MUUNY9pQCM9_qC7PPv2BsA/_n874pczt0nR09KUGemzSITFYWKyFLRqGJk0vM7ch_iB0-n9lLlNw2g1SjVTimJRu5WyS7PJvb1NF-F-FurVWM9nUR90_mAqi1mE25K9EQI/FLeH1vTrmhvLwgMBbDBx0qGX4Vyj2TZyBuX5oZUu1tE",
     "hasPhoto": true,
     "pickedCount": 17,
     "pickedBooks": [
@@ -22,26 +22,26 @@
         "date": "2024-05-29T23:00:00.000Z"
       },
       {
-        "slug": "men-without-work",
-        "title": "Men Without Work",
-        "year": 2023,
-        "date": "2023-07-11T23:00:00.000Z"
-      },
-      {
         "slug": "nation-of-takers",
         "title": "Nation of Takers",
         "year": 2023,
         "date": "2023-07-11T23:00:00.000Z"
       },
       {
-        "slug": "aeschylus-i",
-        "title": "Aeschylus I",
-        "year": 2022,
-        "date": "2022-06-01T23:00:00.000Z"
+        "slug": "men-without-work",
+        "title": "Men Without Work",
+        "year": 2023,
+        "date": "2023-07-11T23:00:00.000Z"
       },
       {
         "slug": "the-florentines",
         "title": "The Florentines",
+        "year": 2022,
+        "date": "2022-06-01T23:00:00.000Z"
+      },
+      {
+        "slug": "aeschylus-i",
+        "title": "Aeschylus I",
         "year": 2022,
         "date": "2022-06-01T23:00:00.000Z"
       },
@@ -137,7 +137,7 @@
     "slug": "erik",
     "isCurrent": true,
     "website": null,
-    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/YfXJlyC3w5cO6Mi3CeuWaw/YVVyZ5Q0F5tN_VwGIb3Mw-G9wBvR1KTU6N9eM_5BQjTss56NO_CRYao_SJLJL8zkK9vOf7gGHFT3zbIwhBYrlIoziV2KRHLHDstwNo0snSY/wVzvlt6aw8GJxqi83DtGFHKww3yF7BRnxxaw7iXEU-M",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775872800000/qKj0BZScedn_5ecypkYgbA/q284DFccNsQSZKIcFqSNtGClHMNxw1cg4Htmsncu0SH8tZ-oxCPhdraQMxsAtFFGuV-QrACLRCLJT03PVWBxVuFt6y1_qr8gWXKULlTUjOc/6_ZVA5jtI160CGP51EfKSoTK9kypLqcbu-y3AoOFqz0",
     "hasPhoto": true,
     "pickedCount": 37,
     "pickedBooks": [
@@ -196,14 +196,14 @@
         "date": "2019-11-08T00:00:00.000Z"
       },
       {
-        "slug": "craeft",
-        "title": "Cræft",
+        "slug": "growing-a-revolution",
+        "title": "Growing a Revolution",
         "year": 2019,
         "date": "2019-06-10T23:00:00.000Z"
       },
       {
-        "slug": "growing-a-revolution",
-        "title": "Growing a Revolution",
+        "slug": "craeft",
+        "title": "Cræft",
         "year": 2019,
         "date": "2019-06-10T23:00:00.000Z"
       },
@@ -268,14 +268,14 @@
         "date": "2013-03-12T23:00:00.000Z"
       },
       {
-        "slug": "a-canticle-for-leibowitz",
-        "title": "A Canticle for Leibowitz",
+        "slug": "the-devil-in-the-white-city",
+        "title": "The Devil in the White City",
         "year": 2012,
         "date": "2012-09-25T23:00:00.000Z"
       },
       {
-        "slug": "the-devil-in-the-white-city",
-        "title": "The Devil in the White City",
+        "slug": "a-canticle-for-leibowitz",
+        "title": "A Canticle for Leibowitz",
         "year": 2012,
         "date": "2012-09-25T23:00:00.000Z"
       },
@@ -322,14 +322,14 @@
         "date": "2007-12-27T00:00:00.000Z"
       },
       {
-        "slug": "watchmen",
-        "title": "Watchmen",
+        "slug": "understanding-comics",
+        "title": "Understanding Comics",
         "year": 2007,
         "date": "2007-06-13T23:00:00.000Z"
       },
       {
-        "slug": "understanding-comics",
-        "title": "Understanding Comics",
+        "slug": "watchmen",
+        "title": "Watchmen",
         "year": 2007,
         "date": "2007-06-13T23:00:00.000Z"
       },
@@ -437,7 +437,7 @@
     "slug": "tom",
     "isCurrent": true,
     "website": "http://tomeri.org",
-    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/IBXRaY16J8JBVMOj7wjeng/RqGWQqVc-Dj5e1dblRB8Rj0g1BCN4BGGxF5bmlD_zd2FrJdfKpbOxSgxdPrgavWLFHaJpZgQmUgNh2lnxHOTMmJ-eMwkpI9jR2VnCnL_JxFWNDNFOiJMajNHuZKfWOtsWli5WznPAM9_LsylIM2bRA/AI7q0iCUJSFOhJpYxsp7gbfscEW51Kht66UWQ49vJ-w",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775872800000/qhwPtMef6XOe8q2-pp8D7g/LInrJwSKrtItw0f4GbYtaafzQ42r3ZcSAcrjZ4qjIMpE8QzGPI8A1L4b5LsluYwkCliWVqffkqQxiJWMKMMan2dXXgra0vEEokusGZU99NreGW3cGJW8-L1sx4iz2xmQO_Nk7dbcxGucfctXgPP-uA/oSANobey0SxdqrB4LO5EqXhzgieU6EsGIAqYFUSVyuU",
     "hasPhoto": true,
     "pickedCount": 35,
     "pickedBooks": [
@@ -641,7 +641,7 @@
     "slug": "jamie",
     "isCurrent": true,
     "website": "https://www.thingelstad.com",
-    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/--qdf3RcY5aRKbpovB0ovw/aG2ZWCUl-knhCyt7oqEOTDqub8M0p0Lqs5bfiBPwLk1Q1iqdcZIB8Cva2CEauhKM6I_wGBdJmrWzvHScjqkrSpEBec812M6uD7P8jn3iOEs/WNn-VDNcYX9eTyf25oMPpEax8VKfgWee8EYQgQJ6wks",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775872800000/Y0lb9f9OMWKPMGQD9dj4WA/_VPrmBhIjNHPWuD5xtKS00Q2_-GPyJA7zQWuymnng9unfwDKk0-j0jVxn9PU2AN5fr27zcF0CbKUF1su5e0L7Qjj_LHJ7DYSMpBa7ceE7q4/Vw7q9osSHF3X3YEI-EvF1j-ZdGq6nlSO-Wae6ZH4724",
     "hasPhoto": true,
     "pickedCount": 34,
     "pickedBooks": [
@@ -706,14 +706,14 @@
         "date": "2020-01-31T00:00:00.000Z"
       },
       {
-        "slug": "craeft",
-        "title": "Cræft",
+        "slug": "growing-a-revolution",
+        "title": "Growing a Revolution",
         "year": 2019,
         "date": "2019-06-10T23:00:00.000Z"
       },
       {
-        "slug": "growing-a-revolution",
-        "title": "Growing a Revolution",
+        "slug": "craeft",
+        "title": "Cræft",
         "year": 2019,
         "date": "2019-06-10T23:00:00.000Z"
       },
@@ -757,7 +757,7 @@
         "slug": "far-from-the-tree",
         "title": "Far from the Tree",
         "year": 2014,
-        "date": "2014-11-04T00:00:00.000Z"
+        "date": "2014-09-22T23:00:00.000Z"
       },
       {
         "slug": "antifragile",
@@ -784,14 +784,14 @@
         "date": "2013-04-17T23:00:00.000Z"
       },
       {
-        "slug": "a-canticle-for-leibowitz",
-        "title": "A Canticle for Leibowitz",
+        "slug": "the-devil-in-the-white-city",
+        "title": "The Devil in the White City",
         "year": 2012,
         "date": "2012-09-25T23:00:00.000Z"
       },
       {
-        "slug": "the-devil-in-the-white-city",
-        "title": "The Devil in the White City",
+        "slug": "a-canticle-for-leibowitz",
+        "title": "A Canticle for Leibowitz",
         "year": 2012,
         "date": "2012-09-25T23:00:00.000Z"
       },
@@ -851,7 +851,7 @@
     "slug": "loren",
     "isCurrent": true,
     "website": "http://www-users.cs.umn.edu/~terveen/",
-    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775858400000/erYhHHFPdJVHgRxX_15VQg/fZNTlgqRxlPihOPlO0-SV69sY75GC2K0S-kCC9VjX3SJcfY8X9QWThiZhuofayxaC7_L-pG2Amw165pTs9kpf7PSPvNm_ijoD31MbQPU8lI/pZZgDz12nZKhFYHoj0K4BclJ-qtl4eMsedGUHQxESwc",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775872800000/hIfLNsZ3lBSDqC5gBY2uZg/R_4O0st7VV8bIQk1xZZMbu5GeSbE9p7SESjWGz2MK6TNuYa0JyVpfmZrJOiZnXiBOzjJEYTqqxA-kXol66YuD4nCQg1MQ_zRFmYLtTzpLWs/CP8pxCgAFVmcO3VuMZ_LTRpsCr5YAKZE0yJxG7taCek",
     "hasPhoto": true,
     "pickedCount": 16,
     "pickedBooks": [

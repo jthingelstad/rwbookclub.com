@@ -18,7 +18,11 @@ eleventyComputed:
       {% include "cover.njk" %}
     </div>
     <div class="book-header-text">
-      <p class="kicker">{{ book.meetingDate | monthYear }}</p>
+      {% if book.placeholder %}
+        <p class="kicker kicker--upcoming">Upcoming · {{ book.meetingDate | monthYear }}</p>
+      {% else %}
+        <p class="kicker">{{ book.meetingDate | monthYear }}</p>
+      {% endif %}
       <h1>{{ book.title }}</h1>
       {% if book.subtitle %}<p class="book-subtitle">{{ book.subtitle }}</p>{% endif %}
       {% if book.authors.length %}
@@ -42,15 +46,13 @@ eleventyComputed:
   </header>
 
   <dl class="book-meta">
-    {% if book.pickerName %}
+    {% if book.pickerNames and book.pickerNames.length %}
       <div class="meta-row">
         <dt>Picked by</dt>
         <dd>
-          {% if book.pickerSlug %}
-            <a href="/members/{{ book.pickerSlug }}/">{{ book.pickerName }}</a>
-          {% else %}
-            {{ book.pickerName }}
-          {% endif %}
+          {% for i in range(0, book.pickerNames.length) %}
+            {% if book.pickerSlugs[i] %}<a href="/members/{{ book.pickerSlugs[i] }}/">{{ book.pickerNames[i] }}</a>{% else %}{{ book.pickerNames[i] }}{% endif %}{% if not loop.last %} &amp; {% endif %}
+          {% endfor %}
         </dd>
       </div>
     {% endif %}

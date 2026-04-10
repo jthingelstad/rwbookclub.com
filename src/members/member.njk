@@ -38,11 +38,27 @@ eleventyComputed:
   <section class="member-picks">
     <h2>Books picked ({{ member.pickedBooks.length }})</h2>
     {% if member.pickedBooks.length %}
-      <ol class="pick-list">
+      <ol class="cover-grid cover-grid--picks">
         {% for pick in member.pickedBooks %}
-          <li>
-            <a href="/books/{{ pick.slug }}/">{{ pick.title }}</a>
-            {% if pick.year %}<span class="pick-year">{{ pick.year }}</span>{% endif %}
+          {% set book = null %}
+          {% for b in books %}
+            {% if b.slug == pick.slug %}
+              {% set book = b %}
+            {% endif %}
+          {% endfor %}
+          <li class="cover-grid-item">
+            <a href="/books/{{ pick.slug }}/">
+              {% if book %}
+                {% set sizes = "(max-width: 480px) 40vw, (max-width: 960px) 22vw, 160px" %}
+                {% include "cover.njk" %}
+              {% else %}
+                <div class="cover cover--placeholder" aria-label="No cover available for {{ pick.title }}">
+                  <span>{{ pick.title }}</span>
+                </div>
+              {% endif %}
+              <p class="grid-title">{{ pick.title }}</p>
+              {% if pick.year %}<p class="grid-year">{{ pick.year }}</p>{% endif %}
+            </a>
           </li>
         {% endfor %}
       </ol>

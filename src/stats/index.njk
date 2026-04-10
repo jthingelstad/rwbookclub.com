@@ -2,6 +2,7 @@
 layout: layouts/base.njk
 title: "Statistics"
 permalink: /stats/
+bodyClass: stats-page
 ---
 
 <article class="stats">
@@ -51,37 +52,39 @@ permalink: /stats/
     </div>
   </section>
 
-  {# ── Publication decade ────────────────────────────────────────────── #}
-  <section class="stats-section">
-    <h2>When the books were written</h2>
-    <p class="stats-desc">Publication decade of every book the club has read.</p>
-    <div class="chart-canvas-wrap">
-      <canvas id="chart-pub-decade"></canvas>
-    </div>
-  </section>
+  <div class="stats-pair">
+    {# ── Publication decade ──────────────────────────────────────────── #}
+    <section class="stats-section">
+      <h2>When the books were written</h2>
+      <p class="stats-desc">Publication decade of every book the club has read.</p>
+      <div class="chart-canvas-wrap">
+        <canvas id="chart-pub-decade"></canvas>
+      </div>
+    </section>
 
-  {# ── Fiction vs non-fiction ────────────────────────────────────────── #}
-  <section class="stats-section">
-    <h2>Fiction vs. non-fiction</h2>
-    <div class="split-bar-wrap">
-      <div class="split-bar">
-        <div class="split-bar-segment split-bar-nonfiction"
-             style="width: {{ (stats.nonfictionCount / stats.totalBooks * 100) | round(1) }}%">
-          <span class="split-bar-label">Non-fiction</span>
-          <span class="split-bar-pct">{{ (stats.nonfictionCount / stats.totalBooks * 100) | round(0) }}%</span>
+    {# ── Fiction vs non-fiction ──────────────────────────────────────── #}
+    <section class="stats-section">
+      <h2>Fiction vs. non-fiction</h2>
+      <div class="split-bar-wrap">
+        <div class="split-bar">
+          <div class="split-bar-segment split-bar-nonfiction"
+               style="width: {{ (stats.nonfictionCount / stats.totalBooks * 100) | round(1) }}%">
+            <span class="split-bar-label">Non-fiction</span>
+            <span class="split-bar-pct">{{ (stats.nonfictionCount / stats.totalBooks * 100) | round(0) }}%</span>
+          </div>
+          <div class="split-bar-segment split-bar-fiction"
+               style="width: {{ (stats.fictionCount / stats.totalBooks * 100) | round(1) }}%">
+            <span class="split-bar-label">Fiction</span>
+            <span class="split-bar-pct">{{ (stats.fictionCount / stats.totalBooks * 100) | round(0) }}%</span>
+          </div>
         </div>
-        <div class="split-bar-segment split-bar-fiction"
-             style="width: {{ (stats.fictionCount / stats.totalBooks * 100) | round(1) }}%">
-          <span class="split-bar-label">Fiction</span>
-          <span class="split-bar-pct">{{ (stats.fictionCount / stats.totalBooks * 100) | round(0) }}%</span>
+        <div class="split-bar-legend">
+          <span>{{ stats.nonfictionCount }} non-fiction</span>
+          <span>{{ stats.fictionCount }} fiction</span>
         </div>
       </div>
-      <div class="split-bar-legend">
-        <span>{{ stats.nonfictionCount }} non-fiction</span>
-        <span>{{ stats.fictionCount }} fiction</span>
-      </div>
-    </div>
-  </section>
+    </section>
+  </div>
 
   {# ── Pickers leaderboard ───────────────────────────────────────────── #}
   <section class="stats-section">
