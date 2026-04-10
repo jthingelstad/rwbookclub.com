@@ -1,0 +1,57 @@
+---
+pagination:
+  data: currentMembers
+  size: 1
+  alias: member
+permalink: "/members/{{ member.slug }}/"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "{{ member.name }}"
+---
+
+<article class="member-detail">
+  <a class="back" href="/">← Reading journey</a>
+
+  <header class="member-header">
+    {% if member.hasPhoto and member.photoWidths %}
+      <picture class="portrait">
+        <source
+          type="image/webp"
+          srcset="{%- for w in member.photoWidths -%}/assets/images/members/{{ member.slug }}-{{ w }}.webp {{ w }}w{% if not loop.last %}, {% endif %}{%- endfor -%}"
+          sizes="(max-width: 720px) 40vw, 240px" />
+        <img
+          src="/assets/images/members/{{ member.slug }}-{{ member.photoWidths[0] }}.jpg"
+          srcset="{%- for w in member.photoWidths -%}/assets/images/members/{{ member.slug }}-{{ w }}.jpg {{ w }}w{% if not loop.last %}, {% endif %}{%- endfor -%}"
+          sizes="(max-width: 720px) 40vw, 240px"
+          alt="{{ member.name }}" />
+      </picture>
+    {% endif %}
+    <div class="member-header-text">
+      <p class="kicker">Member</p>
+      <h1>{{ member.name }}</h1>
+      {% if member.website %}
+        <p class="member-website">
+          <a href="{{ member.website }}" rel="external noopener">
+            {{ member.website | replace("https://", "") | replace("http://", "") | replace("www.", "") }}
+          </a>
+        </p>
+      {% endif %}
+    </div>
+  </header>
+
+  <section class="member-picks">
+    <h2>Books picked ({{ member.pickedBooks.length }})</h2>
+    {% if member.pickedBooks.length %}
+      <ol class="pick-list">
+        {% for pick in member.pickedBooks %}
+          <li>
+            <a href="/books/{{ pick.slug }}/">{{ pick.title }}</a>
+            {% if pick.year %}<span class="pick-year">{{ pick.year }}</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="empty">Hasn't picked a book yet.</p>
+    {% endif %}
+  </section>
+</article>

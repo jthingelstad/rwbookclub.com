@@ -1,0 +1,52 @@
+---
+layout: layouts/base.njk
+title: ""
+---
+
+<section class="hero">
+  <p class="kicker">Since {{ site.founded }}</p>
+  <h1 class="hero-title">A reading journey.</h1>
+  <p class="hero-lede">{{ site.description }} Scroll back through every book we've read together — newest first, all the way to the beginning.</p>
+  {% if journey.totalBooks %}
+    <p class="hero-stat">{{ journey.totalBooks }} books and counting.</p>
+  {% endif %}
+</section>
+
+{% if journey.years.length %}
+  <nav class="years-nav" aria-label="Jump to year">
+    {% for bucket in journey.years %}
+      <a href="#year-{{ bucket.year }}">{{ bucket.year }}</a>
+    {% endfor %}
+  </nav>
+
+  <div class="journey">
+    {% for bucket in journey.years %}
+      <section class="year" id="year-{{ bucket.year }}">
+        <h2 class="year-marker"><span>{{ bucket.year }}</span></h2>
+        <ol class="entries">
+          {% for book in bucket.books %}
+            <li class="entry">
+              <a class="entry-cover-link" href="/books/{{ book.slug }}/" tabindex="-1" aria-hidden="true">
+                {% include "cover.njk" %}
+              </a>
+              <div class="entry-meta">
+                <p class="entry-date">{{ book.meetingDate | monthYear }}</p>
+                <h3 class="entry-title"><a href="/books/{{ book.slug }}/">{{ book.title }}</a></h3>
+                {% if book.subtitle %}<p class="entry-subtitle">{{ book.subtitle }}</p>{% endif %}
+                {% if book.authors.length %}<p class="entry-authors">{{ book.authors | joinNames }}</p>{% endif %}
+                {% if book.pickerName %}
+                  <p class="entry-picker">
+                    Picked by
+                    {% if book.pickerSlug %}<a href="/members/{{ book.pickerSlug }}/">{{ book.pickerName }}</a>{% else %}{{ book.pickerName }}{% endif %}
+                  </p>
+                {% endif %}
+              </div>
+            </li>
+          {% endfor %}
+        </ol>
+      </section>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="empty">The reading journey will appear here once the data layer has been fetched.</p>
+{% endif %}

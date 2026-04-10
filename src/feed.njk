@@ -1,0 +1,26 @@
+---
+permalink: /feed.xml
+eleventyExcludeFromCollections: true
+---
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>{{ site.title }}</title>
+    <link>{{ site.url }}/</link>
+    <atom:link href="{{ site.url }}/feed.xml" rel="self" type="application/rss+xml" />
+    <description>{{ site.description }}</description>
+    <language>en-us</language>
+    {%- if books.length %}
+    <lastBuildDate>{{ books[0].meetingDate | rfc822Date }}</lastBuildDate>
+    {%- endif %}
+    {%- for book in books | limit(20) %}
+    <item>
+      <title>{{ book.title }}{% if book.subtitle %}: {{ book.subtitle }}{% endif %}</title>
+      <link>{{ site.url }}/books/{{ book.slug }}/</link>
+      <guid isPermaLink="true">{{ site.url }}/books/{{ book.slug }}/</guid>
+      <pubDate>{{ book.meetingDate | rfc822Date }}</pubDate>
+      <description>{% if book.pickerName %}Picked by {{ book.pickerName }}. {% endif %}{% if book.authors.length %}By {{ book.authors | joinNames }}. {% endif %}{% if book.synopsis %}{{ book.synopsis }}{% endif %}</description>
+    </item>
+    {%- endfor %}
+  </channel>
+</rss>

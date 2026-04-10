@@ -1,0 +1,25 @@
+---
+layout: layouts/base.njk
+title: All books
+permalink: /books/
+bodyClass: shelf
+---
+
+<section class="shelf-header">
+  <a class="back" href="/">← Reading journey</a>
+  <h1>All books</h1>
+  <p class="lede">Every book the R/W Book Club has read, most recent first. {{ books.length }} in all.</p>
+</section>
+
+<ol class="cover-grid">
+  {% for book in books %}
+    <li class="cover-grid-item">
+      <a href="/books/{{ book.slug }}/">
+        {% set sizes = "(max-width: 480px) 40vw, (max-width: 960px) 22vw, 160px" %}
+        {% include "cover.njk" %}
+        <p class="grid-title">{{ book.title }}</p>
+        {% if book.year %}<p class="grid-year">{{ book.year }}</p>{% endif %}
+      </a>
+    </li>
+  {% endfor %}
+</ol>

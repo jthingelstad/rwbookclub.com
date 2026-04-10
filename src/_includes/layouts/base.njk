@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% if title %}{{ title }} — {% endif %}{{ site.title }}</title>
+    <meta name="description" content="{{ site.description }}" />
+    <link rel="preload" href="/assets/fonts/fraunces-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/assets/css/styles.css" />
+    <link rel="canonical" href="{{ site.url }}{{ page.url }}" />
+    <link rel="alternate" type="application/rss+xml" title="{{ site.title }}" href="/feed.xml" />
+  </head>
+  <body{% if bodyClass %} class="{{ bodyClass }}"{% endif %}>
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="page">
+      <header class="masthead">
+        <a class="masthead-link" href="/">
+          <span class="wordmark">{{ site.title }}</span>
+        </a>
+      </header>
+      <main id="main">
+        {{ content | safe }}
+      </main>
+      <footer class="site-footer">
+        <p>Reading together since {{ site.founded }}.</p>
+        <nav>
+          <a href="/">Journey</a>
+          <span aria-hidden="true">·</span>
+          <a href="/books/">All books</a>
+          <span aria-hidden="true">·</span>
+          <a href="/about/">About</a>
+          <span aria-hidden="true">·</span>
+          <a href="/feed.xml">Feed</a>
+        </nav>
+      </footer>
+    </div>
+    <script defer src="https://tinylytics.app/embed/g27c-eB9Dv7-Eze1XSSy.js?kudos=%F0%9F%93%9A"></script>
+  </body>
+</html>

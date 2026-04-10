@@ -1,0 +1,44 @@
+---
+layout: layouts/base.njk
+title: "About"
+permalink: /about/
+---
+
+<article class="about">
+  <a class="back" href="/">← Reading journey</a>
+
+  <h1>About R/W Book Club</h1>
+
+  <p class="lede">
+    We've been meeting since April {{ site.founded }}. The "R/W" stands for
+    <em>Read / Write</em> — we're a technically minded group, and many of us blog.
+    We read, but we also write.
+  </p>
+
+  <p>
+    Each year we read about eight books together, mostly non-fiction. Members
+    take turns picking the next book and hosting the meeting where we discuss it.
+    This site is the running ledger of what we've read — scroll the
+    <a href="/">reading journey</a> to follow it back to the very first meeting.
+  </p>
+
+  <h2>Current members</h2>
+  <ul class="member-list">
+    {% for m in currentMembers %}
+      <li>
+        <a href="/members/{{ m.slug }}/">{{ m.name }}</a>
+        {% if m.pickedCount %}<span class="pick-count">{{ m.pickedCount }} pick{% if m.pickedCount != 1 %}s{% endif %}</span>{% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+
+  <h2>How this site is built</h2>
+  <p>
+    The Airtable base behind this site is the source of truth. A small Python
+    pipeline pulls every book, meeting, member, and author into JSON, downloads
+    and resizes the cover art, and hands the result to
+    <a href="https://www.11ty.dev/" rel="external noopener">Eleventy</a>, which
+    renders these pages. The whole thing rebuilds and deploys to GitHub Pages
+    on every push.
+  </p>
+</article>

@@ -1,0 +1,22 @@
+{# Renders a responsive book cover. Pass `book` and optional `sizes`. #}
+{%- set sizes = sizes or "(max-width: 720px) 35vw, 220px" -%}
+{%- if book.hasCover and book.coverWidths -%}
+<picture class="cover">
+  <source
+    type="image/webp"
+    srcset="{%- for w in book.coverWidths -%}/assets/images/covers/{{ book.slug }}-{{ w }}.webp {{ w }}w{% if not loop.last %}, {% endif %}{%- endfor -%}"
+    sizes="{{ sizes }}" />
+  <img
+    class="cover-img"
+    src="/assets/images/covers/{{ book.slug }}-{{ book.coverWidths[0] }}.jpg"
+    srcset="{%- for w in book.coverWidths -%}/assets/images/covers/{{ book.slug }}-{{ w }}.jpg {{ w }}w{% if not loop.last %}, {% endif %}{%- endfor -%}"
+    sizes="{{ sizes }}"
+    alt="Cover of {{ book.title }}"
+    loading="lazy"
+    decoding="async" />
+</picture>
+{%- else -%}
+<div class="cover cover--placeholder" aria-label="No cover available for {{ book.title }}">
+  <span>{{ book.title }}</span>
+</div>
+{%- endif -%}

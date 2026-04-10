@@ -1,0 +1,102 @@
+---
+pagination:
+  data: books
+  size: 1
+  alias: book
+permalink: "/books/{{ book.slug }}/"
+layout: layouts/base.njk
+eleventyComputed:
+  title: "{{ book.title }}"
+---
+
+<article class="book-detail">
+  <a class="back" href="/">← Reading journey</a>
+
+  <header class="book-header">
+    <div class="book-cover-frame">
+      {% set sizes = "(max-width: 720px) 60vw, 320px" %}
+      {% include "cover.njk" %}
+    </div>
+    <div class="book-header-text">
+      <p class="kicker">{{ book.meetingDate | monthYear }}</p>
+      <h1>{{ book.title }}</h1>
+      {% if book.subtitle %}<p class="book-subtitle">{{ book.subtitle }}</p>{% endif %}
+      {% if book.authors.length %}
+        <p class="book-authors">by {{ book.authors | joinNames }}</p>
+      {% endif %}
+    </div>
+  </header>
+
+  <dl class="book-meta">
+    {% if book.pickerName %}
+      <div class="meta-row">
+        <dt>Picked by</dt>
+        <dd>
+          {% if book.pickerSlug %}
+            <a href="/members/{{ book.pickerSlug }}/">{{ book.pickerName }}</a>
+          {% else %}
+            {{ book.pickerName }}
+          {% endif %}
+        </dd>
+      </div>
+    {% endif %}
+    {% if book.topic %}
+      <div class="meta-row"><dt>Topic</dt><dd>{{ book.topic }}</dd></div>
+    {% endif %}
+    {% if book.publicationYear %}
+      <div class="meta-row"><dt>First published</dt><dd>{{ book.publicationYear }}</dd></div>
+    {% endif %}
+    {% if book.pageCount %}
+      <div class="meta-row"><dt>Pages</dt><dd>{{ book.pageCount }}</dd></div>
+    {% endif %}
+    {% if book.fiction %}
+      <div class="meta-row"><dt>Form</dt><dd>Fiction</dd></div>
+    {% endif %}
+    {% if book.olKey %}
+      <div class="meta-row">
+        <dt>Open Library</dt>
+        <dd><a href="https://openlibrary.org{{ book.olKey }}" rel="external noopener">View record →</a></dd>
+      </div>
+    {% endif %}
+    {% if book.isbn13 %}
+      <div class="meta-row"><dt>ISBN&#8209;13</dt><dd>{{ book.isbn13 }}</dd></div>
+    {% endif %}
+  </dl>
+
+  {% if book.synopsis %}
+    <section class="book-section">
+      <h2>Synopsis</h2>
+      <p class="book-synopsis">{{ book.synopsis }}</p>
+    </section>
+  {% endif %}
+
+  {% if book.meetingNotes %}
+    <section class="book-section">
+      <h2>Meeting notes</h2>
+      <p>{{ book.meetingNotes }}</p>
+    </section>
+  {% endif %}
+
+  <section class="book-section reviews">
+    <h2>Reviews</h2>
+    {% set bookReviews = reviews | reviewsForBook(book.id) %}
+    {% if bookReviews.length %}
+      <ul class="review-list">
+        {% for r in bookReviews %}
+          <li class="review">
+            {% if r.rating %}<p class="review-rating" aria-label="Rated {{ r.rating }} of 5">{% for i in range(0, r.rating) %}★{% endfor %}{% for i in range(r.rating, 5) %}<span class="dim">★</span>{% endfor %}</p>{% endif %}
+            {% if r.review %}<p>{{ r.review }}</p>{% endif %}
+            {% if r.favoriteQuote %}<blockquote>{{ r.favoriteQuote }}</blockquote>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty">No reviews yet.</p>
+    {% endif %}
+  </section>
+
+  <section class="kudos-section">
+    <p class="kudos-label">Loved this one?</p>
+    <button class="tinylytics_kudos" type="button" aria-label="Give this book a stack"></button>
+  </section>
+</article>
