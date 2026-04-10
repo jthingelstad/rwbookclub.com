@@ -935,12 +935,16 @@ body.shelf .page {
   margin: 0 0 var(--gap-sm);
 }
 
-.chart-container {
+.chart-canvas-wrap {
+  position: relative;
   width: 100%;
-  overflow: hidden;
+  height: 280px;
 }
-.chart-container svg {
-  display: block;
+.chart-canvas-wrap--tall {
+  height: 340px;
+}
+.chart-canvas-wrap--pickers {
+  height: 360px;
 }
 
 /* Fiction / non-fiction split bar */

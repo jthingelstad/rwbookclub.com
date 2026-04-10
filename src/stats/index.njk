@@ -37,21 +37,27 @@ permalink: /stats/
   <section class="stats-section">
     <h2>Books read per year</h2>
     <p class="stats-desc">Book count shown as bars, total pages as the line.</p>
-    <div class="chart-container" id="chart-by-year"></div>
+    <div class="chart-canvas-wrap chart-canvas-wrap--tall">
+      <canvas id="chart-by-year"></canvas>
+    </div>
   </section>
 
   {# ── Topic treemap ─────────────────────────────────────────────────── #}
   <section class="stats-section">
     <h2>What we read about</h2>
     <p class="stats-desc">Topics sized by number of books read in each category.</p>
-    <div class="chart-container" id="chart-topics"></div>
+    <div class="chart-canvas-wrap chart-canvas-wrap--tall">
+      <canvas id="chart-topics"></canvas>
+    </div>
   </section>
 
   {# ── Publication decade ────────────────────────────────────────────── #}
   <section class="stats-section">
     <h2>When the books were written</h2>
     <p class="stats-desc">Publication decade of every book the club has read.</p>
-    <div class="chart-container" id="chart-pub-decade"></div>
+    <div class="chart-canvas-wrap">
+      <canvas id="chart-pub-decade"></canvas>
+    </div>
   </section>
 
   {# ── Fiction vs non-fiction ────────────────────────────────────────── #}
@@ -81,7 +87,9 @@ permalink: /stats/
   <section class="stats-section">
     <h2>Most picks</h2>
     <p class="stats-desc">Members ranked by number of books they've picked for the club.</p>
-    <div class="chart-container chart-container--short" id="chart-pickers"></div>
+    <div class="chart-canvas-wrap chart-canvas-wrap--pickers">
+      <canvas id="chart-pickers"></canvas>
+    </div>
   </section>
 
   {# ── Fun facts ─────────────────────────────────────────────────────── #}
@@ -116,300 +124,7 @@ permalink: /stats/
   </section>
 </article>
 
-<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-<script>
-(function () {
-  const ACCENT = "#9C4A26";
-  const ACCENT_INK = "#7A3A1E";
-  const INK_SOFT = "#5C5247";
-  const INK_FAINT = "#9B8E7C";
-  const BG_ALT = "#F4EFE3";
-  const RULE = "#E6DCCC";
-
-  // Data embedded at build time
-  const byYear = {{ stats.byYear | dump | safe }};
-  const topics = {{ stats.topics | dump | safe }};
-  const pubDecades = {{ stats.pubDecades | dump | safe }};
-  const pickers = {{ stats.pickers | dump | safe }};
-
-  // ── Helpers ─────────────────────────────────────────────────────────
-
-  function responsiveWidth(container) {
-    return container.getBoundingClientRect().width;
-  }
-
-  // ── Books by year (bars + line) ────────────────────────────────────
-
-  function drawByYear() {
-    const container = document.getElementById("chart-by-year");
-    container.innerHTML = "";
-    const width = responsiveWidth(container);
-    const margin = { top: 24, right: 52, bottom: 32, left: 36 };
-    const height = 300;
-    const inner = { w: width - margin.left - margin.right, h: height - margin.top - margin.bottom };
-
-    const svg = d3.select(container).append("svg")
-      .attr("viewBox", `0 0 ${width} ${height}`)
-      .attr("width", "100%")
-      .attr("height", height);
-
-    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-    const x = d3.scaleBand().domain(byYear.map(d => d.year)).range([0, inner.w]).padding(0.35);
-    const yCount = d3.scaleLinear().domain([0, d3.max(byYear, d => d.count) * 1.15]).nice().range([inner.h, 0]);
-    const yPages = d3.scaleLinear().domain([0, d3.max(byYear, d => d.pages) * 1.1]).nice().range([inner.h, 0]);
-
-    // X axis
-    g.append("g")
-      .attr("transform", `translate(0,${inner.h})`)
-      .call(d3.axisBottom(x).tickValues(byYear.filter((_, i) => i % Math.ceil(byYear.length / 12) === 0).map(d => d.year)).tickSize(0).tickPadding(8))
-      .call(g => g.select(".domain").attr("stroke", RULE))
-      .selectAll("text").attr("fill", INK_FAINT).style("font-size", "11px").style("font-family", "inherit");
-
-    // Left axis (count)
-    g.append("g")
-      .call(d3.axisLeft(yCount).ticks(5).tickSize(-inner.w).tickPadding(6))
-      .call(g => g.select(".domain").remove())
-      .call(g => g.selectAll(".tick line").attr("stroke", RULE).attr("stroke-dasharray", "2,3"))
-      .call(g => g.selectAll(".tick text").attr("fill", INK_FAINT).style("font-size", "11px").style("font-family", "inherit"));
-
-    // Left axis label
-    g.append("text").attr("x", -4).attr("y", -10).attr("text-anchor", "start")
-      .attr("fill", ACCENT).style("font-size", "11px").style("font-family", "inherit")
-      .text("Books");
-
-    // Right axis (pages)
-    g.append("g")
-      .attr("transform", `translate(${inner.w},0)`)
-      .call(d3.axisRight(yPages).ticks(5).tickSize(0).tickPadding(6))
-      .call(g => g.select(".domain").remove())
-      .call(g => g.selectAll(".tick text").attr("fill", INK_SOFT).style("font-size", "11px").style("font-family", "inherit"));
-
-    // Right axis label
-    g.append("text").attr("x", inner.w + 4).attr("y", -10).attr("text-anchor", "start")
-      .attr("fill", INK_SOFT).style("font-size", "11px").style("font-family", "inherit")
-      .text("Pages");
-
-    // Bars (book count)
-    g.selectAll(".bar").data(byYear).join("rect")
-      .attr("class", "bar")
-      .attr("x", d => x(d.year))
-      .attr("y", d => yCount(d.count))
-      .attr("width", x.bandwidth())
-      .attr("height", d => inner.h - yCount(d.count))
-      .attr("fill", ACCENT)
-      .attr("rx", 1);
-
-    // Line (pages)
-    const line = d3.line()
-      .x(d => x(d.year) + x.bandwidth() / 2)
-      .y(d => yPages(d.pages))
-      .curve(d3.curveMonotoneX);
-
-    g.append("path").datum(byYear)
-      .attr("fill", "none")
-      .attr("stroke", INK_SOFT)
-      .attr("stroke-width", 2)
-      .attr("d", line);
-
-    // Dots on line
-    g.selectAll(".dot").data(byYear).join("circle")
-      .attr("cx", d => x(d.year) + x.bandwidth() / 2)
-      .attr("cy", d => yPages(d.pages))
-      .attr("r", 3)
-      .attr("fill", INK_SOFT);
-  }
-
-  // ── Topic treemap ─────────────────────────────────────────────────
-
-  function drawTopics() {
-    const container = document.getElementById("chart-topics");
-    container.innerHTML = "";
-    const width = responsiveWidth(container);
-    const height = 360;
-
-    const palette = [
-      "#9C4A26", "#B8623A", "#7A3A1E", "#C4835A", "#5C5247",
-      "#8B7355", "#6B5B4E", "#A67C5B", "#D4A574", "#3E3428",
-      "#C9956B"
-    ];
-
-    const root = d3.hierarchy({ children: topics })
-      .sum(d => d.count)
-      .sort((a, b) => b.value - a.value);
-
-    d3.treemap()
-      .size([width, height])
-      .padding(2)
-      .round(true)(root);
-
-    const svg = d3.select(container).append("svg")
-      .attr("viewBox", `0 0 ${width} ${height}`)
-      .attr("width", "100%")
-      .attr("height", height);
-
-    const cell = svg.selectAll("g").data(root.leaves()).join("g")
-      .attr("transform", d => `translate(${d.x0},${d.y0})`);
-
-    cell.append("rect")
-      .attr("width", d => d.x1 - d.x0)
-      .attr("height", d => d.y1 - d.y0)
-      .attr("fill", (d, i) => palette[i % palette.length])
-      .attr("rx", 2);
-
-    // Labels — only show if cell is big enough
-    cell.each(function (d) {
-      const w = d.x1 - d.x0;
-      const h = d.y1 - d.y0;
-      const g = d3.select(this);
-      if (w > 60 && h > 36) {
-        g.append("text")
-          .attr("x", 6).attr("y", 18)
-          .attr("fill", "#FBF8F3")
-          .style("font-size", w > 120 ? "13px" : "11px")
-          .style("font-family", "inherit")
-          .style("font-weight", "500")
-          .text(d.data.name);
-        g.append("text")
-          .attr("x", 6).attr("y", w > 120 ? 35 : 31)
-          .attr("fill", "rgba(251,248,243,0.7)")
-          .style("font-size", w > 120 ? "12px" : "10px")
-          .style("font-family", "inherit")
-          .text(d.data.count + (d.data.count === 1 ? " book" : " books"));
-      }
-    });
-  }
-
-  // ── Publication decade histogram ──────────────────────────────────
-
-  function drawPubDecade() {
-    const container = document.getElementById("chart-pub-decade");
-    container.innerHTML = "";
-    const width = responsiveWidth(container);
-    const margin = { top: 16, right: 16, bottom: 32, left: 36 };
-    const height = 260;
-    const inner = { w: width - margin.left - margin.right, h: height - margin.top - margin.bottom };
-
-    const svg = d3.select(container).append("svg")
-      .attr("viewBox", `0 0 ${width} ${height}`)
-      .attr("width", "100%")
-      .attr("height", height);
-
-    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-    const x = d3.scaleBand()
-      .domain(pubDecades.map(d => d.decade))
-      .range([0, inner.w])
-      .padding(0.25);
-
-    const y = d3.scaleLinear()
-      .domain([0, d3.max(pubDecades, d => d.count) * 1.15])
-      .nice()
-      .range([inner.h, 0]);
-
-    // X axis
-    g.append("g")
-      .attr("transform", `translate(0,${inner.h})`)
-      .call(d3.axisBottom(x).tickSize(0).tickPadding(8).tickFormat(d => d + "s"))
-      .call(g => g.select(".domain").attr("stroke", RULE))
-      .selectAll("text").attr("fill", INK_FAINT).style("font-size", "11px").style("font-family", "inherit");
-
-    // Y axis
-    g.append("g")
-      .call(d3.axisLeft(y).ticks(5).tickSize(-inner.w).tickPadding(6))
-      .call(g => g.select(".domain").remove())
-      .call(g => g.selectAll(".tick line").attr("stroke", RULE).attr("stroke-dasharray", "2,3"))
-      .call(g => g.selectAll(".tick text").attr("fill", INK_FAINT).style("font-size", "11px").style("font-family", "inherit"));
-
-    // Bars
-    g.selectAll(".bar").data(pubDecades).join("rect")
-      .attr("x", d => x(d.decade))
-      .attr("y", d => y(d.count))
-      .attr("width", x.bandwidth())
-      .attr("height", d => inner.h - y(d.count))
-      .attr("fill", ACCENT)
-      .attr("rx", 1);
-
-    // Count labels on bars
-    g.selectAll(".bar-label").data(pubDecades).join("text")
-      .attr("x", d => x(d.decade) + x.bandwidth() / 2)
-      .attr("y", d => y(d.count) - 5)
-      .attr("text-anchor", "middle")
-      .attr("fill", INK_SOFT)
-      .style("font-size", "11px")
-      .style("font-family", "inherit")
-      .text(d => d.count);
-  }
-
-  // ── Pickers horizontal bar chart ──────────────────────────────────
-
-  function drawPickers() {
-    const container = document.getElementById("chart-pickers");
-    container.innerHTML = "";
-    const width = responsiveWidth(container);
-    const margin = { top: 8, right: 40, bottom: 8, left: 80 };
-    const barH = 28;
-    const gap = 4;
-    const height = pickers.length * (barH + gap) + margin.top + margin.bottom;
-    const inner = { w: width - margin.left - margin.right, h: height - margin.top - margin.bottom };
-
-    const svg = d3.select(container).append("svg")
-      .attr("viewBox", `0 0 ${width} ${height}`)
-      .attr("width", "100%")
-      .attr("height", height);
-
-    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-    const x = d3.scaleLinear()
-      .domain([0, d3.max(pickers, d => d.count)])
-      .range([0, inner.w]);
-
-    // Bars
-    g.selectAll(".bar").data(pickers).join("rect")
-      .attr("x", 0)
-      .attr("y", (d, i) => i * (barH + gap))
-      .attr("width", d => x(d.count))
-      .attr("height", barH)
-      .attr("fill", ACCENT)
-      .attr("rx", 1);
-
-    // Names
-    g.selectAll(".name").data(pickers).join("text")
-      .attr("x", -8)
-      .attr("y", (d, i) => i * (barH + gap) + barH / 2)
-      .attr("text-anchor", "end")
-      .attr("dominant-baseline", "central")
-      .attr("fill", INK_SOFT)
-      .style("font-size", "13px")
-      .style("font-family", "inherit")
-      .text(d => d.name);
-
-    // Count labels
-    g.selectAll(".count").data(pickers).join("text")
-      .attr("x", d => x(d.count) + 6)
-      .attr("y", (d, i) => i * (barH + gap) + barH / 2)
-      .attr("dominant-baseline", "central")
-      .attr("fill", INK_FAINT)
-      .style("font-size", "12px")
-      .style("font-family", "inherit")
-      .text(d => d.count);
-  }
-
-  // ── Draw all & redraw on resize ───────────────────────────────────
-
-  function drawAll() {
-    drawByYear();
-    drawTopics();
-    drawPubDecade();
-    drawPickers();
-  }
-
-  drawAll();
-
-  let resizeTimer;
-  window.addEventListener("resize", function () {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(drawAll, 200);
-  });
-})();
-</script>
+<script id="chart-data" type="application/json">{{ stats | dump | safe }}</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap@3.1.0/dist/chartjs-chart-treemap.min.js"></script>
+<script src="/assets/js/stats.js"></script>
