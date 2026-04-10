@@ -479,18 +479,134 @@ body.shelf .page {
 }
 .review-list { display: flex; flex-direction: column; gap: var(--gap-md); }
 .review {
-  padding: var(--gap-sm);
+  padding: var(--gap-sm) calc(var(--gap-sm) * 1.2);
   background: var(--bg-alt);
   border-radius: 2px;
+  border-left: 3px solid var(--accent);
 }
-.review-rating { letter-spacing: 0.1em; color: var(--accent); margin: 0 0 0.4rem; }
+.review--dnf {
+  border-left-color: var(--ink-faint);
+  background: transparent;
+  border: 1px dashed var(--rule);
+}
+.review-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin: 0 0 0.5rem;
+}
+.review-byline {
+  margin: 0;
+  font-size: var(--type-small);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+.review-byline a {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.review-byline a:hover { color: var(--accent); }
+.review-rating { letter-spacing: 0.1em; color: var(--accent); margin: 0; font-size: 0.95rem; }
 .review-rating .dim { color: var(--rule); }
+.review-body { margin: 0 0 0.6rem; color: var(--ink); }
 .review blockquote {
   margin: 0.6rem 0 0;
   padding-left: 1rem;
   border-left: 2px solid var(--accent);
   font-style: italic;
   color: var(--ink-soft);
+}
+.review-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.7rem 0 0;
+  padding: 0;
+}
+.review-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--ink-soft);
+  border: 1px solid var(--rule);
+  font-variation-settings: "opsz" 12;
+}
+.review-tag--rec {
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+.review-tag--disc .dim { color: var(--rule); }
+.review-tag--dnf {
+  color: var(--ink-faint);
+  border-color: var(--ink-faint);
+  background: transparent;
+}
+
+/* ─── Awards ─────────────────────────────────────────────────────────── */
+
+.award-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+.award-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.75rem 0.4rem 0.55rem;
+  background: var(--bg-alt);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  color: var(--accent-ink);
+}
+.award-badge-icon {
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--accent);
+}
+.award-badge-text {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.award-badge-name {
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.award-badge-year {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 0.1rem;
+}
+
+.entry-award {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0.45rem 0 0;
+  font-size: var(--type-small);
+  color: var(--accent-ink);
+  letter-spacing: 0.02em;
+}
+.entry-award::before {
+  content: "★";
+  color: var(--accent);
+  font-size: 0.9rem;
+  line-height: 1;
 }
 
 /* ─── Kudos (Tinylytics) ─────────────────────────────────────────────── */
@@ -586,6 +702,84 @@ body.shelf .page {
   font-size: var(--type-small);
   color: var(--ink-faint);
   letter-spacing: 0.06em;
+}
+
+.member-reviews {
+  margin-top: var(--gap-lg);
+}
+.member-reviews h2 {
+  font-size: var(--type-h2);
+  font-weight: 500;
+  margin: 0 0 1rem;
+}
+.member-review-list {
+  display: flex;
+  flex-direction: column;
+}
+.member-review-row {
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+.member-review-row:last-child { border-bottom: 1px solid var(--rule); }
+.member-review-title { text-decoration: none; }
+.member-review-title:hover { color: var(--accent); }
+.member-review-status {
+  font-size: var(--type-small);
+  color: var(--ink-faint);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.member-review-row--dnf .member-review-status {
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.member-review-status .review-rating {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+}
+
+.member-todo {
+  margin-top: var(--gap-lg);
+}
+.member-todo h2 {
+  font-size: var(--type-h2);
+  font-weight: 500;
+  margin: 0 0 0.5rem;
+}
+.member-todo-lede {
+  margin: 0 0 1rem;
+  font-size: var(--type-small);
+  color: var(--ink-faint);
+  letter-spacing: 0.02em;
+}
+.member-todo-list {
+  display: flex;
+  flex-direction: column;
+}
+.member-todo-row {
+  padding: 0.65rem 0;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+.member-todo-row:last-child { border-bottom: 1px solid var(--rule); }
+.member-todo-title {
+  text-decoration: none;
+  color: var(--ink);
+}
+.member-todo-title:hover { color: var(--accent); }
+.member-todo-date {
+  font-size: var(--type-small);
+  color: var(--ink-faint);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  text-transform: uppercase;
 }
 
 /* ─── About ──────────────────────────────────────────────────────────── */

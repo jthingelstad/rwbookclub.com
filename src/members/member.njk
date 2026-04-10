@@ -50,4 +50,49 @@ eleventyComputed:
       <p class="empty">Hasn't picked a book yet.</p>
     {% endif %}
   </section>
+
+  {% set memberReviews = reviews | reviewsByMember(member.id) %}
+  {% if memberReviews.length %}
+    <section class="member-reviews">
+      <h2>Reviews ({{ memberReviews.length }})</h2>
+      <ol class="member-review-list">
+        {% for r in memberReviews %}
+          {% for bid in r.bookIds %}
+            {% for b in books %}
+              {% if b.id == bid %}
+                <li class="member-review-row{% if r.dnf %} member-review-row--dnf{% endif %}">
+                  <a class="member-review-title" href="/books/{{ b.slug }}/">{{ b.title }}</a>
+                  <span class="member-review-status">
+                    {% if r.dnf %}
+                      DNF
+                    {% elif r.rating %}
+                      <span class="review-rating">{% for i in range(0, r.rating) %}★{% endfor %}{% for i in range(r.rating, 5) %}<span class="dim">★</span>{% endfor %}</span>
+                    {% endif %}
+                  </span>
+                </li>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+        {% endfor %}
+      </ol>
+    </section>
+  {% endif %}
+
+  {% set todoBooks = books | unreviewedFor(member.id, reviews) | limit(15) %}
+  {% if todoBooks.length %}
+    <section class="member-todo">
+      <h2>To review</h2>
+      <p class="member-todo-lede">The {{ todoBooks.length }} most recent book{% if todoBooks.length != 1 %}s{% endif %} you haven't reviewed yet.</p>
+      <ol class="member-todo-list">
+        {% for b in todoBooks %}
+          <li class="member-todo-row">
+            <a class="member-todo-title" href="/books/{{ b.slug }}/">{{ b.title }}</a>
+            {% if b.meetingDate %}
+              <span class="member-todo-date">{{ b.meetingDate | monthYear }}</span>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    </section>
+  {% endif %}
 </article>

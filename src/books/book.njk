@@ -24,6 +24,20 @@ eleventyComputed:
       {% if book.authors.length %}
         <p class="book-authors">by {{ book.authors | joinNames }}</p>
       {% endif %}
+      {% set bookAwards = awards | awardsForBook(book.id) %}
+      {% if bookAwards.length %}
+        <ul class="award-badges">
+          {% for a in bookAwards %}
+            <li class="award-badge" title="{{ a.year }}">
+              <span class="award-badge-icon" aria-hidden="true">★</span>
+              <span class="award-badge-text">
+                <span class="award-badge-name">{{ a.award }}</span>
+                <span class="award-badge-year">{{ a.year }}</span>
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
     </div>
   </header>
 
@@ -83,10 +97,31 @@ eleventyComputed:
     {% if bookReviews.length %}
       <ul class="review-list">
         {% for r in bookReviews %}
-          <li class="review">
-            {% if r.rating %}<p class="review-rating" aria-label="Rated {{ r.rating }} of 5">{% for i in range(0, r.rating) %}★{% endfor %}{% for i in range(r.rating, 5) %}<span class="dim">★</span>{% endfor %}</p>{% endif %}
-            {% if r.review %}<p>{{ r.review }}</p>{% endif %}
+          <li class="review{% if r.dnf %} review--dnf{% endif %}">
+            <header class="review-head">
+              <p class="review-byline">
+                {% for who in r.reviewers %}
+                  {% if who.slug %}<a href="/members/{{ who.slug }}/">{{ who.name }}</a>{% else %}{{ who.name }}{% endif %}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+              </p>
+              {% if r.dnf %}
+                <span class="review-tag review-tag--dnf">Did not finish</span>
+              {% elif r.rating %}
+                <p class="review-rating" aria-label="Rated {{ r.rating }} of 5">{% for i in range(0, r.rating) %}★{% endfor %}{% for i in range(r.rating, 5) %}<span class="dim">★</span>{% endfor %}</p>
+              {% endif %}
+            </header>
+            {% if r.review %}<p class="review-body">{{ r.review }}</p>{% endif %}
             {% if r.favoriteQuote %}<blockquote>{{ r.favoriteQuote }}</blockquote>{% endif %}
+            {% if (not r.dnf) and (r.wouldRecommend or r.discussionQuality) %}
+              <ul class="review-tags">
+                {% if r.wouldRecommend %}<li class="review-tag review-tag--rec">Recommends</li>{% endif %}
+                {% if r.discussionQuality %}
+                  <li class="review-tag review-tag--disc" title="Discussion quality">
+                    Discussion {% for i in range(0, r.discussionQuality) %}★{% endfor %}{% for i in range(r.discussionQuality, 5) %}<span class="dim">★</span>{% endfor %}
+                  </li>
+                {% endif %}
+              </ul>
+            {% endif %}
           </li>
         {% endfor %}
       </ul>

@@ -11,6 +11,7 @@ from collections import Counter
 
 from lib import (
     AUTHORS,
+    AWARDS,
     BOOKS,
     DATA_DIR,
     MEETINGS,
@@ -34,9 +35,11 @@ def main() -> None:
     members_raw = list_all(session, base, MEMBERS)
     authors_raw = list_all(session, base, AUTHORS)
     reviews_raw = list_all(session, base, REVIEWS)
+    awards_raw = list_all(session, base, AWARDS)
     print(
         f"  books={len(books_raw)} meetings={len(meetings_raw)} "
-        f"members={len(members_raw)} authors={len(authors_raw)} reviews={len(reviews_raw)}"
+        f"members={len(members_raw)} authors={len(authors_raw)} "
+        f"reviews={len(reviews_raw)} awards={len(awards_raw)}"
     )
 
     meetings_by_id = {m["id"]: m for m in meetings_raw}
@@ -204,11 +207,24 @@ def main() -> None:
     review_records = []
     for r in reviews_raw:
         f = r["fields"]
+        member_ids = f.get("Member") or []
+        reviewers = [
+            {
+                "id": mid,
+                "name": member_name_by_id.get(mid),
+                "slug": member_slug_by_id.get(mid)
+                if member_current_by_id.get(mid)
+                else None,
+            }
+            for mid in member_ids
+            if member_name_by_id.get(mid)
+        ]
         review_records.append(
             {
                 "id": r["id"],
                 "bookIds": f.get("Book") or [],
-                "memberIds": f.get("Member") or [],
+                "memberIds": member_ids,
+                "reviewers": reviewers,
                 "rating": f.get("Rating"),
                 "review": (f.get("Review") or "").strip() or None,
                 "dnf": bool(f.get("DNF")),
@@ -218,6 +234,59 @@ def main() -> None:
                 "createdAt": f.get("Created at"),
             }
         )
+
+    # ── Awards ───────────────────────────────────────────────────────────
+    award_records = []
+    for a in awards_raw:
+        f = a["fields"]
+        book_ids = f.get("Book") or []
+        books = [
+            {
+                "id": bid,
+                "slug": slug_by_book_id.get(bid),
+                "title": title_by_book_id.get(bid),
+            }
+            for bid in book_ids
+            if bid in slug_by_book_id
+        ]
+        voter_ids = f.get("Voted By") or []
+        voters = [
+            {
+                "name": member_name_by_id.get(mid),
+                "slug": member_slug_by_id.get(mid)
+                if member_current_by_id.get(mid)
+                else None,
+            }
+            for mid in voter_ids
+            if member_name_by_id.get(mid)
+        ]
+        award_records.append(
+            {
+                "id": a["id"],
+                "name": (f.get("Award Name") or "").strip() or None,
+                "year": f.get("Year"),
+                "award": f.get("Award"),
+                "notes": (f.get("Notes") or "").strip() or None,
+                "books": books,
+                "voters": voters,
+            }
+        )
+
+    # Sort awards: most recent year first, then by category
+    _award_order = {
+        "Book of the Year": 0,
+        "Runner-up": 1,
+        "Honorable Mention": 2,
+        "Most Discussed": 3,
+        "Most Surprising": 4,
+        "Worst Book": 5,
+    }
+    award_records.sort(
+        key=lambda r: (
+            -(r.get("year") or 0),
+            _award_order.get(r.get("award") or "", 99),
+        )
+    )
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     (DATA_DIR / "books.json").write_text(
@@ -232,9 +301,13 @@ def main() -> None:
     (DATA_DIR / "reviews.json").write_text(
         json.dumps(review_records, indent=2, ensure_ascii=False)
     )
+    (DATA_DIR / "awards.json").write_text(
+        json.dumps(award_records, indent=2, ensure_ascii=False)
+    )
     print(
         f"Wrote {len(book_records)} books, {len(member_records)} members, "
-        f"{len(author_records)} authors, {len(review_records)} reviews"
+        f"{len(author_records)} authors, {len(review_records)} reviews, "
+        f"{len(award_records)} awards"
     )
 
 

@@ -44,7 +44,39 @@ module.exports = function (eleventyConfig) {
   // Reviews for a given book id (Nunjucks lacks selectattr)
   eleventyConfig.addFilter("reviewsForBook", (reviews, bookId) => {
     if (!Array.isArray(reviews)) return [];
-    return reviews.filter((r) => Array.isArray(r.bookIds) && r.bookIds.includes(bookId));
+    return reviews
+      .filter((r) => Array.isArray(r.bookIds) && r.bookIds.includes(bookId))
+      .sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
+  });
+
+  // Awards for a given book id
+  eleventyConfig.addFilter("awardsForBook", (awards, bookId) => {
+    if (!Array.isArray(awards)) return [];
+    return awards.filter(
+      (a) => Array.isArray(a.books) && a.books.some((b) => b.id === bookId)
+    );
+  });
+
+  // Reviews authored by a given member id
+  eleventyConfig.addFilter("reviewsByMember", (reviews, memberId) => {
+    if (!Array.isArray(reviews)) return [];
+    return reviews.filter(
+      (r) => Array.isArray(r.memberIds) && r.memberIds.includes(memberId)
+    );
+  });
+
+  // Books a member has not yet reviewed (any kind of review counts, including
+  // DNF). `books` is already sorted most-recent-first by the fetch script.
+  eleventyConfig.addFilter("unreviewedFor", (books, memberId, reviews) => {
+    if (!Array.isArray(books)) return [];
+    const reviewed = new Set();
+    if (Array.isArray(reviews)) {
+      for (const r of reviews) {
+        if (!Array.isArray(r.memberIds) || !r.memberIds.includes(memberId)) continue;
+        for (const bid of r.bookIds || []) reviewed.add(bid);
+      }
+    }
+    return books.filter((b) => b.meetingDate && !reviewed.has(b.id));
   });
 
   // RFC-822 / RFC-2822 date for the RSS feed

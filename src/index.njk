@@ -40,6 +40,10 @@ title: ""
                     {% if book.pickerSlug %}<a href="/members/{{ book.pickerSlug }}/">{{ book.pickerName }}</a>{% else %}{{ book.pickerName }}{% endif %}
                   </p>
                 {% endif %}
+                {% set bookAwards = awards | awardsForBook(book.id) %}
+                {% for a in bookAwards %}
+                  <p class="entry-award">{{ a.award }} · {{ a.year }}</p>
+                {% endfor %}
               </div>
             </li>
           {% endfor %}

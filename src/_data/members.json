@@ -5,6 +5,7 @@
     "slug": "nick",
     "isCurrent": true,
     "website": null,
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775800800000/B-vrCK7gN6THpucfWgvsiw/-v-Nc2yBIvtXZJ0xU40p6ZIbdkuHudqab_xbYz-o_zrcFNwAfCMCgZn8-fRJsk5sJvGrDOIZwW87kObgwjRJ8mYhQHM7FgK8hoSsvHMsqBw/x5P42tFd_tD7B2rrlaheKDpUhbNio5j033jTDWXXcS4",
     "hasPhoto": true,
     "pickedCount": 16,
     "pickedBooks": [
@@ -122,9 +123,6 @@
         "year": 2014,
         "date": "2014-01-28T00:00:00.000Z"
       }
-    ],
-    "photoWidths": [
-      159
     ]
   },
   {
@@ -133,6 +131,7 @@
     "slug": "erik",
     "isCurrent": true,
     "website": null,
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775800800000/-DnK5KazakSIHDnmE2bLuw/fGovvYKlOFBJ-wCWurHxBGjlR5QqLB-u3eZohegmAJrQdqd-wnxgMZTjwyFKzOm6PhzeWJTKTBuLrW6RPXZ4f_hwh6SqVv_Rc8q_gLNwYsE/sTfEssMh1BOrF3W699opnoPbqT68g81l6WpVlWmwSX4",
     "hasPhoto": true,
     "pickedCount": 35,
     "pickedBooks": [
@@ -346,10 +345,6 @@
         "year": 2003,
         "date": "2003-09-26T23:00:00.000Z"
       }
-    ],
-    "photoWidths": [
-      240,
-      480
     ]
   },
   {
@@ -358,6 +353,7 @@
     "slug": "j-rauser",
     "isCurrent": false,
     "website": null,
+    "photoUrl": null,
     "hasPhoto": false,
     "pickedCount": 0,
     "pickedBooks": []
@@ -368,6 +364,7 @@
     "slug": "john",
     "isCurrent": false,
     "website": null,
+    "photoUrl": null,
     "hasPhoto": false,
     "pickedCount": 24,
     "pickedBooks": []
@@ -378,6 +375,7 @@
     "slug": "scott",
     "isCurrent": false,
     "website": null,
+    "photoUrl": null,
     "hasPhoto": false,
     "pickedCount": 1,
     "pickedBooks": []
@@ -388,6 +386,7 @@
     "slug": "brad",
     "isCurrent": false,
     "website": null,
+    "photoUrl": null,
     "hasPhoto": false,
     "pickedCount": 1,
     "pickedBooks": []
@@ -398,6 +397,7 @@
     "slug": "jeffrey",
     "isCurrent": false,
     "website": null,
+    "photoUrl": null,
     "hasPhoto": false,
     "pickedCount": 0,
     "pickedBooks": []
@@ -408,6 +408,7 @@
     "slug": "david",
     "isCurrent": false,
     "website": null,
+    "photoUrl": null,
     "hasPhoto": false,
     "pickedCount": 5,
     "pickedBooks": []
@@ -418,6 +419,7 @@
     "slug": "tom",
     "isCurrent": true,
     "website": "http://tomeri.org",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775800800000/ChE2urLsaskgru4BM34L2w/Mo_4ONUHYuOFO0tt2Wl62UQw0U6_Awwlp6QIeLgdckJQdtTwyfc5f0eINBsF1nAEH3nQs2DiUMQU6pu6AFVCZe88hV4GMpNRltUMcKren9wLV3w8shOXdp1m-dDWtqDdmU0G2OjANbDDys_euWbggw/v0dxyv90PmblwkkELtWngbXAtxiHLOepputYl7bxKWQ",
     "hasPhoto": true,
     "pickedCount": 33,
     "pickedBooks": [
@@ -601,10 +603,6 @@
         "year": 2005,
         "date": "2005-11-24T00:00:00.000Z"
       }
-    ],
-    "photoWidths": [
-      240,
-      256
     ]
   },
   {
@@ -613,6 +611,7 @@
     "slug": "jamie",
     "isCurrent": true,
     "website": "https://www.thingelstad.com",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775800800000/G-YylHiZMhApULhy0MfEMQ/82fKoxfPOQig2l5lEV_BoTNy6xEHYVeps80L62mA2R9V9An6ibprqX868dhF_-n9rZkuBEOGbqHUV16BS_DHtjm1Xf428D665pJ8LuL18NM/HmmH9lQtvKkx5GLFQRVsoaWu6M-iME4HjhxHJgp0rXg",
     "hasPhoto": true,
     "pickedCount": 33,
     "pickedBooks": [
@@ -808,10 +807,6 @@
         "year": 2008,
         "date": "2008-02-01T00:00:00.000Z"
       }
-    ],
-    "photoWidths": [
-      240,
-      480
     ]
   },
   {
@@ -820,6 +815,7 @@
     "slug": "loren",
     "isCurrent": true,
     "website": "http://www-users.cs.umn.edu/~terveen/",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775800800000/ezvIT7Xe6vgRDS5F5O1RDw/eLkb33-cTfPHeiwIrrbt4BXuoaKqqw7xBTWeIKWRplFli4-2LsO2uweG1IxMi7nmGe00hJm8SrF3dQsFYUlHVgpuLBccwg15sFQKFXC1VF0/dn4KS3nOKlyax806Ht0vlqJPx-1HaPuQF0uj3nzj42w",
     "hasPhoto": true,
     "pickedCount": 16,
     "pickedBooks": [
@@ -925,9 +921,6 @@
         "year": 2015,
         "date": "2015-07-22T23:00:00.000Z"
       }
-    ],
-    "photoWidths": [
-      200
     ]
   },
   {
@@ -936,6 +929,7 @@
     "slug": "dan",
     "isCurrent": false,
     "website": null,
+    "photoUrl": null,
     "hasPhoto": false,
     "pickedCount": 21,
     "pickedBooks": []

@@ -7,6 +7,13 @@
     "memberIds": [
       "recuT1LiVs6I0u4zR"
     ],
+    "reviewers": [
+      {
+        "id": "recuT1LiVs6I0u4zR",
+        "name": "Jamie",
+        "slug": "jamie"
+      }
+    ],
     "rating": 5,
     "review": null,
     "dnf": false,
@@ -16,12 +23,134 @@
     "createdAt": "2026-04-09T18:36:15.000Z"
   },
   {
+    "id": "rec1bFDMEaSUWUZf4",
+    "bookIds": [
+      "recoQkJQ7bkfgX3ue"
+    ],
+    "memberIds": [
+      "recuT1LiVs6I0u4zR"
+    ],
+    "reviewers": [
+      {
+        "id": "recuT1LiVs6I0u4zR",
+        "name": "Jamie",
+        "slug": "jamie"
+      }
+    ],
+    "rating": null,
+    "review": null,
+    "dnf": true,
+    "discussionQuality": null,
+    "wouldRecommend": false,
+    "favoriteQuote": null,
+    "createdAt": "2026-04-10T02:20:32.000Z"
+  },
+  {
+    "id": "recKLTYkZJpy6iaBO",
+    "bookIds": [
+      "recCBJ0XFXhJkPBZz"
+    ],
+    "memberIds": [
+      "recuT1LiVs6I0u4zR"
+    ],
+    "reviewers": [
+      {
+        "id": "recuT1LiVs6I0u4zR",
+        "name": "Jamie",
+        "slug": "jamie"
+      }
+    ],
+    "rating": 5,
+    "review": null,
+    "dnf": false,
+    "discussionQuality": null,
+    "wouldRecommend": false,
+    "favoriteQuote": null,
+    "createdAt": "2026-04-10T02:21:19.000Z"
+  },
+  {
+    "id": "recLK9D9ynUI6RYUu",
+    "bookIds": [
+      "reciaAPpXSi5QgtMu"
+    ],
+    "memberIds": [
+      "recuT1LiVs6I0u4zR"
+    ],
+    "reviewers": [
+      {
+        "id": "recuT1LiVs6I0u4zR",
+        "name": "Jamie",
+        "slug": "jamie"
+      }
+    ],
+    "rating": 5,
+    "review": "This is one of my favorite books that we have ever read as a book club. I've come back to this book over and over again with concepts and models that apply to everyday things that I’m encountering. I've recommended it to dozens of people. Very good read!",
+    "dnf": false,
+    "discussionQuality": 5,
+    "wouldRecommend": true,
+    "favoriteQuote": null,
+    "createdAt": "2026-04-10T02:21:45.000Z"
+  },
+  {
+    "id": "recOVDiQEz2XdZACy",
+    "bookIds": [
+      "recKAQ1CZWUNpGndi"
+    ],
+    "memberIds": [
+      "recuT1LiVs6I0u4zR"
+    ],
+    "reviewers": [
+      {
+        "id": "recuT1LiVs6I0u4zR",
+        "name": "Jamie",
+        "slug": "jamie"
+      }
+    ],
+    "rating": null,
+    "review": null,
+    "dnf": true,
+    "discussionQuality": null,
+    "wouldRecommend": false,
+    "favoriteQuote": null,
+    "createdAt": "2026-04-10T02:20:12.000Z"
+  },
+  {
+    "id": "recgQwISN1FMMmxrs",
+    "bookIds": [
+      "reck9sgVZNnM7BxjB"
+    ],
+    "memberIds": [
+      "recuT1LiVs6I0u4zR"
+    ],
+    "reviewers": [
+      {
+        "id": "recuT1LiVs6I0u4zR",
+        "name": "Jamie",
+        "slug": "jamie"
+      }
+    ],
+    "rating": null,
+    "review": null,
+    "dnf": true,
+    "discussionQuality": null,
+    "wouldRecommend": false,
+    "favoriteQuote": null,
+    "createdAt": "2026-04-10T02:20:55.000Z"
+  },
+  {
     "id": "recy2tXyceEBoSgZs",
     "bookIds": [
       "recnXtvkD6JHEQ6af"
     ],
     "memberIds": [
       "recuT1LiVs6I0u4zR"
+    ],
+    "reviewers": [
+      {
+        "id": "recuT1LiVs6I0u4zR",
+        "name": "Jamie",
+        "slug": "jamie"
+      }
     ],
     "rating": 5,
     "review": null,

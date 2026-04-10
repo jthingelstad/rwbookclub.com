@@ -1,0 +1,17 @@
+[
+  {
+    "id": "rechQ53hQAzRjfRKW",
+    "name": "Book of the Year",
+    "year": 2016,
+    "award": "Book of the Year",
+    "notes": null,
+    "books": [
+      {
+        "id": "recHWm3gO1UsblE3A",
+        "slug": "american-nations",
+        "title": "American Nations"
+      }
+    ],
+    "voters": []
+  }
+]
