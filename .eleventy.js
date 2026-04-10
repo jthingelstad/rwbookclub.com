@@ -85,6 +85,12 @@ module.exports = function (eleventyConfig) {
     return new Date(iso).toUTCString();
   });
 
+  // Format a number with locale separators: 54321 → "54,321"
+  eleventyConfig.addFilter("localeNumber", (n) => {
+    if (n == null) return "";
+    return Number(n).toLocaleString("en-US");
+  });
+
   // Take the first n items of an array (Nunjucks `slice` does something else)
   eleventyConfig.addFilter("limit", (arr, n) => {
     if (!Array.isArray(arr)) return [];
