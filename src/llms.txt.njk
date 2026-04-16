@@ -26,12 +26,12 @@ As of this build there are {{ journey.totalBooks }} books across
 - The picker usually hosts the discussion
 - Meetings are in-person in the Minneapolis–Saint Paul area
 
-{% set futureBooks = [] %}
-{% for book in books %}
-  {% if book.placeholder %}
-    {% set futureBooks = (futureBooks.push(book), futureBooks) %}
-  {% endif %}
-{% endfor %}
+{%- set futureBooks = [] -%}
+{%- for book in books -%}
+{%- if book.placeholder -%}
+{%- set futureBooks = (futureBooks.push(book), futureBooks) -%}
+{%- endif -%}
+{%- endfor %}
 
 ## Current book
 {% if futureBooks.length %}
