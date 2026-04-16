@@ -1,12 +1,24 @@
 # CLAUDE.md — rwbookclub.com
 
-Project-specific context for Claude Code. The site has not been built yet. As of April 2026 the only work done in this repo has been on the data layer (an Airtable base that is the source of truth for the future site).
+Project-specific context for Claude Code. The site is live at rwbookclub.com (deployed from `main` via GitHub Pages). As of April 2026 there are 179 books, 184 meetings, 178 authors, and 12 members (5 current).
 
 ## Project
 
-rwbookclub.com will be a public website for the RW Book Club, which has been meeting since April 2003. The club reads about 8 books per year, mostly non-fiction (about 88%), and rotates picking and hosting among members. As of April 2026 there are 179 books, 184 meetings, 178 authors, and 12 members (5 current).
+rwbookclub.com is the public website for the R/W Book Club, which has been meeting since April 2003. The club reads about 8 books per year, mostly non-fiction (about 88%), and rotates picking and hosting among members.
 
 The site is rendered from data in an Airtable base that is the canonical source of truth. Do not maintain a parallel content store; pull from Airtable.
+
+## Site build
+
+- **Generator:** Eleventy 3 (`npm run build`, `npm run serve`)
+- **Data refresh:** `npm run fetch` pulls from Airtable and downloads cover/member images
+- **Input:** `src/` with Nunjucks templates; global data in `src/_data/` (JS modules read the cached JSON in `src/_data/raw/`)
+- **Output:** `_site/` — published by GitHub Pages on push to `main`
+- **Pages:** `/` (home), `/books/<slug>/`, `/members/<slug>/`, `/about/`, `/stats/`, `/feed.xml`, `/llms.txt`, `/llms-full.txt`
+
+### Nunjucks whitespace gotcha
+
+Loops and `{% set %}` tags emit a newline per iteration by default. When a loop's only job is to build up a variable (not render output), use `{%-` / `-%}` on every tag in the block, otherwise a 179-iteration loop dumps ~360 blank lines into the output. The `futureBooks` setup block in `src/llms*.txt.njk` is the canonical example.
 
 ## Data Source
 
