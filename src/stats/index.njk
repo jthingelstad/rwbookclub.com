@@ -34,12 +34,21 @@ bodyClass: stats-page
     </div>
   </div>
 
-  {# ── Books by year ─────────────────────────────────────────────────── #}
+  {# ── Books per year ────────────────────────────────────────────────── #}
   <section class="stats-section">
     <h2>Books read per year</h2>
-    <p class="stats-desc">Book count shown as bars, total pages as the line.</p>
+    <p class="stats-desc">Number of books the club has read each year.</p>
     <div class="chart-canvas-wrap chart-canvas-wrap--tall">
-      <canvas id="chart-by-year"></canvas>
+      <canvas id="chart-books-by-year"></canvas>
+    </div>
+  </section>
+
+  {# ── Pages per year ────────────────────────────────────────────────── #}
+  <section class="stats-section">
+    <h2>Pages read per year</h2>
+    <p class="stats-desc">Total pages across all books read in each year.</p>
+    <div class="chart-canvas-wrap chart-canvas-wrap--tall">
+      <canvas id="chart-pages-by-year"></canvas>
     </div>
   </section>
 

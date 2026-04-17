@@ -110,11 +110,23 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
   padding: var(--gap-sm) 0 var(--gap-lg);
   border-bottom: 1px solid var(--rule);
   margin-bottom: var(--gap-lg);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+  flex-wrap: wrap;
 }
 .masthead-link {
   text-decoration: none;
   display: inline-block;
 }
+.masthead-nav {
+  color: var(--ink-faint);
+  font-size: var(--type-small);
+  text-align: right;
+}
+.masthead-nav a { color: var(--ink-soft); margin-left: 0.4rem; }
+.masthead-nav a:first-of-type { margin-left: 0; }
 .wordmark {
   font-family: var(--serif);
   font-size: 1rem;

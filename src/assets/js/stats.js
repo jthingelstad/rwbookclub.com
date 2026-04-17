@@ -33,42 +33,30 @@
 
   var data = JSON.parse(document.getElementById("chart-data").textContent);
 
-  // ── Books by year (bars + line) ────────────────────────────────────
+  // ── Books per year ────────────────────────────────────────────────
 
-  new Chart(document.getElementById("chart-by-year"), {
+  new Chart(document.getElementById("chart-books-by-year"), {
     type: "bar",
     data: {
       labels: data.byYear.map(function (d) { return d.year; }),
-      datasets: [
-        {
-          label: "Books",
-          data: data.byYear.map(function (d) { return d.count; }),
-          backgroundColor: colors.accent,
-          borderRadius: 3,
-          yAxisID: "y",
-          order: 2,
-        },
-        {
-          label: "Pages",
-          data: data.byYear.map(function (d) { return d.pages; }),
-          type: "line",
-          borderColor: colors.inkSoft,
-          backgroundColor: colors.inkSoft,
-          pointRadius: 3,
-          pointHoverRadius: 5,
-          borderWidth: 2,
-          tension: 0.3,
-          yAxisID: "y1",
-          order: 1,
-        },
-      ],
+      datasets: [{
+        label: "Books",
+        data: data.byYear.map(function (d) { return d.count; }),
+        backgroundColor: colors.accent,
+        borderRadius: 3,
+      }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          labels: { color: colors.inkSoft, font: font },
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function (ctx) {
+              return ctx.parsed.y + (ctx.parsed.y === 1 ? " book" : " books");
+            },
+          },
         },
       },
       scales: {
@@ -77,18 +65,53 @@
           grid: { display: false },
         },
         y: {
-          position: "left",
           beginAtZero: true,
-          title: { display: true, text: "Books", color: colors.accent, font: font },
           ticks: { color: colors.inkFaint, font: font, stepSize: 2 },
           grid: { color: colors.rule },
         },
-        y1: {
-          position: "right",
-          beginAtZero: true,
-          title: { display: true, text: "Pages", color: colors.inkSoft, font: font },
+      },
+    },
+  });
+
+  // ── Pages per year ────────────────────────────────────────────────
+
+  new Chart(document.getElementById("chart-pages-by-year"), {
+    type: "bar",
+    data: {
+      labels: data.byYear.map(function (d) { return d.year; }),
+      datasets: [{
+        label: "Pages",
+        data: data.byYear.map(function (d) { return d.pages; }),
+        backgroundColor: colors.inkSoft,
+        borderRadius: 3,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function (ctx) {
+              return ctx.parsed.y.toLocaleString("en-US") + " pages";
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
           ticks: { color: colors.inkFaint, font: font },
-          grid: { drawOnChartArea: false },
+          grid: { display: false },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: colors.inkFaint,
+            font: font,
+            callback: function (v) { return v.toLocaleString("en-US"); },
+          },
+          grid: { color: colors.rule },
         },
       },
     },

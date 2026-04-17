@@ -7,7 +7,16 @@ eleventyExcludeFromCollections: true
 > This file is designed for LLM consumption. Paste this URL into any AI
 > chatbot to give it full context about our book club's reading history.
 > Human-readable site: {{ site.url }}
-> Detailed version with synopses: {{ site.url }}/llms-full.txt
+
+## How to use this archive
+
+- `{{ site.url }}/llms.txt` — this file. Compact index of every book, with
+  a URL to the detailed text file for each one.
+- `{{ site.url }}/books/<slug>.txt` — one plain-text file per book with
+  full metadata, synopsis, meeting notes, and member reviews. Fetch these
+  individually for the book you care about.
+- `{{ site.url }}/books.json` — structured JSON, one row per book, for
+  analytical or cross-book queries.
 
 ## About the club
 
@@ -37,10 +46,12 @@ As of this build there are {{ journey.totalBooks }} books across
 {% if futureBooks.length %}
 {% set current = futureBooks[futureBooks.length - 1] %}
 - **{{ current.title | safe }}{% if current.subtitle %}: {{ current.subtitle | safe }}{% endif %}** by {{ current.authors | joinNames | safe }}
+  {{ site.url }}/books/{{ current.slug }}.txt
   Meeting {{ current.meetingDate | monthYear }}{% if current.pickerName %} · Picked by {{ current.pickerName }}{% endif %}
 {% else %}
 {% set current = books[0] %}
 - **{{ current.title | safe }}{% if current.subtitle %}: {{ current.subtitle | safe }}{% endif %}** by {{ current.authors | joinNames | safe }}
+  {{ site.url }}/books/{{ current.slug }}.txt
   Read {{ current.meetingDate | monthYear }}{% if current.pickerName %} · Picked by {{ current.pickerName }}{% endif %}
 {% endif %}
 
@@ -49,6 +60,7 @@ As of this build there are {{ journey.totalBooks }} books across
 {% for book in futureBooks | reverse %}
 {% if loop.index0 > 0 %}
 - **{{ book.title | safe }}{% if book.subtitle %}: {{ book.subtitle | safe }}{% endif %}** by {{ book.authors | joinNames | safe }}
+  {{ site.url }}/books/{{ book.slug }}.txt
   {{ book.meetingDate | monthYear }}{% if book.pickerName %} · Picked by {{ book.pickerName }}{% endif %}
 {% endif %}
 {% endfor %}
@@ -65,12 +77,14 @@ As of this build there are {{ journey.totalBooks }} books across
 
 ## Reading history (compact)
 
-Books are listed newest-first, grouped by year.
+Books are listed newest-first, grouped by year. Follow the .txt URL under
+each entry for the full metadata, synopsis, and reviews for that book.
 {% for yr in journey.years %}
 
 ### {{ yr.year }}
 {% for book in yr.books %}
 - **{{ book.title | safe }}{% if book.subtitle %}: {{ book.subtitle | safe }}{% endif %}** by {{ book.authors | joinNames | safe }}
+  {{ site.url }}/books/{{ book.slug }}.txt
   {{ book.topic | safe }}{% if book.fiction %} · Fiction{% endif %}{% if book.pageCount %} · {{ book.pageCount }}pp{% endif %}{% if book.publicationYear %} · Published {{ book.publicationYear }}{% endif %}{% if book.pickerName %} · Picked by {{ book.pickerName }}{% endif %}
 
 {%- endfor %}

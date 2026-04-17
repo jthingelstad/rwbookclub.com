@@ -6,6 +6,26 @@ module.exports = function (eleventyConfig) {
   // Watch CSS so --serve picks up edits
   eleventyConfig.addWatchTarget("src/assets/css/");
 
+  // Ensure the local dev server declares UTF-8 for plain-text responses
+  // (.txt, .xml). GitHub Pages sends charset=utf-8 by default in production;
+  // the Eleventy dev server doesn't, so browsers default to CP1252 and render
+  // mojibake for chars like em-dash and middle dot. JSON is UTF-8 already.
+  eleventyConfig.setServerOptions({
+    middleware: [
+      (req, res, next) => {
+        const url = req.url || "";
+        if (url.endsWith(".txt")) {
+          res.setHeader("Content-Type", "text/plain; charset=utf-8");
+        } else if (url.endsWith(".xml")) {
+          res.setHeader("Content-Type", "application/xml; charset=utf-8");
+        } else if (url.endsWith(".json")) {
+          res.setHeader("Content-Type", "application/json; charset=utf-8");
+        }
+        next();
+      },
+    ],
+  });
+
   // ── Filters ────────────────────────────────────────────────────────────
   eleventyConfig.addFilter("monthYear", (iso) => {
     if (!iso) return "";
@@ -123,7 +143,7 @@ module.exports = function (eleventyConfig) {
       data: "_data",
       output: "_site",
     },
-    templateFormats: ["njk", "md", "html"],
+    templateFormats: ["njk", "md", "html", "11ty.js"],
     htmlTemplateEngine: "njk",
     markdownTemplateEngine: "njk",
   };

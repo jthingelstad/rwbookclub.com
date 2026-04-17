@@ -1,0 +1,61 @@
+---
+pagination:
+  data: books
+  size: 1
+  alias: book
+permalink: "/books/{{ book.slug }}.txt"
+eleventyExcludeFromCollections: true
+---
+# {{ book.title | safe }}{% if book.subtitle %}: {{ book.subtitle | safe }}{% endif %}
+
+- **Author:** {{ book.authors | joinNames | safe }}
+{%- if book.placeholder %}
+- **Status:** Upcoming — Meeting {{ book.meetingDate | monthYear }}
+{%- else %}
+- **Read:** {{ book.meetingDate | monthYear }}
+{%- endif %}
+{%- if book.topic %}
+- **Topic:** {{ book.topic | safe }}{% if book.fiction %} (Fiction){% endif %}
+{%- endif %}
+{%- if book.publicationYear %}
+- **Published:** {{ book.publicationYear }}
+{%- endif %}
+{%- if book.pageCount %}
+- **Pages:** {{ book.pageCount }}
+{%- endif %}
+{%- if book.pickerNames and book.pickerNames.length %}
+- **Picked by:** {{ book.pickerNames | joinNames | safe }}
+{%- endif %}
+{%- if book.isbn13 %}
+- **ISBN-13:** {{ book.isbn13 }}
+{%- endif %}
+{%- if book.olKey %}
+- **Open Library:** https://openlibrary.org{{ book.olKey }}
+{%- endif %}
+{%- if book.hasCover and book.coverWidths %}
+- **Cover:** {{ site.url }}/assets/images/covers/{{ book.slug }}-{{ book.coverWidths[book.coverWidths.length - 1] }}.jpg
+{%- endif %}
+- **Canonical page:** {{ site.url }}/books/{{ book.slug }}/
+{% if book.synopsis %}
+## Synopsis
+
+{{ book.synopsis | stripHtml | safe }}
+{% endif %}
+{%- if book.meetingNotes %}
+## Meeting notes
+
+{{ book.meetingNotes | stripHtml | safe }}
+{% endif %}
+{%- set bookReviews = reviews | reviewsForBook(book.id) -%}
+{% if bookReviews.length %}
+## Reviews
+{% for r in bookReviews %}
+- {{ r.reviewers[0].name if r.reviewers.length else "Anonymous" }}{% if r.rating %} — {{ r.rating }}/5{% endif %}{% if r.dnf %} (Did Not Finish){% endif %}{% if r.wouldRecommend %} — Would recommend{% endif %}{% if r.discussionQuality %} — Discussion quality: {{ r.discussionQuality }}/5{% endif %}
+{%- if r.review %}
+  {{ r.review | stripHtml | safe }}
+{%- endif %}
+{%- if r.favoriteQuote %}
+  Favorite quote: "{{ r.favoriteQuote | stripHtml | safe }}"
+{%- endif %}
+{% endfor %}
+{%- endif %}
