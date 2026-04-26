@@ -1,0 +1,29 @@
+---
+layout: layouts/base.njk
+title: "Page not found"
+permalink: /404.html
+eleventyExcludeFromCollections: true
+---
+
+<article class="about">
+  <a class="back" href="/">← Reading journey</a>
+
+  <h1>Page not found</h1>
+
+  <p class="lede">
+    This page seems to have wandered off the shelf.
+  </p>
+
+  <p>
+    The link you followed may be out of date, or the page may have been renamed.
+    A few good places to pick up the trail:
+  </p>
+
+  <ul class="member-list">
+    <li><a href="/">Reading journey</a><span class="pick-count">home</span></li>
+    <li><a href="/books/">All books</a><span class="pick-count">{{ books.length }} titles</span></li>
+    <li><a href="/members/">Members</a><span class="pick-count">since {{ site.founded }}</span></li>
+    <li><a href="/stats/">Stats</a><span class="pick-count">by the numbers</span></li>
+    <li><a href="/about/">About</a><span class="pick-count">what this is</span></li>
+  </ul>
+</article>
