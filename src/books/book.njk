@@ -7,6 +7,7 @@ permalink: "/books/{{ book.slug }}/"
 layout: layouts/base.njk
 eleventyComputed:
   title: "{{ book.title }}"
+  textAlternate: "/books/{{ book.slug }}.txt"
 ---
 
 <article class="book-detail">

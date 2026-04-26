@@ -14,7 +14,7 @@ The site is rendered from data in an Airtable base that is the canonical source 
 - **Data refresh:** `npm run fetch` pulls from Airtable and downloads cover/member images
 - **Input:** `src/` with Nunjucks templates; global data in `src/_data/` (JS modules read the cached JSON in `src/_data/raw/`)
 - **Output:** `_site/` — published by GitHub Pages on push to `main`
-- **Pages:** `/` (home), `/books/<slug>/`, `/members/<slug>/`, `/about/`, `/stats/`, `/feed.xml`, `/llms.txt`, `/llms-full.txt`
+- **Pages:** `/` (home), `/books/<slug>/`, `/members/<slug>/`, `/about/`, `/stats/`, `/feed.xml`, `/llms.txt`, `/llms-full.txt`, `/robots.txt`, `/sitemap.xml`
 
 ### Nunjucks whitespace gotcha
 

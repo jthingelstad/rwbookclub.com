@@ -9,6 +9,10 @@
     <link rel="stylesheet" href="/assets/css/styles.css" />
     <link rel="canonical" href="{{ site.url }}{{ page.url }}" />
     <link rel="alternate" type="application/rss+xml" title="{{ site.title }}" href="/feed.xml" />
+    <link rel="alternate" type="text/plain" title="LLM archive" href="/llms.txt" />
+    {%- if textAlternate %}
+    <link rel="alternate" type="text/plain" title="Plain text" href="{{ textAlternate }}" />
+    {%- endif %}
   </head>
   <body{% if bodyClass %} class="{{ bodyClass }}"{% endif %}>
     <a class="skip" href="#main">Skip to content</a>
