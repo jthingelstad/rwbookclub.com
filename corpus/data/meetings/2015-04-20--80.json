@@ -1,23 +1,9 @@
 {
   "id": "reclZHlqJyNYmHe37",
   "meetingId": 80,
-  "name": "April 2015: No Place to Hide",
   "date": "2015-04-20T23:00:00.000Z",
-  "year": 2015,
-  "bookIds": [
-    "recLxRNfTAzaj51Y9"
-  ],
-  "bookSlugs": [
+  "books": [
     "no-place-to-hide"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

@@ -14,19 +14,7 @@
   "isbn13": "9781588360953",
   "olKey": "/works/OL108869W",
   "synopsis": "Offers a collection of witty, emotional, and direct poems by the popular and critically acclaimed poet, including selections from his four previous collections and new works such as \"Man Listening to a Disc,\" about headphones.",
-  "meetingDate": "2004-12-06T00:00:00.000Z",
-  "year": 2004,
-  "pickerName": "Erik",
-  "pickerSlug": "erik",
-  "pickerNames": [
-    "Erik"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "erik"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

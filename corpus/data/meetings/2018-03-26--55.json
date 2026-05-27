@@ -1,23 +1,9 @@
 {
   "id": "reckXAipxKF2eCADq",
   "meetingId": 55,
-  "name": "March 2018: Why Buddhism is True",
   "date": "2018-03-26T23:00:00.000Z",
-  "year": 2018,
-  "bookIds": [
-    "recZQzzKoo3HIqeKL"
-  ],
-  "bookSlugs": [
+  "books": [
     "why-buddhism-is-true"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

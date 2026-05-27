@@ -14,19 +14,7 @@
   "isbn13": "9780593469989",
   "olKey": "/works/OL34024127W",
   "synopsis": null,
-  "meetingDate": "2024-04-23T23:00:00.000Z",
-  "year": 2024,
-  "pickerName": "Loren",
-  "pickerSlug": "loren",
-  "pickerNames": [
-    "Loren"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "loren"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

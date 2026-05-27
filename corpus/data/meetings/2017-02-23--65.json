@@ -1,23 +1,9 @@
 {
   "id": "reckXXCyhISwUYZr5",
   "meetingId": 65,
-  "name": "February 2017: The Vital Question",
   "date": "2017-02-23T00:00:00.000Z",
-  "year": 2017,
-  "bookIds": [
-    "recZor0alGpyBoRJT"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-vital-question"
-  ],
-  "hostIds": [
-    "rec0unNzGOt24JKLj"
-  ],
-  "hosts": [
-    {
-      "name": "Nick",
-      "slug": "nick"
-    }
   ],
   "type": [
     "Book"

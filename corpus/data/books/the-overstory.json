@@ -14,19 +14,7 @@
   "isbn13": "978-0393356687",
   "olKey": null,
   "synopsis": "The Overstory, winner of the 2019 Pulitzer Prize in Fiction, is a sweeping, impassioned work of activism and resistance that is also a stunning evocation of―and paean to―the natural world. From the roots to the crown and back to the seeds, Richard Powers’s twelfth novel unfolds in concentric rings of interlocking fables that range from antebellum New York to the late twentieth-century Timber Wars of the Pacific Northwest and beyond. There is a world alongside ours―vast, slow, interconnected, resourceful, magnificently inventive, and almost invisible to us. This is the story of a handful of people who learn how to see that world and who are drawn up into its unfolding catastrophe.",
-  "meetingDate": "2026-01-28T01:00:00.000Z",
-  "year": 2026,
-  "pickerName": "Erik",
-  "pickerSlug": "erik",
-  "pickerNames": [
-    "Erik"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "erik"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

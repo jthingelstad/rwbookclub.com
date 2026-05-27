@@ -1,20 +1,8 @@
 {
   "id": "recuwe2slfBcVMzs2",
   "meetingId": 131,
-  "name": "November 2009: ",
   "date": "2009-11-02T00:00:00.000Z",
-  "year": 2009,
-  "bookIds": [],
-  "bookSlugs": [],
-  "hostIds": [
-    "recLaMxXUJ9RiaGyM"
-  ],
-  "hosts": [
-    {
-      "name": "John",
-      "slug": "john"
-    }
-  ],
+  "books": [],
   "type": [
     "Movie"
   ],

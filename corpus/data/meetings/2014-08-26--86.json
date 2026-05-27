@@ -1,23 +1,9 @@
 {
   "id": "rec5pZQswK4gnh10k",
   "meetingId": 86,
-  "name": "August 2014: Thinking in Systems",
   "date": "2014-08-26T23:00:00.000Z",
-  "year": 2014,
-  "bookIds": [
-    "recX4epYEDrS8nzvT"
-  ],
-  "bookSlugs": [
+  "books": [
     "thinking-in-systems"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

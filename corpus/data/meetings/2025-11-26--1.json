@@ -1,23 +1,9 @@
 {
   "id": "recvSSQcTLO7qGd64",
   "meetingId": 1,
-  "name": "November 2025: Enshittification",
   "date": "2025-11-26T00:30:00.000Z",
-  "year": 2025,
-  "bookIds": [
-    "recRJNBhMPa4IGYli"
-  ],
-  "bookSlugs": [
+  "books": [
     "enshittification"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

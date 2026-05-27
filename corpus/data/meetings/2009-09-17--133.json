@@ -1,23 +1,9 @@
 {
   "id": "recl2AHLjuG0RlXYl",
   "meetingId": 133,
-  "name": "September 2009: Sustainable Energy Without the Hot Air",
   "date": "2009-09-17T23:00:00.000Z",
-  "year": 2009,
-  "bookIds": [
-    "rec6ERmbiudyNF1dY"
-  ],
-  "bookSlugs": [
+  "books": [
     "sustainable-energy-without-the-hot-air"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

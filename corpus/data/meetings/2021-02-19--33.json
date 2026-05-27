@@ -1,23 +1,9 @@
 {
   "id": "recNPNWxERGc0YY8d",
   "meetingId": 33,
-  "name": "February 2021: The WEIRDest People in the World",
   "date": "2021-02-19T01:00:00.000Z",
-  "year": 2021,
-  "bookIds": [
-    "reciaAPpXSi5QgtMu"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-weirdest-people-in-the-world"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

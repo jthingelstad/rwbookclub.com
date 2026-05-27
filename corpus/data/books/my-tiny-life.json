@@ -14,19 +14,7 @@
   "isbn13": "9781841150574",
   "olKey": "/works/OL1856237W",
   "synopsis": null,
-  "meetingDate": "2003-04-28T23:00:00.000Z",
-  "year": 2003,
-  "pickerName": "John",
-  "pickerSlug": null,
-  "pickerNames": [
-    "John"
-  ],
-  "pickerSlugs": [
-    null
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  "picker": [
+    "john"
+  ]
 }

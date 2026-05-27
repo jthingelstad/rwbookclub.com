@@ -1,23 +1,9 @@
 {
   "id": "recC4SXQcWK9ctqBN",
   "meetingId": 70,
-  "name": "May 2016: American Nations",
   "date": "2016-05-02T23:00:00.000Z",
-  "year": 2016,
-  "bookIds": [
-    "recHWm3gO1UsblE3A"
-  ],
-  "bookSlugs": [
+  "books": [
     "american-nations"
-  ],
-  "hostIds": [
-    "rec0unNzGOt24JKLj"
-  ],
-  "hosts": [
-    {
-      "name": "Nick",
-      "slug": "nick"
-    }
   ],
   "type": [
     "Book"

@@ -1,23 +1,9 @@
 {
   "id": "recO3sIrwCBvgKtMj",
   "meetingId": 166,
-  "name": "October 2005: The Complexity of Cooperation",
   "date": "2005-10-26T23:00:00.000Z",
-  "year": 2005,
-  "bookIds": [
-    "recIAp4wKmrDFrUJ6"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-complexity-of-cooperation"
-  ],
-  "hostIds": [
-    "recLaMxXUJ9RiaGyM"
-  ],
-  "hosts": [
-    {
-      "name": "John",
-      "slug": "john"
-    }
   ],
   "type": [
     "Book"

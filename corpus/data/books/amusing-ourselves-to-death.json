@@ -14,19 +14,7 @@
   "isbn13": "9780136006466",
   "olKey": "/works/OL137916W",
   "synopsis": "Amusing Ourselves to Death is a prophetic look at what happens when politics, journalism, education, and even religion become subject to the demands of entertainment. It is also a blueprint for regaining control of our media, so that they can serve our highest goals.",
-  "meetingDate": "2015-08-17T23:00:00.000Z",
-  "year": 2015,
-  "pickerName": "Tom",
-  "pickerSlug": "tom",
-  "pickerNames": [
-    "Tom"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "tom"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

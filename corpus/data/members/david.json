@@ -3,8 +3,5 @@
   "name": "David",
   "slug": "david",
   "isCurrent": false,
-  "website": null,
-  "hasPhoto": false,
-  "pickedCount": 5,
-  "pickedBooks": []
+  "website": null
 }

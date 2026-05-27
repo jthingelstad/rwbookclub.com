@@ -1,23 +1,9 @@
 {
   "id": "recHhwzdQkNtIBe0S",
   "meetingId": 56,
-  "name": "January 2018: Walkaway",
   "date": "2018-01-24T00:00:00.000Z",
-  "year": 2018,
-  "bookIds": [
-    "rec8pEufHuvhv0eYm"
-  ],
-  "bookSlugs": [
+  "books": [
     "walkaway"
-  ],
-  "hostIds": [
-    "reczR2kRhTW8h4Htz"
-  ],
-  "hosts": [
-    {
-      "name": "Loren",
-      "slug": "loren"
-    }
   ],
   "type": [
     "Book"

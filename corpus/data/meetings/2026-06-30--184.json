@@ -1,23 +1,9 @@
 {
   "id": "recAPjm6hOgzUFuGI",
   "meetingId": 184,
-  "name": "June 2026: A World Appears",
   "date": "2026-06-30T23:30:00.000Z",
-  "year": 2026,
-  "bookIds": [
-    "recCg7pHVMkAkgH54"
-  ],
-  "bookSlugs": [
+  "books": [
     "a-world-appears"
-  ],
-  "hostIds": [
-    "recuT1LiVs6I0u4zR"
-  ],
-  "hosts": [
-    {
-      "name": "Jamie",
-      "slug": "jamie"
-    }
   ],
   "type": [
     "Book"

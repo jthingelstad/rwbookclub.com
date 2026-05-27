@@ -14,19 +14,7 @@
   "isbn13": "9780393352979",
   "olKey": "/works/OL19663289W",
   "synopsis": "A biochemist, building on the pillars of evolutionary theory and drawing on cutting-edge research into the link between energy and genes, argues that the evolution of multicellular life was the result of a single event.",
-  "meetingDate": "2017-02-23T00:00:00.000Z",
-  "year": 2017,
-  "pickerName": "Nick",
-  "pickerSlug": "nick",
-  "pickerNames": [
-    "Nick"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "nick"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": "Lake Monster Brewing",
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

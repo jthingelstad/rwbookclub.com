@@ -14,19 +14,7 @@
   "isbn13": "9781473217409",
   "olKey": "/works/OL27256W",
   "synopsis": "Turner, corporate mercenary, wakes in a reconstructed body, a beautiful woman by his side. Then Hosaka Corporation reactivates him for a mission more dangerous than the one he's recovering from: Maas-Neotek's chief of R&D is defecting. Turner is the one assigned to get him out intact, along with the biochip he's perfected. But this proves to be of supreme interest to certain other parties--some of whom aren't remotely human. Bobby Newmark is entirely human: a rustbelt data-hustler totally unprepared for what comes his way when the defection triggers war in cyberspace. With voodoo on the Net and a price on his head, Newmark thinks he's only trying to get out alive. The second novel of William Gibson's Sprawl trilogy, *Count Zero* is a stylish, streetsmart, frighteningly probable parable of the future and sequel to Neuromancer.",
-  "meetingDate": "2012-05-29T23:00:00.000Z",
-  "year": 2012,
-  "pickerName": "Tom",
-  "pickerSlug": "tom",
-  "pickerNames": [
-    "Tom"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "tom"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

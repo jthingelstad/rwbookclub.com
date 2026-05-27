@@ -1,23 +1,9 @@
 {
   "id": "recGA2exfP8tdN0OJ",
   "meetingId": 163,
-  "name": "March 2006: Democratizing Innovation",
   "date": "2006-03-22T23:00:00.000Z",
-  "year": 2006,
-  "bookIds": [
-    "recjjFqpoy16Unq4a"
-  ],
-  "bookSlugs": [
+  "books": [
     "democratizing-innovation"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

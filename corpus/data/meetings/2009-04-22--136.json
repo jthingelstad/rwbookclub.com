@@ -1,23 +1,9 @@
 {
   "id": "recr32L15RrpCR3jd",
   "meetingId": 136,
-  "name": "April 2009: Doomsday Book",
   "date": "2009-04-22T23:00:00.000Z",
-  "year": 2009,
-  "bookIds": [
-    "reccy7tmNjRKfW3qc"
-  ],
-  "bookSlugs": [
+  "books": [
     "doomsday-book"
-  ],
-  "hostIds": [
-    "recLaMxXUJ9RiaGyM"
-  ],
-  "hosts": [
-    {
-      "name": "John",
-      "slug": "john"
-    }
   ],
   "type": [
     "Book"

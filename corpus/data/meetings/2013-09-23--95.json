@@ -1,23 +1,9 @@
 {
   "id": "recXgRAOzBQRgBPfA",
   "meetingId": 95,
-  "name": "September 2013: This Machine Kills Secrets",
   "date": "2013-09-23T23:00:00.000Z",
-  "year": 2013,
-  "bookIds": [
-    "reclh56Nyrv6NBJP0"
-  ],
-  "bookSlugs": [
+  "books": [
     "this-machine-kills-secrets"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

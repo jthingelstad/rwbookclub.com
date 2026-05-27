@@ -1,23 +1,9 @@
 {
   "id": "recgIC4g1lfNxgFnL",
   "meetingId": 90,
-  "name": "March 2014: A History of God",
   "date": "2014-03-13T23:00:00.000Z",
-  "year": 2014,
-  "bookIds": [
-    "recUTffAMOlFqicvI"
-  ],
-  "bookSlugs": [
+  "books": [
     "a-history-of-god"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

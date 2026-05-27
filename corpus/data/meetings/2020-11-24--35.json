@@ -1,23 +1,9 @@
 {
   "id": "recLcAYuwcwK9ZcZN",
   "meetingId": 35,
-  "name": "November 2020: Unflattening",
   "date": "2020-11-24T01:00:00.000Z",
-  "year": 2020,
-  "bookIds": [
-    "reczPYkesN0OMTL1G"
-  ],
-  "bookSlugs": [
+  "books": [
     "unflattening"
-  ],
-  "hostIds": [
-    "rec0unNzGOt24JKLj"
-  ],
-  "hosts": [
-    {
-      "name": "Nick",
-      "slug": "nick"
-    }
   ],
   "type": [
     "Book"

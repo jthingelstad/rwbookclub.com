@@ -14,19 +14,7 @@
   "isbn13": "9780226311449",
   "olKey": "/works/OL21049995W",
   "synopsis": null,
-  "meetingDate": "2022-06-01T23:00:00.000Z",
-  "year": 2022,
-  "pickerName": "Nick",
-  "pickerSlug": "nick",
-  "pickerNames": [
-    "Nick"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "nick"
-  ],
-  "placeholder": false,
-  "meetingNotes": "Only reading \"Prometheus Bound\" from the Aeschylus I.",
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

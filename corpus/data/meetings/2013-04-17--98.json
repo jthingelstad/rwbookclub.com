@@ -1,23 +1,9 @@
 {
   "id": "recxaaKGcc8cdIp3I",
   "meetingId": 98,
-  "name": "April 2013: The Willpower Instinct",
   "date": "2013-04-17T23:00:00.000Z",
-  "year": 2013,
-  "bookIds": [
-    "recXuQnMR2q13PjFN"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-willpower-instinct"
-  ],
-  "hostIds": [
-    "recuT1LiVs6I0u4zR"
-  ],
-  "hosts": [
-    {
-      "name": "Jamie",
-      "slug": "jamie"
-    }
   ],
   "type": [
     "Book"

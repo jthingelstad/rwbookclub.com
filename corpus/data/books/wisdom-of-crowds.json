@@ -14,19 +14,7 @@
   "isbn13": "9780385721707",
   "olKey": "/works/OL8036447W",
   "synopsis": "In this fascinating book, New Yorker business columnist James Surowiecki explores a deceptively simple idea: Large groups of people are smarter than an elite few, no matter how brilliant — better at solving problems, fostering innovation, coming to wise decisions, even predicting the future. Surowiecki ranges across fields as diverse as popular culture, psychology, ant biology, behavioral economics, artificial intelligence, military history, and politics to show how this simple idea offers important lessons for how we live our lives, select our leaders, run our companies, and think about our world. The story is told of the first observations of this effect, through to anecdotes of the effect in modern economics and psychology. The book not heavy on statistics, and has prompted much research since its publication. The title is an allusion to the famous phrase, the \"madness of crowds\".",
-  "meetingDate": "2004-07-07T23:00:00.000Z",
-  "year": 2004,
-  "pickerName": "Dan",
-  "pickerSlug": null,
-  "pickerNames": [
-    "Dan"
-  ],
-  "pickerSlugs": [
-    null
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  "picker": [
+    "dan"
+  ]
 }

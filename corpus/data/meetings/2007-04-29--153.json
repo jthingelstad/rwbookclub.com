@@ -1,23 +1,9 @@
 {
   "id": "recwms7r4685lSNy1",
   "meetingId": 153,
-  "name": "April 2007: The Mythical Man-Month",
   "date": "2007-04-29T23:00:00.000Z",
-  "year": 2007,
-  "bookIds": [
-    "rec8VWWkxVYa4wKrg"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-mythical-man-month"
-  ],
-  "hostIds": [
-    "rechNL5xOnYd7aE5c"
-  ],
-  "hosts": [
-    {
-      "name": "David",
-      "slug": "david"
-    }
   ],
   "type": [
     "Book"

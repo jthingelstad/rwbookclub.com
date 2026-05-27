@@ -1,23 +1,9 @@
 {
   "id": "recgN9DKSxoYpZ3Kj",
   "meetingId": 14,
-  "name": "August 2023: Otherlands",
   "date": "2023-08-31T23:00:00.000Z",
-  "year": 2023,
-  "bookIds": [
-    "recHZxXqAnAqFnyOP"
-  ],
-  "bookSlugs": [
+  "books": [
     "otherlands"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

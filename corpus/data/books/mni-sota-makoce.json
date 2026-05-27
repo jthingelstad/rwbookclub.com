@@ -15,19 +15,7 @@
   "isbn13": "9780873518697",
   "olKey": "/works/OL16681765W",
   "synopsis": null,
-  "meetingDate": "2022-12-15T00:00:00.000Z",
-  "year": 2022,
-  "pickerName": "Erik",
-  "pickerSlug": "erik",
-  "pickerNames": [
-    "Erik"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "erik"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": "Erik's Apartment",
-  "hasCover": true,
-  "reviewCount": 1
+  ]
 }

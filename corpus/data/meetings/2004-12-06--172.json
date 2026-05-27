@@ -1,23 +1,9 @@
 {
   "id": "recw2QY4hBdIWDOFv",
   "meetingId": 172,
-  "name": "December 2004: Sailing Alone Around the Room",
   "date": "2004-12-06T00:00:00.000Z",
-  "year": 2004,
-  "bookIds": [
-    "recL9sg1ZolY8cF0R"
-  ],
-  "bookSlugs": [
+  "books": [
     "sailing-alone-around-the-room"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

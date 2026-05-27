@@ -14,19 +14,7 @@
   "isbn13": "978-1524761400",
   "olKey": "/works/OL19763522W",
   "synopsis": "From travel writer and Instagram phenomenon Jedidiah Jenkins, a long-awaited memoir of adventure, failure, and lessons learned while bicycling the 10,000 miles from Oregon to Patagonia. On the eve of turning thirty, terrified of being sucked into a life he didn't choose, Jedidiah Jenkins quit his dream job and spent the next sixteen months cycling from Oregon to Patagonia. He chronicled the trip on Instagram, where his photos and profound reflections on life soon attracted hundreds of thousands of followers and got him featured by National Geographic and The Paris Review. In this unflinchingly honest memoir, Jed narrates the adventure that started it all: the people and places he encountered on his way to the bottom of the world, and the internal journey that prompted it--the question of what it means to be an adult; his struggle to reconcile his sexual identity with his conservative Christian upbringing; and his belief in travel as a way to \"wake us up\" to our lives back home. As he writes in his inspiring search for wonder and a life he could believe in, 'It's not about the bike. It's about getting out of your routine--and that could look like anything'",
-  "meetingDate": "2023-04-11T23:00:00.000Z",
-  "year": 2023,
-  "pickerName": "Jamie",
-  "pickerSlug": "jamie",
-  "pickerNames": [
-    "Jamie"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "jamie"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

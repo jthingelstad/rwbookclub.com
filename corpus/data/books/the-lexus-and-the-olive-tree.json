@@ -14,19 +14,7 @@
   "isbn13": "9780965885942",
   "olKey": "/works/OL3740414W",
   "synopsis": "As the Foreign Affairs columnist for The New York Times, Thomas L. Friedman has traveled to the four corners of the globe, interviewing people from all walks of contemporary life - Brazilian peasants in the Amazon rain forest, new entrepreneurs in Indonesia, Islamic students in Teheran, and the financial wizards on Wall Street and in Silicon Valley. Now Friedman has drawn on his years on the road to produce an engrossing and original look at the new international system that, more than anything else, is shaping world affairs today: globalization. His argument can be summarized quite simply. Globalization is not just a phenomenon and not just a passing trend. It is the international system that replaced the Cold War system. Globalization is the integration of capital, technology, and information across national borders, in a way that is creating a single global market and, to some degree, a global village. With vivid stories and a set of original terms and concepts, Friedman shows us how to see this new system. He dramatizes the conflict of \"the Lexus and the olive tree\" - the tension between the globalization system and ancient forces of culture, geography, tradition, and community. He also details the powerful backlash that globalization produces among those who feel brutalized by it, and he spells out what we all need to do to keep this system in balance.",
-  "meetingDate": "2003-04-18T23:00:00.000Z",
-  "year": 2003,
-  "pickerName": "John",
-  "pickerSlug": null,
-  "pickerNames": [
-    "John"
-  ],
-  "pickerSlugs": [
-    null
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  "picker": [
+    "john"
+  ]
 }

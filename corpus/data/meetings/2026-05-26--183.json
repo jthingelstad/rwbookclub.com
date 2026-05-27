@@ -1,23 +1,9 @@
 {
   "id": "recUDG3BIhlGYDZIg",
   "meetingId": 183,
-  "name": "May 2026: Patterns in Nature",
   "date": "2026-05-26T23:30:00.000Z",
-  "year": 2026,
-  "bookIds": [
-    "recKQD3gDqKjzqnAw"
-  ],
-  "bookSlugs": [
+  "books": [
     "patterns-in-nature"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

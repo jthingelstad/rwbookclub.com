@@ -1,23 +1,9 @@
 {
   "id": "recoTSEb1yCeQmVtB",
   "meetingId": 94,
-  "name": "November 2013: Behind the Beautiful Forevers",
   "date": "2013-11-05T00:00:00.000Z",
-  "year": 2013,
-  "bookIds": [
-    "rec0xg9ppl4BQYaAw"
-  ],
-  "bookSlugs": [
+  "books": [
     "behind-the-beautiful-forevers"
-  ],
-  "hostIds": [
-    "recuT1LiVs6I0u4zR"
-  ],
-  "hosts": [
-    {
-      "name": "Jamie",
-      "slug": "jamie"
-    }
   ],
   "type": [
     "Book"

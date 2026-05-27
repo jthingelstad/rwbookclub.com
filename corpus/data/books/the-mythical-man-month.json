@@ -14,19 +14,7 @@
   "isbn13": "9780201835953",
   "olKey": "/works/OL3510570W",
   "synopsis": "Classic text on the human side of software engineering, containing essays on the management of software teams, projections about how computer languages and tools will evolve, and philosophical speculation. Unlike most other books about computing, Brooks' work has been remarkably enduring, remaining in print for at least four decades. The book is most famous for its statement of Brooks' Law: \"adding manpower to a late software project makes it later\".",
-  "meetingDate": "2007-04-29T23:00:00.000Z",
-  "year": 2007,
-  "pickerName": "David",
-  "pickerSlug": null,
-  "pickerNames": [
-    "David"
-  ],
-  "pickerSlugs": [
-    null
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  "picker": [
+    "david"
+  ]
 }

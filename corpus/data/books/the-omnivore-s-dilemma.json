@@ -14,19 +14,7 @@
   "isbn13": "9781504044844",
   "olKey": "/works/OL28339036W",
   "synopsis": null,
-  "meetingDate": "2006-10-30T23:00:00.000Z",
-  "year": 2006,
-  "pickerName": "Erik",
-  "pickerSlug": "erik",
-  "pickerNames": [
-    "Erik"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "erik"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

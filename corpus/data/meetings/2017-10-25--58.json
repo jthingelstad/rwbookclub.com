@@ -1,23 +1,9 @@
 {
   "id": "reciqAEQGw0Wyp0nG",
   "meetingId": 58,
-  "name": "October 2017: A Crack in Creation",
   "date": "2017-10-25T23:00:00.000Z",
-  "year": 2017,
-  "bookIds": [
-    "recVkzSnnMw1nBtcx"
-  ],
-  "bookSlugs": [
+  "books": [
     "a-crack-in-creation"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

@@ -14,19 +14,7 @@
   "isbn13": "9780385516402",
   "olKey": "/works/OL119176W",
   "synopsis": "Bestselling author Jeffrey Toobin takes you into the chambers of the most important--and secret--legal body in our country, the Supreme Court, and reveals the complex dynamic among the nine people who decide the law of the land.Just in time for the 2008 presidential election--where the future of the Court will be at stake--Toobin reveals an institution at a moment of transition, when decades of conservative disgust with the Court have finally produced a conservative majority, with major changes in store on such issues as abortion, civil rights, presidential power, and church-state relations.Based on exclusive interviews with justices themselves, The Nine tells the story of the Court through personalities--from Anthony Kennedy's overwhelming sense of self-importance to Clarence Thomas's well-tended grievances against his critics to David Souter's odd nineteenth-century lifestyle. There is also, for the first time, the full behind-the-scenes story of Bush v. Gore--and Sandra Day O'Connor's fateful breach with George W. Bush, the president she helped place in office. The Nine is the book bestselling author Jeffrey Toobin was born to write. A CNN senior legal analyst and New Yorker staff writer, no one is more superbly qualified to profile the nine justices.",
-  "meetingDate": "2009-02-04T00:00:00.000Z",
-  "year": 2009,
-  "pickerName": "Erik",
-  "pickerSlug": "erik",
-  "pickerNames": [
-    "Erik"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "erik"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

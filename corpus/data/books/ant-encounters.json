@@ -14,19 +14,7 @@
   "isbn13": "9780691138794",
   "olKey": "/works/OL12762964W",
   "synopsis": null,
-  "meetingDate": "2011-07-26T23:00:00.000Z",
-  "year": 2011,
-  "pickerName": "Jamie",
-  "pickerSlug": "jamie",
-  "pickerNames": [
-    "Jamie"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "jamie"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

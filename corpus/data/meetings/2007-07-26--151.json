@@ -1,23 +1,9 @@
 {
   "id": "recj7sfBeSq58DrHe",
   "meetingId": 151,
-  "name": "July 2007: Beautiful Code",
   "date": "2007-07-26T23:00:00.000Z",
-  "year": 2007,
-  "bookIds": [
-    "recDJgSWxCLuYxsUf"
-  ],
-  "bookSlugs": [
+  "books": [
     "beautiful-code"
-  ],
-  "hostIds": [
-    "recLaMxXUJ9RiaGyM"
-  ],
-  "hosts": [
-    {
-      "name": "John",
-      "slug": "john"
-    }
   ],
   "type": [
     "Book"

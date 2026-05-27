@@ -14,19 +14,7 @@
   "isbn13": "9780393635065",
   "olKey": "/works/OL20162907W",
   "synopsis": "Mama's Last Hug opens with the dramatic farewell between Mama, a dying 59-year-old chimpanzee matriarch, and biologist Jan Van Hooff. This heartfelt final meeting of two longtime friends, widely shared as a video, offers a window into how deep and instantly recognizable these bonds can be.\n\nSo begins Frans de Waal's whirlwind tour of new ideas and findings about animal emotions, based on his renowned studies of the social and emotional lives of chimpanzees, bonobos, and other primates. De Waal discusses facial expressions, animal sentience and consciousness, Mama's life and death, the emotional side of human politics, and the illusion of free will. He distinguishes between emotions and feelings, all the while emphasizing the continuity between our species and other species. And he makes the radical proposal that emotions are like organs: We don't have a single organ that other animals don't have, and the same is true for our emotions.",
-  "meetingDate": "2021-01-07T01:00:00.000Z",
-  "year": 2021,
-  "pickerName": "Tom",
-  "pickerSlug": "tom",
-  "pickerNames": [
-    "Tom"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "tom"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": "Zoom",
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

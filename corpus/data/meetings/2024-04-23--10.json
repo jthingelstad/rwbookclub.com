@@ -1,23 +1,9 @@
 {
   "id": "recHJJ9VQWVylMWRK",
   "meetingId": 10,
-  "name": "April 2024: Dictionary People",
   "date": "2024-04-23T23:00:00.000Z",
-  "year": 2024,
-  "bookIds": [
-    "rects3FGg3nC3plOG"
-  ],
-  "bookSlugs": [
+  "books": [
     "dictionary-people"
-  ],
-  "hostIds": [
-    "reczR2kRhTW8h4Htz"
-  ],
-  "hosts": [
-    {
-      "name": "Loren",
-      "slug": "loren"
-    }
   ],
   "type": [
     "Book"

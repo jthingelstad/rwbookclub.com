@@ -98,7 +98,7 @@ title: ""
                     {% endfor %}
                   </p>
                 {% endif %}
-                {% set bookAwards = awards | awardsForBook(book.id) %}
+                {% set bookAwards = awards | awardsForBook(book.slug) %}
                 {% for a in bookAwards %}
                   <p class="entry-award">{{ a.award }} · {{ a.year }}</p>
                 {% endfor %}

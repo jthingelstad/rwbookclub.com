@@ -14,19 +14,7 @@
   "isbn13": "9780141988948",
   "olKey": "/works/OL25328015W",
   "synopsis": null,
-  "meetingDate": "2024-05-29T23:00:00.000Z",
-  "year": 2024,
-  "pickerName": "Nick",
-  "pickerSlug": "nick",
-  "pickerNames": [
-    "Nick"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "nick"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

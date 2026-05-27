@@ -2,14 +2,6 @@
 id: recy2tXyceEBoSgZs
 book: army-of-none
 member: jamie
-bookIds:
-- recnXtvkD6JHEQ6af
-memberIds:
-- recuT1LiVs6I0u4zR
-reviewers:
-- id: recuT1LiVs6I0u4zR
-  name: Jamie
-  slug: jamie
 rating: 5
 dnf: false
 discussionQuality: null

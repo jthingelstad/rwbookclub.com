@@ -1,23 +1,9 @@
 {
   "id": "rec8LXvmKOr28N3pK",
   "meetingId": 32,
-  "name": "March 2021: Running with Sherman",
   "date": "2021-03-19T00:00:00.000Z",
-  "year": 2021,
-  "bookIds": [
-    "recWkWChZZxJrzcKf"
-  ],
-  "bookSlugs": [
+  "books": [
     "running-with-sherman"
-  ],
-  "hostIds": [
-    "recuT1LiVs6I0u4zR"
-  ],
-  "hosts": [
-    {
-      "name": "Jamie",
-      "slug": "jamie"
-    }
   ],
   "type": [
     "Book"

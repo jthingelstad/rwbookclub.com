@@ -1,23 +1,9 @@
 {
   "id": "recNaNcTsmrWfW6dJ",
   "meetingId": 43,
-  "name": "November 2019: Genesis",
   "date": "2019-11-08T00:00:00.000Z",
-  "year": 2019,
-  "bookIds": [
-    "recYja1qSMhYKq2bE"
-  ],
-  "bookSlugs": [
+  "books": [
     "genesis"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

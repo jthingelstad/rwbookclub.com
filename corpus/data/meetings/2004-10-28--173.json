@@ -1,23 +1,9 @@
 {
   "id": "recz5SUp4C1iQ6XcR",
   "meetingId": 173,
-  "name": "October 2004: The Paradox of Choice",
   "date": "2004-10-28T23:00:00.000Z",
-  "year": 2004,
-  "bookIds": [
-    "rec0gMdixmCCPKmw0"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-paradox-of-choice"
-  ],
-  "hostIds": [
-    "recLaMxXUJ9RiaGyM"
-  ],
-  "hosts": [
-    {
-      "name": "John",
-      "slug": "john"
-    }
   ],
   "type": [
     "Book"

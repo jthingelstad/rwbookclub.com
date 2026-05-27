@@ -13,7 +13,7 @@ rwbookclub.com is the home of the R/W Book Club, which has been meeting since Ap
 This repo is a flat, polyglot monorepo with three top-level concerns:
 
 - **`website/`** — the Eleventy 3 static site (Node). Consumes the corpus.
-- **`corpus/`** — the canonical knowledge layer (Python). Per-entity text files in `corpus/data/` (`books/`, `members/`, `meetings/`, `authors/`, `reviews/`, `awards/`) are the source of truth — records as JSON, reviews as Markdown+frontmatter, each keyed by its Airtable `rec…` id. `corpus/images.py` backfills missing covers from Open Library; `corpus/fetch.py` + `migrate.py` are cold-backup Airtable re-import tools. The agent will eventually own this.
+- **`corpus/`** — the canonical knowledge layer (Python). Per-entity text files in `corpus/data/` (`books/`, `members/`, `meetings/`, `authors/`, `reviews/`, `awards/`) are the source of truth, **normalized**: each fact stored once, relationships by **slug** (meetings own date + book refs; books carry `picker`), and derived fields (meeting date, picks, counts) computed at build/read time. Records are JSON, reviews Markdown+frontmatter. `corpus/validate.py` checks reference integrity; `corpus/images.py` backfills covers from Open Library; `fetch.py` + `migrate.py` + `normalize.py` are the cold-backup re-import path. The agent will eventually own this.
 - **`agent/`** — Oliver, the club's Discord bot (Python). Consumes the corpus; answers questions in `#ask-oliver` via Claude.
 
 A root `package.json` (npm workspace over `website`) provides `npm run build`/`serve`/`covers`. All Python runs from the repo root (`python -m corpus.images`, `python -m agent.bot`). One shared root `.env`.

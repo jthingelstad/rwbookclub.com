@@ -14,19 +14,7 @@
   "isbn13": "9780007126903",
   "olKey": "/works/OL20452875W",
   "synopsis": null,
-  "meetingDate": "2016-08-22T23:00:00.000Z",
-  "year": 2016,
-  "pickerName": "Tom",
-  "pickerSlug": "tom",
-  "pickerNames": [
-    "Tom"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "tom"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

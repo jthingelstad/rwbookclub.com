@@ -14,19 +14,7 @@
   "isbn13": "9781429917216",
   "olKey": "/works/OL2746364W",
   "synopsis": "The World Without Us, an intriguing peek inside the impact homo sapiens have on the world around us and what will be left when we cease to exist. Alan Weisman intelligently intertwines the affect we have on the Earth and its ecosystems and the way we have damaged it, the things nature can't undo. A tremendous report on the ways we have killed the flora and fauna and how we will ultimately exterminate ourselves, bringing all that is left of human civilization with us. ~ Written by an 11 year old",
-  "meetingDate": "2008-02-01T00:00:00.000Z",
-  "year": 2008,
-  "pickerName": "Jamie",
-  "pickerSlug": "jamie",
-  "pickerNames": [
-    "Jamie"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "jamie"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

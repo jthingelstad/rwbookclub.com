@@ -1,23 +1,9 @@
 {
   "id": "recf7FNwh3vHTdTEw",
   "meetingId": 117,
-  "name": "March 2011: The Master Switch",
   "date": "2011-03-02T00:00:00.000Z",
-  "year": 2011,
-  "bookIds": [
-    "reccyESMLfEijFumE"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-master-switch"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

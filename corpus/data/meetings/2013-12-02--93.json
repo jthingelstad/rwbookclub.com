@@ -1,23 +1,9 @@
 {
   "id": "recXXVthlQSpiroHQ",
   "meetingId": 93,
-  "name": "December 2013: The Emperor of All Maladies",
   "date": "2013-12-02T00:00:00.000Z",
-  "year": 2013,
-  "bookIds": [
-    "rec345Jnzqpgv1Gag"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-emperor-of-all-maladies"
-  ],
-  "hostIds": [
-    "reczXGhA4xwgX91Jc"
-  ],
-  "hosts": [
-    {
-      "name": "Dan",
-      "slug": "dan"
-    }
   ],
   "type": [
     "Book"

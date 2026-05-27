@@ -14,19 +14,7 @@
   "isbn13": "9780393540970",
   "olKey": "/works/OL21971441W",
   "synopsis": "Jerusalem and the Sinai desert, AD 55. In the turbulent aftermath of the crucifixion of Jesus, agents of the Roman Empire receive information about a pilgrim bearing an incendiary letter from a religious fanatic calling himself Paul the Apostle to insurrectionists in Corinth. What's in the letter could bring down an empire.\n\nThe Romans hire a former legionary, a solitary man-at-arms named Telamon to intercept the letter and destroy the courier. Telamon fights for money, not principles. He's been promised a rich reward; should he fail, the punishment is death by crucifixion. But once he meets the courier, Telamon experiences an extraordinary conversion, and instead of carrying out the mission, takes on the Empire.\n\nIn his first novel of the ancient world in 13 years, the best-selling author of Gates of Fire and Tides of War returns with a gripping saga of conquest and rebellion, bloodshed and faith.",
-  "meetingDate": "2021-07-30T00:00:00.000Z",
-  "year": 2021,
-  "pickerName": "Jamie",
-  "pickerSlug": "jamie",
-  "pickerNames": [
-    "Jamie"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "jamie"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": "Lake & Irving",
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

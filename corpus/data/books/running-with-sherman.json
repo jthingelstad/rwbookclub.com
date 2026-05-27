@@ -14,19 +14,7 @@
   "isbn13": "9781524732363",
   "olKey": "/works/OL20334758W",
   "synopsis": "When Chris McDougall agreed to take in a donkey from an animal hoarder, he thought it would be no harder than the rest of the adjustments he and his family had made after moving from Philadelphia to the heart of Pennsylvania Amish country. But when he arrived, Sherman was in such bad shape he could barely move, and his hair was coming out in clumps. Chris decided to undertake a radical rehabilitation program designed not only to heal Sherman's body but to heal his mind as well. It turns out the best way to soothe a donkey is to give it a job, and so Chris decided to teach Sherman how to run. He'd heard about burro racing--a unique type of race where humans and donkeys run together in a call-back to mining days--and decided he and Sherman would enter the World Championship in Colorado.\n\nEasier said than done. In the course of Sherman's training, Chris would have to recruit several other runners, both human and equine, and call upon the wisdom of burro racers, goat farmers, Amish running club members, and a group of irrepressible female long-haul truckers. An entire community comes together to help save Sherman and, along the way, Chris shows us the joy of a life with animals.",
-  "meetingDate": "2021-03-19T00:00:00.000Z",
-  "year": 2021,
-  "pickerName": "Jamie",
-  "pickerSlug": "jamie",
-  "pickerNames": [
-    "Jamie"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "jamie"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": "Zoom",
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

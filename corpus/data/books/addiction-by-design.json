@@ -14,19 +14,7 @@
   "isbn13": "9780691160887",
   "olKey": "/works/OL20900698W",
   "synopsis": null,
-  "meetingDate": "2022-09-22T00:00:00.000Z",
-  "year": 2022,
-  "pickerName": "Tom",
-  "pickerSlug": "tom",
-  "pickerNames": [
-    "Tom"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "tom"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

@@ -1,23 +1,9 @@
 {
   "id": "recfovgtyJBsLJQN5",
   "meetingId": 13,
-  "name": "December 2023: Dawn of Everything",
   "date": "2023-12-21T00:00:00.000Z",
-  "year": 2023,
-  "bookIds": [
-    "reciMDY0dG2CVgqhF"
-  ],
-  "bookSlugs": [
+  "books": [
     "dawn-of-everything"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

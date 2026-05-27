@@ -1,23 +1,9 @@
 {
   "id": "rec20qj6dhe2jBUVE",
   "meetingId": 126,
-  "name": "March 2010: Don't Make Me Think",
   "date": "2010-03-22T23:00:00.000Z",
-  "year": 2010,
-  "bookIds": [
-    "recahzZGS64btP51l"
-  ],
-  "bookSlugs": [
+  "books": [
     "don-t-make-me-think"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

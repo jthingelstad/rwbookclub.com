@@ -14,21 +14,8 @@
   "isbn13": "9780393356090",
   "olKey": "/works/OL20179092W",
   "synopsis": null,
-  "meetingDate": "2019-06-10T23:00:00.000Z",
-  "year": 2019,
-  "pickerName": "Jamie",
-  "pickerSlug": "jamie",
-  "pickerNames": [
-    "Jamie",
-    "Erik"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "jamie",
     "erik"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": "Lake & Harriet",
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

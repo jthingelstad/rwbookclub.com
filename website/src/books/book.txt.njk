@@ -46,7 +46,7 @@ eleventyExcludeFromCollections: true
 
 {{ book.meetingNotes | stripHtml | safe }}
 {% endif %}
-{%- set bookReviews = reviews | reviewsForBook(book.id) -%}
+{%- set bookReviews = reviews | reviewsForBook(book.slug) -%}
 {% if bookReviews.length %}
 ## Reviews
 {% for r in bookReviews %}

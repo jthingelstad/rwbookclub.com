@@ -14,19 +14,7 @@
   "isbn13": "9780007367481",
   "olKey": "/works/OL15540668W",
   "synopsis": "The Emperor of All Maladies: A Biography of Cancer is a book written by Siddhartha Mukherjee, an Indian-born American physician and oncologist. Published on 16 November 2010 by Scribner, it won the 2011 Pulitzer Prize for General Non-Fiction.",
-  "meetingDate": "2013-12-02T00:00:00.000Z",
-  "year": 2013,
-  "pickerName": "Dan",
-  "pickerSlug": null,
-  "pickerNames": [
-    "Dan"
-  ],
-  "pickerSlugs": [
-    null
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  "picker": [
+    "dan"
+  ]
 }

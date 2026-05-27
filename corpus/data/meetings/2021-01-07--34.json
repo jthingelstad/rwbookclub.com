@@ -1,23 +1,9 @@
 {
   "id": "recAXHTMvNwujEq0R",
   "meetingId": 34,
-  "name": "January 2021: Mama's Last Hug",
   "date": "2021-01-07T01:00:00.000Z",
-  "year": 2021,
-  "bookIds": [
-    "recyjHHBoonNCmPG6"
-  ],
-  "bookSlugs": [
+  "books": [
     "mama-s-last-hug"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

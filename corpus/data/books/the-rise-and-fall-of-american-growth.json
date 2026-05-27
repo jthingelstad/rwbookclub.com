@@ -14,19 +14,7 @@
   "isbn13": null,
   "olKey": "/works/OL17343962W",
   "synopsis": "The trajectory and impetus of American growth from the end of the Civil War until now.",
-  "meetingDate": "2016-03-22T23:00:00.000Z",
-  "year": 2016,
-  "pickerName": "Loren",
-  "pickerSlug": "loren",
-  "pickerNames": [
-    "Loren"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "loren"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

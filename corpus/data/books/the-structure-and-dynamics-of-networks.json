@@ -15,19 +15,7 @@
   "isbn13": "9781400841356",
   "olKey": "/works/OL19002758W",
   "synopsis": null,
-  "meetingDate": "2015-01-20T00:00:00.000Z",
-  "year": 2015,
-  "pickerName": "Nick",
-  "pickerSlug": "nick",
-  "pickerNames": [
-    "Nick"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "nick"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

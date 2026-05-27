@@ -1,23 +1,9 @@
 {
   "id": "recviXsBivB2Xv26q",
   "meetingId": 69,
-  "name": "August 2016: The Metaphysical Club",
   "date": "2016-08-22T23:00:00.000Z",
-  "year": 2016,
-  "bookIds": [
-    "reckeJWLfTvd0eq6A"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-metaphysical-club"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

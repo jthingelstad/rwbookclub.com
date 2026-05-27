@@ -1,23 +1,9 @@
 {
   "id": "rec9ETQDxAQhKp6Vy",
   "meetingId": 5,
-  "name": "May 2025: How to Do Nothing",
   "date": "2025-05-27T23:30:00.000Z",
-  "year": 2025,
-  "bookIds": [
-    "recGbiZctGndfwK7J"
-  ],
-  "bookSlugs": [
+  "books": [
     "how-to-do-nothing"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

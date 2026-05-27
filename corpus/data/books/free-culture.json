@@ -14,19 +14,7 @@
   "isbn13": "9781549608186",
   "olKey": "/works/OL6037024W",
   "synopsis": "Lessig details the history of copyright law as it pertains to digital media, how it has affected creativity and expression online. Title for the hardcover and PDF versions: Free Culture: How Big Media Uses Technology and the Law to Lock Down Culture and Control Creativity",
-  "meetingDate": "2005-03-13T00:00:00.000Z",
-  "year": 2005,
-  "pickerName": "John",
-  "pickerSlug": null,
-  "pickerNames": [
-    "John"
-  ],
-  "pickerSlugs": [
-    null
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  "picker": [
+    "john"
+  ]
 }

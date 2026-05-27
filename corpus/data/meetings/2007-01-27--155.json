@@ -1,23 +1,9 @@
 {
   "id": "recuLb7HuzM70TafB",
   "meetingId": 155,
-  "name": "January 2007: The Long Tail",
   "date": "2007-01-27T00:00:00.000Z",
-  "year": 2007,
-  "bookIds": [
-    "recennsaTw6vO9izj"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-long-tail"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

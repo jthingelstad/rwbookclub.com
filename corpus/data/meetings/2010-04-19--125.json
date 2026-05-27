@@ -1,23 +1,9 @@
 {
   "id": "recj14ncGZhPkVWyk",
   "meetingId": 125,
-  "name": "April 2010: The Golden Age",
   "date": "2010-04-19T23:00:00.000Z",
-  "year": 2010,
-  "bookIds": [
-    "recnQ3R3NidAj18HF"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-golden-age"
-  ],
-  "hostIds": [
-    "recuT1LiVs6I0u4zR"
-  ],
-  "hosts": [
-    {
-      "name": "Jamie",
-      "slug": "jamie"
-    }
   ],
   "type": [
     "Book"

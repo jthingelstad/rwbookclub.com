@@ -1,23 +1,9 @@
 {
   "id": "rec3dlurJ5VMLpvXK",
   "meetingId": 180,
-  "name": "April 2003: My Tiny Life",
   "date": "2003-04-28T23:00:00.000Z",
-  "year": 2003,
-  "bookIds": [
-    "rec8IpPOVZwoPNPmr"
-  ],
-  "bookSlugs": [
+  "books": [
     "my-tiny-life"
-  ],
-  "hostIds": [
-    "recLaMxXUJ9RiaGyM"
-  ],
-  "hosts": [
-    {
-      "name": "John",
-      "slug": "john"
-    }
   ],
   "type": [
     "Book"

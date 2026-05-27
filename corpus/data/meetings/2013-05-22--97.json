@@ -1,23 +1,9 @@
 {
   "id": "recYfOMge1v8OMMg5",
   "meetingId": 97,
-  "name": "May 2013: The Joy of x",
   "date": "2013-05-22T23:00:00.000Z",
-  "year": 2013,
-  "bookIds": [
-    "rec6ff7vhLADVDuBu"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-joy-of-x"
-  ],
-  "hostIds": [
-    "recLaMxXUJ9RiaGyM"
-  ],
-  "hosts": [
-    {
-      "name": "John",
-      "slug": "john"
-    }
   ],
   "type": [
     "Book"

@@ -14,19 +14,7 @@
   "isbn13": "9781594205842",
   "olKey": "/works/OL17582325W",
   "synopsis": "Financial Times Asia editor David Pilling presents a fresh vision of Japan, drawing on his own deep experience, as well as observations from a cross section of Japanese citizenry, including novelist Haruki Murakami, former prime minister Junichiro Koizumi, industrialists and bankers, activists and artists, teenagers and octogenarians. Through their voices, Pilling captures the dynamism and diversity of contemporary Japan.",
-  "meetingDate": "2020-09-16T23:30:00.000Z",
-  "year": 2020,
-  "pickerName": "Loren",
-  "pickerSlug": "loren",
-  "pickerNames": [
-    "Loren"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "loren"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": "Zoom",
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

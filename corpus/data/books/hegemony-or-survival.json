@@ -14,19 +14,7 @@
   "isbn13": "9780241142509",
   "olKey": "/works/OL71680W",
   "synopsis": "From the world's foremost intellectual activist, here is an irrefutable analysis of America's pursuit of total domination and the catastrophic consequences that are sure to follow. The United States is in the process of staking out not just the globe, but the last unarmed spot in our neighbourhood - the skies - as a militarized sphere of influence. Our earth and its skies are, for the Bush administration, the final frontiers of imperial control. In Hegemony or Survival, Noam Chomsky explains how we came to this moment, what kind of peril we find ourselves in, and why our rulers are willing to jeopardize the future of our species. In our era, Chomsky argues, empire is a recipe for an earthly wasteland.",
-  "meetingDate": "2010-11-12T00:00:00.000Z",
-  "year": 2010,
-  "pickerName": "Jamie",
-  "pickerSlug": "jamie",
-  "pickerNames": [
-    "Jamie"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "jamie"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

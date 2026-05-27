@@ -1,23 +1,9 @@
 {
   "id": "reca9St967b1BfYi6",
   "meetingId": 19,
-  "name": "December 2022: Mni Sota Makoce",
   "date": "2022-12-15T00:00:00.000Z",
-  "year": 2022,
-  "bookIds": [
-    "recoQkJQ7bkfgX3ue"
-  ],
-  "bookSlugs": [
+  "books": [
     "mni-sota-makoce"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

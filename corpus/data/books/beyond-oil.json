@@ -14,19 +14,7 @@
   "isbn13": "9780374707026",
   "olKey": "/works/OL5744857W",
   "synopsis": null,
-  "meetingDate": "2005-12-21T00:00:00.000Z",
-  "year": 2005,
-  "pickerName": "Dan",
-  "pickerSlug": null,
-  "pickerNames": [
-    "Dan"
-  ],
-  "pickerSlugs": [
-    null
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  "picker": [
+    "dan"
+  ]
 }

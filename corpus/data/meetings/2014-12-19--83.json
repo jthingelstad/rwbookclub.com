@@ -1,17 +1,10 @@
 {
   "id": "recSp6OYPpS9I1TYM",
   "meetingId": 83,
-  "name": "December 2014: Love Sense",
   "date": "2014-12-19T00:00:00.000Z",
-  "year": 2014,
-  "bookIds": [
-    "recdZ6CYn5getejXp"
-  ],
-  "bookSlugs": [
+  "books": [
     "love-sense"
   ],
-  "hostIds": [],
-  "hosts": [],
   "type": [
     "Spouses"
   ],

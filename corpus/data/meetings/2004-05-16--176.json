@@ -1,23 +1,9 @@
 {
   "id": "recx3Nm121VtVzUqN",
   "meetingId": 176,
-  "name": "May 2004: Over the Edge of the World",
   "date": "2004-05-16T23:00:00.000Z",
-  "year": 2004,
-  "bookIds": [
-    "recwQ2B3JAj0GDPHp"
-  ],
-  "bookSlugs": [
+  "books": [
     "over-the-edge-of-the-world"
-  ],
-  "hostIds": [
-    "recLaMxXUJ9RiaGyM"
-  ],
-  "hosts": [
-    {
-      "name": "John",
-      "slug": "john"
-    }
   ],
   "type": [
     "Book"

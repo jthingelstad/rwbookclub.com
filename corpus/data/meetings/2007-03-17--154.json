@@ -1,23 +1,9 @@
 {
   "id": "recXS98mtYWHoc9rF",
   "meetingId": 154,
-  "name": "March 2007: Happiness",
   "date": "2007-03-17T23:00:00.000Z",
-  "year": 2007,
-  "bookIds": [
-    "rectYkVZwrOECoRGO"
-  ],
-  "bookSlugs": [
+  "books": [
     "happiness"
-  ],
-  "hostIds": [
-    "reczXGhA4xwgX91Jc"
-  ],
-  "hosts": [
-    {
-      "name": "Dan",
-      "slug": "dan"
-    }
   ],
   "type": [
     "Book"

@@ -14,19 +14,7 @@
   "isbn13": "9780688161125",
   "olKey": "/works/OL2252098W",
   "synopsis": "Jeff Winston, forty-three, didn't know he was a replayer until he died and woke up twenty-five years younger in his college dorm room; he lived another life. And died again. And lived again and died again—in a continuous twenty-five-year cycle—each time starting from scratch at the age of eighteen to reclaim lost loves, remedy past mistakes, or make a fortune in the stock market. A novel of gripping adventure, romance, and fascinating speculation on the nature of time, Replay asks the question: \"What if you could live your life over again?\"",
-  "meetingDate": "2020-04-29T23:30:00.000Z",
-  "year": 2020,
-  "pickerName": "Tom",
-  "pickerSlug": "tom",
-  "pickerNames": [
-    "Tom"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "tom"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": "Zoom",
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

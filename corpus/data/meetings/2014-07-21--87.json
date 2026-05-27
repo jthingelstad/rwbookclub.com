@@ -1,23 +1,9 @@
 {
   "id": "reck8f7ABRdqoGJH6",
   "meetingId": 87,
-  "name": "July 2014: The Everything Store",
   "date": "2014-07-21T23:00:00.000Z",
-  "year": 2014,
-  "bookIds": [
-    "rec7SFTS9fGzWGC1g"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-everything-store"
-  ],
-  "hostIds": [
-    "rec0unNzGOt24JKLj"
-  ],
-  "hosts": [
-    {
-      "name": "Nick",
-      "slug": "nick"
-    }
   ],
   "type": [
     "Book"

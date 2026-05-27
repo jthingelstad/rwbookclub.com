@@ -1,23 +1,9 @@
 {
   "id": "rec18sDB6wIpwDm7H",
   "meetingId": 99,
-  "name": "March 2013: The Signal and the Noise",
   "date": "2013-03-12T23:00:00.000Z",
-  "year": 2013,
-  "bookIds": [
-    "recUxnvlpAiHOtkL3"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-signal-and-the-noise"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

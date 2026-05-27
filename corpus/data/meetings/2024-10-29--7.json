@@ -1,23 +1,9 @@
 {
   "id": "reco9xQ9yuqFf3EV6",
   "meetingId": 7,
-  "name": "October 2024: Through the Language Glass",
   "date": "2024-10-29T23:00:00.000Z",
-  "year": 2024,
-  "bookIds": [
-    "rechVbKOaCYrh9QZn"
-  ],
-  "bookSlugs": [
+  "books": [
     "through-the-language-glass"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

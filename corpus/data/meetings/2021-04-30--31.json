@@ -1,13 +1,8 @@
 {
   "id": "recSKVKo45CSbOoKH",
   "meetingId": 31,
-  "name": "April 2021: ",
   "date": "2021-04-30T00:00:00.000Z",
-  "year": 2021,
-  "bookIds": [],
-  "bookSlugs": [],
-  "hostIds": [],
-  "hosts": [],
+  "books": [],
   "type": [
     "Picking"
   ],

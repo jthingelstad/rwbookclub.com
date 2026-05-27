@@ -1,23 +1,9 @@
 {
   "id": "rec8rSTDSntDC7R8b",
   "meetingId": 110,
-  "name": "December 2011: Darwin's Radio",
   "date": "2011-12-14T00:00:00.000Z",
-  "year": 2011,
-  "bookIds": [
-    "recKomcACt9D7xBLe"
-  ],
-  "bookSlugs": [
+  "books": [
     "darwin-s-radio"
-  ],
-  "hostIds": [
-    "reczXGhA4xwgX91Jc"
-  ],
-  "hosts": [
-    {
-      "name": "Dan",
-      "slug": "dan"
-    }
   ],
   "type": [
     "Book"

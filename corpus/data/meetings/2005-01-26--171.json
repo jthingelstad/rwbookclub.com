@@ -1,23 +1,9 @@
 {
   "id": "recbs0FYJFaLyBmVq",
   "meetingId": 171,
-  "name": "January 2005: Divorce Among the Gulls",
   "date": "2005-01-26T00:00:00.000Z",
-  "year": 2005,
-  "bookIds": [
-    "recNsXDIZCI3hQG58"
-  ],
-  "bookSlugs": [
+  "books": [
     "divorce-among-the-gulls"
-  ],
-  "hostIds": [
-    "rechNL5xOnYd7aE5c"
-  ],
-  "hosts": [
-    {
-      "name": "David",
-      "slug": "david"
-    }
   ],
   "type": [
     "Book"

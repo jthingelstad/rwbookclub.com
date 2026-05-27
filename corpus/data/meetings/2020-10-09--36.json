@@ -1,13 +1,8 @@
 {
   "id": "recbIMhBvwb41xFyt",
   "meetingId": 36,
-  "name": "October 2020: ",
   "date": "2020-10-09T00:00:00.000Z",
-  "year": 2020,
-  "bookIds": [],
-  "bookSlugs": [],
-  "hostIds": [],
-  "hosts": [],
+  "books": [],
   "type": [
     "Picking"
   ],

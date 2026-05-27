@@ -14,19 +14,7 @@
   "isbn13": "9780262162562",
   "olKey": "/works/OL11903988W",
   "synopsis": "\"How can you know when someone is bluffing? Paying attention? Genuinely interested? The answer, writes Sandy Pentland in Honest Signals, is that subtle patterns in how we interact with other people reveal our attitudes toward them. These unconscious social signals are not just a back channel or a complement to our conscious language; they form a separate communication network. Biologically based \"honest signaling,\" evolved from ancient primate signaling mechanisms, offers an unmatched window into our intentions, goals, and values. If we understand this ancient channel of communication, Pentland claims, we can accurately predict the outcomes of situations ranging from job interviews to first dates.\" \"Pentland, an MIT professor, has used a specially designed digital sensor worn like an ID badge - a \"sociometer\"--To monitor and analyze the back-and-forth patterns of signaling among groups of people. He and his researchers found that this second channel of communication, revolving not around words but around social relations, profoundly Influences major decisions in our lives - even though we are largely unaware of it. Pentland presents the scientific background necessary for understanding this form of communication, applies it to examples of group behavior in real organizations, and shows how by \"reading\" our social networks we can become more successful at pitching an idea, getting a job, or closing a deal. Using this \"network intelligence\" theory of social signaling, Pentland describes how we can harness the intelligence of our social network to become better managers, workers, and communicators.\"--",
-  "meetingDate": "2009-05-29T23:00:00.000Z",
-  "year": 2009,
-  "pickerName": "Tom",
-  "pickerSlug": "tom",
-  "pickerNames": [
-    "Tom"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "tom"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

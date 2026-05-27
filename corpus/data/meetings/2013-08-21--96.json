@@ -1,23 +1,9 @@
 {
   "id": "reczpjYnM24OdmvoO",
   "meetingId": 96,
-  "name": "August 2013: The Real North Korea",
   "date": "2013-08-21T23:00:00.000Z",
-  "year": 2013,
-  "bookIds": [
-    "rec0GJLDFlQB7Y4VF"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-real-north-korea"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

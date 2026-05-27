@@ -61,42 +61,37 @@ module.exports = function (eleventyConfig) {
     return `${list.slice(0, -1).join(", ")}, and ${list[list.length - 1]}`;
   });
 
-  // Reviews for a given book id (Nunjucks lacks selectattr)
-  eleventyConfig.addFilter("reviewsForBook", (reviews, bookId) => {
+  // Reviews for a given book slug (Nunjucks lacks selectattr)
+  eleventyConfig.addFilter("reviewsForBook", (reviews, bookSlug) => {
     if (!Array.isArray(reviews)) return [];
     return reviews
-      .filter((r) => Array.isArray(r.bookIds) && r.bookIds.includes(bookId))
+      .filter((r) => r.book === bookSlug)
       .sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
   });
 
-  // Awards for a given book id
-  eleventyConfig.addFilter("awardsForBook", (awards, bookId) => {
+  // Awards for a given book slug
+  eleventyConfig.addFilter("awardsForBook", (awards, bookSlug) => {
     if (!Array.isArray(awards)) return [];
-    return awards.filter(
-      (a) => Array.isArray(a.books) && a.books.some((b) => b.id === bookId)
-    );
+    return awards.filter((a) => Array.isArray(a.books) && a.books.includes(bookSlug));
   });
 
-  // Reviews authored by a given member id
-  eleventyConfig.addFilter("reviewsByMember", (reviews, memberId) => {
+  // Reviews authored by a given member slug
+  eleventyConfig.addFilter("reviewsByMember", (reviews, memberSlug) => {
     if (!Array.isArray(reviews)) return [];
-    return reviews.filter(
-      (r) => Array.isArray(r.memberIds) && r.memberIds.includes(memberId)
-    );
+    return reviews.filter((r) => r.member === memberSlug);
   });
 
   // Books a member has not yet reviewed (any kind of review counts, including
-  // DNF). `books` is already sorted most-recent-first by the fetch script.
-  eleventyConfig.addFilter("unreviewedFor", (books, memberId, reviews) => {
+  // DNF). `books` is already sorted most-recent-first.
+  eleventyConfig.addFilter("unreviewedFor", (books, memberSlug, reviews) => {
     if (!Array.isArray(books)) return [];
     const reviewed = new Set();
     if (Array.isArray(reviews)) {
       for (const r of reviews) {
-        if (!Array.isArray(r.memberIds) || !r.memberIds.includes(memberId)) continue;
-        for (const bid of r.bookIds || []) reviewed.add(bid);
+        if (r.member === memberSlug && r.book) reviewed.add(r.book);
       }
     }
-    return books.filter((b) => b.meetingDate && !b.placeholder && !reviewed.has(b.id));
+    return books.filter((b) => b.meetingDate && !b.placeholder && !reviewed.has(b.slug));
   });
 
   // RFC-822 / RFC-2822 date for the RSS feed

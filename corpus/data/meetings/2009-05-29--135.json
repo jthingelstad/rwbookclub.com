@@ -1,23 +1,9 @@
 {
   "id": "recOny6g6HF4Zib1W",
   "meetingId": 135,
-  "name": "May 2009: Honest Signals",
   "date": "2009-05-29T23:00:00.000Z",
-  "year": 2009,
-  "bookIds": [
-    "recsbp2idM7ATIjaP"
-  ],
-  "bookSlugs": [
+  "books": [
     "honest-signals"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

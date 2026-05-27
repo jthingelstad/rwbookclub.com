@@ -1,9 +1,10 @@
-"""Read/query layer over the per-entity Git corpus for Oliver's tools.
+"""Read/query layer over the normalized Git corpus for Oliver's tools.
 
-Loads books/members/meetings/reviews/awards from corpus/data/ and exposes query
-functions (search, get_book, member_history, upcoming_meetings, club_stats). Reads
-fresh from disk each call — the corpus is small and this keeps Oliver current if the
-files change. Returns plain dicts/lists; agent/tools.py formats them for the model.
+The corpus is normalized: book files are intrinsic + picker (member slugs); meetings
+own date + book refs; reviews/awards reference by slug. This module mirrors the
+website's build-time joins — it enriches books with their meeting date, picker names,
+placeholder, etc. — so the query functions return the same shapes as before. Reads
+fresh from disk each call (the corpus is small).
 """
 
 from __future__ import annotations
@@ -26,12 +27,19 @@ def _load_json_dir(name: str) -> list[dict]:
 def _parse_frontmatter(text: str) -> tuple[dict, str]:
     if text.startswith("---"):
         _, fm, *rest = text.split("---", 2)
-        body = rest[0] if rest else ""
-        return (yaml.safe_load(fm) or {}), body.strip()
+        return (yaml.safe_load(fm) or {}), (rest[0] if rest else "").strip()
     return {}, text.strip()
 
 
-def _load_reviews() -> list[dict]:
+def members() -> list[dict]:
+    return _load_json_dir("members")
+
+
+def meetings() -> list[dict]:
+    return _load_json_dir("meetings")
+
+
+def reviews() -> list[dict]:
     d = DATA_DIR / "reviews"
     if not d.exists():
         return []
@@ -43,16 +51,45 @@ def _load_reviews() -> list[dict]:
     return out
 
 
+def _earliest_meeting_by_book() -> dict[str, dict]:
+    m: dict[str, dict] = {}
+    for mt in meetings():
+        for bslug in mt.get("books") or []:
+            cur = m.get(bslug)
+            if not cur or (mt.get("date") or "") < (cur.get("date") or ""):
+                m[bslug] = mt
+    return m
+
+
 def books() -> list[dict]:
-    return _load_json_dir("books")
-
-
-def members() -> list[dict]:
-    return _load_json_dir("members")
-
-
-def reviews() -> list[dict]:
-    return _load_reviews()
+    """Books enriched with their derived meeting + picker fields (keeps `picker` too)."""
+    mbs = _earliest_meeting_by_book()
+    member_by_slug = {m["slug"]: m for m in members()}
+    out = []
+    for b in _load_json_dir("books"):
+        mt = mbs.get(b["slug"])
+        md = mt.get("date") if mt else None
+        pnames, pslugs = [], []
+        for ps in b.get("picker") or []:
+            mem = member_by_slug.get(ps)
+            if not mem:
+                continue
+            pnames.append(mem["name"])
+            pslugs.append(mem["slug"] if mem.get("isCurrent") else None)
+        eb = dict(b)
+        eb.update({
+            "meetingDate": md,
+            "year": int(md[:4]) if md else None,
+            "placeholder": bool(mt.get("placeholder")) if mt else False,
+            "meetingNotes": (mt.get("notes") if mt else None),
+            "meetingLocation": (mt.get("location") if mt else None),
+            "pickerName": pnames[0] if pnames else None,
+            "pickerSlug": pslugs[0] if pslugs else None,
+            "pickerNames": pnames or None,
+            "pickerSlugs": pslugs or None,
+        })
+        out.append(eb)
+    return out
 
 
 def _norm(s: str | None) -> str:
@@ -75,7 +112,6 @@ def _book_brief(b: dict) -> dict:
     }
 
 
-# ── Queries (each maps to a tool) ────────────────────────────────────────────
 def search_books(query: str | None = None, topic: str | None = None,
                  fiction: bool | None = None, year: int | None = None,
                  author: str | None = None, limit: int = 25) -> list[dict]:
@@ -105,31 +141,41 @@ def search_books(query: str | None = None, topic: str | None = None,
 def find_book(slug_or_title: str) -> dict | None:
     key = _norm(slug_or_title)
     bs = books()
-    for b in bs:  # exact slug
+    for b in bs:
         if _norm(b.get("slug")) == key:
             return b
-    for b in bs:  # exact title
+    for b in bs:
         if _norm(b.get("title")) == key:
             return b
-    for b in bs:  # contains
+    for b in bs:
         if key in _norm(b.get("title")) or key in _norm(b.get("slug")):
             return b
     return None
 
 
-def _reviews_for(*, book_id: str | None = None, member_id: str | None = None) -> list[dict]:
-    titles = {b["id"]: b.get("title") for b in books()}
+def find_member(name_or_slug: str) -> dict | None:
+    key = _norm(name_or_slug)
+    for m in members():
+        if _norm(m.get("slug")) == key or _norm(m.get("name")) == key:
+            return m
+    for m in members():
+        if key and (key in _norm(m.get("name")) or key in _norm(m.get("slug"))):
+            return m
+    return None
+
+
+def _reviews_for(*, book_slug: str | None = None, member_slug: str | None = None) -> list[dict]:
+    titles = {b["slug"]: b.get("title") for b in _load_json_dir("books")}
+    names = {m["slug"]: m.get("name") for m in members()}
     out = []
     for r in reviews():
-        if book_id and book_id not in (r.get("bookIds") or []):
+        if book_slug and r.get("book") != book_slug:
             continue
-        if member_id and member_id not in (r.get("memberIds") or []):
+        if member_slug and r.get("member") != member_slug:
             continue
-        names = [rv.get("name") for rv in (r.get("reviewers") or [])]
-        book_titles = [titles.get(b) for b in (r.get("bookIds") or []) if titles.get(b)]
         out.append({
-            "book": book_titles[0] if book_titles else None,
-            "by": names,
+            "book": titles.get(r.get("book")),
+            "by": names.get(r.get("member")),
             "rating": r.get("rating"),
             "dnf": bool(r.get("dnf")),
             "wouldRecommend": bool(r.get("wouldRecommend")),
@@ -149,36 +195,24 @@ def get_book(slug_or_title: str) -> dict | None:
     brief["isbn13"] = b.get("isbn13")
     brief["meetingDate"] = b.get("meetingDate")
     brief["meetingNotes"] = b.get("meetingNotes")
-    brief["reviews"] = _reviews_for(book_id=b.get("id"))
+    brief["reviews"] = _reviews_for(book_slug=b.get("slug"))
     return brief
-
-
-def find_member(name_or_slug: str) -> dict | None:
-    key = _norm(name_or_slug)
-    for m in members():
-        if _norm(m.get("slug")) == key or _norm(m.get("name")) == key:
-            return m
-    for m in members():
-        if key and (key in _norm(m.get("name")) or key in _norm(m.get("slug"))):
-            return m
-    return None
 
 
 def member_history(name_or_slug: str) -> dict | None:
     m = find_member(name_or_slug)
     if not m:
         return None
+    picked = [b for b in books() if m["slug"] in (b.get("picker") or [])]
+    picked.sort(key=lambda b: b.get("meetingDate") or "", reverse=True)
     return {
         "name": m.get("name"),
         "slug": m.get("slug"),
         "isCurrent": bool(m.get("isCurrent")),
         "website": m.get("website"),
-        "pickedCount": m.get("pickedCount"),
-        "picks": [
-            {"title": p.get("title"), "year": p.get("year")}
-            for p in (m.get("pickedBooks") or [])
-        ],
-        "reviews": _reviews_for(member_id=m.get("id")),
+        "pickedCount": len(picked),
+        "picks": [{"title": b.get("title"), "year": b.get("year")} for b in picked],
+        "reviews": _reviews_for(member_slug=m.get("slug")),
     }
 
 
@@ -186,13 +220,9 @@ def upcoming_meetings() -> list[dict]:
     future = [b for b in books() if b.get("placeholder")]
     future.sort(key=lambda b: b.get("meetingDate") or "")
     return [
-        {
-            "title": b.get("title"),
-            "authors": b.get("authors") or [],
-            "meetingDate": b.get("meetingDate"),
-            "pickedBy": b.get("pickerName"),
-            "topic": b.get("topic"),
-        }
+        {"title": b.get("title"), "authors": b.get("authors") or [],
+         "meetingDate": b.get("meetingDate"), "pickedBy": b.get("pickerName"),
+         "topic": b.get("topic")}
         for b in future
     ]
 
@@ -223,22 +253,17 @@ def club_stats() -> dict:
 
 
 def pending_reviews(name_or_slug: str) -> dict | None:
-    """Books the member has read (not placeholders) that they haven't reviewed yet."""
     m = find_member(name_or_slug)
     if not m:
         return None
-    reviewed = {
-        bid for r in reviews() if m["id"] in (r.get("memberIds") or [])
-        for bid in (r.get("bookIds") or [])
-    }
+    reviewed = {r.get("book") for r in reviews() if r.get("member") == m["slug"]}
     read = [b for b in books() if b.get("meetingDate") and not b.get("placeholder")]
-    pending = [_book_brief(b) for b in read if b.get("id") not in reviewed]
+    pending = [_book_brief(b) for b in read if b.get("slug") not in reviewed]
     pending.sort(key=lambda x: x["yearRead"] or 0, reverse=True)
     return {"member": m["name"], "count": len(pending), "books": pending}
 
 
 def book_choices(prefix: str, limit: int = 25) -> list[tuple[str, str]]:
-    """(title, slug) pairs for slash-command autocomplete; recent reads first."""
     p = _norm(prefix)
     out: list[tuple[str, str]] = []
     for b in sorted(books(), key=lambda x: (x.get("year") or 0), reverse=True):

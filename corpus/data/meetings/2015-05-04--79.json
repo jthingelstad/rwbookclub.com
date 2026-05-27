@@ -1,17 +1,10 @@
 {
   "id": "recf7G5i87iPVh5Me",
   "meetingId": 79,
-  "name": "May 2015: Complexity",
   "date": "2015-05-04T23:00:00.000Z",
-  "year": 2015,
-  "bookIds": [
-    "rec68ZsVB4PKwrddI"
-  ],
-  "bookSlugs": [
+  "books": [
     "complexity"
   ],
-  "hostIds": [],
-  "hosts": [],
   "type": [
     "Book"
   ],

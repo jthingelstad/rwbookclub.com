@@ -14,19 +14,7 @@
   "isbn13": "9780306819773",
   "olKey": "/works/OL17803533W",
   "synopsis": null,
-  "meetingDate": "2013-12-21T00:00:00.000Z",
-  "year": 2013,
-  "pickerName": "Jamie",
-  "pickerSlug": "jamie",
-  "pickerNames": [
-    "Jamie"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "jamie"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

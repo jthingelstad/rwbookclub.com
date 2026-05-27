@@ -1,23 +1,9 @@
 {
   "id": "recDb4XWZcq6Ojk2C",
   "meetingId": 140,
-  "name": "November 2008: Traffic",
   "date": "2008-11-04T00:00:00.000Z",
-  "year": 2008,
-  "bookIds": [
-    "recx7SRs1dKCrfUJh"
-  ],
-  "bookSlugs": [
+  "books": [
     "traffic"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

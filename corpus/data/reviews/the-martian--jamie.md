@@ -2,14 +2,6 @@
 id: recqp8KhUCpIVdx8c
 book: the-martian
 member: jamie
-bookIds:
-- rec6efyGvdpzMPshh
-memberIds:
-- recuT1LiVs6I0u4zR
-reviewers:
-- id: recuT1LiVs6I0u4zR
-  name: Jamie
-  slug: jamie
 rating: 5
 dnf: false
 discussionQuality: 4

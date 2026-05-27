@@ -1,23 +1,9 @@
 {
   "id": "recVT4uLhC4HbClTJ",
   "meetingId": 167,
-  "name": "August 2005: Freakonomics",
   "date": "2005-08-30T23:00:00.000Z",
-  "year": 2005,
-  "bookIds": [
-    "recStLGntwUY1oitq"
-  ],
-  "bookSlugs": [
+  "books": [
     "freakonomics"
-  ],
-  "hostIds": [
-    "rechNL5xOnYd7aE5c"
-  ],
-  "hosts": [
-    {
-      "name": "David",
-      "slug": "david"
-    }
   ],
   "type": [
     "Book"

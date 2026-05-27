@@ -14,19 +14,7 @@
   "isbn13": "9780676978582",
   "olKey": "/works/OL15840192W",
   "synopsis": "A smart and funny book by a prominent Harvard psychologist, which uses groundbreaking research and (often hilarious) anecdotes to show us why we're so lousy at predicting what will make us happy -- and what we can do about it.Most of us spend our lives steering ourselves toward the best of all possible futures, only to find that tomorrow rarely turns out as we had expected. Why? As Harvard psychologist Daniel Gilbert explains, when people try to imagine what the future will hold, they make some basic and consistent mistakes. Just as memory plays tricks on us when we try to look backward in time, so does imagination play tricks when we try to look forward. Using cutting-edge research, much of it original, Gilbert shakes, cajoles, persuades, tricks and jokes us into accepting the fact that happiness is not really what or where we thought it was. Among the unexpected questions he poses: Why are conjoined twins no less happy than the general population? When you go out to eat, is it better to order your favourite dish every time, or to try something new? If Ingrid Bergman hadn't gotten on the plane at the end of Casablanca, would she and Bogey have been better off?Smart, witty, accessible and laugh-out-loud funny, Stumbling on Happiness brilliantly describes all that science has to tell us about the uniquely human ability to envision the future, and how likely we are to enjoy it when we get there.From the Hardcover edition.",
-  "meetingDate": "2006-10-03T23:00:00.000Z",
-  "year": 2006,
-  "pickerName": "David",
-  "pickerSlug": null,
-  "pickerNames": [
-    "David"
-  ],
-  "pickerSlugs": [
-    null
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  "picker": [
+    "david"
+  ]
 }

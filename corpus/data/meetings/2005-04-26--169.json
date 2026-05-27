@@ -1,23 +1,9 @@
 {
   "id": "recqopt0RKBIcKWnK",
   "meetingId": 169,
-  "name": "April 2005: Hackers and Painters",
   "date": "2005-04-26T23:00:00.000Z",
-  "year": 2005,
-  "bookIds": [
-    "reciM17apKoJoeA9a"
-  ],
-  "bookSlugs": [
+  "books": [
     "hackers-and-painters"
-  ],
-  "hostIds": [
-    "reczXGhA4xwgX91Jc"
-  ],
-  "hosts": [
-    {
-      "name": "Dan",
-      "slug": "dan"
-    }
   ],
   "type": [
     "Book"

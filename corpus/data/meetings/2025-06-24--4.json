@@ -1,23 +1,9 @@
 {
   "id": "recCAw0pD0VXSWVkF",
   "meetingId": 4,
-  "name": "June 2025: Co-Intelligence",
   "date": "2025-06-24T23:30:00.000Z",
-  "year": 2025,
-  "bookIds": [
-    "recZ4nkkZjO1J7fDE"
-  ],
-  "bookSlugs": [
+  "books": [
     "co-intelligence"
-  ],
-  "hostIds": [
-    "recuT1LiVs6I0u4zR"
-  ],
-  "hosts": [
-    {
-      "name": "Jamie",
-      "slug": "jamie"
-    }
   ],
   "type": [
     "Book"

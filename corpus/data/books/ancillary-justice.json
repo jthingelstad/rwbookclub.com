@@ -14,19 +14,7 @@
   "isbn13": "9780316246620",
   "olKey": "/works/OL17062644W",
   "synopsis": "On a remote, icy planet, the soldier known as Breq is drawing closer to completing her quest. Once, she was the *Justice of Toren*--a colossal starship with an artificial intelligence linking thousands of soldiers in the service of the Radch, the empire that conquered the galaxy. Now, an act of treachery has ripped it all away, leaving her with one fragile human body, unanswered questions, and a burning desire for vengeance. Sequels: Ancillary Sword; Ancillary Mercy.",
-  "meetingDate": "2016-09-27T23:00:00.000Z",
-  "year": 2016,
-  "pickerName": "Erik",
-  "pickerSlug": "erik",
-  "pickerNames": [
-    "Erik"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "erik"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

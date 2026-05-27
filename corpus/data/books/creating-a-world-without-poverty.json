@@ -14,19 +14,7 @@
   "isbn13": "9781586484934",
   "olKey": "/works/OL1079340W",
   "synopsis": "The winner of the Nobel Peace Prize outlines his vision for a new business model that combines the power of free markets with the quest for a more humane world--and he tells the inspiring stories of companies that are doing this work today. In the last two decades, free markets have swept the globe, bringing with them enormous potential for positive change. But traditional capitalism cannot solve problems like inequality and poverty, because it is hampered by a narrow view of human nature in which people are one-dimensional beings concerned only with profit. In fact, human beings have many other drives and passions, including the spiritual, the social, and the altruistic. Welcome to the world of social business, where the creative vision of the entrepreneur is applied to today's most serious problems: feeding the poor, housing the homeless, healing the sick, and protecting the planet.--From publisher description.",
-  "meetingDate": "2010-02-16T00:00:00.000Z",
-  "year": 2010,
-  "pickerName": "Dan",
-  "pickerSlug": null,
-  "pickerNames": [
-    "Dan"
-  ],
-  "pickerSlugs": [
-    null
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  "picker": [
+    "dan"
+  ]
 }

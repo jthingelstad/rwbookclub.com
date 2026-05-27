@@ -1,18 +1,39 @@
 // Build-time enrichment for books.
 //
-// Aggregates the per-entity book files from the corpus (the source of truth)
-// and derives `coverWidths`/`hasCover` from whatever JPEGs actually exist on
-// disk under src/assets/images/covers. The filesystem is the source of truth
-// for covers: if a file is there it renders; if not, the placeholder shows.
-// This means corpus.fetch/migrate and corpus.images can run in any order
-// without leaving the data and the asset folder out of sync.
+// The corpus is normalized: book files hold intrinsic facts + picker (member
+// slugs); meetings own date + book refs. Here we JOIN — derive each book's
+// meeting date / picker names / placeholder etc. — and derive coverWidths from
+// the JPEGs actually on disk. Downstream (journey, stats, templates) sees the
+// same enriched fields as before.
 
 const fs = require("fs");
 const path = require("path");
 
-const BOOKS_DIR = path.join(__dirname, "..", "..", "..", "corpus", "data", "books");
+const DATA = path.join(__dirname, "..", "..", "..", "corpus", "data");
 const COVERS_DIR = path.join(__dirname, "..", "assets", "images", "covers");
 const FILENAME_RE = /^(.+)-(\d+)\.jpg$/;
+
+function readJsonDir(name) {
+  const dir = path.join(DATA, name);
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith(".json"))
+    .map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")));
+}
+
+function reviewCountBySlug() {
+  // Count review files per book ("<book-slug>--<member-slug>.md"); "--" is only the separator.
+  const dir = path.join(DATA, "reviews");
+  const counts = new Map();
+  if (!fs.existsSync(dir)) return counts;
+  for (const f of fs.readdirSync(dir)) {
+    if (!f.endsWith(".md")) continue;
+    const slug = f.slice(0, -3).split("--")[0];
+    counts.set(slug, (counts.get(slug) || 0) + 1);
+  }
+  return counts;
+}
 
 function buildWidthsBySlug() {
   if (!fs.existsSync(COVERS_DIR)) return new Map();
@@ -28,34 +49,68 @@ function buildWidthsBySlug() {
   return widths;
 }
 
-function loadBooks() {
-  if (!fs.existsSync(BOOKS_DIR)) return [];
-  return fs
-    .readdirSync(BOOKS_DIR)
-    .filter((f) => f.endsWith(".json"))
-    .map((f) => JSON.parse(fs.readFileSync(path.join(BOOKS_DIR, f), "utf8")));
+// Exposed so members.js can reuse the same book→meeting join.
+function earliestMeetingBySlug(meetings) {
+  const map = new Map();
+  for (const mt of meetings) {
+    for (const bslug of mt.books || []) {
+      const cur = map.get(bslug);
+      if (!cur || (mt.date || "") < (cur.date || "")) map.set(bslug, mt);
+    }
+  }
+  return map;
 }
 
-module.exports = function () {
-  const books = loadBooks();
-  // Most-recent-first: by meeting date desc, then Book ID desc (matches the
-  // order the old fetch pipeline wrote, so the reading journey is unchanged).
-  books.sort((a, b) => {
+function enrich() {
+  const books = readJsonDir("books");
+  const meetings = readJsonDir("meetings");
+  const members = readJsonDir("members");
+  const memberBySlug = new Map(members.map((m) => [m.slug, m]));
+  const meetingForBook = earliestMeetingBySlug(meetings);
+  const widthsBySlug = buildWidthsBySlug();
+  const reviewCounts = reviewCountBySlug();
+
+  const enriched = books.map((b) => {
+    const mt = meetingForBook.get(b.slug) || null;
+    const meetingDate = mt ? mt.date || null : null;
+    const pickerNames = [];
+    const pickerSlugs = [];
+    for (const ps of b.picker || []) {
+      const m = memberBySlug.get(ps);
+      if (!m) continue;
+      pickerNames.push(m.name);
+      pickerSlugs.push(m.isCurrent ? m.slug : null);
+    }
+    const widths = widthsBySlug.get(b.slug);
+    const { picker, ...rest } = b;
+    return {
+      ...rest,
+      meetingDate,
+      year: meetingDate ? Number(meetingDate.slice(0, 4)) : null,
+      pickerName: pickerNames[0] || null,
+      pickerSlug: pickerSlugs.length ? pickerSlugs[0] : null,
+      pickerNames: pickerNames.length ? pickerNames : null,
+      pickerSlugs: pickerSlugs.length ? pickerSlugs : null,
+      placeholder: mt ? Boolean(mt.placeholder) : false,
+      meetingNotes: mt ? mt.notes || null : null,
+      meetingLocation: mt ? mt.location || null : null,
+      hasCover: Boolean(widths && widths.length),
+      reviewCount: reviewCounts.get(b.slug) || 0,
+      coverWidths: widths || null,
+    };
+  });
+
+  // Most-recent first: meeting date desc, then Book ID desc.
+  enriched.sort((a, b) => {
     const ad = a.meetingDate || "";
     const bd = b.meetingDate || "";
     if (ad < bd) return 1;
     if (ad > bd) return -1;
     return (b.bookId || 0) - (a.bookId || 0);
   });
+  return enriched;
+}
 
-  const widthsBySlug = buildWidthsBySlug();
-  return books.map((b) => {
-    const widths = widthsBySlug.get(b.slug);
-    const { coverUrl, ...rest } = b;
-    return {
-      ...rest,
-      hasCover: Boolean(widths && widths.length),
-      coverWidths: widths || null,
-    };
-  });
-};
+module.exports = enrich;
+module.exports.readJsonDir = readJsonDir;
+module.exports.earliestMeetingBySlug = earliestMeetingBySlug;

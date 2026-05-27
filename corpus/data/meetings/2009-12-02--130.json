@@ -1,23 +1,9 @@
 {
   "id": "recb1OFqFnQXafbl3",
   "meetingId": 130,
-  "name": "December 2009: Play",
   "date": "2009-12-02T00:00:00.000Z",
-  "year": 2009,
-  "bookIds": [
-    "recMHvJS80NMGe8hI"
-  ],
-  "bookSlugs": [
+  "books": [
     "play"
-  ],
-  "hostIds": [
-    "recLaMxXUJ9RiaGyM"
-  ],
-  "hosts": [
-    {
-      "name": "John",
-      "slug": "john"
-    }
   ],
   "type": [
     "Book"

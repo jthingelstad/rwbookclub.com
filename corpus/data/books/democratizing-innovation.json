@@ -14,19 +14,7 @@
   "isbn13": "9780262285636",
   "olKey": "/works/OL5275396W",
   "synopsis": "Innovation is rapidly becoming democratized. Users, aided by improvements in computer and communications technology, increasingly can develop their own new products and services. Eric von Hippel looks closely at this emerging system of user-centred innovation.",
-  "meetingDate": "2006-03-22T23:00:00.000Z",
-  "year": 2006,
-  "pickerName": "Erik",
-  "pickerSlug": "erik",
-  "pickerNames": [
-    "Erik"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "erik"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

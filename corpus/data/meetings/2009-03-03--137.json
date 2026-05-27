@@ -1,23 +1,9 @@
 {
   "id": "recg3DyaySTr4Dkbd",
   "meetingId": 137,
-  "name": "March 2009: Money-Driven Medicine",
   "date": "2009-03-03T00:00:00.000Z",
-  "year": 2009,
-  "bookIds": [
-    "recehrUsMcgBMOwT4"
-  ],
-  "bookSlugs": [
+  "books": [
     "money-driven-medicine"
-  ],
-  "hostIds": [
-    "recuT1LiVs6I0u4zR"
-  ],
-  "hosts": [
-    {
-      "name": "Jamie",
-      "slug": "jamie"
-    }
   ],
   "type": [
     "Book"

@@ -1,23 +1,9 @@
 {
   "id": "recmZDLhDvuLEPkzo",
   "meetingId": 101,
-  "name": "December 2012: Liars and Outliers",
   "date": "2012-12-20T00:00:00.000Z",
-  "year": 2012,
-  "bookIds": [
-    "recQ55hpN2cHMiTkG"
-  ],
-  "bookSlugs": [
+  "books": [
     "liars-and-outliers"
-  ],
-  "hostIds": [
-    "reczXGhA4xwgX91Jc"
-  ],
-  "hosts": [
-    {
-      "name": "Dan",
-      "slug": "dan"
-    }
   ],
   "type": [
     "Spouses"

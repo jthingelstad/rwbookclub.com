@@ -61,13 +61,19 @@ async def on_ready() -> None:
     log.info("Oliver connected as %s — %d books in the corpus.", client.user, kb.book_count())
 
 
-@client.tree.command(name="ping", description="Check that Oliver is awake.")
-async def ping(interaction: discord.Interaction) -> None:
+# All slash commands live under one /oliver group for consistency.
+oliver_cmds = discord.app_commands.Group(
+    name="oliver", description="Ask Oliver, or help run the R/W Book Club."
+)
+
+
+@oliver_cmds.command(name="ping", description="Check that Oliver is awake.")
+async def oliver_ping(interaction: discord.Interaction) -> None:
     await interaction.response.send_message("🟢 Oliver is awake.", ephemeral=True)
 
 
-@client.tree.command(name="corpus", description="Admin: report corpus stats.")
-async def corpus(interaction: discord.Interaction) -> None:
+@oliver_cmds.command(name="stats", description="Report corpus stats (admin).")
+async def oliver_stats(interaction: discord.Interaction) -> None:
     if interaction.user.id != ADMIN_USER_ID:
         await interaction.response.send_message("Sorry, that command is admin-only.", ephemeral=True)
         return
@@ -134,7 +140,7 @@ class ReviewModal(discord.ui.Modal):
         )
 
 
-@client.tree.command(name="review", description="Log your review of a book the club has read.")
+@oliver_cmds.command(name="review", description="Log your review of a book the club has read.")
 @discord.app_commands.describe(book="The book you're reviewing")
 @discord.app_commands.autocomplete(book=book_autocomplete)
 async def review_cmd(interaction: discord.Interaction, book: str) -> None:
@@ -156,6 +162,9 @@ async def review_cmd(interaction: discord.Interaction, book: str) -> None:
         data, body = corpus_read._parse_frontmatter(rp.read_text())
         existing = {**(data or {}), "review": body}
     await interaction.response.send_modal(ReviewModal(b["slug"], b["title"], existing))
+
+
+client.tree.add_command(oliver_cmds)
 
 
 @client.event

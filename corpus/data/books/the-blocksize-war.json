@@ -14,19 +14,7 @@
   "isbn13": "9798721895609",
   "olKey": "/works/OL30747417W",
   "synopsis": null,
-  "meetingDate": "2022-01-25T00:00:00.000Z",
-  "year": 2022,
-  "pickerName": "Jamie",
-  "pickerSlug": "jamie",
-  "pickerNames": [
-    "Jamie"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "jamie"
-  ],
-  "placeholder": false,
-  "meetingNotes": "Special guest: Hector Fernandez",
-  "meetingLocation": "Zoom",
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

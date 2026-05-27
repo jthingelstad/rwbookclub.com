@@ -1,23 +1,9 @@
 {
   "id": "rec4bRz6L4CKCUhP8",
   "meetingId": 105,
-  "name": "July 2012: The Mystery of Banking",
   "date": "2012-07-02T23:00:00.000Z",
-  "year": 2012,
-  "bookIds": [
-    "rec1gmZqyX4btwosy"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-mystery-of-banking"
-  ],
-  "hostIds": [
-    "reczXGhA4xwgX91Jc"
-  ],
-  "hosts": [
-    {
-      "name": "Dan",
-      "slug": "dan"
-    }
   ],
   "type": [
     "Book"

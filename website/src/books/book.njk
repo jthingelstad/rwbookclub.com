@@ -29,7 +29,7 @@ eleventyComputed:
       {% if book.authors.length %}
         <p class="book-authors">by {{ book.authors | joinNames }}</p>
       {% endif %}
-      {% set bookAwards = awards | awardsForBook(book.id) %}
+      {% set bookAwards = awards | awardsForBook(book.slug) %}
       {% if bookAwards.length %}
         <ul class="award-badges">
           {% for a in bookAwards %}
@@ -96,7 +96,7 @@ eleventyComputed:
 
   <section class="book-section reviews">
     <h2>Reviews</h2>
-    {% set bookReviews = reviews | reviewsForBook(book.id) %}
+    {% set bookReviews = reviews | reviewsForBook(book.slug) %}
     {% if bookReviews.length %}
       <ul class="review-list">
         {% for r in bookReviews %}

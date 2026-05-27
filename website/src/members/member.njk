@@ -67,15 +67,14 @@ eleventyComputed:
     {% endif %}
   </section>
 
-  {% set memberReviews = reviews | reviewsByMember(member.id) %}
+  {% set memberReviews = reviews | reviewsByMember(member.slug) %}
   {% if memberReviews.length %}
     <section class="member-reviews">
       <h2>Reviews ({{ memberReviews.length }})</h2>
       <ol class="member-review-list">
         {% for r in memberReviews %}
-          {% for bid in r.bookIds %}
             {% for b in books %}
-              {% if b.id == bid %}
+              {% if b.slug == r.book %}
                 <li class="member-review-row{% if r.dnf %} member-review-row--dnf{% endif %}">
                   <a class="member-review-title" href="/books/{{ b.slug }}/">{{ b.title }}</a>
                   <span class="member-review-status">
@@ -88,13 +87,12 @@ eleventyComputed:
                 </li>
               {% endif %}
             {% endfor %}
-          {% endfor %}
         {% endfor %}
       </ol>
     </section>
   {% endif %}
 
-  {% set todoBooks = books | unreviewedFor(member.id, reviews) | limit(15) %}
+  {% set todoBooks = books | unreviewedFor(member.slug, reviews) | limit(15) %}
   {% if todoBooks.length %}
     <section class="member-todo">
       <h2>To review</h2>

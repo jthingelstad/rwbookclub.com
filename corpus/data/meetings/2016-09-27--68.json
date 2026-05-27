@@ -1,23 +1,9 @@
 {
   "id": "recQ6LglrvciPEapW",
   "meetingId": 68,
-  "name": "September 2016: Ancillary Justice",
   "date": "2016-09-27T23:00:00.000Z",
-  "year": 2016,
-  "bookIds": [
-    "rec4SNt8VYWfp0w8D"
-  ],
-  "bookSlugs": [
+  "books": [
     "ancillary-justice"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

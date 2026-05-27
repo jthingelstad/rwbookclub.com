@@ -1,23 +1,9 @@
 {
   "id": "recVbUEeD7zzacel4",
   "meetingId": 85,
-  "name": "September 2014: Far from the Tree",
   "date": "2014-09-22T23:00:00.000Z",
-  "year": 2014,
-  "bookIds": [
-    "rec4W7HgKT9HVSFuC"
-  ],
-  "bookSlugs": [
+  "books": [
     "far-from-the-tree"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

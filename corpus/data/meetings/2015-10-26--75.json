@@ -1,23 +1,9 @@
 {
   "id": "recvaQxQFYCUtWv6p",
   "meetingId": 75,
-  "name": "October 2015: The World Until Yesterday",
   "date": "2015-10-26T23:00:00.000Z",
-  "year": 2015,
-  "bookIds": [
-    "recOr8wo5c61zazyf"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-world-until-yesterday"
-  ],
-  "hostIds": [
-    "rec0unNzGOt24JKLj"
-  ],
-  "hosts": [
-    {
-      "name": "Nick",
-      "slug": "nick"
-    }
   ],
   "type": [
     "Book"

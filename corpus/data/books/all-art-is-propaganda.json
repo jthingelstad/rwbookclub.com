@@ -14,19 +14,7 @@
   "isbn13": "9780151013555",
   "olKey": "/works/OL1167992W",
   "synopsis": "Collects critical essays written by George Orwell in the 1940s, in which he discusses the work of Charles Dickens, Rudyard Kipling, T. S. Eliot, Salvador Dali, and others; and also covers propaganda, politics, and more.",
-  "meetingDate": "2017-03-21T23:00:00.000Z",
-  "year": 2017,
-  "pickerName": "Tom",
-  "pickerSlug": "tom",
-  "pickerNames": [
-    "Tom"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "tom"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": "Lake & Harriet",
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

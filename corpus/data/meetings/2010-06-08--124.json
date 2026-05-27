@@ -1,23 +1,9 @@
 {
   "id": "rec4iwpcaRAcJFVeR",
   "meetingId": 124,
-  "name": "June 2010: Team of Rivals",
   "date": "2010-06-08T23:00:00.000Z",
-  "year": 2010,
-  "bookIds": [
-    "rec7PqegVHLxfnHGp"
-  ],
-  "bookSlugs": [
+  "books": [
     "team-of-rivals"
-  ],
-  "hostIds": [
-    "recLaMxXUJ9RiaGyM"
-  ],
-  "hosts": [
-    {
-      "name": "John",
-      "slug": "john"
-    }
   ],
   "type": [
     "Book"

@@ -1,23 +1,9 @@
 {
   "id": "recVpLFIK8m2roNyL",
   "meetingId": 53,
-  "name": "June 2018: Sapiens",
   "date": "2018-06-06T23:00:00.000Z",
-  "year": 2018,
-  "bookIds": [
-    "reccq9hUWcNDsLQgv"
-  ],
-  "bookSlugs": [
+  "books": [
     "sapiens"
-  ],
-  "hostIds": [
-    "reczR2kRhTW8h4Htz"
-  ],
-  "hosts": [
-    {
-      "name": "Loren",
-      "slug": "loren"
-    }
   ],
   "type": [
     "Book"

@@ -14,19 +14,7 @@
   "isbn13": "9780465022014",
   "olKey": "/works/OL27083522W",
   "synopsis": null,
-  "meetingDate": "2017-01-17T00:00:00.000Z",
-  "year": 2017,
-  "pickerName": "Loren",
-  "pickerSlug": "loren",
-  "pickerNames": [
-    "Loren"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "loren"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": "George & The Dragon",
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

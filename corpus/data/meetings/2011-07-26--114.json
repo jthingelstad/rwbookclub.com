@@ -1,23 +1,9 @@
 {
   "id": "recuysiDSQmMw8SVN",
   "meetingId": 114,
-  "name": "July 2011: Ant Encounters",
   "date": "2011-07-26T23:00:00.000Z",
-  "year": 2011,
-  "bookIds": [
-    "recsioyHHF79PGv8R"
-  ],
-  "bookSlugs": [
+  "books": [
     "ant-encounters"
-  ],
-  "hostIds": [
-    "recuT1LiVs6I0u4zR"
-  ],
-  "hosts": [
-    {
-      "name": "Jamie",
-      "slug": "jamie"
-    }
   ],
   "type": [
     "Book"

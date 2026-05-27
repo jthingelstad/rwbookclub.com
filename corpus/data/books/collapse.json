@@ -14,19 +14,7 @@
   "isbn13": "9780143036555",
   "olKey": "/works/OL276557W",
   "synopsis": "In his Pulitzer Prize-winning bestseller Guns, Germs, and Steel, Jared Diamond examined how and why Western civilizations developed the technologies and immunities that allowed them to dominate much of the world. Now, Diamond probes the other side of the equation: What caused some of the great civilizations of the past to collapse into ruin, and what can we learn from their fates?\" \"As in Guns, Germs, and Steel, Diamond weaves an all-encompassing global thesis through a series of historical-cultural narratives. Moving from the prehistoric Polynesian culture on Easter Island to the formerly flourishing Native American civilizations of the Anasazi and the Maya, the doomed medieval Viking colony on Greenland, and finally to the modern world, Diamond traces a fundamental pattern of catastrophe, spelling out what happens when we squander our resources, when we ignore the signals our environment gives us, and when we reproduce too fast or cut down too many trees. Environmental damage, climate change, rapid population growth, unstable trade partners, and pressure from enemies were all factors in the demise of the doomed societies, but other societies found solutions to those same problems and persisted.",
-  "meetingDate": "2018-07-25T23:00:00.000Z",
-  "year": 2018,
-  "pickerName": "Erik",
-  "pickerSlug": "erik",
-  "pickerNames": [
-    "Erik"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "erik"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

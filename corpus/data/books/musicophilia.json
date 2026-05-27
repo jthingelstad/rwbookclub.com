@@ -14,19 +14,7 @@
   "isbn13": "9781035068371",
   "olKey": "/works/OL277255W",
   "synopsis": "Music can move us to the heights or depths of emotion. It can persuade us to buy something, or remind us of our first date. It can lift us out of depression when nothing else can. It can get us dancing to its beat. But the power of music goes much, much further. Indeed, music occupies more areas of our brain than language does–humans are a musical species. Oliver Sacks’s compassionate, compelling tales of people struggling to adapt to different neurological conditions have fundamentally changed the way we think of our own brains, and of the human experience. In Musicophilia, he examines the powers of music through the individual experiences of patients, musicians, and everyday people–from a man who is struck by lightning and suddenly inspired to become a pianist at the age of forty-two, to an entire group of children with Williams syndrome who are hypermusical from birth; from people with “amusia,” to whom a symphony sounds like the clattering of pots and pans, to a man whose memory spans only seven seconds–for everything but music. Our exquisite sensitivity to music can sometimes go wrong: Sacks explores how catchy tunes can subject us to hours of mental replay, and how a surprising number of people acquire nonstop musical hallucinations that assault them night and day. Yet far more frequently, music goes right: Sacks describes how music can animate people with Parkinson’s disease who cannot otherwise move, give words to stroke patients who cannot otherwise speak, and calm and organize people whose memories are ravaged by Alzheimer’s or amnesia. Music is irresistible, haunting, and unforgettable, and in Musicophilia, Oliver Sacks tells us why.",
-  "meetingDate": "2007-10-29T23:00:00.000Z",
-  "year": 2007,
-  "pickerName": "Dan",
-  "pickerSlug": null,
-  "pickerNames": [
-    "Dan"
-  ],
-  "pickerSlugs": [
-    null
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  "picker": [
+    "dan"
+  ]
 }

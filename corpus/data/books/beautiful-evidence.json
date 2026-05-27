@@ -14,19 +14,7 @@
   "isbn13": "9781930824164",
   "olKey": "/works/OL2824008W",
   "synopsis": "Science and art have in common intense seeing, the wide-eyed observing that generates visual information. Beautiful Evidence is about how seeing turns into showing, how data and evidence turn into explanation. The book identifies excellent and effective methods for showing nearly every kind of information, suggests many new designs (including sparklines), and provides analytical tools for assessing the credibility of evidence presentations (which are seen from both sides: how to produce and how to consume presentations). For alert consumers of presentations, there are chapters on diagnosing evidence corruption and PowerPoint pitches. Beautiful Evidence concludes with two chapters that leave the world of pixel and paper flatland representations - and move onto seeing and thinking in space land, the real-land of three-space and time. Edward Rolf Tufte (born 1942 in Kansas City, Missouri to Virginia and Edward E. Tufte), a professor emeritus of statistics, graphic design, and political economy at Yale University has been described by The New York Times as \"the Leonardo da Vinci of Data\". He is an expert in the presentation of informational graphics such as charts and diagrams, and is a fellow of the American Statistical Association. Tufte has held fellowships from the Guggenheim Foundation and the Center for Advanced Studies in Behavioral Sciences. Tufte currently resides in Cheshire, Connecticut. He periodically travels around the United States to offer one-day workshops on data presentation and information graphics. http://www.edwardtufte.com",
-  "meetingDate": "2007-12-27T00:00:00.000Z",
-  "year": 2007,
-  "pickerName": "Erik",
-  "pickerSlug": "erik",
-  "pickerNames": [
-    "Erik"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "erik"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

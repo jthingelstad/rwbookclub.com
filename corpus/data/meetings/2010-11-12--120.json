@@ -1,23 +1,9 @@
 {
   "id": "recPjIdi1jFofdhni",
   "meetingId": 120,
-  "name": "November 2010: Hegemony or Survival",
   "date": "2010-11-12T00:00:00.000Z",
-  "year": 2010,
-  "bookIds": [
-    "recnNlEK85HiZR3CV"
-  ],
-  "bookSlugs": [
+  "books": [
     "hegemony-or-survival"
-  ],
-  "hostIds": [
-    "recuT1LiVs6I0u4zR"
-  ],
-  "hosts": [
-    {
-      "name": "Jamie",
-      "slug": "jamie"
-    }
   ],
   "type": [
     "Book"

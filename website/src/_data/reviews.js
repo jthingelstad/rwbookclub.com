@@ -1,22 +1,32 @@
-// Reviews are canonical corpus data, stored one-per-file as Markdown with YAML
-// frontmatter (the prose body is the review text). Reconstruct the record shape
-// the templates expect ({ bookIds, memberIds, reviewers, rating, ... , review }).
-// Sorted by record id ascending to match the original fetch order.
+// Reviews are canonical corpus data: one Markdown file per review with slug-based
+// frontmatter (book + member slugs) and the prose body. Reviewer name/slug is
+// derived from the member here so templates keep rendering names. Joined to books
+// and members by slug (see the reviewsForBook / reviewsByMember filters).
 
 const fs = require("fs");
 const path = require("path");
 const matter = require("gray-matter");
 
-const DIR = path.join(__dirname, "..", "..", "..", "corpus", "data", "reviews");
+const DATA = path.join(__dirname, "..", "..", "..", "corpus", "data");
+const REVIEWS_DIR = path.join(DATA, "reviews");
+const MEMBERS_DIR = path.join(DATA, "members");
 
 module.exports = function () {
-  if (!fs.existsSync(DIR)) return [];
+  if (!fs.existsSync(REVIEWS_DIR)) return [];
+  const members = fs.existsSync(MEMBERS_DIR)
+    ? fs.readdirSync(MEMBERS_DIR).filter((f) => f.endsWith(".json"))
+        .map((f) => JSON.parse(fs.readFileSync(path.join(MEMBERS_DIR, f), "utf8")))
+    : [];
+  const memberBySlug = new Map(members.map((m) => [m.slug, m]));
+
   return fs
-    .readdirSync(DIR)
+    .readdirSync(REVIEWS_DIR)
     .filter((f) => f.endsWith(".md"))
     .map((f) => {
-      const { data, content } = matter(fs.readFileSync(path.join(DIR, f), "utf8"));
-      return { ...data, review: content.trim() || null };
+      const { data, content } = matter(fs.readFileSync(path.join(REVIEWS_DIR, f), "utf8"));
+      const m = memberBySlug.get(data.member);
+      const reviewers = m ? [{ name: m.name, slug: m.isCurrent ? m.slug : null }] : [];
+      return { ...data, review: content.trim() || null, reviewers };
     })
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 };

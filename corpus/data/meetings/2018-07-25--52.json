@@ -1,23 +1,9 @@
 {
   "id": "recJiUgssyZLTIv8n",
   "meetingId": 52,
-  "name": "July 2018: Collapse",
   "date": "2018-07-25T23:00:00.000Z",
-  "year": 2018,
-  "bookIds": [
-    "rec7sJuvw6cP26MuE"
-  ],
-  "bookSlugs": [
+  "books": [
     "collapse"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

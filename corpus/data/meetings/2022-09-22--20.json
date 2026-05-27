@@ -1,23 +1,9 @@
 {
   "id": "recfnRc4QAfGuqM2n",
   "meetingId": 20,
-  "name": "September 2022: Addiction by Design",
   "date": "2022-09-22T00:00:00.000Z",
-  "year": 2022,
-  "bookIds": [
-    "recY3w8pRdby7zWGh"
-  ],
-  "bookSlugs": [
+  "books": [
     "addiction-by-design"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

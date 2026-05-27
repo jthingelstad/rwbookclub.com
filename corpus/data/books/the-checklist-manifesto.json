@@ -14,19 +14,7 @@
   "isbn13": "9780143423225",
   "olKey": "/works/OL15436462W",
   "synopsis": "Reveals the surprising power of the ordinary checklist now being used in medicine, aviation, the armed services, homeland security, investment banking, skyscraper construction, and businesses of all kinds.",
-  "meetingDate": "2011-09-13T23:00:00.000Z",
-  "year": 2011,
-  "pickerName": "John",
-  "pickerSlug": null,
-  "pickerNames": [
-    "John"
-  ],
-  "pickerSlugs": [
-    null
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  "picker": [
+    "john"
+  ]
 }

@@ -1,15 +1,17 @@
-// Build-time enrichment for members. Mirror of books.js — aggregates the
-// per-entity member files and derives `photoWidths`/`hasPhoto` from JPEGs on
-// disk so the build always matches what's in src/assets/images/members.
+// Build-time enrichment for members. Member files hold identity only; a member's
+// picks are derived from the books they picked (book.picker), and photo widths
+// come from the JPEGs on disk. Re-emits pickedBooks/pickedCount like before.
 
 const fs = require("fs");
 const path = require("path");
+
+const buildBooks = require("./books.js");
 
 const MEMBERS_DIR = path.join(__dirname, "..", "..", "..", "corpus", "data", "members");
 const PHOTOS_DIR = path.join(__dirname, "..", "assets", "images", "members");
 const FILENAME_RE = /^(.+)-(\d+)\.jpg$/;
 
-function buildWidthsBySlug() {
+function photoWidthsBySlug() {
   if (!fs.existsSync(PHOTOS_DIR)) return new Map();
   const widths = new Map();
   for (const name of fs.readdirSync(PHOTOS_DIR)) {
@@ -23,25 +25,27 @@ function buildWidthsBySlug() {
   return widths;
 }
 
-function loadMembers() {
-  if (!fs.existsSync(MEMBERS_DIR)) return [];
-  return fs
-    .readdirSync(MEMBERS_DIR)
-    .filter((f) => f.endsWith(".json"))
-    .map((f) => JSON.parse(fs.readFileSync(path.join(MEMBERS_DIR, f), "utf8")));
-}
-
 module.exports = function () {
-  const members = loadMembers();
-  // Preserve the original (record-id ascending) order the fetch pipeline used.
+  const members = buildBooks.readJsonDir("members");
+  const books = buildBooks(); // enriched (has pickerNames, meetingDate, year)
+  const widthsBySlug = photoWidthsBySlug();
+
   members.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
-  const widthsBySlug = buildWidthsBySlug();
   return members.map((m) => {
+    const picked = books.filter(
+      (b) => Array.isArray(b.pickerNames) && b.pickerNames.includes(m.name)
+    );
+    const pickedBooks = m.isCurrent
+      ? picked
+          .map((b) => ({ slug: b.slug, title: b.title, year: b.year, date: b.meetingDate }))
+          .sort((a, b) => (b.date || "").localeCompare(a.date || ""))
+      : [];
     const widths = m.isCurrent ? widthsBySlug.get(m.slug) : undefined;
-    const { photoUrl, ...rest } = m;
     return {
-      ...rest,
+      ...m,
+      pickedCount: picked.length,
+      pickedBooks,
       hasPhoto: Boolean(widths && widths.length),
       photoWidths: widths || null,
     };

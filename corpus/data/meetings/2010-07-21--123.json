@@ -1,23 +1,9 @@
 {
   "id": "recCDOjNNM0BK6IWb",
   "meetingId": 123,
-  "name": "July 2010: Wetware",
   "date": "2010-07-21T23:00:00.000Z",
-  "year": 2010,
-  "bookIds": [
-    "recisJLTJN7swsmkJ"
-  ],
-  "bookSlugs": [
+  "books": [
     "wetware"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

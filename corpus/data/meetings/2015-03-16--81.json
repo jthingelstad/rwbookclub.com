@@ -1,23 +1,9 @@
 {
   "id": "rec0wJQmvfQfcckvD",
   "meetingId": 81,
-  "name": "March 2015: The Age of Cryptocurrency",
   "date": "2015-03-16T23:00:00.000Z",
-  "year": 2015,
-  "bookIds": [
-    "recDq6wQhRmgS8hW7"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-age-of-cryptocurrency"
-  ],
-  "hostIds": [
-    "rectfpnvCHhjL7aLx"
-  ],
-  "hosts": [
-    {
-      "name": "Tom",
-      "slug": "tom"
-    }
   ],
   "type": [
     "Book"

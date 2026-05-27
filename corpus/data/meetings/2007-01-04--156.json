@@ -1,23 +1,9 @@
 {
   "id": "recnoFBdTMLDWxK1h",
   "meetingId": 156,
-  "name": "January 2007: The Road",
   "date": "2007-01-04T00:00:00.000Z",
-  "year": 2007,
-  "bookIds": [
-    "recgd7jP70PIh882k"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-road"
-  ],
-  "hostIds": [
-    "recLaMxXUJ9RiaGyM"
-  ],
-  "hosts": [
-    {
-      "name": "John",
-      "slug": "john"
-    }
   ],
   "type": [
     "Book"

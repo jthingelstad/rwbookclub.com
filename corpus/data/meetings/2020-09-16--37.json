@@ -1,23 +1,9 @@
 {
   "id": "recGpzwxbsuDuTEQJ",
   "meetingId": 37,
-  "name": "September 2020: Bending Adversity",
   "date": "2020-09-16T23:30:00.000Z",
-  "year": 2020,
-  "bookIds": [
-    "receEKhxIMLoQVXA0"
-  ],
-  "bookSlugs": [
+  "books": [
     "bending-adversity"
-  ],
-  "hostIds": [
-    "reczR2kRhTW8h4Htz"
-  ],
-  "hosts": [
-    {
-      "name": "Loren",
-      "slug": "loren"
-    }
   ],
   "type": [
     "Book"

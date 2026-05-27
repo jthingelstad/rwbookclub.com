@@ -14,21 +14,8 @@
   "isbn13": "9780465065707",
   "olKey": "/works/OL19663805W",
   "synopsis": "In the world's top research labs and universities, the race is on to invent the ultimate learning algorithm: one capable of discovering any knowledge from data, and doing anything we want, before we even ask. In The Master Algorithm, Pedro Domingos lifts the veil to give us a peek inside the learning machines that power Google, Amazon, and your smartphone. He assembles a blueprint for the future universal learner--the Master Algorithm--and discusses what it will mean for business, science, and society. If data-ism is today's philosophy, this book is its bible.",
-  "meetingDate": "2020-01-31T00:00:00.000Z",
-  "year": 2020,
-  "pickerName": "Loren",
-  "pickerSlug": "loren",
-  "pickerNames": [
-    "Loren",
-    "Jamie"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "loren",
     "jamie"
-  ],
-  "placeholder": false,
-  "meetingNotes": "December meeting was cancelled at last minute and two books consolidated into January meeting.",
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

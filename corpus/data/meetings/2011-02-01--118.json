@@ -1,40 +1,8 @@
 {
   "id": "recA1CikI0ZVLQnKU",
   "meetingId": 118,
-  "name": "February 2011: ",
   "date": "2011-02-01T00:00:00.000Z",
-  "year": 2011,
-  "bookIds": [],
-  "bookSlugs": [],
-  "hostIds": [
-    "recuT1LiVs6I0u4zR",
-    "rec1ov9Osp68C7uD3",
-    "rectfpnvCHhjL7aLx",
-    "reczXGhA4xwgX91Jc",
-    "recLaMxXUJ9RiaGyM"
-  ],
-  "hosts": [
-    {
-      "name": "Jamie",
-      "slug": "jamie"
-    },
-    {
-      "name": "Erik",
-      "slug": "erik"
-    },
-    {
-      "name": "Tom",
-      "slug": "tom"
-    },
-    {
-      "name": "Dan",
-      "slug": "dan"
-    },
-    {
-      "name": "John",
-      "slug": "john"
-    }
-  ],
+  "books": [],
   "type": [
     "Essay"
   ],

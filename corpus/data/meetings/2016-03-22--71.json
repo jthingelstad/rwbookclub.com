@@ -1,23 +1,9 @@
 {
   "id": "recvP4gOC3y22cHS5",
   "meetingId": 71,
-  "name": "March 2016: The Rise and Fall of American Growth",
   "date": "2016-03-22T23:00:00.000Z",
-  "year": 2016,
-  "bookIds": [
-    "recsndczkTLsuPIRh"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-rise-and-fall-of-american-growth"
-  ],
-  "hostIds": [
-    "reczR2kRhTW8h4Htz"
-  ],
-  "hosts": [
-    {
-      "name": "Loren",
-      "slug": "loren"
-    }
   ],
   "type": [
     "Book"

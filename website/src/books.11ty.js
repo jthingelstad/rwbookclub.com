@@ -10,9 +10,9 @@ module.exports = class {
   }
 
   render({ books, reviews, site }) {
-    const reviewsFor = (bookId) =>
+    const reviewsFor = (bookSlug) =>
       (reviews || [])
-        .filter((r) => Array.isArray(r.bookIds) && r.bookIds.includes(bookId))
+        .filter((r) => r.book === bookSlug)
         .sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""))
         .map((r) => ({
           reviewers: (r.reviewers || []).map((p) => ({
@@ -33,7 +33,7 @@ module.exports = class {
       site: site.url,
       count: books.length,
       books: books.map((b) => {
-        const bookReviews = reviewsFor(b.id);
+        const bookReviews = reviewsFor(b.slug);
         const widths = Array.isArray(b.coverWidths) ? b.coverWidths : [];
         const coverBase = `${site.url}/assets/images/covers/${b.slug}`;
         return {

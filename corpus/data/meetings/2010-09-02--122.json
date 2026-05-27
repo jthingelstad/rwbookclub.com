@@ -1,23 +1,9 @@
 {
   "id": "rec1bCjlJApvs5jx6",
   "meetingId": 122,
-  "name": "September 2010: A Distant Mirror",
   "date": "2010-09-02T23:00:00.000Z",
-  "year": 2010,
-  "bookIds": [
-    "recvap6iar7XIqD4x"
-  ],
-  "bookSlugs": [
+  "books": [
     "a-distant-mirror"
-  ],
-  "hostIds": [
-    "reczXGhA4xwgX91Jc"
-  ],
-  "hosts": [
-    {
-      "name": "Dan",
-      "slug": "dan"
-    }
   ],
   "type": [
     "Book"

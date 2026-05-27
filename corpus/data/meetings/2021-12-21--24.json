@@ -1,13 +1,8 @@
 {
   "id": "recQfhAvPJSDL7Vby",
   "meetingId": 24,
-  "name": "December 2021: ",
   "date": "2021-12-21T01:00:00.000Z",
-  "year": 2021,
-  "bookIds": [],
-  "bookSlugs": [],
-  "hostIds": [],
-  "hosts": [],
+  "books": [],
   "type": [
     "Picking"
   ],

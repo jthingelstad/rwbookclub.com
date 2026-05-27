@@ -14,19 +14,7 @@
   "isbn13": "9780544456235",
   "olKey": "/works/OL19664939W",
   "synopsis": "Draws on the examples of chess champions, violin virtuosos, star athletes, and memory mavens to outline a powerful approach to learning that enables proficiency through strategic goal setting, self-motivation, and feedback exercises.",
-  "meetingDate": "2017-08-24T23:00:00.000Z",
-  "year": 2017,
-  "pickerName": "Nick",
-  "pickerSlug": "nick",
-  "pickerNames": [
-    "Nick"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "nick"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": "Heyday",
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

@@ -1,23 +1,9 @@
 {
   "id": "recHL4g2CveDFlD6n",
   "meetingId": 181,
-  "name": "April 2003: The Lexus and the Olive Tree",
   "date": "2003-04-18T23:00:00.000Z",
-  "year": 2003,
-  "bookIds": [
-    "reclI0AdpgJJkGsnU"
-  ],
-  "bookSlugs": [
+  "books": [
     "the-lexus-and-the-olive-tree"
-  ],
-  "hostIds": [
-    "recLaMxXUJ9RiaGyM"
-  ],
-  "hosts": [
-    {
-      "name": "John",
-      "slug": "john"
-    }
   ],
   "type": [
     "Book"

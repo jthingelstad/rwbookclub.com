@@ -2,14 +2,6 @@
 id: recLK9D9ynUI6RYUu
 book: the-weirdest-people-in-the-world
 member: jamie
-bookIds:
-- reciaAPpXSi5QgtMu
-memberIds:
-- recuT1LiVs6I0u4zR
-reviewers:
-- id: recuT1LiVs6I0u4zR
-  name: Jamie
-  slug: jamie
 rating: 5
 dnf: false
 discussionQuality: 5

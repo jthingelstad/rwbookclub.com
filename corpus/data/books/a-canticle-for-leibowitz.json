@@ -14,21 +14,8 @@
   "isbn13": "9780553121803",
   "olKey": "/works/OL2626638W",
   "synopsis": "Highly unusual After the Holocaust novel. In the far future, 20th century texts are preserved in a monastery, as \"sacred books\". The monks preserve for centuries what little science there is, and have saved the science texts and blueprints from destruction many times, also making beautifully illuminated copies. As the story opens to a world run on a basically fuedal lines, science is again becoming fashionable, as a hobby of rich men, at perhaps 18th or early 19th century level of comprehesion. A local lord, interested in science, comes to the monastery. What happens after that is an exquisitely told tale, stunning and extremely moving, totally different from any other After the Holocaust story",
-  "meetingDate": "2012-09-25T23:00:00.000Z",
-  "year": 2012,
-  "pickerName": "Jamie",
-  "pickerSlug": "jamie",
-  "pickerNames": [
-    "Jamie",
-    "Erik"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "jamie",
     "erik"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

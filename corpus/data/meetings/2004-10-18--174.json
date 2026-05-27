@@ -1,23 +1,9 @@
 {
   "id": "rec2ZypqId50KcRCs",
   "meetingId": 174,
-  "name": "October 2004: When We Were Orphans",
   "date": "2004-10-18T23:00:00.000Z",
-  "year": 2004,
-  "bookIds": [
-    "rec85RHHqKuzeEaYe"
-  ],
-  "bookSlugs": [
+  "books": [
     "when-we-were-orphans"
-  ],
-  "hostIds": [
-    "recV1qzmp3Yqy9zK1"
-  ],
-  "hosts": [
-    {
-      "name": "Scott",
-      "slug": "scott"
-    }
   ],
   "type": [
     "Book"

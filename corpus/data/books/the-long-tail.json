@@ -14,19 +14,7 @@
   "isbn13": "9781401302375",
   "olKey": "/works/OL4091759W",
   "synopsis": "The New York Times bestseller that introduced the business world to a future that’s already here—now in a new edition with a new chapter about Long Tail Marketing and a new epilogue.Winner of the Gerald Loeb Award for Best Business Book of the YearIn the most important business book since The Tipping Point, Chris Anderson shows how the future of commerce and culture isn’t in hits, the high-volume head of a traditional demand curve, but in what used to be regarded as misses—the endlessly long tail of that same curve.",
-  "meetingDate": "2007-01-27T00:00:00.000Z",
-  "year": 2007,
-  "pickerName": "Tom",
-  "pickerSlug": "tom",
-  "pickerNames": [
-    "Tom"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "tom"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

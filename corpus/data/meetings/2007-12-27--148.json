@@ -1,23 +1,9 @@
 {
   "id": "recXK93aKebnKWaMh",
   "meetingId": 148,
-  "name": "December 2007: Beautiful Evidence",
   "date": "2007-12-27T00:00:00.000Z",
-  "year": 2007,
-  "bookIds": [
-    "rec56vAYqSCbXAQ2g"
-  ],
-  "bookSlugs": [
+  "books": [
     "beautiful-evidence"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

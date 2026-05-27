@@ -14,21 +14,8 @@
   "isbn13": "9780553813531",
   "olKey": "/works/OL20262W",
   "synopsis": "From back cover: Bringing Chicago circa 1893 to vivid life, Erik Larson's spell-binding bestseller intertwines the true tale of two men - the brilliant architect behind the legendary 1893 World's Fair, striving to secure America's place in the world; and the cunning serial killer who used the fair to lure his victims to their death. Combining meticulous research with nail-biting storytelling, Erik Larson has crafted a narrative with all the wonder of newly discovered history and the thrills of the best fiction.",
-  "meetingDate": "2012-09-25T23:00:00.000Z",
-  "year": 2012,
-  "pickerName": "Jamie",
-  "pickerSlug": "jamie",
-  "pickerNames": [
-    "Jamie",
-    "Erik"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "jamie",
     "erik"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

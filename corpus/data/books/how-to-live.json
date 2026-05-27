@@ -14,19 +14,7 @@
   "isbn13": "9781590514832",
   "olKey": "/works/OL25463670W",
   "synopsis": null,
-  "meetingDate": "2017-09-26T23:00:00.000Z",
-  "year": 2017,
-  "pickerName": "Tom",
-  "pickerSlug": "tom",
-  "pickerNames": [
-    "Tom"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "tom"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": "Lake and Irving",
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

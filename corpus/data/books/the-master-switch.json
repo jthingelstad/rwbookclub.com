@@ -14,19 +14,7 @@
   "isbn13": "9780307269935",
   "olKey": "/works/OL15118227W",
   "synopsis": "In this age of an open internet, it is easy to forget that every American information industry, beginning with the telephone, has eventually been taken captive by some ruthless monopoly or cartel. With all our media now traveling a single network, an unprecedented potential is building for centralized control over what Americans see and hear. Could history repeat itself with the next industrial consolidation? Could the internet- the entire flow of American information- come to be ruled by one corporate leviathan in possession of \"the master switch\"? That is the big question that the author presents in this pathbreaking book. As Wu's sweeping history shows, each of the new media of the twentieth century- radio, telephone, television, and film- was born free and open. Each invited unrestricted use and enterprising experiment until some would-be mogul battled his way to total domination. Explaining how invention begets industry and industry begets empire- a progress often blessed by government, typically with stifling consequences for free expression and technical innovation alike- Wu identifies a time-honored pattern in the maneuvers of today's great information powers: Apple, Goggle, and an eerily resurgent AT & T.A battle royal looms for the internet's future, and with almost every aspect of our lives now dependent on that network, this is one war we dare not tune out. Part industrial expose, part meditation of what freedom requires in the information age, this book is a stirring illumination of a drama that has played out over decades in the shadows of our national life and now culminates with terrifying implications for our future. -- from Book Jacket.",
-  "meetingDate": "2011-03-02T00:00:00.000Z",
-  "year": 2011,
-  "pickerName": "Tom",
-  "pickerSlug": "tom",
-  "pickerNames": [
-    "Tom"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "tom"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

@@ -14,19 +14,7 @@
   "isbn13": "9781848313477",
   "olKey": "/works/OL16184574W",
   "synopsis": "Epigenetics can potentially revolutionize our understanding of the structure and behavior of biological life on Earth. It explains why mapping an organism's genetic code is not enough to determine how it develops or acts and shows how nurture combines with nature to engineer biological diversity. Surveying the twenty-year history of the field while also highlighting its latest findings and innovations, this volume provides a readily understandable introduction to the foundations of epigenetics. Nessa Carey, a leading epigenetics researcher, connects the field's arguments to such diverse phenomena as how ants and queen bees control their colonies; why tortoiseshell cats are always female; why some plants need cold weather before they can flower; and how our bodies age and develop disease. Reaching beyond biology, epigenetics now informs work on drug addiction, the long-term effects of famine, and the physical and psychological consequences of childhood trauma. Carey concludes with a discussion of the future directions for this research and its ability to improve human health and well-being.",
-  "meetingDate": "2017-07-20T21:00:00.000Z",
-  "year": 2017,
-  "pickerName": "Loren",
-  "pickerSlug": "loren",
-  "pickerNames": [
-    "Loren"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "loren"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": "Nick's Cabin",
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

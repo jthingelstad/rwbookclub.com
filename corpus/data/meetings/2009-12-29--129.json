@@ -1,40 +1,8 @@
 {
   "id": "recz02KkDxX4myDN8",
   "meetingId": 129,
-  "name": "December 2009: ",
   "date": "2009-12-29T00:00:00.000Z",
-  "year": 2009,
-  "bookIds": [],
-  "bookSlugs": [],
-  "hostIds": [
-    "recuT1LiVs6I0u4zR",
-    "rec1ov9Osp68C7uD3",
-    "reczXGhA4xwgX91Jc",
-    "rectfpnvCHhjL7aLx",
-    "recLaMxXUJ9RiaGyM"
-  ],
-  "hosts": [
-    {
-      "name": "Jamie",
-      "slug": "jamie"
-    },
-    {
-      "name": "Erik",
-      "slug": "erik"
-    },
-    {
-      "name": "Dan",
-      "slug": "dan"
-    },
-    {
-      "name": "Tom",
-      "slug": "tom"
-    },
-    {
-      "name": "John",
-      "slug": "john"
-    }
-  ],
+  "books": [],
   "type": [
     "Essay"
   ],

@@ -1,23 +1,9 @@
 {
   "id": "recnTd2tFAGfJJhHO",
   "meetingId": 73,
-  "name": "December 2015: Superforecasting",
   "date": "2015-12-22T00:00:00.000Z",
-  "year": 2015,
-  "bookIds": [
-    "rec8lVojK0wsXDstq"
-  ],
-  "bookSlugs": [
+  "books": [
     "superforecasting"
-  ],
-  "hostIds": [
-    "rec1ov9Osp68C7uD3"
-  ],
-  "hosts": [
-    {
-      "name": "Erik",
-      "slug": "erik"
-    }
   ],
   "type": [
     "Book"

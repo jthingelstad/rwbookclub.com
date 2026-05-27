@@ -14,19 +14,7 @@
   "isbn13": "9780679643951",
   "olKey": "/works/OL16262891W",
   "synopsis": "The dramatic and sometimes heartbreaking story of families striving toward a better life in one of the twenty-first century's great, unequal cities. In this fast-paced book, based on three years of uncompromising reporting, a bewildering age of global change and inequality is made human. Annawadi is a makeshift settlement in the shadow of luxury hotels near the Mumbai airport, and as India starts to prosper, Annawadians are electric with hope. Abdul, a reflective and enterprising Muslim teenager, sees fortune in the recyclable garbage of richer people. Asha, a woman of formidable wit and deep scars from a rural childhood, has identified an alternate route to the middle class: political corruption. And even the poorest Annawadians, like Kalu, a fifteen-year-old scrap-metal thief, believe themselves inching closer to good times. But then, as the tenderest individual hopes intersect with the greatest global truths, the true contours of a competitive age are revealed.",
-  "meetingDate": "2013-11-05T00:00:00.000Z",
-  "year": 2013,
-  "pickerName": "Jamie",
-  "pickerSlug": "jamie",
-  "pickerNames": [
-    "Jamie"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "jamie"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

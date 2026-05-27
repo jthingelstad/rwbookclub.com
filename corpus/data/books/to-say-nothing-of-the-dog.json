@@ -14,19 +14,7 @@
   "isbn13": "9781399617192",
   "olKey": "/works/OL14858392W",
   "synopsis": "Connie Willis' entertaining comedy inspired by Jerome K. Jerome's [Three Men in a Boat (to say nothing of the dog)][1]. [Robert A. Heinlein][2] mentioned the earlier work in [Have Spacesuit will Travel][3] as Kip's father's favorite.",
-  "meetingDate": "2013-01-21T00:00:00.000Z",
-  "year": 2013,
-  "pickerName": "Dan",
-  "pickerSlug": null,
-  "pickerNames": [
-    "Dan"
-  ],
-  "pickerSlugs": [
-    null
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  "picker": [
+    "dan"
+  ]
 }

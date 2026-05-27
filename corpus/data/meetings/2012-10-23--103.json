@@ -1,23 +1,9 @@
 {
   "id": "recSML4HCEf1ToozS",
   "meetingId": 103,
-  "name": "October 2012: Flagrant Conduct",
   "date": "2012-10-23T23:00:00.000Z",
-  "year": 2012,
-  "bookIds": [
-    "recHxVhTieT9nTrD8"
-  ],
-  "bookSlugs": [
+  "books": [
     "flagrant-conduct"
-  ],
-  "hostIds": [
-    "recLaMxXUJ9RiaGyM"
-  ],
-  "hosts": [
-    {
-      "name": "John",
-      "slug": "john"
-    }
   ],
   "type": [
     "Book"

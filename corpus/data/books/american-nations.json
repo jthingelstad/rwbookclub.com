@@ -14,19 +14,7 @@
   "isbn13": "9780143122029",
   "olKey": "/works/OL20272183W",
   "synopsis": null,
-  "meetingDate": "2016-05-02T23:00:00.000Z",
-  "year": 2016,
-  "pickerName": "Nick",
-  "pickerSlug": "nick",
-  "pickerNames": [
-    "Nick"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "nick"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": null,
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

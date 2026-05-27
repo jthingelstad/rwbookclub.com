@@ -14,19 +14,7 @@
   "isbn13": "9780199595112",
   "olKey": "/works/OL21041666W",
   "synopsis": null,
-  "meetingDate": "2020-03-25T23:00:00.000Z",
-  "year": 2020,
-  "pickerName": "Nick",
-  "pickerSlug": "nick",
-  "pickerNames": [
-    "Nick"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "nick"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": "Zoom",
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }

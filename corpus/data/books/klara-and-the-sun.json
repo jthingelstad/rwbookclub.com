@@ -14,19 +14,7 @@
   "isbn13": "9780593318171",
   "olKey": "/works/OL20883297W",
   "synopsis": "Klara and the Sun, the first novel by Kazuo Ishiguro since he was awarded the Nobel Prize in Literature, tells the story of Klara, an Artificial Friend with outstanding observational qualities, who, from her place in the store, watches carefully the behavior of those who come in to browse, and of those who pass on the street outside. She remains hopeful that a customer will soon choose her. Klara and the Sun is a thrilling book that offers a look at our changing world through the eyes of an unforgettable narrator, and one that explores the fundamental question: what does it mean to love? In its award citation in 2017, the Nobel committee described Ishiguro's books as \"novels of great emotional force\" and said he has \"uncovered the abyss beneath our illusory sense of connection with the world.\"",
-  "meetingDate": "2021-06-16T23:00:00.000Z",
-  "year": 2021,
-  "pickerName": "Tom",
-  "pickerSlug": "tom",
-  "pickerNames": [
-    "Tom"
-  ],
-  "pickerSlugs": [
+  "picker": [
     "tom"
-  ],
-  "placeholder": false,
-  "meetingNotes": null,
-  "meetingLocation": "Jamie's House",
-  "hasCover": true,
-  "reviewCount": 0
+  ]
 }
