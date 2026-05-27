@@ -8,6 +8,9 @@
     "serve": "eleventy --serve",
     "clean": "rm -rf _site src/assets/images/covers src/assets/images/members"
   },
+  "dependencies": {
+    "gray-matter": "^4.0.3"
+  },
   "devDependencies": {
     "@11ty/eleventy": "^3.0.0"
   }

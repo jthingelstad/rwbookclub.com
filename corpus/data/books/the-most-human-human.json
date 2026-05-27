@@ -1,0 +1,32 @@
+{
+  "id": "recLN8i7qMp1pjqaY",
+  "bookId": 106,
+  "title": "The Most Human Human",
+  "subtitle": "What Talking with Computers Teaches Us About What It Means to Be Alive",
+  "slug": "the-most-human-human",
+  "authors": [
+    "Brian Christian"
+  ],
+  "topic": "Brain & Psychology",
+  "fiction": false,
+  "publicationYear": 2011,
+  "pageCount": 320,
+  "isbn13": "9780385533065",
+  "olKey": "/works/OL16163232W",
+  "synopsis": "\"The Most Human Human\" is a provocative exploration of the ways in which computers are reshaping our ideas of what it means to be human. Its starting point is the annual Turing Test, which pits artificial intelligence programs against people to determine if computers can \"think.\"",
+  "meetingDate": "2012-03-09T00:00:00.000Z",
+  "year": 2012,
+  "pickerName": "Jamie",
+  "pickerSlug": "jamie",
+  "pickerNames": [
+    "Jamie"
+  ],
+  "pickerSlugs": [
+    "jamie"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

@@ -1,0 +1,28 @@
+{
+  "id": "rec1PwtC8Eax5xibH",
+  "meetingId": 107,
+  "name": "April 2012: Thinking Fast and Slow",
+  "date": "2012-04-30T23:00:00.000Z",
+  "year": 2012,
+  "bookIds": [
+    "recEEfoCMp2f0iIy3"
+  ],
+  "bookSlugs": [
+    "thinking-fast-and-slow"
+  ],
+  "hostIds": [
+    "recLaMxXUJ9RiaGyM"
+  ],
+  "hosts": [
+    {
+      "name": "John",
+      "slug": "john"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

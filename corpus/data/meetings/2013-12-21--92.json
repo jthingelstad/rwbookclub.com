@@ -1,0 +1,28 @@
+{
+  "id": "recW7hItNM8qjt2lc",
+  "meetingId": 92,
+  "name": "December 2013: Powering the Dream",
+  "date": "2013-12-21T00:00:00.000Z",
+  "year": 2013,
+  "bookIds": [
+    "rec1UgSIEUmWUOewl"
+  ],
+  "bookSlugs": [
+    "powering-the-dream"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Spouses"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

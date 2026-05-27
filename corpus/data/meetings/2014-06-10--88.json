@@ -1,0 +1,28 @@
+{
+  "id": "recnlk6Z1AJZv7YDw",
+  "meetingId": 88,
+  "name": "June 2014: Antifragile",
+  "date": "2014-06-10T23:00:00.000Z",
+  "year": 2014,
+  "bookIds": [
+    "recfI8jmqljv3wqc9"
+  ],
+  "bookSlugs": [
+    "antifragile"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

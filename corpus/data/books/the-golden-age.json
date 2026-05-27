@@ -1,0 +1,32 @@
+{
+  "id": "recnQ3R3NidAj18HF",
+  "bookId": 120,
+  "title": "The Golden Age",
+  "subtitle": null,
+  "slug": "the-golden-age",
+  "authors": [
+    "John C. Wright"
+  ],
+  "topic": "Science Fiction & Fiction",
+  "fiction": true,
+  "publicationYear": 2002,
+  "pageCount": 320,
+  "isbn13": "9780812579840",
+  "olKey": "/works/OL5725219W",
+  "synopsis": "\"The Golden Age takes place 10,000 years in the future in our solar system, an interplanetary utopian society filled with immortal humans. Within the frame of a traditional tale - the one rebel who is unhappy in utopia - Wright spins an elaborate plot web filled with suspense and passion.\" \"Phaethon, of Radamanthus House, is attending a glorious party at his family mansion to celebrate the thousand-year anniversary of the High Transcendence. There he meets first an old man who accuses him of being an impostor and then a being from Neptune who claims to be an old friend. The Neptunian tells him that essential parts of his memory were removed and stored by the very government that Phaethon believes to be wholly honorable. It shakes his faith. He is an exile from himself.\" And so Phaethon embarks upon a quest across the transformed solar system - Jupiter is now a second sun, Mars and Venus terraformed, humanity immortal - among humans, intelligent machines, and bizarre lifeforms that are partly both, to recover his memory, and to learn what crime he planned that warranted such preemptive punishment. His quest is to regain his true identity.",
+  "meetingDate": "2010-04-19T23:00:00.000Z",
+  "year": 2010,
+  "pickerName": "Jamie",
+  "pickerSlug": "jamie",
+  "pickerNames": [
+    "Jamie"
+  ],
+  "pickerSlugs": [
+    "jamie"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

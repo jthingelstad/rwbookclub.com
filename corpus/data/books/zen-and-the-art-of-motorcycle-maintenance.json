@@ -1,0 +1,32 @@
+{
+  "id": "recKGPx6cBukxjX2V",
+  "bookId": 43,
+  "title": "Zen and the Art of Motorcycle Maintenance",
+  "subtitle": null,
+  "slug": "zen-and-the-art-of-motorcycle-maintenance",
+  "authors": [
+    "Robert Pirsig"
+  ],
+  "topic": "Science Fiction & Fiction",
+  "fiction": true,
+  "publicationYear": 1974,
+  "pageCount": 373,
+  "isbn13": "9780688171667",
+  "olKey": "/works/OL827357W",
+  "synopsis": "One of the most important and influential books of the past half-century, Robert M. Pirsig's Zen and the Art of Motorcycle Maintenance is a powerful, moving, and penetrating examination of how we live and a meditation on how to live better. The narrative of a father on a summer motorcycle trip across America's Northwest with his young son, it becomes a profound personal and philosophical odyssey into life's fundamental questions. A true modern classic, it remains at once touching and transcendent, resonant with the myriad confusions of existence and the small, essential triumphs that propel us forward.",
+  "meetingDate": "2019-08-15T23:00:00.000Z",
+  "year": 2019,
+  "pickerName": "Nick",
+  "pickerSlug": "nick",
+  "pickerNames": [
+    "Nick"
+  ],
+  "pickerSlugs": [
+    "nick"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

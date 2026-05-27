@@ -1,0 +1,32 @@
+{
+  "id": "recnXtvkD6JHEQ6af",
+  "bookId": 7,
+  "title": "Army of None",
+  "subtitle": "Autonomous Weapons and the Future of War",
+  "slug": "army-of-none",
+  "authors": [
+    "Paul Scharre"
+  ],
+  "topic": "Technology",
+  "fiction": false,
+  "publicationYear": 2018,
+  "pageCount": 384,
+  "isbn13": "9780393608991",
+  "olKey": "/works/OL19746016W",
+  "synopsis": "What happens when a Predator drone has as much autonomy as a Google car? Although it sounds like science fiction, the technology to create weapons that could hunt and destroy targets on their own already exists. Paul Scharre, a leading expert in emerging weapons technologies, draws on incisive research and firsthand experience to explore how increasingly autonomous weapons are changing warfare. This far-ranging investigation examines the emergence of fully autonomous weapons, the movement to ban them, and the legal and ethical issues surrounding their use. Scharre spotlights the role of artificial intelligence in military technology, spanning decades of innovation from German noise-seeking Wren torpedoes in World War II--antecedents of today's armed drones--to autonomous cyber weapons. At the forefront of a game-changing debate, Army of None engages military history, global policy, and bleeding-edge science to explore what it would mean to give machines authority over the ultimate decision: life or death.",
+  "meetingDate": "2024-09-17T23:00:00.000Z",
+  "year": 2024,
+  "pickerName": "Tom",
+  "pickerSlug": "tom",
+  "pickerNames": [
+    "Tom"
+  ],
+  "pickerSlugs": [
+    "tom"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 1
+}

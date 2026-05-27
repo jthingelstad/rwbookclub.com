@@ -1,0 +1,28 @@
+{
+  "id": "recXfe74yRyiMLn3R",
+  "meetingId": 39,
+  "name": "June 2020: Benjamin Franklin",
+  "date": "2020-06-04T00:00:00.000Z",
+  "year": 2020,
+  "bookIds": [
+    "recuR2y7Wgv2bLgMa"
+  ],
+  "bookSlugs": [
+    "benjamin-franklin"
+  ],
+  "hostIds": [
+    "rec1ov9Osp68C7uD3"
+  ],
+  "hosts": [
+    {
+      "name": "Erik",
+      "slug": "erik"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Zoom",
+  "notes": null,
+  "placeholder": false
+}

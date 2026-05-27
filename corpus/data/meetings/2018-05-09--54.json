@@ -1,0 +1,28 @@
+{
+  "id": "recECH1Q4RYe5EFMf",
+  "meetingId": 54,
+  "name": "May 2018: Why We Sleep",
+  "date": "2018-05-09T23:00:00.000Z",
+  "year": 2018,
+  "bookIds": [
+    "recVPER9eqDluYwDh"
+  ],
+  "bookSlugs": [
+    "why-we-sleep"
+  ],
+  "hostIds": [
+    "rec0unNzGOt24JKLj"
+  ],
+  "hosts": [
+    {
+      "name": "Nick",
+      "slug": "nick"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

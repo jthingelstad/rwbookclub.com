@@ -1,0 +1,28 @@
+{
+  "id": "recl8wcTVf6REwunz",
+  "meetingId": 8,
+  "name": "September 2024: Army of None",
+  "date": "2024-09-17T23:00:00.000Z",
+  "year": 2024,
+  "bookIds": [
+    "recnXtvkD6JHEQ6af"
+  ],
+  "bookSlugs": [
+    "army-of-none"
+  ],
+  "hostIds": [
+    "rectfpnvCHhjL7aLx"
+  ],
+  "hosts": [
+    {
+      "name": "Tom",
+      "slug": "tom"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

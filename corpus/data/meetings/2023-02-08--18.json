@@ -1,0 +1,24 @@
+{
+  "id": "rec05l5RGbqkp3jN8",
+  "meetingId": 18,
+  "name": "February 2023: ",
+  "date": "2023-02-08T00:00:00.000Z",
+  "year": 2023,
+  "bookIds": [],
+  "bookSlugs": [],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Picking"
+  ],
+  "location": "Jamie's House",
+  "notes": null,
+  "placeholder": false
+}

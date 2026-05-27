@@ -1,0 +1,32 @@
+{
+  "id": "recisJLTJN7swsmkJ",
+  "bookId": 118,
+  "title": "Wetware",
+  "subtitle": "A Computer in Every Living Cell",
+  "slug": "wetware",
+  "authors": [
+    "Dennis Bray"
+  ],
+  "topic": "Science and Math",
+  "fiction": false,
+  "publicationYear": 2009,
+  "pageCount": 267,
+  "isbn13": "9780300141733",
+  "olKey": "/works/OL16018523W",
+  "synopsis": "\"How does a single-cell creature, such as an amoeba, lead such a sophisticated life? How does it hunt living prey, respond to lights, sounds, and smells, and display complex sequences of movements without the benefit of a nervous system? This book offers a startling and original answer. The author taps the findings of the new discipline of systems biology to show that the internal chemistry of living cells is a form of computation. Cells are built out of molecular circuits that perform logical operations, as electronic devices do, but with unique properties. Bray argues that the computational juice of cells provides the basis of all the distinctive properties of living systems: it allows organisms to embody in their internal structure an image of the world, and this accounts for their adaptability, responsiveness, and intelligence.\"--Book jacket.",
+  "meetingDate": "2010-07-21T23:00:00.000Z",
+  "year": 2010,
+  "pickerName": "Tom",
+  "pickerSlug": "tom",
+  "pickerNames": [
+    "Tom"
+  ],
+  "pickerSlugs": [
+    "tom"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

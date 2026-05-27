@@ -1,0 +1,28 @@
+{
+  "id": "recznIigRfoyFYniQ",
+  "meetingId": 22,
+  "name": "April 2022: Empire of Pain",
+  "date": "2022-04-14T23:00:00.000Z",
+  "year": 2022,
+  "bookIds": [
+    "recPl6D4DQTFWB74a"
+  ],
+  "bookSlugs": [
+    "empire-of-pain"
+  ],
+  "hostIds": [
+    "reczR2kRhTW8h4Htz"
+  ],
+  "hosts": [
+    {
+      "name": "Loren",
+      "slug": "loren"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

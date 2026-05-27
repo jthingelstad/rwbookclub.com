@@ -1,0 +1,28 @@
+{
+  "id": "recn6gWX1pTS44vQf",
+  "meetingId": 179,
+  "name": "August 2003: The Blank Slate",
+  "date": "2003-08-20T23:00:00.000Z",
+  "year": 2003,
+  "bookIds": [
+    "recOpz6xTZZ73yfSM"
+  ],
+  "bookSlugs": [
+    "the-blank-slate"
+  ],
+  "hostIds": [
+    "recLaMxXUJ9RiaGyM"
+  ],
+  "hosts": [
+    {
+      "name": "John",
+      "slug": "john"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

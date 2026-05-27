@@ -1,0 +1,32 @@
+{
+  "id": "recHZxXqAnAqFnyOP",
+  "bookId": 12,
+  "title": "Otherlands",
+  "subtitle": "A Journey Through Earth's Extinct Worlds",
+  "slug": "otherlands",
+  "authors": [
+    "Thomas Halliday"
+  ],
+  "topic": "Science and Math",
+  "fiction": false,
+  "publicationYear": 2022,
+  "pageCount": 112,
+  "isbn13": "9780241611241",
+  "olKey": "/works/OL24831204W",
+  "synopsis": null,
+  "meetingDate": "2023-08-31T23:00:00.000Z",
+  "year": 2023,
+  "pickerName": "Tom",
+  "pickerSlug": "tom",
+  "pickerNames": [
+    "Tom"
+  ],
+  "pickerSlugs": [
+    "tom"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

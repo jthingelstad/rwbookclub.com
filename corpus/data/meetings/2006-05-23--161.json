@@ -1,0 +1,28 @@
+{
+  "id": "recjs5gNvSygYe6Pt",
+  "meetingId": 161,
+  "name": "May 2006: Across Realtime",
+  "date": "2006-05-23T23:00:00.000Z",
+  "year": 2006,
+  "bookIds": [
+    "recURZQ7XcL0MWYu2"
+  ],
+  "bookSlugs": [
+    "across-realtime"
+  ],
+  "hostIds": [
+    "recLaMxXUJ9RiaGyM"
+  ],
+  "hosts": [
+    {
+      "name": "John",
+      "slug": "john"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

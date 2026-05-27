@@ -1,0 +1,32 @@
+{
+  "id": "reciM17apKoJoeA9a",
+  "bookId": 163,
+  "title": "Hackers and Painters",
+  "subtitle": "Big Ideas from the Computer Age",
+  "slug": "hackers-and-painters",
+  "authors": [
+    "Paul Graham"
+  ],
+  "topic": "Technology",
+  "fiction": false,
+  "publicationYear": 2004,
+  "pageCount": null,
+  "isbn13": "9780596550660",
+  "olKey": "/works/OL27071402W",
+  "synopsis": "This seems to be a duplicate entry of https://openlibrary.org/works/OL2973119W/Hackers_painters",
+  "meetingDate": "2005-04-26T23:00:00.000Z",
+  "year": 2005,
+  "pickerName": "Dan",
+  "pickerSlug": null,
+  "pickerNames": [
+    "Dan"
+  ],
+  "pickerSlugs": [
+    null
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

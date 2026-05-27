@@ -1,0 +1,28 @@
+{
+  "id": "recsI0rOcCXTRKlba",
+  "meetingId": 108,
+  "name": "March 2012: The Most Human Human",
+  "date": "2012-03-09T00:00:00.000Z",
+  "year": 2012,
+  "bookIds": [
+    "recLN8i7qMp1pjqaY"
+  ],
+  "bookSlugs": [
+    "the-most-human-human"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

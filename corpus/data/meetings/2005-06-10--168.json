@@ -1,0 +1,28 @@
+{
+  "id": "recUDnyLeb4FzeAv7",
+  "meetingId": 168,
+  "name": "June 2005: The Plot Against America",
+  "date": "2005-06-10T23:00:00.000Z",
+  "year": 2005,
+  "bookIds": [
+    "recGqt10rYKMAHXH0"
+  ],
+  "bookSlugs": [
+    "the-plot-against-america"
+  ],
+  "hostIds": [
+    "rec1ov9Osp68C7uD3"
+  ],
+  "hosts": [
+    {
+      "name": "Erik",
+      "slug": "erik"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

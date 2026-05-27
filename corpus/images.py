@@ -1,13 +1,15 @@
-"""Download book covers and member photos referenced in
-corpus/data/raw/*.json, resize them with Pillow, and write progressive JPEGs
-at multiple widths into the website's asset tree.
+"""Ensure every book has cover-image variants on disk, fetching any that are
+missing from Open Library (via the book's OL Key).
 
-The website data layer (website/src/_data/books.js, members.js) derives
-`coverWidths`/`photoWidths`/`hasCover`/`hasPhoto` from whatever JPEGs
-exist on disk at build time, so this script no longer needs to write
-anything back into the JSON. Its only job is downloading and resizing.
+Git is the source of truth: book metadata lives in corpus/data/books/*.json and
+the resized cover JPEGs live in website/src/assets/images/covers/. This script
+is idempotent and self-healing — it only does work for books whose covers are
+missing, so it can run any time (e.g. after a new book is added).
 
-Run from the repo root as `python -m corpus.images`.
+Run from the repo root:  python -m corpus.images
+
+Member photos are no longer fetched automatically (Airtable held those URLs).
+Existing photos are committed; add a new member's photo file manually.
 """
 
 from __future__ import annotations
@@ -19,66 +21,75 @@ from io import BytesIO
 import requests
 from PIL import Image
 
-from corpus.airtable import COVERS_DIR, MEMBERS_IMG_DIR, RAW_DATA_DIR
+from corpus.airtable import COVERS_DIR, DATA_DIR
 
 COVER_WIDTHS = [240, 480, 960]
-PHOTO_WIDTHS = [240, 480]
 JPEG_QUALITY = 82
+BOOKS_DIR = DATA_DIR / "books"
+
+
+def has_cover(slug: str) -> bool:
+    return COVERS_DIR.exists() and any(COVERS_DIR.glob(f"{slug}-*.jpg"))
+
+
+def ol_cover_url(ol_key: str) -> str | None:
+    """Resolve an Open Library Work key (/works/OL..W) to a cover image URL."""
+    try:
+        r = requests.get(f"https://openlibrary.org{ol_key}.json", timeout=30)
+        r.raise_for_status()
+        covers = [c for c in (r.json().get("covers") or []) if isinstance(c, int) and c > 0]
+        if covers:
+            return f"https://covers.openlibrary.org/b/id/{covers[0]}-L.jpg"
+    except Exception as e:  # noqa: BLE001 - network/parse errors are non-fatal
+        print(f"    OL lookup failed for {ol_key}: {e}", file=sys.stderr)
+    return None
 
 
 def process_image(url: str, base_filename: str, out_dir, widths: list[int]) -> list[int]:
+    """Download an image, resize to each width (capped at source), write JPEGs."""
     out_dir.mkdir(parents=True, exist_ok=True)
     r = requests.get(url, timeout=60)
     r.raise_for_status()
     img = Image.open(BytesIO(r.content)).convert("RGB")
     src_w, src_h = img.size
     aspect = src_h / src_w
-    saved_widths: list[int] = []
+    saved: list[int] = []
     for w in widths:
         if w >= src_w:
-            resized = img
-            actual_w = src_w
+            resized, actual_w = img, src_w
         else:
             actual_w = w
-            actual_h = round(w * aspect)
-            resized = img.resize((actual_w, actual_h), Image.LANCZOS)
-        jpeg_path = out_dir / f"{base_filename}-{actual_w}.jpg"
+            resized = img.resize((actual_w, round(actual_w * aspect)), Image.LANCZOS)
         resized.save(
-            jpeg_path, "JPEG", quality=JPEG_QUALITY, optimize=True, progressive=True
+            out_dir / f"{base_filename}-{actual_w}.jpg",
+            "JPEG",
+            quality=JPEG_QUALITY,
+            optimize=True,
+            progressive=True,
         )
-        if actual_w not in saved_widths:
-            saved_widths.append(actual_w)
-    return saved_widths
+        if actual_w not in saved:
+            saved.append(actual_w)
+    return saved
 
 
 def main() -> None:
-    books = json.loads((RAW_DATA_DIR / "books.json").read_text())
-    members = json.loads((RAW_DATA_DIR / "members.json").read_text())
-
-    cover_count = sum(1 for b in books if b.get("coverUrl"))
-    print(f"Processing {cover_count} book covers")
-    for b in books:
-        url = b.get("coverUrl")
+    books = [json.loads(p.read_text()) for p in sorted(BOOKS_DIR.glob("*.json"))]
+    missing = [b for b in books if not has_cover(b["slug"])]
+    print(f"{len(books)} books; {len(missing)} missing covers")
+    for b in missing:
+        slug, ol = b["slug"], b.get("olKey")
+        if not ol:
+            print(f"  ✗ {slug}: no OL Key — add a cover manually", file=sys.stderr)
+            continue
+        url = ol_cover_url(ol)
         if not url:
+            print(f"  ✗ {slug}: no Open Library cover", file=sys.stderr)
             continue
         try:
-            widths = process_image(url, b["slug"], COVERS_DIR, COVER_WIDTHS)
-            print(f"  ✓ {b['slug']} ({', '.join(str(w) for w in widths)})")
-        except Exception as e:
-            print(f"  ✗ {b['slug']}: {e}", file=sys.stderr)
-
-    photo_count = sum(1 for m in members if m.get("photoUrl"))
-    print(f"Processing {photo_count} member photos")
-    for m in members:
-        url = m.get("photoUrl")
-        if not url:
-            continue
-        try:
-            widths = process_image(url, m["slug"], MEMBERS_IMG_DIR, PHOTO_WIDTHS)
-            print(f"  ✓ {m['slug']} ({', '.join(str(w) for w in widths)})")
-        except Exception as e:
-            print(f"  ✗ {m['slug']}: {e}", file=sys.stderr)
-
+            widths = process_image(url, slug, COVERS_DIR, COVER_WIDTHS)
+            print(f"  ✓ {slug} ({', '.join(str(w) for w in widths)})")
+        except Exception as e:  # noqa: BLE001
+            print(f"  ✗ {slug}: {e}", file=sys.stderr)
     print("Done.")
 
 

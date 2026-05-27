@@ -1,0 +1,28 @@
+{
+  "id": "recqZBYFhowgbOaA2",
+  "meetingId": 23,
+  "name": "January 2022: The Blocksize War",
+  "date": "2022-01-25T00:00:00.000Z",
+  "year": 2022,
+  "bookIds": [
+    "recUCo6TG4rbmeyoE"
+  ],
+  "bookSlugs": [
+    "the-blocksize-war"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Zoom",
+  "notes": "Special guest: Hector Fernandez",
+  "placeholder": false
+}

@@ -1,0 +1,33 @@
+{
+  "id": "recDhycklKMzJ6jgb",
+  "bookId": 81,
+  "title": "The Structure and Dynamics of Networks",
+  "subtitle": null,
+  "slug": "the-structure-and-dynamics-of-networks",
+  "authors": [
+    "Mark Newman",
+    "Duncan J. Watts"
+  ],
+  "topic": "Science and Math",
+  "fiction": false,
+  "publicationYear": 2006,
+  "pageCount": 592,
+  "isbn13": "9781400841356",
+  "olKey": "/works/OL19002758W",
+  "synopsis": null,
+  "meetingDate": "2015-01-20T00:00:00.000Z",
+  "year": 2015,
+  "pickerName": "Nick",
+  "pickerSlug": "nick",
+  "pickerNames": [
+    "Nick"
+  ],
+  "pickerSlugs": [
+    "nick"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

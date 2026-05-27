@@ -1,0 +1,28 @@
+{
+  "id": "recPRLvr4drlU9f7z",
+  "meetingId": 115,
+  "name": "June 2011: Never Let Me Go",
+  "date": "2011-06-20T23:00:00.000Z",
+  "year": 2011,
+  "bookIds": [
+    "recynTRx5vdHzkPqb"
+  ],
+  "bookSlugs": [
+    "never-let-me-go"
+  ],
+  "hostIds": [
+    "rec1ov9Osp68C7uD3"
+  ],
+  "hosts": [
+    {
+      "name": "Erik",
+      "slug": "erik"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

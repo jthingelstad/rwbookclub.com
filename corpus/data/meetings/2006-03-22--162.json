@@ -1,0 +1,28 @@
+{
+  "id": "recaReGEyKuWjFsmd",
+  "meetingId": 162,
+  "name": "March 2006: The Success of Open Source",
+  "date": "2006-03-22T23:00:00.000Z",
+  "year": 2006,
+  "bookIds": [
+    "recKGpXsO5a57bp6C"
+  ],
+  "bookSlugs": [
+    "the-success-of-open-source"
+  ],
+  "hostIds": [
+    "rechNL5xOnYd7aE5c"
+  ],
+  "hosts": [
+    {
+      "name": "David",
+      "slug": "david"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

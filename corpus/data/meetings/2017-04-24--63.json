@@ -1,0 +1,28 @@
+{
+  "id": "rec6WYE6BIFh7TKAg",
+  "meetingId": 63,
+  "name": "April 2017: Norse Mythology",
+  "date": "2017-04-24T23:00:00.000Z",
+  "year": 2017,
+  "bookIds": [
+    "recotXje32JOXZHKf"
+  ],
+  "bookSlugs": [
+    "norse-mythology"
+  ],
+  "hostIds": [
+    "rec1ov9Osp68C7uD3"
+  ],
+  "hosts": [
+    {
+      "name": "Erik",
+      "slug": "erik"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Surly Brewing",
+  "notes": null,
+  "placeholder": false
+}

@@ -1,0 +1,28 @@
+{
+  "id": "recMKh3uGMGNbK3aE",
+  "meetingId": 50,
+  "name": "October 2018: How to Change Your Mind",
+  "date": "2018-10-01T23:00:00.000Z",
+  "year": 2018,
+  "bookIds": [
+    "recSShKxVWUJ8QhMR"
+  ],
+  "bookSlugs": [
+    "how-to-change-your-mind"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

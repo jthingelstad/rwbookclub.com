@@ -1,0 +1,28 @@
+{
+  "id": "recDjMHLEJa83L2qD",
+  "meetingId": 128,
+  "name": "January 2010: Influence",
+  "date": "2010-01-11T00:00:00.000Z",
+  "year": 2010,
+  "bookIds": [
+    "recQiEAFoHN8Hcuic"
+  ],
+  "bookSlugs": [
+    "influence"
+  ],
+  "hostIds": [
+    "rectfpnvCHhjL7aLx"
+  ],
+  "hosts": [
+    {
+      "name": "Tom",
+      "slug": "tom"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

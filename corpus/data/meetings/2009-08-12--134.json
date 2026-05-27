@@ -1,0 +1,28 @@
+{
+  "id": "recWL0bQ56p5M7UTo",
+  "meetingId": 134,
+  "name": "August 2009: The China Study",
+  "date": "2009-08-12T23:00:00.000Z",
+  "year": 2009,
+  "bookIds": [
+    "recvVGV5BuOzygKS8"
+  ],
+  "bookSlugs": [
+    "the-china-study"
+  ],
+  "hostIds": [
+    "reczXGhA4xwgX91Jc"
+  ],
+  "hosts": [
+    {
+      "name": "Dan",
+      "slug": "dan"
+    }
+  ],
+  "type": [
+    "Spouses"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

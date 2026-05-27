@@ -1,0 +1,32 @@
+{
+  "id": "rec3NfJodUdBpzaZ9",
+  "bookId": 44,
+  "title": "Educated",
+  "subtitle": "A Memoir",
+  "slug": "educated",
+  "authors": [
+    "Tara Westover"
+  ],
+  "topic": "Current Events & People",
+  "fiction": false,
+  "publicationYear": 2018,
+  "pageCount": 464,
+  "isbn13": "9781984854858",
+  "olKey": "/works/OL18139176W",
+  "synopsis": "Westover recounts overcoming her survivalist Mormon family in order to go to college, and emphasizes the importance of education in enlarging her world. She details her journey from her isolated life in the mountains of Idaho to completing a PhD program in history at Cambridge University. She started college at the age of 17 having had no formal education. She explores her struggle to reconcile her desire to learn with the world she inhabited with her father.",
+  "meetingDate": "2019-07-17T23:00:00.000Z",
+  "year": 2019,
+  "pickerName": "Loren",
+  "pickerSlug": "loren",
+  "pickerNames": [
+    "Loren"
+  ],
+  "pickerSlugs": [
+    "loren"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

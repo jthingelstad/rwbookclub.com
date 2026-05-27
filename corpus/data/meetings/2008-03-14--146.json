@@ -1,0 +1,28 @@
+{
+  "id": "recnpWTGPRE5qxDem",
+  "meetingId": 146,
+  "name": "March 2008: How Doctors Think",
+  "date": "2008-03-14T23:00:00.000Z",
+  "year": 2008,
+  "bookIds": [
+    "recni1W6jCYcOqKUP"
+  ],
+  "bookSlugs": [
+    "how-doctors-think"
+  ],
+  "hostIds": [
+    "recLaMxXUJ9RiaGyM"
+  ],
+  "hosts": [
+    {
+      "name": "John",
+      "slug": "john"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

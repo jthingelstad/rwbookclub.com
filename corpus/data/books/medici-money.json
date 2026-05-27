@@ -1,0 +1,32 @@
+{
+  "id": "recGYTZqeBp8km1aK",
+  "bookId": 10,
+  "title": "Medici Money",
+  "subtitle": null,
+  "slug": "medici-money",
+  "authors": [
+    "Tim Parks"
+  ],
+  "topic": "History & Economics",
+  "fiction": false,
+  "publicationYear": 2006,
+  "pageCount": 288,
+  "isbn13": "9781861977571",
+  "olKey": "/works/OL25645767W",
+  "synopsis": null,
+  "meetingDate": "2024-02-29T00:00:00.000Z",
+  "year": 2024,
+  "pickerName": "Jamie",
+  "pickerSlug": "jamie",
+  "pickerNames": [
+    "Jamie"
+  ],
+  "pickerSlugs": [
+    "jamie"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

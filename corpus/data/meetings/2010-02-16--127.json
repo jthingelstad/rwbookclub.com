@@ -1,0 +1,28 @@
+{
+  "id": "rec2akQsZHAcuc79u",
+  "meetingId": 127,
+  "name": "February 2010: Creating a World without Poverty",
+  "date": "2010-02-16T00:00:00.000Z",
+  "year": 2010,
+  "bookIds": [
+    "receoVzOHfch8IUGm"
+  ],
+  "bookSlugs": [
+    "creating-a-world-without-poverty"
+  ],
+  "hostIds": [
+    "reczXGhA4xwgX91Jc"
+  ],
+  "hosts": [
+    {
+      "name": "Dan",
+      "slug": "dan"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

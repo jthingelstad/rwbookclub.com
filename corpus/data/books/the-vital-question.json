@@ -1,0 +1,32 @@
+{
+  "id": "recZor0alGpyBoRJT",
+  "bookId": 64,
+  "title": "The Vital Question",
+  "subtitle": "Energy, Evolution, and the Origins of Complex Life",
+  "slug": "the-vital-question",
+  "authors": [
+    "Nick Lane"
+  ],
+  "topic": "Science and Math",
+  "fiction": false,
+  "publicationYear": 2001,
+  "pageCount": 352,
+  "isbn13": "9780393352979",
+  "olKey": "/works/OL19663289W",
+  "synopsis": "A biochemist, building on the pillars of evolutionary theory and drawing on cutting-edge research into the link between energy and genes, argues that the evolution of multicellular life was the result of a single event.",
+  "meetingDate": "2017-02-23T00:00:00.000Z",
+  "year": 2017,
+  "pickerName": "Nick",
+  "pickerSlug": "nick",
+  "pickerNames": [
+    "Nick"
+  ],
+  "pickerSlugs": [
+    "nick"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": "Lake Monster Brewing",
+  "hasCover": true,
+  "reviewCount": 0
+}

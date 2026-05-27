@@ -1,0 +1,28 @@
+{
+  "id": "recG0ElQbpGBOH0uq",
+  "meetingId": 170,
+  "name": "March 2005: Free Culture",
+  "date": "2005-03-13T00:00:00.000Z",
+  "year": 2005,
+  "bookIds": [
+    "recrAe3GZXt49jkUH"
+  ],
+  "bookSlugs": [
+    "free-culture"
+  ],
+  "hostIds": [
+    "recLaMxXUJ9RiaGyM"
+  ],
+  "hosts": [
+    {
+      "name": "John",
+      "slug": "john"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

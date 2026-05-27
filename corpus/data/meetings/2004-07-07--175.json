@@ -1,0 +1,28 @@
+{
+  "id": "recXFy4Pi5dccOnxn",
+  "meetingId": 175,
+  "name": "July 2004: Wisdom of Crowds",
+  "date": "2004-07-07T23:00:00.000Z",
+  "year": 2004,
+  "bookIds": [
+    "recSdXpgxuuyzG3G4"
+  ],
+  "bookSlugs": [
+    "wisdom-of-crowds"
+  ],
+  "hostIds": [
+    "reczXGhA4xwgX91Jc"
+  ],
+  "hosts": [
+    {
+      "name": "Dan",
+      "slug": "dan"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

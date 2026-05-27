@@ -1,0 +1,32 @@
+{
+  "id": "recURZQ7XcL0MWYu2",
+  "bookId": 155,
+  "title": "Across Realtime",
+  "subtitle": null,
+  "slug": "across-realtime",
+  "authors": [
+    "Vernor Vinge"
+  ],
+  "topic": "Science Fiction & Fiction",
+  "fiction": true,
+  "publicationYear": 1986,
+  "pageCount": 534,
+  "isbn13": "9780671720988",
+  "olKey": "/works/OL1975717W",
+  "synopsis": "Anthology containing *The Peace War* and *Marooned in Realtime*.",
+  "meetingDate": "2006-05-23T23:00:00.000Z",
+  "year": 2006,
+  "pickerName": "John",
+  "pickerSlug": null,
+  "pickerNames": [
+    "John"
+  ],
+  "pickerSlugs": [
+    null
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

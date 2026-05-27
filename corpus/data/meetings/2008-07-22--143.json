@@ -1,0 +1,28 @@
+{
+  "id": "recsxKxR25gZULaKn",
+  "meetingId": 143,
+  "name": "July 2008: Shaping Things",
+  "date": "2008-07-22T23:00:00.000Z",
+  "year": 2008,
+  "bookIds": [
+    "recCRcGxd0YLBh3Yh"
+  ],
+  "bookSlugs": [
+    "shaping-things"
+  ],
+  "hostIds": [
+    "rec1ov9Osp68C7uD3"
+  ],
+  "hosts": [
+    {
+      "name": "Erik",
+      "slug": "erik"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

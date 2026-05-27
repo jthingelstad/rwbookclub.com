@@ -1,0 +1,32 @@
+{
+  "id": "rec2qxBWXthJ5uBiK",
+  "bookId": 154,
+  "title": "Bowling Alone",
+  "subtitle": "The Collapse and Revival of American Community",
+  "slug": "bowling-alone",
+  "authors": [
+    "Robert Putnam"
+  ],
+  "topic": "Politics & Social Sciences",
+  "fiction": false,
+  "publicationYear": 2000,
+  "pageCount": 544,
+  "isbn13": "9781982130848",
+  "olKey": "/works/OL4291077W",
+  "synopsis": "\"Updated to include a new chapter about the influence of social media and the Internet—the 20th anniversary edition of Bowling Alone remains a seminal work of social analysis, and its examination of what happened to our sense of community remains more relevant than ever in today’s fractured America. Twenty years, ago, Robert Putnam made a seemingly simple observation: once we bowled in leagues, usually after work; but no longer. This seemingly small phenomenon symbolized a significant social change that became the basis of the acclaimed bestseller, Bowling Alone, which The Washington Post called “a very important book” and Putnam, “the de Tocqueville of our generation.” Bowling Alone surveyed in detail Americans’ changing behavior over the decades, showing how we had become increasingly disconnected from family, friends, neighbors, and social structures, whether it’s with the PTA, church, clubs, political parties, or bowling leagues. In the revised edition of his classic work, Putnam shows how our shrinking access to the “social capital” that is the reward of communal activity and community sharing still poses a serious threat to our civic and personal health, and how these consequences have a new resonance for our divided country today. He includes critical new material on the pervasive influence of social media and the internet, which has introduced previously unthinkable opportunities for social connection—as well as unprecedented levels of alienation and isolation. At the time of its publication, Putnam’s then-groundbreaking work showed how social bonds are the most powerful predictor of life satisfaction, and how the loss of social capital is felt in critical ways, acting as a strong predictor of crime rates and other measures of neighborhood quality of life, and affecting our health in other ways. While the ways in which we connect, or become disconnected, have changed over the decades, his central argument remains as powerful and urgent as ever: mending our frayed social capital is key to preserving the very fabric of our society\"--Simon & Schuster.",
+  "meetingDate": "2006-06-30T23:00:00.000Z",
+  "year": 2006,
+  "pickerName": "Tom",
+  "pickerSlug": "tom",
+  "pickerNames": [
+    "Tom"
+  ],
+  "pickerSlugs": [
+    "tom"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

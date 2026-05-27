@@ -9,14 +9,15 @@ from __future__ import annotations
 
 import json
 
-from corpus.airtable import RAW_DATA_DIR
+from corpus.airtable import DATA_DIR
+
+BOOKS_DIR = DATA_DIR / "books"
 
 
 def _load_books() -> list[dict]:
-    path = RAW_DATA_DIR / "books.json"
-    if not path.exists():
+    if not BOOKS_DIR.exists():
         return []
-    return json.loads(path.read_text())
+    return [json.loads(p.read_text()) for p in sorted(BOOKS_DIR.glob("*.json"))]
 
 
 def book_count() -> int:

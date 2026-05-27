@@ -1,28 +1,28 @@
 # CLAUDE.md — rwbookclub.com
 
-Project-specific context for Claude Code. The site is live at rwbookclub.com (deployed from `main` via GitHub Pages). As of April 2026 there are 179 books, 184 meetings, 178 authors, and 12 members (5 current).
+Project-specific context for Claude Code. The site is live at rwbookclub.com (deployed from `main` via GitHub Pages). As of May 2026 there are 179 books, 184 meetings, 177 authors, and 12 members (5 current).
 
 ## Project
 
 rwbookclub.com is the home of the R/W Book Club, which has been meeting since April 2003. The club reads about 8 books per year, mostly non-fiction (about 88%), and rotates picking and hosting among members.
 
-The data lives in an Airtable base that is the canonical source of truth. Do not maintain a parallel content store; pull from Airtable.
+**Git is the canonical source of truth** for club data — it lives as per-entity text files in `corpus/data/` (see the corpus section). Airtable was the original home and is now a read-only cold backup. Edit the corpus files directly; do not reintroduce Airtable as a live dependency.
 
 ## Monorepo layout
 
 This repo is a flat, polyglot monorepo with three top-level concerns:
 
 - **`website/`** — the Eleventy 3 static site (Node). Consumes the corpus.
-- **`corpus/`** — the canonical knowledge layer (Python): the Airtable client (`corpus/airtable.py`), the fetch pipeline (`corpus/fetch.py`, `corpus/images.py`), and the committed JSON under `corpus/data/`. The agent will eventually own this.
+- **`corpus/`** — the canonical knowledge layer (Python). Per-entity text files in `corpus/data/` (`books/`, `members/`, `meetings/`, `authors/`, `reviews/`, `awards/`) are the source of truth — records as JSON, reviews as Markdown+frontmatter, each keyed by its Airtable `rec…` id. `corpus/images.py` backfills missing covers from Open Library; `corpus/fetch.py` + `migrate.py` are cold-backup Airtable re-import tools. The agent will eventually own this.
 - **`agent/`** — Oliver, the club's Discord bot (Python). Consumes the corpus; answers questions in `#ask-oliver` via Claude.
 
-A root `package.json` (npm workspace over `website`) provides `npm run build`/`serve`/`fetch`. All Python runs from the repo root (`python -m corpus.fetch`, `python -m agent.bot`). One shared root `.env`.
+A root `package.json` (npm workspace over `website`) provides `npm run build`/`serve`/`covers`. All Python runs from the repo root (`python -m corpus.images`, `python -m agent.bot`). One shared root `.env`.
 
 ## Site build
 
 - **Generator:** Eleventy 3, in `website/` (`npm run build`, `npm run serve` from the repo root via the workspace)
-- **Data refresh:** `npm run fetch` runs `python -m corpus.fetch && python -m corpus.images` — pulls from Airtable into `corpus/data/` and resizes cover/member images into `website/src/assets/images/`
-- **Input:** `website/src/` with Nunjucks templates; global data in `website/src/_data/` (JS modules read the canonical JSON in `corpus/data/`: `books.js`/`members.js` read `corpus/data/raw/`, and `authors.js`/`reviews.js`/`awards.js` re-export `corpus/data/*.json`)
+- **Covers:** `npm run covers` (`python -m corpus.images`) backfills any missing book covers from Open Library into `website/src/assets/images/covers/`. Idempotent — only fetches what's absent.
+- **Input:** `website/src/` with Nunjucks templates; global data in `website/src/_data/` — the `*.js` modules glob and aggregate the per-entity files in `corpus/data/` (`books.js`/`members.js` derive cover/photo widths from disk; `reviews.js` parses the Markdown via gray-matter; `meetings.js` is new)
 - **Output:** `website/_site/` — published by GitHub Pages on push to `main` (the Actions artifact path is `website/_site`)
 - **Pages:** `/` (home), `/books/<slug>/`, `/members/<slug>/`, `/about/`, `/stats/`, `/feed.xml`, `/llms.txt`, `/llms-full.txt`, `/robots.txt`, `/sitemap.xml`
 
@@ -30,7 +30,9 @@ A root `package.json` (npm workspace over `website`) provides `npm run build`/`s
 
 Loops and `{% set %}` tags emit a newline per iteration by default. When a loop's only job is to build up a variable (not render output), use `{%-` / `-%}` on every tag in the block, otherwise a 179-iteration loop dumps ~360 blank lines into the output. The `futureBooks` setup block in `website/src/llms*.txt.njk` is the canonical example.
 
-## Data Source
+## Data Source (Airtable — cold backup)
+
+Git is canonical; the details below are for the rare cold-backup re-import (`python -m corpus.fetch && python -m corpus.migrate`) and for understanding the shape the per-entity files mirror.
 
 - **Airtable base ID:** `appmiF5yLSzx0klJc`
 - **Credentials:** the shared root `.env` holds `AIRTABLE_BASE_ID` and `AIRTABLE_PAT` (corpus), the `DISCORD_*` identifiers + `DISCORD_BOT_TOKEN` and `ANTHROPIC_API_KEY` (agent). See `.env.example` for the full list. Never commit `.env`. Never hard-code the PAT, bot token, or API key.
@@ -265,7 +267,7 @@ requests.patch(f"{base_url}/{books_table}", json=body, headers=auth)
 
 ## Open follow-ups (not blocking site work)
 
-1. *The Devil in the White City* has no cover. Pull from Open Library when convenient.
+1. ~~*The Devil in the White City* has no cover.~~ Resolved — covers are complete for all 179 books.
 2. Awards table Book field allows multi-link; toggle to single in the Airtable UI.
 3. 88 authors matched to Open Library but have no bio there. Wikipedia fallback would help (no clean API; use the first paragraph of the article).
 4. 8 authors did not match Open Library at all (Strugatsky brothers, Frederick P. Brooks Jr., Michael J. Casey, Andrei Lankov, Bruce White, Christopher Vaughan, David Gibbons). Looser name matching would catch most.
@@ -275,9 +277,9 @@ requests.patch(f"{base_url}/{books_table}", json=body, headers=auth)
 
 ## Things not to do
 
-- Don't add fields, tables, or single-select options to the base without asking first. The schema has been deliberately curated.
+- Don't reintroduce Airtable (or any other store) as a live data dependency. **Git is canonical** — edit the per-entity files in `corpus/data/`. Airtable is a read-only cold backup.
+- Don't change the corpus file schema/shape (fields, file layout) without asking first. The schema has been deliberately curated.
 - Don't re-categorize books across the Topic field without per-book confirmation from Jamie.
 - Don't fetch metadata from Google Books. The unauthenticated daily quota is exhausted on this network. Use Open Library.
-- Don't commit `.env` or hard-code the PAT.
-- Don't assume Airtable attachment URLs are stable.
-- Don't introduce a parallel content store. The Airtable base is canonical.
+- Don't commit `.env` or hard-code the PAT, bot token, or API key.
+- Cover images come from committed files / Open Library (via `olKey`), not Airtable attachment URLs (which expire).

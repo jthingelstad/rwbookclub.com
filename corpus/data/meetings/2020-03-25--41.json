@@ -1,0 +1,30 @@
+{
+  "id": "recjozyD9LduS1kh2",
+  "meetingId": 41,
+  "name": "March 2020: The Roman Republic, The Hundred-Year Marathon",
+  "date": "2020-03-25T23:00:00.000Z",
+  "year": 2020,
+  "bookIds": [
+    "recyBMVbhBEY5hqMb",
+    "rec79IhcJ2NA3euFq"
+  ],
+  "bookSlugs": [
+    "the-roman-republic",
+    "the-hundred-year-marathon"
+  ],
+  "hostIds": [
+    "rec0unNzGOt24JKLj"
+  ],
+  "hosts": [
+    {
+      "name": "Nick",
+      "slug": "nick"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Zoom",
+  "notes": null,
+  "placeholder": false
+}

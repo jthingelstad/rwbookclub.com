@@ -1,0 +1,32 @@
+{
+  "id": "recynTRx5vdHzkPqb",
+  "bookId": 112,
+  "title": "Never Let Me Go",
+  "subtitle": null,
+  "slug": "never-let-me-go",
+  "authors": [
+    "Kazuo Ishiguro"
+  ],
+  "topic": "Science Fiction & Fiction",
+  "fiction": true,
+  "publicationYear": 2005,
+  "pageCount": 296,
+  "isbn13": "9780571328475",
+  "olKey": "/works/OL59038W",
+  "synopsis": "Ishiguro explores what it means to have a soul and how art distinguishes man from other life forms. But above all, *Never Let Me Go* is a study of friendship and the bonds we form which make or break while we come of age.",
+  "meetingDate": "2011-06-20T23:00:00.000Z",
+  "year": 2011,
+  "pickerName": "Erik",
+  "pickerSlug": "erik",
+  "pickerNames": [
+    "Erik"
+  ],
+  "pickerSlugs": [
+    "erik"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

@@ -1,0 +1,28 @@
+{
+  "id": "recx6cTTtqLc0Lbeb",
+  "meetingId": 2,
+  "name": "September 2025: Heart of Darkness",
+  "date": "2025-09-30T23:30:00.000Z",
+  "year": 2025,
+  "bookIds": [
+    "rec5oaFMbHIwiZ4vj"
+  ],
+  "bookSlugs": [
+    "heart-of-darkness"
+  ],
+  "hostIds": [
+    "rec0unNzGOt24JKLj"
+  ],
+  "hosts": [
+    {
+      "name": "Nick",
+      "slug": "nick"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Waterbury Restaurant",
+  "notes": null,
+  "placeholder": false
+}

@@ -1,0 +1,30 @@
+{
+  "id": "rec5n4HJrPRwUKs46",
+  "meetingId": 152,
+  "name": "June 2007: Watchmen, Understanding Comics",
+  "date": "2007-06-13T23:00:00.000Z",
+  "year": 2007,
+  "bookIds": [
+    "recuBQVmhCVt74qdu",
+    "recRfxuDdTDVpAJxd"
+  ],
+  "bookSlugs": [
+    "watchmen",
+    "understanding-comics"
+  ],
+  "hostIds": [
+    "rec1ov9Osp68C7uD3"
+  ],
+  "hosts": [
+    {
+      "name": "Erik",
+      "slug": "erik"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

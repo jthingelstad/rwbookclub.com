@@ -1,0 +1,28 @@
+{
+  "id": "recRnMw7103gwScf9",
+  "meetingId": 57,
+  "name": "December 2017: Daemon",
+  "date": "2017-12-22T00:00:00.000Z",
+  "year": 2017,
+  "bookIds": [
+    "recfsEZz5On0SBm84"
+  ],
+  "bookSlugs": [
+    "daemon"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Cafe Alma",
+  "notes": null,
+  "placeholder": false
+}

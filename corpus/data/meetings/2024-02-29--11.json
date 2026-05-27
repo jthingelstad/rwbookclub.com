@@ -1,0 +1,28 @@
+{
+  "id": "recrfKprqg5nRbBmy",
+  "meetingId": 11,
+  "name": "February 2024: Medici Money",
+  "date": "2024-02-29T00:00:00.000Z",
+  "year": 2024,
+  "bookIds": [
+    "recGYTZqeBp8km1aK"
+  ],
+  "bookSlugs": [
+    "medici-money"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

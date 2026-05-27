@@ -1,0 +1,32 @@
+{
+  "id": "recze1eAG1JnBmUjh",
+  "bookId": 25,
+  "title": "Evicted",
+  "subtitle": null,
+  "slug": "evicted",
+  "authors": [
+    "Matthew Desmond"
+  ],
+  "topic": "Politics & Social Sciences",
+  "fiction": false,
+  "publicationYear": 2016,
+  "pageCount": 464,
+  "isbn13": "9780553447453",
+  "olKey": "/works/OL17828326W",
+  "synopsis": "Evicted: Poverty and Profit in the American City is a 2016 non-fiction book by American author Matthew Desmond. Set in the poorest areas of Milwaukee, Wisconsin, the book follows eight families struggling to pay rent to their landlords during the financial crisis of 2007–2008. Through a year of ethnographic fieldwork, Desmond's goal in the book is to highlight the issues of extreme poverty, affordable housing, and economic exploitation in the United States. Evicted was well-received and won multiple book awards such as the 2017 Pulitzer Prize for General Nonfiction and the Robert F. Kennedy Book Award. The Pulitzer committee selected the book \"for a deeply researched exposé that showed how mass evictions after the 2008 economic crash were less a consequence than a cause of poverty.\"",
+  "meetingDate": "2021-09-01T23:00:00.000Z",
+  "year": 2021,
+  "pickerName": "Loren",
+  "pickerSlug": "loren",
+  "pickerNames": [
+    "Loren"
+  ],
+  "pickerSlugs": [
+    "loren"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": "McCoy's Public House",
+  "hasCover": true,
+  "reviewCount": 0
+}

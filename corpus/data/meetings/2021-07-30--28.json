@@ -1,0 +1,28 @@
+{
+  "id": "recshEkkcFUmxJdJK",
+  "meetingId": 28,
+  "name": "July 2021: A Man at Arms",
+  "date": "2021-07-30T00:00:00.000Z",
+  "year": 2021,
+  "bookIds": [
+    "rec72Q6YQPfbWjB22"
+  ],
+  "bookSlugs": [
+    "a-man-at-arms"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Lake & Irving",
+  "notes": null,
+  "placeholder": false
+}

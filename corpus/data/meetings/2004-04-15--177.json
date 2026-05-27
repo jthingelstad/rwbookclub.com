@@ -1,0 +1,28 @@
+{
+  "id": "recBjtGrShfSfes6I",
+  "meetingId": 177,
+  "name": "April 2004: Pompeii",
+  "date": "2004-04-15T23:00:00.000Z",
+  "year": 2004,
+  "bookIds": [
+    "recaLgWap2XW8Wagq"
+  ],
+  "bookSlugs": [
+    "pompeii"
+  ],
+  "hostIds": [
+    "recYQIsNRskrqlIAx"
+  ],
+  "hosts": [
+    {
+      "name": "Brad",
+      "slug": "brad"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

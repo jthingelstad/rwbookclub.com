@@ -1,11 +1,11 @@
-// Build-time enrichment for members. Mirror of books.js — derives
-// `photoWidths`/`hasPhoto` from JPEGs on disk so the build always matches
-// what's actually in src/assets/images/members.
+// Build-time enrichment for members. Mirror of books.js — aggregates the
+// per-entity member files and derives `photoWidths`/`hasPhoto` from JPEGs on
+// disk so the build always matches what's in src/assets/images/members.
 
 const fs = require("fs");
 const path = require("path");
 
-const RAW_PATH = path.join(__dirname, "..", "..", "..", "corpus", "data", "raw", "members.json");
+const MEMBERS_DIR = path.join(__dirname, "..", "..", "..", "corpus", "data", "members");
 const PHOTOS_DIR = path.join(__dirname, "..", "assets", "images", "members");
 const FILENAME_RE = /^(.+)-(\d+)\.jpg$/;
 
@@ -23,11 +23,20 @@ function buildWidthsBySlug() {
   return widths;
 }
 
-module.exports = function () {
-  if (!fs.existsSync(RAW_PATH)) return [];
-  const members = JSON.parse(fs.readFileSync(RAW_PATH, "utf8"));
-  const widthsBySlug = buildWidthsBySlug();
+function loadMembers() {
+  if (!fs.existsSync(MEMBERS_DIR)) return [];
+  return fs
+    .readdirSync(MEMBERS_DIR)
+    .filter((f) => f.endsWith(".json"))
+    .map((f) => JSON.parse(fs.readFileSync(path.join(MEMBERS_DIR, f), "utf8")));
+}
 
+module.exports = function () {
+  const members = loadMembers();
+  // Preserve the original (record-id ascending) order the fetch pipeline used.
+  members.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+
+  const widthsBySlug = buildWidthsBySlug();
   return members.map((m) => {
     const widths = m.isCurrent ? widthsBySlug.get(m.slug) : undefined;
     const { photoUrl, ...rest } = m;

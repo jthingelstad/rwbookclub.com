@@ -1,0 +1,28 @@
+{
+  "id": "recCe2vHRZM8S94C8",
+  "meetingId": 160,
+  "name": "June 2006: Bowling Alone",
+  "date": "2006-06-30T23:00:00.000Z",
+  "year": 2006,
+  "bookIds": [
+    "rec2qxBWXthJ5uBiK"
+  ],
+  "bookSlugs": [
+    "bowling-alone"
+  ],
+  "hostIds": [
+    "rectfpnvCHhjL7aLx"
+  ],
+  "hosts": [
+    {
+      "name": "Tom",
+      "slug": "tom"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

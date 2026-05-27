@@ -1,0 +1,34 @@
+{
+  "id": "reccbM5qYOJa8J5ma",
+  "bookId": 45,
+  "title": "Cræft",
+  "subtitle": "An Inquiry Into the Origins and True Meaning of Traditional Crafts",
+  "slug": "craeft",
+  "authors": [
+    "Alexander Langlands"
+  ],
+  "topic": "Politics & Social Sciences",
+  "fiction": false,
+  "publicationYear": 2017,
+  "pageCount": 352,
+  "isbn13": "9780393356571",
+  "olKey": "/works/OL20162539W",
+  "synopsis": null,
+  "meetingDate": "2019-06-10T23:00:00.000Z",
+  "year": 2019,
+  "pickerName": "Jamie",
+  "pickerSlug": "jamie",
+  "pickerNames": [
+    "Jamie",
+    "Erik"
+  ],
+  "pickerSlugs": [
+    "jamie",
+    "erik"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": "Lake & Harriet",
+  "hasCover": true,
+  "reviewCount": 0
+}

@@ -1,0 +1,28 @@
+{
+  "id": "rece9Gjwyf69mxdYX",
+  "meetingId": 9,
+  "name": "May 2024: The Power Law",
+  "date": "2024-05-29T23:00:00.000Z",
+  "year": 2024,
+  "bookIds": [
+    "rec7DLLtZpzG2kOhn"
+  ],
+  "bookSlugs": [
+    "the-power-law"
+  ],
+  "hostIds": [
+    "rec0unNzGOt24JKLj"
+  ],
+  "hosts": [
+    {
+      "name": "Nick",
+      "slug": "nick"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

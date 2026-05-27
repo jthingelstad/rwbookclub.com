@@ -1,0 +1,28 @@
+{
+  "id": "rechbvSZ1A6RUJUz1",
+  "meetingId": 44,
+  "name": "September 2019: How to Read a Book",
+  "date": "2019-09-18T23:00:00.000Z",
+  "year": 2019,
+  "bookIds": [
+    "recQTROdazvgXRk4o"
+  ],
+  "bookSlugs": [
+    "how-to-read-a-book"
+  ],
+  "hostIds": [
+    "rectfpnvCHhjL7aLx"
+  ],
+  "hosts": [
+    {
+      "name": "Tom",
+      "slug": "tom"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

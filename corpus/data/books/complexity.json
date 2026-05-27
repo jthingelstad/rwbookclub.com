@@ -1,0 +1,28 @@
+{
+  "id": "rec68ZsVB4PKwrddI",
+  "bookId": 78,
+  "title": "Complexity",
+  "subtitle": "A Very Short Introduction",
+  "slug": "complexity",
+  "authors": [
+    "John H. Holland"
+  ],
+  "topic": "Science and Math",
+  "fiction": false,
+  "publicationYear": 2014,
+  "pageCount": 112,
+  "isbn13": "9780199662548",
+  "olKey": "/works/OL17785073W",
+  "synopsis": null,
+  "meetingDate": "2015-05-04T23:00:00.000Z",
+  "year": 2015,
+  "pickerName": null,
+  "pickerSlug": null,
+  "pickerNames": null,
+  "pickerSlugs": null,
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

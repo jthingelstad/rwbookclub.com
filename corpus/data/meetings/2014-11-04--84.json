@@ -1,0 +1,28 @@
+{
+  "id": "recewk7nNIddJqYCZ",
+  "meetingId": 84,
+  "name": "November 2014: Far from the Tree",
+  "date": "2014-11-04T00:00:00.000Z",
+  "year": 2014,
+  "bookIds": [
+    "rec4W7HgKT9HVSFuC"
+  ],
+  "bookSlugs": [
+    "far-from-the-tree"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

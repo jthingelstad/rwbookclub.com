@@ -1,0 +1,32 @@
+{
+  "id": "rec1gmZqyX4btwosy",
+  "bookId": 103,
+  "title": "The Mystery of Banking",
+  "subtitle": null,
+  "slug": "the-mystery-of-banking",
+  "authors": [
+    "Murray N. Rothbard"
+  ],
+  "topic": "History & Economics",
+  "fiction": false,
+  "publicationYear": 2012,
+  "pageCount": 168,
+  "isbn13": "9781388173838",
+  "olKey": "/works/OL34894655W",
+  "synopsis": null,
+  "meetingDate": "2012-07-02T23:00:00.000Z",
+  "year": 2012,
+  "pickerName": "Dan",
+  "pickerSlug": null,
+  "pickerNames": [
+    "Dan"
+  ],
+  "pickerSlugs": [
+    null
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

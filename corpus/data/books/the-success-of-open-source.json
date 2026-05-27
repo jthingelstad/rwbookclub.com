@@ -1,0 +1,32 @@
+{
+  "id": "recKGpXsO5a57bp6C",
+  "bookId": 157,
+  "title": "The Success of Open Source",
+  "subtitle": null,
+  "slug": "the-success-of-open-source",
+  "authors": [
+    "Steve Weber"
+  ],
+  "topic": "Technology",
+  "fiction": false,
+  "publicationYear": 2004,
+  "pageCount": 312,
+  "isbn13": null,
+  "olKey": "/works/OL15840214W",
+  "synopsis": null,
+  "meetingDate": "2006-03-22T23:00:00.000Z",
+  "year": 2006,
+  "pickerName": "David",
+  "pickerSlug": null,
+  "pickerNames": [
+    "David"
+  ],
+  "pickerSlugs": [
+    null
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

@@ -1,0 +1,28 @@
+{
+  "id": "recDroj0mlGPhLPaP",
+  "meetingId": 45,
+  "name": "August 2019: Zen and the Art of Motorcycle Maintenance",
+  "date": "2019-08-15T23:00:00.000Z",
+  "year": 2019,
+  "bookIds": [
+    "recKGPx6cBukxjX2V"
+  ],
+  "bookSlugs": [
+    "zen-and-the-art-of-motorcycle-maintenance"
+  ],
+  "hostIds": [
+    "rec0unNzGOt24JKLj"
+  ],
+  "hosts": [
+    {
+      "name": "Nick",
+      "slug": "nick"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

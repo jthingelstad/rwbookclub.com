@@ -1,0 +1,32 @@
+{
+  "id": "recZ4nkkZjO1J7fDE",
+  "bookId": 4,
+  "title": "Co-Intelligence",
+  "subtitle": "Living and Working with AI",
+  "slug": "co-intelligence",
+  "authors": [
+    "Ethan Mollick"
+  ],
+  "topic": "Technology",
+  "fiction": false,
+  "publicationYear": 2024,
+  "pageCount": null,
+  "isbn13": "9780593716724",
+  "olKey": "/works/OL37565105W",
+  "synopsis": "Something new entered our world in November 2022 — the first general purpose AI that could pass for a human and do the kinds of creative, innovative work that only humans could do previously. After millions of years on our own, humans had developed a kind of co-intelligence that could augment, or even replace, human thinking. Through his writing, speaking, and teaching, Mollick has become one of the most prominent and provocative explainers of AI, focusing on the practical aspects of how these new tools for thought can transform our world.",
+  "meetingDate": "2025-06-24T23:30:00.000Z",
+  "year": 2025,
+  "pickerName": "Jamie",
+  "pickerSlug": "jamie",
+  "pickerNames": [
+    "Jamie"
+  ],
+  "pickerSlugs": [
+    "jamie"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": "Waterbury Restaurant",
+  "hasCover": true,
+  "reviewCount": 1
+}

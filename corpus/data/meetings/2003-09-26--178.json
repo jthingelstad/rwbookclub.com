@@ -1,0 +1,28 @@
+{
+  "id": "rec4nyi7dgMXx9QPU",
+  "meetingId": 178,
+  "name": "September 2003: Quicksilver",
+  "date": "2003-09-26T23:00:00.000Z",
+  "year": 2003,
+  "bookIds": [
+    "reczJe24epYvsXmo9"
+  ],
+  "bookSlugs": [
+    "quicksilver"
+  ],
+  "hostIds": [
+    "rec1ov9Osp68C7uD3"
+  ],
+  "hosts": [
+    {
+      "name": "Erik",
+      "slug": "erik"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

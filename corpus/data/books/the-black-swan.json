@@ -1,0 +1,32 @@
+{
+  "id": "rec7wo82JwJrka5XZ",
+  "bookId": 137,
+  "title": "The Black Swan",
+  "subtitle": "The Impact of the Highly Improbable",
+  "slug": "the-black-swan",
+  "authors": [
+    "Nassim Nicholas Taleb"
+  ],
+  "topic": "Science and Math",
+  "fiction": false,
+  "publicationYear": 2005,
+  "pageCount": 475,
+  "isbn13": "9780593243657",
+  "olKey": "/works/OL3295030W",
+  "synopsis": "From the critically acclaimed author of Fooled by Randomness, a book about the impact of improbable events on every aspect of life.",
+  "meetingDate": "2008-05-20T23:00:00.000Z",
+  "year": 2008,
+  "pickerName": "Dan",
+  "pickerSlug": null,
+  "pickerNames": [
+    "Dan"
+  ],
+  "pickerSlugs": [
+    null
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

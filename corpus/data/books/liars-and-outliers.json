@@ -1,0 +1,32 @@
+{
+  "id": "recQ55hpN2cHMiTkG",
+  "bookId": 99,
+  "title": "Liars and Outliers",
+  "subtitle": "Enabling the Trust that Society Needs to Thrive",
+  "slug": "liars-and-outliers",
+  "authors": [
+    "Bruce Schneier"
+  ],
+  "topic": "Brain & Psychology",
+  "fiction": false,
+  "publicationYear": 2012,
+  "pageCount": 366,
+  "isbn13": "9781118143308",
+  "olKey": "/works/OL16626501W",
+  "synopsis": "In today's hyper-connected society, understanding the mechanisms of trust is crucial. Issues of trust are critical to solving problems as diverse as corporate responsibility, global warming, and the political system. In this insightful and entertaining book, Schneier weaves together ideas from across the social and biological sciences to explain how society induces trust. He shows the unique role of trust in facilitating and stabilizing human society. He discusses why and how trust has evolved, why it works the way it does, and the ways the information society is changing everything. - Publisher.",
+  "meetingDate": "2012-12-20T00:00:00.000Z",
+  "year": 2012,
+  "pickerName": "Dan",
+  "pickerSlug": null,
+  "pickerNames": [
+    "Dan"
+  ],
+  "pickerSlugs": [
+    null
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

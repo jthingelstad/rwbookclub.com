@@ -1,0 +1,28 @@
+{
+  "id": "rec3zWqsfnuSgHdIx",
+  "meetingId": 29,
+  "name": "June 2021: Klara and the Sun",
+  "date": "2021-06-16T23:00:00.000Z",
+  "year": 2021,
+  "bookIds": [
+    "reclmUK2bkzY6hgDc"
+  ],
+  "bookSlugs": [
+    "klara-and-the-sun"
+  ],
+  "hostIds": [
+    "rectfpnvCHhjL7aLx"
+  ],
+  "hosts": [
+    {
+      "name": "Tom",
+      "slug": "tom"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Jamie's House",
+  "notes": null,
+  "placeholder": false
+}

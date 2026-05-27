@@ -1,0 +1,35 @@
+{
+  "id": "recOEHCYBN1m51utB",
+  "meetingId": 42,
+  "name": "January 2020: The Master Algorithm, The Nordic Theory of Everything",
+  "date": "2020-01-31T00:00:00.000Z",
+  "year": 2020,
+  "bookIds": [
+    "rec2U0s4D7aLM5boq",
+    "recCBJ0XFXhJkPBZz"
+  ],
+  "bookSlugs": [
+    "the-master-algorithm",
+    "the-nordic-theory-of-everything"
+  ],
+  "hostIds": [
+    "reczR2kRhTW8h4Htz",
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Loren",
+      "slug": "loren"
+    },
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": "December meeting was cancelled at last minute and two books consolidated into January meeting.",
+  "placeholder": false
+}

@@ -1,0 +1,28 @@
+{
+  "id": "rec4HEQqLK5WR4AjX",
+  "meetingId": 119,
+  "name": "December 2010: In a Sunburned Country",
+  "date": "2010-12-16T00:00:00.000Z",
+  "year": 2010,
+  "bookIds": [
+    "rechXm1ECmt0EoAz4"
+  ],
+  "bookSlugs": [
+    "in-a-sunburned-country"
+  ],
+  "hostIds": [
+    "recLaMxXUJ9RiaGyM"
+  ],
+  "hosts": [
+    {
+      "name": "John",
+      "slug": "john"
+    }
+  ],
+  "type": [
+    "Spouses"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

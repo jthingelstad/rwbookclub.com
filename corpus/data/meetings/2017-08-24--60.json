@@ -1,0 +1,28 @@
+{
+  "id": "recplvOTiBMGFnyDS",
+  "meetingId": 60,
+  "name": "August 2017: Peak",
+  "date": "2017-08-24T23:00:00.000Z",
+  "year": 2017,
+  "bookIds": [
+    "recAPd6gph4Ry2o9Z"
+  ],
+  "bookSlugs": [
+    "peak"
+  ],
+  "hostIds": [
+    "rec0unNzGOt24JKLj"
+  ],
+  "hosts": [
+    {
+      "name": "Nick",
+      "slug": "nick"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Heyday",
+  "notes": null,
+  "placeholder": false
+}

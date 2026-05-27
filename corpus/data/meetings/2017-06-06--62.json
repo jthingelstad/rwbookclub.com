@@ -1,0 +1,28 @@
+{
+  "id": "rec0vjoVl3BgzCewF",
+  "meetingId": 62,
+  "name": "June 2017: Stuff Matters",
+  "date": "2017-06-06T23:00:00.000Z",
+  "year": 2017,
+  "bookIds": [
+    "recfZCb8ms8t3qsul"
+  ],
+  "bookSlugs": [
+    "stuff-matters"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Agra Culture",
+  "notes": null,
+  "placeholder": false
+}

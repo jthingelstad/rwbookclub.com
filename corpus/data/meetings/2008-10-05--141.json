@@ -1,0 +1,28 @@
+{
+  "id": "rec3eERziN4aSH8Du",
+  "meetingId": 141,
+  "name": "October 2008: Nudge",
+  "date": "2008-10-05T23:00:00.000Z",
+  "year": 2008,
+  "bookIds": [
+    "rec7CJXijIoa78g9K"
+  ],
+  "bookSlugs": [
+    "nudge"
+  ],
+  "hostIds": [
+    "recLaMxXUJ9RiaGyM"
+  ],
+  "hosts": [
+    {
+      "name": "John",
+      "slug": "john"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

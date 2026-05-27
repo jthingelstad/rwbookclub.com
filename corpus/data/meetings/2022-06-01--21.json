@@ -1,0 +1,30 @@
+{
+  "id": "recYbLsyj1oYJe9N3",
+  "meetingId": 21,
+  "name": "June 2022: Aeschylus I, The Florentines",
+  "date": "2022-06-01T23:00:00.000Z",
+  "year": 2022,
+  "bookIds": [
+    "recFWzFSsZrj8Ewr3",
+    "recMrBWML8vdTAJBv"
+  ],
+  "bookSlugs": [
+    "aeschylus-i",
+    "the-florentines"
+  ],
+  "hostIds": [
+    "rec0unNzGOt24JKLj"
+  ],
+  "hosts": [
+    {
+      "name": "Nick",
+      "slug": "nick"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": "Only reading \"Prometheus Bound\" from the Aeschylus I.",
+  "placeholder": false
+}

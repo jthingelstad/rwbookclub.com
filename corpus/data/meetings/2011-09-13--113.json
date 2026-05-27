@@ -1,0 +1,28 @@
+{
+  "id": "recvfWcR27W64oKFj",
+  "meetingId": 113,
+  "name": "September 2011: The Checklist Manifesto",
+  "date": "2011-09-13T23:00:00.000Z",
+  "year": 2011,
+  "bookIds": [
+    "rec4k6H93Gjmq60Zb"
+  ],
+  "bookSlugs": [
+    "the-checklist-manifesto"
+  ],
+  "hostIds": [
+    "recLaMxXUJ9RiaGyM"
+  ],
+  "hosts": [
+    {
+      "name": "John",
+      "slug": "john"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

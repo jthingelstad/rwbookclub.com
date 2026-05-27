@@ -1,0 +1,32 @@
+{
+  "id": "recsndczkTLsuPIRh",
+  "bookId": 70,
+  "title": "The Rise and Fall of American Growth",
+  "subtitle": "The U.S. Standard of Living since the Civil War",
+  "slug": "the-rise-and-fall-of-american-growth",
+  "authors": [
+    "Robert J. Gordon"
+  ],
+  "topic": "History & Economics",
+  "fiction": false,
+  "publicationYear": 2016,
+  "pageCount": 762,
+  "isbn13": null,
+  "olKey": "/works/OL17343962W",
+  "synopsis": "The trajectory and impetus of American growth from the end of the Civil War until now.",
+  "meetingDate": "2016-03-22T23:00:00.000Z",
+  "year": 2016,
+  "pickerName": "Loren",
+  "pickerSlug": "loren",
+  "pickerNames": [
+    "Loren"
+  ],
+  "pickerSlugs": [
+    "loren"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

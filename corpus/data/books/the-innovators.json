@@ -1,0 +1,32 @@
+{
+  "id": "rece7SphVtkkPNpQA",
+  "bookId": 77,
+  "title": "The Innovators",
+  "subtitle": "How a Group of Hackers, Geniuses, and Geeks Created the Digital Revolution",
+  "slug": "the-innovators",
+  "authors": [
+    "Walter Isaacson"
+  ],
+  "topic": "History & Economics",
+  "fiction": false,
+  "publicationYear": 2014,
+  "pageCount": 608,
+  "isbn13": "9781471138799",
+  "olKey": "/works/OL17074268W",
+  "synopsis": "Following his blockbuster biography of Steve Jobs, The Innovators is Walter Isaacson’s revealing story of the people who created the computer and the Internet. It is destined to be the standard history of the digital revolution and an indispensable guide to how innovation really happens. What were the talents that allowed certain inventors and entrepreneurs to turn their visionary ideas into disruptive realities? What led to their creative leaps? Why did some succeed and others fail? In his masterly saga, Isaacson begins with Ada Lovelace, Lord Byron’s daughter, who pioneered computer programming in the 1840s. He explores the fascinating personalities that created our current digital revolution, such as Vannevar Bush, Alan Turing, John von Neumann, J.C.R. Licklider, Doug Engelbart, Robert Noyce, Bill Gates, Steve Wozniak, Steve Jobs, Tim Berners-Lee, and Larry Page. This is the story of how their minds worked and what made them so inventive. It’s also a narrative of how their ability to collaborate and master the art of teamwork made them even more creative. For an era that seeks to foster innovation, creativity, and teamwork, The Innovators shows how they happen.",
+  "meetingDate": "2015-06-15T23:00:00.000Z",
+  "year": 2015,
+  "pickerName": "Jamie",
+  "pickerSlug": "jamie",
+  "pickerNames": [
+    "Jamie"
+  ],
+  "pickerSlugs": [
+    "jamie"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

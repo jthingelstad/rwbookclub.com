@@ -1,0 +1,34 @@
+{
+  "id": "recAj0vgSRqpmmnho",
+  "bookId": 46,
+  "title": "Growing a Revolution",
+  "subtitle": "Bringing Our Soil Back to Life",
+  "slug": "growing-a-revolution",
+  "authors": [
+    "David R. Montgomery"
+  ],
+  "topic": "Science and Math",
+  "fiction": false,
+  "publicationYear": 2017,
+  "pageCount": 320,
+  "isbn13": "9780393356090",
+  "olKey": "/works/OL20179092W",
+  "synopsis": null,
+  "meetingDate": "2019-06-10T23:00:00.000Z",
+  "year": 2019,
+  "pickerName": "Jamie",
+  "pickerSlug": "jamie",
+  "pickerNames": [
+    "Jamie",
+    "Erik"
+  ],
+  "pickerSlugs": [
+    "jamie",
+    "erik"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": "Lake & Harriet",
+  "hasCover": true,
+  "reviewCount": 0
+}

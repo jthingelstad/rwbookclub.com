@@ -1,0 +1,28 @@
+{
+  "id": "recvV1DpX07HGNgAu",
+  "meetingId": 78,
+  "name": "June 2015: The Innovators",
+  "date": "2015-06-15T23:00:00.000Z",
+  "year": 2015,
+  "bookIds": [
+    "rece7SphVtkkPNpQA"
+  ],
+  "bookSlugs": [
+    "the-innovators"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

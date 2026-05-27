@@ -1,0 +1,32 @@
+{
+  "id": "reciHdED6jmyCjANr",
+  "bookId": 58,
+  "title": "How to Live",
+  "subtitle": "Or A Life of Montaigne in One Question and Twenty Attempts at an Answer",
+  "slug": "how-to-live",
+  "authors": [
+    "Sarah Bakewell"
+  ],
+  "topic": "Philosophy & Religion",
+  "fiction": false,
+  "publicationYear": 2011,
+  "pageCount": 416,
+  "isbn13": "9781590514832",
+  "olKey": "/works/OL25463670W",
+  "synopsis": null,
+  "meetingDate": "2017-09-26T23:00:00.000Z",
+  "year": 2017,
+  "pickerName": "Tom",
+  "pickerSlug": "tom",
+  "pickerNames": [
+    "Tom"
+  ],
+  "pickerSlugs": [
+    "tom"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": "Lake and Irving",
+  "hasCover": true,
+  "reviewCount": 0
+}

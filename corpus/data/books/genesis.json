@@ -1,0 +1,32 @@
+{
+  "id": "recYja1qSMhYKq2bE",
+  "bookId": 41,
+  "title": "Genesis",
+  "subtitle": "The Deep Origin of Societies",
+  "slug": "genesis",
+  "authors": [
+    "Edward O. Wilson"
+  ],
+  "topic": "Science and Math",
+  "fiction": false,
+  "publicationYear": 2019,
+  "pageCount": 160,
+  "isbn13": "9781631495540",
+  "olKey": "/works/OL20148876W",
+  "synopsis": "Asserting that religious creeds and philosophical questions can be reduced to purely genetic and evolutionary components, and that the human body and mind have a physical base obedient to the laws of physics and chemistry, Genesis demonstrates that the only way for us to fully understand human behavior is to study the evolutionary histories of nonhuman species. Of these, Wilson demonstrates that at least 17 - among them the African naked mole rat and the sponge-dwelling shrimp - have been found to have advanced societies based on altruism and cooperation.\n\nWhether writing about midges who \"dance about like acrobats\" or schools of anchovies who protectively huddle \"to appear like a gigantic fish\", or proposing that human society owes a debt of gratitude to \"postmenopausal grandmothers\" and \"childless homosexuals\", Genesis is a pithy yet path-breaking work of evolutionary theory, braiding 21st-century scientific theory with the lyrical biological and humanistic observations for which Wilson is known.",
+  "meetingDate": "2019-11-08T00:00:00.000Z",
+  "year": 2019,
+  "pickerName": "Erik",
+  "pickerSlug": "erik",
+  "pickerNames": [
+    "Erik"
+  ],
+  "pickerSlugs": [
+    "erik"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

@@ -1,0 +1,28 @@
+{
+  "id": "recjXD8DMBNHickYo",
+  "meetingId": 158,
+  "name": "October 2006: Stumbling on Happiness",
+  "date": "2006-10-03T23:00:00.000Z",
+  "year": 2006,
+  "bookIds": [
+    "recFG1LD2o2gGlGwx"
+  ],
+  "bookSlugs": [
+    "stumbling-on-happiness"
+  ],
+  "hostIds": [
+    "rechNL5xOnYd7aE5c"
+  ],
+  "hosts": [
+    {
+      "name": "David",
+      "slug": "david"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

@@ -1,0 +1,33 @@
+{
+  "id": "recVkzSnnMw1nBtcx",
+  "bookId": 57,
+  "title": "A Crack in Creation",
+  "subtitle": "Gene Editing and the Unthinkable Power to Control Evolution",
+  "slug": "a-crack-in-creation",
+  "authors": [
+    "Jennifer A. Doudna",
+    "Samuel H. Sternberg"
+  ],
+  "topic": "Science and Math",
+  "fiction": false,
+  "publicationYear": 2017,
+  "pageCount": 248,
+  "isbn13": "9780544716940",
+  "olKey": "/works/OL17765779W",
+  "synopsis": "Not since the atomic bomb has a technology so alarmed its inventors that they warned the world about its use. Not, that is, until the spring of 2015, when biologist Jennifer Doudna called for a worldwide moratorium on the use of the new gene-editing tool CRISPR—a revolutionary new technology that she helped create—to make heritable changes in human embryos. The cheapest, simplest, most effective way of manipulating DNA ever known, CRISPR may well give us the cure to HIV, genetic diseases, and some cancers, and will help address the world’s hunger crisis. Yet even the tiniest changes to DNA could have myriad, unforeseeable consequences—to say nothing of the ethical and societal repercussions of intentionally mutating embryos to create “better” humans. Writing with fellow researcher Samuel Sternberg, Doudna shares the thrilling story of her discovery, and passionately argues that enormous responsibility comes with the ability to rewrite the code of life. With CRISPR, she shows, we have effectively taken control of evolution. What will we do with this unfathomable power?",
+  "meetingDate": "2017-10-25T23:00:00.000Z",
+  "year": 2017,
+  "pickerName": "Erik",
+  "pickerSlug": "erik",
+  "pickerNames": [
+    "Erik"
+  ],
+  "pickerSlugs": [
+    "erik"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": "Surly",
+  "hasCover": true,
+  "reviewCount": 0
+}

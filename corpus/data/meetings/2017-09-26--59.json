@@ -1,0 +1,28 @@
+{
+  "id": "recwyC2OlEMHuR4NN",
+  "meetingId": 59,
+  "name": "September 2017: How to Live",
+  "date": "2017-09-26T23:00:00.000Z",
+  "year": 2017,
+  "bookIds": [
+    "reciHdED6jmyCjANr"
+  ],
+  "bookSlugs": [
+    "how-to-live"
+  ],
+  "hostIds": [
+    "rectfpnvCHhjL7aLx"
+  ],
+  "hosts": [
+    {
+      "name": "Tom",
+      "slug": "tom"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Lake and Irving",
+  "notes": null,
+  "placeholder": false
+}

@@ -1,0 +1,28 @@
+{
+  "id": "recLNFUq3FZBWndAq",
+  "meetingId": 49,
+  "name": "November 2018: Life After Google",
+  "date": "2018-11-20T00:00:00.000Z",
+  "year": 2018,
+  "bookIds": [
+    "recJpzoSRLhbQbke8"
+  ],
+  "bookSlugs": [
+    "life-after-google"
+  ],
+  "hostIds": [
+    "rec0unNzGOt24JKLj"
+  ],
+  "hosts": [
+    {
+      "name": "Nick",
+      "slug": "nick"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

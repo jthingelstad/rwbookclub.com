@@ -1,0 +1,30 @@
+{
+  "id": "recmYoUaJnMOedM4a",
+  "meetingId": 15,
+  "name": "July 2023: Men Without Work, Nation of Takers",
+  "date": "2023-07-11T23:00:00.000Z",
+  "year": 2023,
+  "bookIds": [
+    "recNhwhj9vQNHYrVL",
+    "recUcdPIH3jz5tXOH"
+  ],
+  "bookSlugs": [
+    "men-without-work",
+    "nation-of-takers"
+  ],
+  "hostIds": [
+    "rec0unNzGOt24JKLj"
+  ],
+  "hosts": [
+    {
+      "name": "Nick",
+      "slug": "nick"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "French Meadow",
+  "notes": null,
+  "placeholder": false
+}

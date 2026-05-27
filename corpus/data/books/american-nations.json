@@ -1,0 +1,32 @@
+{
+  "id": "recHWm3gO1UsblE3A",
+  "bookId": 69,
+  "title": "American Nations",
+  "subtitle": "A History of the Eleven Rival Regional Cultures of North America",
+  "slug": "american-nations",
+  "authors": [
+    "Colin Woodard"
+  ],
+  "topic": "Politics & Social Sciences",
+  "fiction": false,
+  "publicationYear": 2011,
+  "pageCount": 384,
+  "isbn13": "9780143122029",
+  "olKey": "/works/OL20272183W",
+  "synopsis": null,
+  "meetingDate": "2016-05-02T23:00:00.000Z",
+  "year": 2016,
+  "pickerName": "Nick",
+  "pickerSlug": "nick",
+  "pickerNames": [
+    "Nick"
+  ],
+  "pickerSlugs": [
+    "nick"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

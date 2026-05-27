@@ -1,0 +1,32 @@
+{
+  "id": "recFWzFSsZrj8Ewr3",
+  "bookId": 19,
+  "title": "Aeschylus I",
+  "subtitle": "The Persians, The Seven Against Thebes, The Suppliant Maidens, Prometheus Bound",
+  "slug": "aeschylus-i",
+  "authors": [
+    "Aeschylus"
+  ],
+  "topic": "History & Economics",
+  "fiction": false,
+  "publicationYear": 2013,
+  "pageCount": 256,
+  "isbn13": "9780226311449",
+  "olKey": "/works/OL21049995W",
+  "synopsis": null,
+  "meetingDate": "2022-06-01T23:00:00.000Z",
+  "year": 2022,
+  "pickerName": "Nick",
+  "pickerSlug": "nick",
+  "pickerNames": [
+    "Nick"
+  ],
+  "pickerSlugs": [
+    "nick"
+  ],
+  "placeholder": false,
+  "meetingNotes": "Only reading \"Prometheus Bound\" from the Aeschylus I.",
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

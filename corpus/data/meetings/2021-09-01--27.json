@@ -1,0 +1,28 @@
+{
+  "id": "recx2YsIbRQFr6thA",
+  "meetingId": 27,
+  "name": "September 2021: Evicted",
+  "date": "2021-09-01T23:00:00.000Z",
+  "year": 2021,
+  "bookIds": [
+    "recze1eAG1JnBmUjh"
+  ],
+  "bookSlugs": [
+    "evicted"
+  ],
+  "hostIds": [
+    "reczR2kRhTW8h4Htz"
+  ],
+  "hosts": [
+    {
+      "name": "Loren",
+      "slug": "loren"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "McCoy's Public House",
+  "notes": null,
+  "placeholder": false
+}

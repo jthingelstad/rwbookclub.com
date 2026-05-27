@@ -1,0 +1,28 @@
+{
+  "id": "recni9vFs2L0ZhQ9J",
+  "meetingId": 147,
+  "name": "February 2008: The World Without Us",
+  "date": "2008-02-01T00:00:00.000Z",
+  "year": 2008,
+  "bookIds": [
+    "recyTIeTtYjp1pO6r"
+  ],
+  "bookSlugs": [
+    "the-world-without-us"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

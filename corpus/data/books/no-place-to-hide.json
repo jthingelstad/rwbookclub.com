@@ -1,0 +1,32 @@
+{
+  "id": "recLxRNfTAzaj51Y9",
+  "bookId": 79,
+  "title": "No Place to Hide",
+  "subtitle": "Edward Snowden, the NSA, and the U.S. Surveillance State",
+  "slug": "no-place-to-hide",
+  "authors": [
+    "Glenn Greenwald"
+  ],
+  "topic": "Current Events & People",
+  "fiction": false,
+  "publicationYear": 2013,
+  "pageCount": 333,
+  "isbn13": "9780241146705",
+  "olKey": "/works/OL16819228W",
+  "synopsis": "The story of one of the greatest national security leaks in US history. In June 2013, reporter and political commentator Glenn Greenwald published a series of reports in the Guardian which rocked the world. The reports revealed shocking truths about the extent to which the National Security Agency had been gathering information about US citizens and intercepting communication worldwide, and were based on documents leaked by former National Security Agency employee Edward Snowden to Greenwald. Including new revelations from documents entrusted to Greenwald by Snowden.",
+  "meetingDate": "2015-04-20T23:00:00.000Z",
+  "year": 2015,
+  "pickerName": "Erik",
+  "pickerSlug": "erik",
+  "pickerNames": [
+    "Erik"
+  ],
+  "pickerSlugs": [
+    "erik"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

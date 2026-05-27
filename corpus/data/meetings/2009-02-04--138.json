@@ -1,0 +1,28 @@
+{
+  "id": "recsN9dbX52PMogUs",
+  "meetingId": 138,
+  "name": "February 2009: The Nine",
+  "date": "2009-02-04T00:00:00.000Z",
+  "year": 2009,
+  "bookIds": [
+    "recq7AkHEbmI45dWK"
+  ],
+  "bookSlugs": [
+    "the-nine"
+  ],
+  "hostIds": [
+    "rec1ov9Osp68C7uD3"
+  ],
+  "hosts": [
+    {
+      "name": "Erik",
+      "slug": "erik"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

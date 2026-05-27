@@ -1,0 +1,33 @@
+{
+  "id": "recoQkJQ7bkfgX3ue",
+  "bookId": 17,
+  "title": "Mni Sota Makoce",
+  "subtitle": "The Land of the Dakota",
+  "slug": "mni-sota-makoce",
+  "authors": [
+    "Gwen Westerman",
+    "Bruce White"
+  ],
+  "topic": "History & Economics",
+  "fiction": false,
+  "publicationYear": 2012,
+  "pageCount": 296,
+  "isbn13": "9780873518697",
+  "olKey": "/works/OL16681765W",
+  "synopsis": null,
+  "meetingDate": "2022-12-15T00:00:00.000Z",
+  "year": 2022,
+  "pickerName": "Erik",
+  "pickerSlug": "erik",
+  "pickerNames": [
+    "Erik"
+  ],
+  "pickerSlugs": [
+    "erik"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": "Erik's Apartment",
+  "hasCover": true,
+  "reviewCount": 1
+}

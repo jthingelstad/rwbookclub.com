@@ -1,0 +1,32 @@
+{
+  "id": "rectKLgM2uf4gygH5",
+  "bookId": 151,
+  "title": "The Omnivore's Dilemma",
+  "subtitle": "A Natural History of Four Meals",
+  "slug": "the-omnivore-s-dilemma",
+  "authors": [
+    "Michael Pollan"
+  ],
+  "topic": "Travel & Memoir",
+  "fiction": false,
+  "publicationYear": 2006,
+  "pageCount": null,
+  "isbn13": "9781504044844",
+  "olKey": "/works/OL28339036W",
+  "synopsis": null,
+  "meetingDate": "2006-10-30T23:00:00.000Z",
+  "year": 2006,
+  "pickerName": "Erik",
+  "pickerSlug": "erik",
+  "pickerNames": [
+    "Erik"
+  ],
+  "pickerSlugs": [
+    "erik"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

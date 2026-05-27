@@ -1,0 +1,28 @@
+{
+  "id": "recrJ8D1brdANTMda",
+  "meetingId": 3,
+  "name": "August 2025: The Origins of Totalitarianism",
+  "date": "2025-08-26T23:30:00.000Z",
+  "year": 2025,
+  "bookIds": [
+    "recKAQ1CZWUNpGndi"
+  ],
+  "bookSlugs": [
+    "the-origins-of-totalitarianism"
+  ],
+  "hostIds": [
+    "reczR2kRhTW8h4Htz"
+  ],
+  "hosts": [
+    {
+      "name": "Loren",
+      "slug": "loren"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Waterbury Restaurant",
+  "notes": null,
+  "placeholder": false
+}

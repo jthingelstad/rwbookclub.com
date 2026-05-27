@@ -1,0 +1,32 @@
+{
+  "id": "rec1UgSIEUmWUOewl",
+  "bookId": 90,
+  "title": "Powering the Dream",
+  "subtitle": "The History and Promise of Green Technology",
+  "slug": "powering-the-dream",
+  "authors": [
+    "Alexis Madrigal"
+  ],
+  "topic": "Technology",
+  "fiction": false,
+  "publicationYear": 2011,
+  "pageCount": null,
+  "isbn13": "9780306819773",
+  "olKey": "/works/OL17803533W",
+  "synopsis": null,
+  "meetingDate": "2013-12-21T00:00:00.000Z",
+  "year": 2013,
+  "pickerName": "Jamie",
+  "pickerSlug": "jamie",
+  "pickerNames": [
+    "Jamie"
+  ],
+  "pickerSlugs": [
+    "jamie"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

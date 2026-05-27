@@ -1,0 +1,33 @@
+{
+  "id": "recvVGV5BuOzygKS8",
+  "bookId": 127,
+  "title": "The China Study",
+  "subtitle": "Startling Implications for Diet, Weight Loss and Long-Term Health",
+  "slug": "the-china-study",
+  "authors": [
+    "Thomas Campbell",
+    "T. Colin Campbell"
+  ],
+  "topic": "Health & Medicine",
+  "fiction": false,
+  "publicationYear": 2004,
+  "pageCount": 417,
+  "isbn13": "9781932100389",
+  "olKey": "/works/OL15176142W",
+  "synopsis": "Referred to as the \"Grand Prix of epidemiology\" by The New York Times, this study examines more than 350 variables of health and nutrition with surveys from 6,500 adults in more than 2,500 counties across China and Taiwan, and conclusively demonstrates the link between nutrition and heart disease, diabetes, and cancer. While revealing that proper nutrition can have a dramatic effect on reducing and reversing these ailments as well as curbing obesity, this text calls into question the practices of many of the current dietary programs, such as the Atkins diet, that are widely popular in the West. The politics of nutrition and the impact of special interest groups in the creation and dissemination of public information are also discussed.",
+  "meetingDate": "2009-08-12T23:00:00.000Z",
+  "year": 2009,
+  "pickerName": "Dan",
+  "pickerSlug": null,
+  "pickerNames": [
+    "Dan"
+  ],
+  "pickerSlugs": [
+    null
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

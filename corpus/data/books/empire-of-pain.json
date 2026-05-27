@@ -1,0 +1,32 @@
+{
+  "id": "recPl6D4DQTFWB74a",
+  "bookId": 21,
+  "title": "Empire of Pain",
+  "subtitle": "The Secret History of the Sackler Dynasty",
+  "slug": "empire-of-pain",
+  "authors": [
+    "Patrick Radden Keefe"
+  ],
+  "topic": "Current Events & People",
+  "fiction": false,
+  "publicationYear": 2021,
+  "pageCount": 720,
+  "isbn13": "9780385545686",
+  "olKey": "/works/OL24218388W",
+  "synopsis": null,
+  "meetingDate": "2022-04-14T23:00:00.000Z",
+  "year": 2022,
+  "pickerName": "Loren",
+  "pickerSlug": "loren",
+  "pickerNames": [
+    "Loren"
+  ],
+  "pickerSlugs": [
+    "loren"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

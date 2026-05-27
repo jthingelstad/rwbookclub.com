@@ -1,0 +1,28 @@
+{
+  "id": "recxS7OSRODPUT7qv",
+  "meetingId": 17,
+  "name": "April 2023: To Shake the Sleeping Self",
+  "date": "2023-04-11T23:00:00.000Z",
+  "year": 2023,
+  "bookIds": [
+    "recaQcbZfnzqX0OLv"
+  ],
+  "bookSlugs": [
+    "to-shake-the-sleeping-self"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

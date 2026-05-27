@@ -1,0 +1,32 @@
+{
+  "id": "recCRcGxd0YLBh3Yh",
+  "bookId": 136,
+  "title": "Shaping Things",
+  "subtitle": null,
+  "slug": "shaping-things",
+  "authors": [
+    "Bruce Sterling"
+  ],
+  "topic": "Technology",
+  "fiction": false,
+  "publicationYear": 2005,
+  "pageCount": 149,
+  "isbn13": null,
+  "olKey": "/works/OL1888034W",
+  "synopsis": null,
+  "meetingDate": "2008-07-22T23:00:00.000Z",
+  "year": 2008,
+  "pickerName": "Erik",
+  "pickerSlug": "erik",
+  "pickerNames": [
+    "Erik"
+  ],
+  "pickerSlugs": [
+    "erik"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

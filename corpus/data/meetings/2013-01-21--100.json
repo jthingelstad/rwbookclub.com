@@ -1,0 +1,28 @@
+{
+  "id": "rec8KKQtyj1n6T87n",
+  "meetingId": 100,
+  "name": "January 2013: To Say Nothing of the Dog",
+  "date": "2013-01-21T00:00:00.000Z",
+  "year": 2013,
+  "bookIds": [
+    "rechbA0nQR24ePE1i"
+  ],
+  "bookSlugs": [
+    "to-say-nothing-of-the-dog"
+  ],
+  "hostIds": [
+    "reczXGhA4xwgX91Jc"
+  ],
+  "hosts": [
+    {
+      "name": "Dan",
+      "slug": "dan"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

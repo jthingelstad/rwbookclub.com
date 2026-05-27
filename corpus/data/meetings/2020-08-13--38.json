@@ -1,0 +1,28 @@
+{
+  "id": "recCQ489Ib9Fkj1vO",
+  "meetingId": 38,
+  "name": "August 2020: The Rise of Big Data Policing",
+  "date": "2020-08-13T00:00:00.000Z",
+  "year": 2020,
+  "bookIds": [
+    "rec7wGWXi6o3PxIb5"
+  ],
+  "bookSlugs": [
+    "the-rise-of-big-data-policing"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Zoom",
+  "notes": null,
+  "placeholder": false
+}

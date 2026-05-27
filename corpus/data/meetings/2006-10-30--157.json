@@ -1,0 +1,28 @@
+{
+  "id": "recJQq1vywETvQeR0",
+  "meetingId": 157,
+  "name": "October 2006: The Omnivore's Dilemma",
+  "date": "2006-10-30T23:00:00.000Z",
+  "year": 2006,
+  "bookIds": [
+    "rectKLgM2uf4gygH5"
+  ],
+  "bookSlugs": [
+    "the-omnivore-s-dilemma"
+  ],
+  "hostIds": [
+    "rec1ov9Osp68C7uD3"
+  ],
+  "hosts": [
+    {
+      "name": "Erik",
+      "slug": "erik"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

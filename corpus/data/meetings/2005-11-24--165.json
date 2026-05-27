@@ -1,0 +1,28 @@
+{
+  "id": "recD09zVgp4qREBvH",
+  "meetingId": 165,
+  "name": "November 2005: The Search",
+  "date": "2005-11-24T00:00:00.000Z",
+  "year": 2005,
+  "bookIds": [
+    "recbeZWwC2jpeEpSn"
+  ],
+  "bookSlugs": [
+    "the-search"
+  ],
+  "hostIds": [
+    "rectfpnvCHhjL7aLx"
+  ],
+  "hosts": [
+    {
+      "name": "Tom",
+      "slug": "tom"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

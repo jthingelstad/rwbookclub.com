@@ -1,0 +1,28 @@
+{
+  "id": "recp1bORLgBeJISxg",
+  "meetingId": 25,
+  "name": "December 2021: Caste",
+  "date": "2021-12-15T00:30:00.000Z",
+  "year": 2021,
+  "bookIds": [
+    "recjmYSUexCHyyKb9"
+  ],
+  "bookSlugs": [
+    "caste"
+  ],
+  "hostIds": [
+    "rec1ov9Osp68C7uD3"
+  ],
+  "hosts": [
+    {
+      "name": "Erik",
+      "slug": "erik"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Erik's Home",
+  "notes": null,
+  "placeholder": false
+}

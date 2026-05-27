@@ -1,0 +1,32 @@
+{
+  "id": "recuR2y7Wgv2bLgMa",
+  "bookId": 35,
+  "title": "Benjamin Franklin",
+  "subtitle": "An American Life",
+  "slug": "benjamin-franklin",
+  "authors": [
+    "Walter Isaacson"
+  ],
+  "topic": "History & Economics",
+  "fiction": false,
+  "publicationYear": 2003,
+  "pageCount": 626,
+  "isbn13": "9780743258074",
+  "olKey": "/works/OL4288868W",
+  "synopsis": "Chronicles the founding father's life and his multiple careers as a shopkeeper, writer, inventor, media baron, scientist, diplomat, business strategist, and political leader, while showing how his faith in the wisdom of the common citizen helped forge an American national identity based on the virtues of its middle class.",
+  "meetingDate": "2020-06-04T00:00:00.000Z",
+  "year": 2020,
+  "pickerName": "Erik",
+  "pickerSlug": "erik",
+  "pickerNames": [
+    "Erik"
+  ],
+  "pickerSlugs": [
+    "erik"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": "Zoom",
+  "hasCover": true,
+  "reviewCount": 0
+}

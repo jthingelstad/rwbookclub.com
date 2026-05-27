@@ -1,0 +1,32 @@
+{
+  "id": "reckeJWLfTvd0eq6A",
+  "bookId": 68,
+  "title": "The Metaphysical Club",
+  "subtitle": "A Story of Ideas in America",
+  "slug": "the-metaphysical-club",
+  "authors": [
+    "Louis Menand"
+  ],
+  "topic": "History & Economics",
+  "fiction": false,
+  "publicationYear": 2001,
+  "pageCount": 384,
+  "isbn13": "9780007126903",
+  "olKey": "/works/OL20452875W",
+  "synopsis": null,
+  "meetingDate": "2016-08-22T23:00:00.000Z",
+  "year": 2016,
+  "pickerName": "Tom",
+  "pickerSlug": "tom",
+  "pickerNames": [
+    "Tom"
+  ],
+  "pickerSlugs": [
+    "tom"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

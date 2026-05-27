@@ -1,0 +1,28 @@
+{
+  "id": "recKXZryjPqEXE90V",
+  "meetingId": 159,
+  "name": "July 2006: Genghis Khan and the Making of the Modern World",
+  "date": "2006-07-29T23:00:00.000Z",
+  "year": 2006,
+  "bookIds": [
+    "recZ36QxhdUVvVAfJ"
+  ],
+  "bookSlugs": [
+    "genghis-khan-and-the-making-of-the-modern-world"
+  ],
+  "hostIds": [
+    "reczXGhA4xwgX91Jc"
+  ],
+  "hosts": [
+    {
+      "name": "Dan",
+      "slug": "dan"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

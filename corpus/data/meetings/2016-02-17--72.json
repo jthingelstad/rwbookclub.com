@@ -1,0 +1,28 @@
+{
+  "id": "recXVugNlnHQ2Mt8T",
+  "meetingId": 72,
+  "name": "February 2016: Elon Musk",
+  "date": "2016-02-17T00:00:00.000Z",
+  "year": 2016,
+  "bookIds": [
+    "reciM7yOOiIl8sfV0"
+  ],
+  "bookSlugs": [
+    "elon-musk"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

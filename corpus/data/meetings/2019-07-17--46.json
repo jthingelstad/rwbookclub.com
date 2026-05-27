@@ -1,0 +1,28 @@
+{
+  "id": "recPsUnWOPz7nIeSK",
+  "meetingId": 46,
+  "name": "July 2019: Educated",
+  "date": "2019-07-17T23:00:00.000Z",
+  "year": 2019,
+  "bookIds": [
+    "rec3NfJodUdBpzaZ9"
+  ],
+  "bookSlugs": [
+    "educated"
+  ],
+  "hostIds": [
+    "reczR2kRhTW8h4Htz"
+  ],
+  "hosts": [
+    {
+      "name": "Loren",
+      "slug": "loren"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

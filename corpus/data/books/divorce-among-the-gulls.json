@@ -1,0 +1,32 @@
+{
+  "id": "recNsXDIZCI3hQG58",
+  "bookId": 165,
+  "title": "Divorce Among the Gulls",
+  "subtitle": "An Uncommon Look at Human Nature",
+  "slug": "divorce-among-the-gulls",
+  "authors": [
+    "William Jordan"
+  ],
+  "topic": "Science and Math",
+  "fiction": false,
+  "publicationYear": 1991,
+  "pageCount": 205,
+  "isbn13": null,
+  "olKey": "/works/OL4128080W",
+  "synopsis": null,
+  "meetingDate": "2005-01-26T00:00:00.000Z",
+  "year": 2005,
+  "pickerName": "David",
+  "pickerSlug": null,
+  "pickerNames": [
+    "David"
+  ],
+  "pickerSlugs": [
+    null
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

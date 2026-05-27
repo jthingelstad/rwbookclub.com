@@ -1,0 +1,28 @@
+{
+  "id": "recL1eNGqOojbwgsq",
+  "meetingId": 51,
+  "name": "August 2018: Freedom™",
+  "date": "2018-08-30T23:00:00.000Z",
+  "year": 2018,
+  "bookIds": [
+    "rectJkTYuvCyHnHrG"
+  ],
+  "bookSlugs": [
+    "freedom-tm"
+  ],
+  "hostIds": [
+    "reczR2kRhTW8h4Htz"
+  ],
+  "hosts": [
+    {
+      "name": "Loren",
+      "slug": "loren"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

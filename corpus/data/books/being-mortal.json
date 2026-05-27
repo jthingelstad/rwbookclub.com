@@ -1,0 +1,28 @@
+{
+  "id": "recmeIVEKsjWiaiuG",
+  "bookId": 73,
+  "title": "Being Mortal",
+  "subtitle": "Medicine and What Matters in the End",
+  "slug": "being-mortal",
+  "authors": [
+    "Atul Gawande"
+  ],
+  "topic": "Health & Medicine",
+  "fiction": false,
+  "publicationYear": 2014,
+  "pageCount": 287,
+  "isbn13": "9781510015036",
+  "olKey": "/works/OL17079567W",
+  "synopsis": "Being Mortal: Medicine and What Matters in the End is a 2014 non-fiction book by American surgeon Atul Gawande. The book addresses end-of-life care, hospice care, and also contains Gawande's reflections and personal stories. He suggests that medical care should focus on well-being rather than survival. Being Mortal has won awards, appeared on lists of best books, and been featured in a documentary.",
+  "meetingDate": "2015-11-25T00:00:00.000Z",
+  "year": 2015,
+  "pickerName": null,
+  "pickerSlug": null,
+  "pickerNames": null,
+  "pickerSlugs": null,
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

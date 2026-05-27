@@ -1,6 +1,9 @@
-"""Fetch every table from the R/W Book Club Airtable base and write
-denormalized JSON files into corpus/data/ — the canonical knowledge corpus
-consumed by the website and the Discord agent.
+"""COLD-BACKUP TOOL — not part of the routine flow.
+
+Git is the canonical source of truth (per-entity files in corpus/data/).
+This re-pulls the Airtable cold backup into grouped JSON under corpus/data/raw/;
+pair it with `python -m corpus.migrate` to rebuild the per-entity files. Only
+needed if you ever have to re-import from Airtable. See corpus/README.md.
 
 Run from the repo root as `python -m corpus.fetch` after
 `pip install -r corpus/requirements.txt`. Reads credentials from the root .env.

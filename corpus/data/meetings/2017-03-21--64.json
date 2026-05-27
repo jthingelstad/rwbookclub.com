@@ -1,0 +1,28 @@
+{
+  "id": "recExl3iGBdqLmoun",
+  "meetingId": 64,
+  "name": "March 2017: All Art Is Propaganda",
+  "date": "2017-03-21T23:00:00.000Z",
+  "year": 2017,
+  "bookIds": [
+    "recA2JLViVoVl9zJ5"
+  ],
+  "bookSlugs": [
+    "all-art-is-propaganda"
+  ],
+  "hostIds": [
+    "rectfpnvCHhjL7aLx"
+  ],
+  "hosts": [
+    {
+      "name": "Tom",
+      "slug": "tom"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Lake & Harriet",
+  "notes": null,
+  "placeholder": false
+}

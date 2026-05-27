@@ -1,0 +1,28 @@
+{
+  "id": "recL0MiAq5P5NuVjD",
+  "meetingId": 89,
+  "name": "April 2014: The Martian",
+  "date": "2014-04-22T23:00:00.000Z",
+  "year": 2014,
+  "bookIds": [
+    "rec6efyGvdpzMPshh"
+  ],
+  "bookSlugs": [
+    "the-martian"
+  ],
+  "hostIds": [
+    "rec1ov9Osp68C7uD3"
+  ],
+  "hosts": [
+    {
+      "name": "Erik",
+      "slug": "erik"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

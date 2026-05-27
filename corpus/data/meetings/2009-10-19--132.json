@@ -1,0 +1,28 @@
+{
+  "id": "recUA9rpLWwwLTJbT",
+  "meetingId": 132,
+  "name": "October 2009: Creativity",
+  "date": "2009-10-19T23:00:00.000Z",
+  "year": 2009,
+  "bookIds": [
+    "recupT2hngfbLuWkr"
+  ],
+  "bookSlugs": [
+    "creativity"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

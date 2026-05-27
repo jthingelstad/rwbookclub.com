@@ -1,0 +1,28 @@
+{
+  "id": "recgb0PTaMfeAYJ3z",
+  "meetingId": 16,
+  "name": "May 2023: A Supposedly Fun Thing I'll Never Do Again",
+  "date": "2023-05-30T23:00:00.000Z",
+  "year": 2023,
+  "bookIds": [
+    "recUbCmTifTbC2KFd"
+  ],
+  "bookSlugs": [
+    "a-supposedly-fun-thing-i-ll-never-do-again"
+  ],
+  "hostIds": [
+    "reczR2kRhTW8h4Htz"
+  ],
+  "hosts": [
+    {
+      "name": "Loren",
+      "slug": "loren"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

@@ -1,0 +1,32 @@
+{
+  "id": "rects3FGg3nC3plOG",
+  "bookId": 9,
+  "title": "Dictionary People",
+  "subtitle": null,
+  "slug": "dictionary-people",
+  "authors": [
+    "Sarah Ogilvie"
+  ],
+  "topic": "Current Events & People",
+  "fiction": false,
+  "publicationYear": 2023,
+  "pageCount": 384,
+  "isbn13": "9780593469989",
+  "olKey": "/works/OL34024127W",
+  "synopsis": null,
+  "meetingDate": "2024-04-23T23:00:00.000Z",
+  "year": 2024,
+  "pickerName": "Loren",
+  "pickerSlug": "loren",
+  "pickerNames": [
+    "Loren"
+  ],
+  "pickerSlugs": [
+    "loren"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

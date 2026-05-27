@@ -1,0 +1,32 @@
+{
+  "id": "rec7DLLtZpzG2kOhn",
+  "bookId": 8,
+  "title": "The Power Law",
+  "subtitle": "Venture Capital and the Making of a New Future",
+  "slug": "the-power-law",
+  "authors": [
+    "Sebastian Mallaby"
+  ],
+  "topic": "History & Economics",
+  "fiction": false,
+  "publicationYear": 2022,
+  "pageCount": 496,
+  "isbn13": "9780141988948",
+  "olKey": "/works/OL25328015W",
+  "synopsis": null,
+  "meetingDate": "2024-05-29T23:00:00.000Z",
+  "year": 2024,
+  "pickerName": "Nick",
+  "pickerSlug": "nick",
+  "pickerNames": [
+    "Nick"
+  ],
+  "pickerSlugs": [
+    "nick"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

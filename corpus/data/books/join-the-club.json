@@ -1,0 +1,32 @@
+{
+  "id": "rec2SryiOGdNS6mh7",
+  "bookId": 100,
+  "title": "Join the Club",
+  "subtitle": "How Peer Pressure Can Transform the World",
+  "slug": "join-the-club",
+  "authors": [
+    "Tina Rosenberg"
+  ],
+  "topic": "Brain & Psychology",
+  "fiction": false,
+  "publicationYear": 2011,
+  "pageCount": 402,
+  "isbn13": "9781848313002",
+  "olKey": "/works/OL15686817W",
+  "synopsis": "This book identifies a brewing social revolution that is changing the way people live, based on harnessing the positive force of peer pressure, and shows how peer pressure has reduced teen smoking in the United States, made villages in India healthier and more prosperous, helped minority students get top grades in college calculus, and even led to the fall of Slobodan Milosevic.",
+  "meetingDate": "2012-11-29T00:00:00.000Z",
+  "year": 2012,
+  "pickerName": "Tom",
+  "pickerSlug": "tom",
+  "pickerNames": [
+    "Tom"
+  ],
+  "pickerSlugs": [
+    "tom"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

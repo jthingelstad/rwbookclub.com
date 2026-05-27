@@ -1,17 +1,16 @@
 // Build-time enrichment for books.
 //
-// Reads the raw Airtable export and derives `coverWidths`/`hasCover` from
-// whatever JPEGs actually exist on disk under src/assets/images/covers.
-// The filesystem is the source of truth: if a cover file is there it
-// renders; if not, the placeholder shows. This means corpus.fetch
-// and corpus.images can be run in either order (or independently)
-// without leaving the JSON and the asset folder out of sync.
+// Aggregates the per-entity book files from the corpus (the source of truth)
+// and derives `coverWidths`/`hasCover` from whatever JPEGs actually exist on
+// disk under src/assets/images/covers. The filesystem is the source of truth
+// for covers: if a file is there it renders; if not, the placeholder shows.
+// This means corpus.fetch/migrate and corpus.images can run in any order
+// without leaving the data and the asset folder out of sync.
 
 const fs = require("fs");
 const path = require("path");
 
-// Canonical data lives in the corpus package, three levels up.
-const RAW_PATH = path.join(__dirname, "..", "..", "..", "corpus", "data", "raw", "books.json");
+const BOOKS_DIR = path.join(__dirname, "..", "..", "..", "corpus", "data", "books");
 const COVERS_DIR = path.join(__dirname, "..", "assets", "images", "covers");
 const FILENAME_RE = /^(.+)-(\d+)\.jpg$/;
 
@@ -29,11 +28,27 @@ function buildWidthsBySlug() {
   return widths;
 }
 
-module.exports = function () {
-  if (!fs.existsSync(RAW_PATH)) return [];
-  const books = JSON.parse(fs.readFileSync(RAW_PATH, "utf8"));
-  const widthsBySlug = buildWidthsBySlug();
+function loadBooks() {
+  if (!fs.existsSync(BOOKS_DIR)) return [];
+  return fs
+    .readdirSync(BOOKS_DIR)
+    .filter((f) => f.endsWith(".json"))
+    .map((f) => JSON.parse(fs.readFileSync(path.join(BOOKS_DIR, f), "utf8")));
+}
 
+module.exports = function () {
+  const books = loadBooks();
+  // Most-recent-first: by meeting date desc, then Book ID desc (matches the
+  // order the old fetch pipeline wrote, so the reading journey is unchanged).
+  books.sort((a, b) => {
+    const ad = a.meetingDate || "";
+    const bd = b.meetingDate || "";
+    if (ad < bd) return 1;
+    if (ad > bd) return -1;
+    return (b.bookId || 0) - (a.bookId || 0);
+  });
+
+  const widthsBySlug = buildWidthsBySlug();
   return books.map((b) => {
     const widths = widthsBySlug.get(b.slug);
     const { coverUrl, ...rest } = b;

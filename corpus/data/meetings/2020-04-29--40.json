@@ -1,0 +1,28 @@
+{
+  "id": "reczRsYrys1NbRv2q",
+  "meetingId": 40,
+  "name": "April 2020: Replay",
+  "date": "2020-04-29T23:30:00.000Z",
+  "year": 2020,
+  "bookIds": [
+    "rec8dtR5oLGLTOhq8"
+  ],
+  "bookSlugs": [
+    "replay"
+  ],
+  "hostIds": [
+    "rectfpnvCHhjL7aLx"
+  ],
+  "hosts": [
+    {
+      "name": "Tom",
+      "slug": "tom"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Zoom",
+  "notes": null,
+  "placeholder": false
+}

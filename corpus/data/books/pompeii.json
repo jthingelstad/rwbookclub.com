@@ -1,0 +1,32 @@
+{
+  "id": "recaLgWap2XW8Wagq",
+  "bookId": 171,
+  "title": "Pompeii",
+  "subtitle": null,
+  "slug": "pompeii",
+  "authors": [
+    "Robert Harris"
+  ],
+  "topic": "Science Fiction & Fiction",
+  "fiction": false,
+  "publicationYear": 2003,
+  "pageCount": 368,
+  "isbn13": "9780345475671",
+  "olKey": "/works/OL4297223W",
+  "synopsis": "Historical fiction about the eruption of Mount Vesuvius in 79 AD from the perspective of Marcus Attilius, an *aquarius* (hydraulic engineer) responsible for Aqua Augusta, the regional aqueduct.",
+  "meetingDate": "2004-04-15T23:00:00.000Z",
+  "year": 2004,
+  "pickerName": "Brad",
+  "pickerSlug": null,
+  "pickerNames": [
+    "Brad"
+  ],
+  "pickerSlugs": [
+    null
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

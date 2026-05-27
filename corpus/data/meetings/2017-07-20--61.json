@@ -1,0 +1,28 @@
+{
+  "id": "recudptB1O9wP3Q57",
+  "meetingId": 61,
+  "name": "July 2017: The Epigenetics Revolution",
+  "date": "2017-07-20T21:00:00.000Z",
+  "year": 2017,
+  "bookIds": [
+    "reco63GiocCCmVv53"
+  ],
+  "bookSlugs": [
+    "the-epigenetics-revolution"
+  ],
+  "hostIds": [
+    "reczR2kRhTW8h4Htz"
+  ],
+  "hosts": [
+    {
+      "name": "Loren",
+      "slug": "loren"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Nick's Cabin",
+  "notes": null,
+  "placeholder": false
+}

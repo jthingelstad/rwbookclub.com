@@ -1,0 +1,28 @@
+{
+  "id": "recPGm5sSMUVImbPm",
+  "meetingId": 67,
+  "name": "December 2016: Hillbilly Eligy",
+  "date": "2016-12-07T00:00:00.000Z",
+  "year": 2016,
+  "bookIds": [
+    "rec5tqRM2bRQFVI4Z"
+  ],
+  "bookSlugs": [
+    "hillbilly-eligy"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Lake & Harriet",
+  "notes": null,
+  "placeholder": false
+}

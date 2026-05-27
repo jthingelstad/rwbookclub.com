@@ -1,0 +1,32 @@
+{
+  "id": "rec5tqRM2bRQFVI4Z",
+  "bookId": 66,
+  "title": "Hillbilly Eligy",
+  "subtitle": "A Memoir of a Family and Culture in Crisis",
+  "slug": "hillbilly-eligy",
+  "authors": [
+    "J. D. Vance"
+  ],
+  "topic": "Politics & Social Sciences",
+  "fiction": false,
+  "publicationYear": 2016,
+  "pageCount": 256,
+  "isbn13": "9780062300546",
+  "olKey": "/works/OL17357665W",
+  "synopsis": "From a former marine and Yale Law School graduate, this book is a probing look at the struggles of America's white working class through the author's own story of growing up in a poor Rust Belt town. Hillbilly Elegy is a passionate and personal analysis of a culture in crisis - that of poor, white Americans. The disintegration of this group, a process that has been slowly occurring now for over forty years, has been reported with growing frequency and alarm, but has never before been written about as searingly from the inside.",
+  "meetingDate": "2016-12-07T00:00:00.000Z",
+  "year": 2016,
+  "pickerName": "Jamie",
+  "pickerSlug": "jamie",
+  "pickerNames": [
+    "Jamie"
+  ],
+  "pickerSlugs": [
+    "jamie"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": "Lake & Harriet",
+  "hasCover": true,
+  "reviewCount": 0
+}

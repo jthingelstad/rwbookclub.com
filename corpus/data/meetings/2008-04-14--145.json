@@ -1,0 +1,28 @@
+{
+  "id": "rec8M0p5zm7XNbwWw",
+  "meetingId": 145,
+  "name": "April 2008: Cheating",
+  "date": "2008-04-14T23:00:00.000Z",
+  "year": 2008,
+  "bookIds": [
+    "rec8zs82BUc13z8TF"
+  ],
+  "bookSlugs": [
+    "cheating"
+  ],
+  "hostIds": [
+    "rectfpnvCHhjL7aLx"
+  ],
+  "hosts": [
+    {
+      "name": "Tom",
+      "slug": "tom"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

@@ -1,0 +1,32 @@
+{
+  "id": "recGTOegGf3BSnLhM",
+  "bookId": 65,
+  "title": "Shadow Elite",
+  "subtitle": "How the World's New Power Brokers Undermine Democracy, Government, and the Free Market",
+  "slug": "shadow-elite",
+  "authors": [
+    "Janine R. Wedel"
+  ],
+  "topic": "Politics & Social Sciences",
+  "fiction": false,
+  "publicationYear": 2010,
+  "pageCount": 283,
+  "isbn13": "9780465022014",
+  "olKey": "/works/OL27083522W",
+  "synopsis": null,
+  "meetingDate": "2017-01-17T00:00:00.000Z",
+  "year": 2017,
+  "pickerName": "Loren",
+  "pickerSlug": "loren",
+  "pickerNames": [
+    "Loren"
+  ],
+  "pickerSlugs": [
+    "loren"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": "George & The Dragon",
+  "hasCover": true,
+  "reviewCount": 0
+}

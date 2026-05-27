@@ -1,0 +1,28 @@
+{
+  "id": "rec3bTpjwLI98Rfwe",
+  "meetingId": 116,
+  "name": "April 2011: Triumph of the City",
+  "date": "2011-04-19T23:00:00.000Z",
+  "year": 2011,
+  "bookIds": [
+    "recybdyBeEtLOvCEW"
+  ],
+  "bookSlugs": [
+    "triumph-of-the-city"
+  ],
+  "hostIds": [
+    "reczXGhA4xwgX91Jc"
+  ],
+  "hosts": [
+    {
+      "name": "Dan",
+      "slug": "dan"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

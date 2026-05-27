@@ -1,0 +1,33 @@
+{
+  "id": "rec7CJXijIoa78g9K",
+  "bookId": 134,
+  "title": "Nudge",
+  "subtitle": "Improving Decisions About Health, Wealth, and Happiness",
+  "slug": "nudge",
+  "authors": [
+    "Richard H. Thaler",
+    "Cass R. Sunstein"
+  ],
+  "topic": "Brain & Psychology",
+  "fiction": false,
+  "publicationYear": 2008,
+  "pageCount": 324,
+  "isbn13": "9780141040011",
+  "olKey": "/works/OL3936258W",
+  "synopsis": "Thaler and Sunstein develop libertarian paternalism as a middle path between command-and-control and strict-neutrality choice architectures. Libertarian paternalism protects humans against their damaging psychological traits (inertia, bounded rationality, undue influence) by exploiting those habits to nudge people into making better choices.",
+  "meetingDate": "2008-10-05T23:00:00.000Z",
+  "year": 2008,
+  "pickerName": "John",
+  "pickerSlug": null,
+  "pickerNames": [
+    "John"
+  ],
+  "pickerSlugs": [
+    null
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

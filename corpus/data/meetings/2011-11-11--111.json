@@ -1,0 +1,44 @@
+{
+  "id": "recjvtDnqOwut0SIu",
+  "meetingId": 111,
+  "name": "November 2011: ",
+  "date": "2011-11-11T00:00:00.000Z",
+  "year": 2011,
+  "bookIds": [],
+  "bookSlugs": [],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR",
+    "rec1ov9Osp68C7uD3",
+    "reczXGhA4xwgX91Jc",
+    "recLaMxXUJ9RiaGyM",
+    "rectfpnvCHhjL7aLx"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    },
+    {
+      "name": "Erik",
+      "slug": "erik"
+    },
+    {
+      "name": "Dan",
+      "slug": "dan"
+    },
+    {
+      "name": "John",
+      "slug": "john"
+    },
+    {
+      "name": "Tom",
+      "slug": "tom"
+    }
+  ],
+  "type": [
+    "Videos"
+  ],
+  "location": null,
+  "notes": "<TED videofest>",
+  "placeholder": false
+}

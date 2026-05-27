@@ -1,0 +1,209 @@
+{
+  "id": "recuT1LiVs6I0u4zR",
+  "name": "Jamie",
+  "slug": "jamie",
+  "isCurrent": true,
+  "website": "https://www.thingelstad.com",
+  "hasPhoto": true,
+  "pickedCount": 34,
+  "pickedBooks": [
+    {
+      "slug": "a-world-appears",
+      "title": "A World Appears",
+      "year": 2026,
+      "date": "2026-06-30T23:30:00.000Z"
+    },
+    {
+      "slug": "co-intelligence",
+      "title": "Co-Intelligence",
+      "year": 2025,
+      "date": "2025-06-24T23:30:00.000Z"
+    },
+    {
+      "slug": "medici-money",
+      "title": "Medici Money",
+      "year": 2024,
+      "date": "2024-02-29T00:00:00.000Z"
+    },
+    {
+      "slug": "to-shake-the-sleeping-self",
+      "title": "To Shake the Sleeping Self",
+      "year": 2023,
+      "date": "2023-04-11T23:00:00.000Z"
+    },
+    {
+      "slug": "the-blocksize-war",
+      "title": "The Blocksize War",
+      "year": 2022,
+      "date": "2022-01-25T00:00:00.000Z"
+    },
+    {
+      "slug": "a-man-at-arms",
+      "title": "A Man at Arms",
+      "year": 2021,
+      "date": "2021-07-30T00:00:00.000Z"
+    },
+    {
+      "slug": "running-with-sherman",
+      "title": "Running with Sherman",
+      "year": 2021,
+      "date": "2021-03-19T00:00:00.000Z"
+    },
+    {
+      "slug": "the-rise-of-big-data-policing",
+      "title": "The Rise of Big Data Policing",
+      "year": 2020,
+      "date": "2020-08-13T00:00:00.000Z"
+    },
+    {
+      "slug": "the-master-algorithm",
+      "title": "The Master Algorithm",
+      "year": 2020,
+      "date": "2020-01-31T00:00:00.000Z"
+    },
+    {
+      "slug": "the-nordic-theory-of-everything",
+      "title": "The Nordic Theory of Everything",
+      "year": 2020,
+      "date": "2020-01-31T00:00:00.000Z"
+    },
+    {
+      "slug": "growing-a-revolution",
+      "title": "Growing a Revolution",
+      "year": 2019,
+      "date": "2019-06-10T23:00:00.000Z"
+    },
+    {
+      "slug": "craeft",
+      "title": "Cræft",
+      "year": 2019,
+      "date": "2019-06-10T23:00:00.000Z"
+    },
+    {
+      "slug": "how-to-change-your-mind",
+      "title": "How to Change Your Mind",
+      "year": 2018,
+      "date": "2018-10-01T23:00:00.000Z"
+    },
+    {
+      "slug": "daemon",
+      "title": "Daemon",
+      "year": 2017,
+      "date": "2017-12-22T00:00:00.000Z"
+    },
+    {
+      "slug": "stuff-matters",
+      "title": "Stuff Matters",
+      "year": 2017,
+      "date": "2017-06-06T23:00:00.000Z"
+    },
+    {
+      "slug": "hillbilly-eligy",
+      "title": "Hillbilly Eligy",
+      "year": 2016,
+      "date": "2016-12-07T00:00:00.000Z"
+    },
+    {
+      "slug": "elon-musk",
+      "title": "Elon Musk",
+      "year": 2016,
+      "date": "2016-02-17T00:00:00.000Z"
+    },
+    {
+      "slug": "the-innovators",
+      "title": "The Innovators",
+      "year": 2015,
+      "date": "2015-06-15T23:00:00.000Z"
+    },
+    {
+      "slug": "far-from-the-tree",
+      "title": "Far from the Tree",
+      "year": 2014,
+      "date": "2014-09-22T23:00:00.000Z"
+    },
+    {
+      "slug": "antifragile",
+      "title": "Antifragile",
+      "year": 2014,
+      "date": "2014-06-10T23:00:00.000Z"
+    },
+    {
+      "slug": "powering-the-dream",
+      "title": "Powering the Dream",
+      "year": 2013,
+      "date": "2013-12-21T00:00:00.000Z"
+    },
+    {
+      "slug": "behind-the-beautiful-forevers",
+      "title": "Behind the Beautiful Forevers",
+      "year": 2013,
+      "date": "2013-11-05T00:00:00.000Z"
+    },
+    {
+      "slug": "the-willpower-instinct",
+      "title": "The Willpower Instinct",
+      "year": 2013,
+      "date": "2013-04-17T23:00:00.000Z"
+    },
+    {
+      "slug": "the-devil-in-the-white-city",
+      "title": "The Devil in the White City",
+      "year": 2012,
+      "date": "2012-09-25T23:00:00.000Z"
+    },
+    {
+      "slug": "a-canticle-for-leibowitz",
+      "title": "A Canticle for Leibowitz",
+      "year": 2012,
+      "date": "2012-09-25T23:00:00.000Z"
+    },
+    {
+      "slug": "the-most-human-human",
+      "title": "The Most Human Human",
+      "year": 2012,
+      "date": "2012-03-09T00:00:00.000Z"
+    },
+    {
+      "slug": "ant-encounters",
+      "title": "Ant Encounters",
+      "year": 2011,
+      "date": "2011-07-26T23:00:00.000Z"
+    },
+    {
+      "slug": "hegemony-or-survival",
+      "title": "Hegemony or Survival",
+      "year": 2010,
+      "date": "2010-11-12T00:00:00.000Z"
+    },
+    {
+      "slug": "the-golden-age",
+      "title": "The Golden Age",
+      "year": 2010,
+      "date": "2010-04-19T23:00:00.000Z"
+    },
+    {
+      "slug": "creativity",
+      "title": "Creativity",
+      "year": 2009,
+      "date": "2009-10-19T23:00:00.000Z"
+    },
+    {
+      "slug": "money-driven-medicine",
+      "title": "Money-Driven Medicine",
+      "year": 2009,
+      "date": "2009-03-03T00:00:00.000Z"
+    },
+    {
+      "slug": "animal-vegetable-miracle",
+      "title": "Animal, Vegetable, Miracle",
+      "year": 2008,
+      "date": "2008-08-14T23:00:00.000Z"
+    },
+    {
+      "slug": "the-world-without-us",
+      "title": "The World Without Us",
+      "year": 2008,
+      "date": "2008-02-01T00:00:00.000Z"
+    }
+  ]
+}

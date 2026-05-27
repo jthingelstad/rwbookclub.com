@@ -1,0 +1,28 @@
+{
+  "id": "recJYE2XCYk2XKZAM",
+  "meetingId": 150,
+  "name": "September 2007: The Box",
+  "date": "2007-09-28T23:00:00.000Z",
+  "year": 2007,
+  "bookIds": [
+    "recqNKVctM8LLJn86"
+  ],
+  "bookSlugs": [
+    "the-box"
+  ],
+  "hostIds": [
+    "rectfpnvCHhjL7aLx"
+  ],
+  "hosts": [
+    {
+      "name": "Tom",
+      "slug": "tom"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

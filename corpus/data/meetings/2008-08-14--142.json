@@ -1,0 +1,28 @@
+{
+  "id": "recvKGjkD1aX2b5s1",
+  "meetingId": 142,
+  "name": "August 2008: \"Animal, Vegetable, Miracle\"",
+  "date": "2008-08-14T23:00:00.000Z",
+  "year": 2008,
+  "bookIds": [
+    "recm7waBs7QHAsOBP"
+  ],
+  "bookSlugs": [
+    "animal-vegetable-miracle"
+  ],
+  "hostIds": [
+    "recuT1LiVs6I0u4zR"
+  ],
+  "hosts": [
+    {
+      "name": "Jamie",
+      "slug": "jamie"
+    }
+  ],
+  "type": [
+    "Spouses"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

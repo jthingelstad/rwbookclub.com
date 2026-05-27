@@ -1,0 +1,28 @@
+{
+  "id": "recgiIas0ibC5dyKh",
+  "meetingId": 76,
+  "name": "August 2015: Amusing Ourselves to Death",
+  "date": "2015-08-17T23:00:00.000Z",
+  "year": 2015,
+  "bookIds": [
+    "recfIOEGfvrsB2uSg"
+  ],
+  "bookSlugs": [
+    "amusing-ourselves-to-death"
+  ],
+  "hostIds": [
+    "rectfpnvCHhjL7aLx"
+  ],
+  "hosts": [
+    {
+      "name": "Tom",
+      "slug": "tom"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

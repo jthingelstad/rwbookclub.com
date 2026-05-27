@@ -1,0 +1,28 @@
+{
+  "id": "recvYqmkLmJJH4JQi",
+  "meetingId": 91,
+  "name": "January 2014: Quiet",
+  "date": "2014-01-28T00:00:00.000Z",
+  "year": 2014,
+  "bookIds": [
+    "recYaRy6Jb1W9R3Tg"
+  ],
+  "bookSlugs": [
+    "quiet"
+  ],
+  "hostIds": [
+    "rec0unNzGOt24JKLj"
+  ],
+  "hosts": [
+    {
+      "name": "Nick",
+      "slug": "nick"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

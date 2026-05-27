@@ -1,0 +1,28 @@
+{
+  "id": "recs2PG1xyt7zUXAk",
+  "meetingId": 149,
+  "name": "October 2007: Musicophilia",
+  "date": "2007-10-29T23:00:00.000Z",
+  "year": 2007,
+  "bookIds": [
+    "recZqFIZgiG9ENzdu"
+  ],
+  "bookSlugs": [
+    "musicophilia"
+  ],
+  "hostIds": [
+    "reczXGhA4xwgX91Jc"
+  ],
+  "hosts": [
+    {
+      "name": "Dan",
+      "slug": "dan"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

@@ -1,0 +1,28 @@
+{
+  "id": "rec4V5DOfqdEDqYG7",
+  "meetingId": 26,
+  "name": "October 2021: Nature & Walking",
+  "date": "2021-10-12T23:00:00.000Z",
+  "year": 2021,
+  "bookIds": [
+    "rec0HboHheA1cYcvz"
+  ],
+  "bookSlugs": [
+    "nature-walking"
+  ],
+  "hostIds": [
+    "rec0unNzGOt24JKLj"
+  ],
+  "hosts": [
+    {
+      "name": "Nick",
+      "slug": "nick"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Walk in Woods, Birch's on the Lake",
+  "notes": null,
+  "placeholder": false
+}

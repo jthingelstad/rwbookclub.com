@@ -1,0 +1,28 @@
+{
+  "id": "recwhW97kRuesIHaC",
+  "meetingId": 66,
+  "name": "January 2017: Shadow Elite",
+  "date": "2017-01-17T00:00:00.000Z",
+  "year": 2017,
+  "bookIds": [
+    "recGTOegGf3BSnLhM"
+  ],
+  "bookSlugs": [
+    "shadow-elite"
+  ],
+  "hostIds": [
+    "reczR2kRhTW8h4Htz"
+  ],
+  "hosts": [
+    {
+      "name": "Loren",
+      "slug": "loren"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "George & The Dragon",
+  "notes": null,
+  "placeholder": false
+}

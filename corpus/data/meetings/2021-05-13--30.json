@@ -1,0 +1,28 @@
+{
+  "id": "recDCE9hyhdJ7SEzp",
+  "meetingId": 30,
+  "name": "May 2021: \"The Horse, the Wheel, and Language\"",
+  "date": "2021-05-13T00:00:00.000Z",
+  "year": 2021,
+  "bookIds": [
+    "reck9sgVZNnM7BxjB"
+  ],
+  "bookSlugs": [
+    "the-horse-the-wheel-and-language"
+  ],
+  "hostIds": [
+    "reczR2kRhTW8h4Htz"
+  ],
+  "hosts": [
+    {
+      "name": "Loren",
+      "slug": "loren"
+    }
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Zoom",
+  "notes": null,
+  "placeholder": false
+}

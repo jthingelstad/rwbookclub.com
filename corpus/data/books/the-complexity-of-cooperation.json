@@ -1,0 +1,32 @@
+{
+  "id": "recIAp4wKmrDFrUJ6",
+  "bookId": 160,
+  "title": "The Complexity of Cooperation",
+  "subtitle": "Agent-Based Models of Competition and Collaboration",
+  "slug": "the-complexity-of-cooperation",
+  "authors": [
+    "Robert Axelrod"
+  ],
+  "topic": "Science and Math",
+  "fiction": false,
+  "publicationYear": 1997,
+  "pageCount": 232,
+  "isbn13": null,
+  "olKey": "/works/OL2620281W",
+  "synopsis": null,
+  "meetingDate": "2005-10-26T23:00:00.000Z",
+  "year": 2005,
+  "pickerName": "John",
+  "pickerSlug": null,
+  "pickerNames": [
+    "John"
+  ],
+  "pickerSlugs": [
+    null
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}

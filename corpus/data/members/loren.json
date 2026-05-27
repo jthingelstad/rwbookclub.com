@@ -1,0 +1,113 @@
+{
+  "id": "reczR2kRhTW8h4Htz",
+  "name": "Loren",
+  "slug": "loren",
+  "isCurrent": true,
+  "website": "https://lorenterveen.com",
+  "hasPhoto": true,
+  "pickedCount": 16,
+  "pickedBooks": [
+    {
+      "slug": "the-origins-of-totalitarianism",
+      "title": "The Origins of Totalitarianism",
+      "year": 2025,
+      "date": "2025-08-26T23:30:00.000Z"
+    },
+    {
+      "slug": "dictionary-people",
+      "title": "Dictionary People",
+      "year": 2024,
+      "date": "2024-04-23T23:00:00.000Z"
+    },
+    {
+      "slug": "a-supposedly-fun-thing-i-ll-never-do-again",
+      "title": "A Supposedly Fun Thing I'll Never Do Again",
+      "year": 2023,
+      "date": "2023-05-30T23:00:00.000Z"
+    },
+    {
+      "slug": "empire-of-pain",
+      "title": "Empire of Pain",
+      "year": 2022,
+      "date": "2022-04-14T23:00:00.000Z"
+    },
+    {
+      "slug": "evicted",
+      "title": "Evicted",
+      "year": 2021,
+      "date": "2021-09-01T23:00:00.000Z"
+    },
+    {
+      "slug": "the-horse-the-wheel-and-language",
+      "title": "The Horse, the Wheel, and Language",
+      "year": 2021,
+      "date": "2021-05-13T00:00:00.000Z"
+    },
+    {
+      "slug": "bending-adversity",
+      "title": "Bending Adversity",
+      "year": 2020,
+      "date": "2020-09-16T23:30:00.000Z"
+    },
+    {
+      "slug": "the-master-algorithm",
+      "title": "The Master Algorithm",
+      "year": 2020,
+      "date": "2020-01-31T00:00:00.000Z"
+    },
+    {
+      "slug": "the-nordic-theory-of-everything",
+      "title": "The Nordic Theory of Everything",
+      "year": 2020,
+      "date": "2020-01-31T00:00:00.000Z"
+    },
+    {
+      "slug": "educated",
+      "title": "Educated",
+      "year": 2019,
+      "date": "2019-07-17T23:00:00.000Z"
+    },
+    {
+      "slug": "freedom-tm",
+      "title": "Freedom™",
+      "year": 2018,
+      "date": "2018-08-30T23:00:00.000Z"
+    },
+    {
+      "slug": "sapiens",
+      "title": "Sapiens",
+      "year": 2018,
+      "date": "2018-06-06T23:00:00.000Z"
+    },
+    {
+      "slug": "walkaway",
+      "title": "Walkaway",
+      "year": 2018,
+      "date": "2018-01-24T00:00:00.000Z"
+    },
+    {
+      "slug": "the-epigenetics-revolution",
+      "title": "The Epigenetics Revolution",
+      "year": 2017,
+      "date": "2017-07-20T21:00:00.000Z"
+    },
+    {
+      "slug": "shadow-elite",
+      "title": "Shadow Elite",
+      "year": 2017,
+      "date": "2017-01-17T00:00:00.000Z"
+    },
+    {
+      "slug": "the-rise-and-fall-of-american-growth",
+      "title": "The Rise and Fall of American Growth",
+      "year": 2016,
+      "date": "2016-03-22T23:00:00.000Z"
+    },
+    {
+      "slug": "roadside-picnic",
+      "title": "Roadside Picnic",
+      "year": 2015,
+      "date": "2015-07-22T23:00:00.000Z"
+    }
+  ]
+}

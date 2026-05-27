@@ -1,0 +1,32 @@
+{
+  "id": "recupT2hngfbLuWkr",
+  "bookId": 125,
+  "title": "Creativity",
+  "subtitle": "Flow and the Psychology of Discovery and Invention",
+  "slug": "creativity",
+  "authors": [
+    "Mihaly Csikszentmihalyi"
+  ],
+  "topic": "Brain & Psychology",
+  "fiction": false,
+  "publicationYear": 1996,
+  "pageCount": 464,
+  "isbn13": "9780060928209",
+  "olKey": "/works/OL506563W",
+  "synopsis": "Creativity is about capturing those moments that make life worth living. The author's objective is to offer an understanding of what leads to these moments, be it the excitement of the artist at the easel or the scientist in the lab, so that knowledge can be used to enrich people's lives. Drawing on 100 interviews with exceptional people, from biologists and physicists to politicians and business leaders, poets and artists, as well as his 30 years of research on the subject, Csikszentmihalyi uses his famous theory to explore the creative process. He discusses such ideas as why creative individuals are often seen as selfish and arrogant, and why the tortured genius is largely a myth. Most important, he clearly explains why creativity needs to be cultivated and is necessary for the future of our country, if not the world.",
+  "meetingDate": "2009-10-19T23:00:00.000Z",
+  "year": 2009,
+  "pickerName": "Jamie",
+  "pickerSlug": "jamie",
+  "pickerNames": [
+    "Jamie"
+  ],
+  "pickerSlugs": [
+    "jamie"
+  ],
+  "placeholder": false,
+  "meetingNotes": null,
+  "meetingLocation": null,
+  "hasCover": true,
+  "reviewCount": 0
+}
