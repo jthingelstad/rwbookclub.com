@@ -102,7 +102,7 @@ def search_books(query: str | None = None, topic: str | None = None,
     return out[:limit]
 
 
-def _find_book(slug_or_title: str) -> dict | None:
+def find_book(slug_or_title: str) -> dict | None:
     key = _norm(slug_or_title)
     bs = books()
     for b in bs:  # exact slug
@@ -141,7 +141,7 @@ def _reviews_for(*, book_id: str | None = None, member_id: str | None = None) ->
 
 
 def get_book(slug_or_title: str) -> dict | None:
-    b = _find_book(slug_or_title)
+    b = find_book(slug_or_title)
     if not b:
         return None
     brief = _book_brief(b)
@@ -153,7 +153,7 @@ def get_book(slug_or_title: str) -> dict | None:
     return brief
 
 
-def _find_member(name_or_slug: str) -> dict | None:
+def find_member(name_or_slug: str) -> dict | None:
     key = _norm(name_or_slug)
     for m in members():
         if _norm(m.get("slug")) == key or _norm(m.get("name")) == key:
@@ -165,7 +165,7 @@ def _find_member(name_or_slug: str) -> dict | None:
 
 
 def member_history(name_or_slug: str) -> dict | None:
-    m = _find_member(name_or_slug)
+    m = find_member(name_or_slug)
     if not m:
         return None
     return {
@@ -220,3 +220,31 @@ def club_stats() -> dict:
         "oldestPublication": min(pub_years) if pub_years else None,
         "newestPublication": max(pub_years) if pub_years else None,
     }
+
+
+def pending_reviews(name_or_slug: str) -> dict | None:
+    """Books the member has read (not placeholders) that they haven't reviewed yet."""
+    m = find_member(name_or_slug)
+    if not m:
+        return None
+    reviewed = {
+        bid for r in reviews() if m["id"] in (r.get("memberIds") or [])
+        for bid in (r.get("bookIds") or [])
+    }
+    read = [b for b in books() if b.get("meetingDate") and not b.get("placeholder")]
+    pending = [_book_brief(b) for b in read if b.get("id") not in reviewed]
+    pending.sort(key=lambda x: x["yearRead"] or 0, reverse=True)
+    return {"member": m["name"], "count": len(pending), "books": pending}
+
+
+def book_choices(prefix: str, limit: int = 25) -> list[tuple[str, str]]:
+    """(title, slug) pairs for slash-command autocomplete; recent reads first."""
+    p = _norm(prefix)
+    out: list[tuple[str, str]] = []
+    for b in sorted(books(), key=lambda x: (x.get("year") or 0), reverse=True):
+        title = b.get("title") or ""
+        if not p or p in title.lower():
+            out.append((title, b.get("slug")))
+        if len(out) >= limit:
+            break
+    return out

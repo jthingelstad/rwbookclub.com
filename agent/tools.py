@@ -60,6 +60,15 @@ TOOLS = [
         "input_schema": {"type": "object", "properties": {}},
     },
     {
+        "name": "pending_reviews",
+        "description": "Books a member has read but not yet reviewed — answers 'what do I still owe a review for?'. Point them at the /review command to log one.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"member": {"type": "string", "description": "member name or slug"}},
+            "required": ["member"],
+        },
+    },
+    {
         "name": "remember",
         "description": "Save a durable note Oliver should remember across conversations (a member's taste, a club fact, a preference). Private to Oliver.",
         "input_schema": {
@@ -115,6 +124,8 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             return _dump(cr.upcoming_meetings())
         if name == "club_stats":
             return _dump(cr.club_stats())
+        if name == "pending_reviews":
+            return _dump(cr.pending_reviews(tool_input["member"]) or {"error": "no such member"})
         if name == "remember":
             mid = db.add_memory(
                 tool_input["note"],

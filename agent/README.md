@@ -21,7 +21,10 @@ agent/
 - **System prompt** = persona + a compact club overview (`context.py`), cached. Not the
   whole corpus — Oliver pulls specifics on demand via tools.
 - **Tools** (`tools.py`): `search_books`, `get_book`, `member_history`, `upcoming_meetings`,
-  `club_stats` (read the corpus), plus `remember`, `recall`, `set_reminder` (SQLite).
+  `club_stats`, `pending_reviews` (read the corpus), plus `remember`, `recall`, `set_reminder`
+  (SQLite).
+- **Reviews** (`/review`): members log reviews via a Discord form that writes to the Git
+  corpus (`reviews.py` → `gitwrite.py`) — see below.
 - **Memory** (`db.py`): durable notes, per-channel conversation log + rolling summary,
   reminders, and a usage log. Survives restarts.
 - **Speaker** is matched from the Discord display name to a club member (best-effort) so
@@ -57,6 +60,15 @@ that doesn't belong in the public corpus. On the deployment host, point `OLIVER_
 at durable storage and back it up (litestream or a periodic dump, matching the Weekly
 Thing pattern). Backup wiring is a deployment step, not in the repo.
 
+## Reviews (`/review`)
+
+Members log book reviews with the `/review` command: pick the book (autocomplete), fill the
+form (rating 1–5 or DNF, the review, recommend?, discussion quality, favorite quote), and
+submit. Oliver writes `corpus/data/reviews/<book>--<member>.md`, commits, and pushes to
+`main` — live after the deploy. Only recognized club members can submit, and submitting the
+form is the confirmation. `reviews.py` → `gitwrite.py` is the single write path (any future
+front-end reuses it). Set `OLIVER_GIT_PUSH=0` to commit locally without pushing (dev).
+
 ## Discord setup
 
 The bot must be invited with the `bot` + `applications.commands` scopes and have the
@@ -65,8 +77,6 @@ Intents) — without it `on_message` gets empty content.
 
 ## What's next (later phases)
 
-- **Phase 3 — reviews:** a guided review-collection flow that writes finalized reviews to
-  the Git corpus (gated, draft → confirm → commit).
-- **Phase 4 — meetings & operations:** meeting tools + an in-process scheduler that fires
-  the reminders stored here.
+- **Phase 4 — meetings & operations:** meeting tools + an in-process scheduler that fires the
+  reminders stored here, plus proactive review nudges.
 - **Phase 5 — "6th member":** persona depth, main-channel presence, milestone awareness.
