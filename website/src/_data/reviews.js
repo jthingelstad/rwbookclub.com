@@ -15,7 +15,7 @@ module.exports = function () {
   if (!fs.existsSync(REVIEWS_DIR)) return [];
   const members = fs.existsSync(MEMBERS_DIR)
     ? fs.readdirSync(MEMBERS_DIR).filter((f) => f.endsWith(".json"))
-        .map((f) => JSON.parse(fs.readFileSync(path.join(MEMBERS_DIR, f), "utf8")))
+        .map((f) => ({ ...JSON.parse(fs.readFileSync(path.join(MEMBERS_DIR, f), "utf8")), slug: f.slice(0, -5) }))
     : [];
   const memberBySlug = new Map(members.map((m) => [m.slug, m]));
 
@@ -28,5 +28,5 @@ module.exports = function () {
       const reviewers = m ? [{ name: m.name, slug: m.isCurrent ? m.slug : null }] : [];
       return { ...data, review: content.trim() || null, reviewers };
     })
-    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    .sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
 };

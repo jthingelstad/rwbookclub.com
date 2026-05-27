@@ -21,7 +21,8 @@ def _load_json_dir(name: str) -> list[dict]:
     d = DATA_DIR / name
     if not d.exists():
         return []
-    return [json.loads(p.read_text()) for p in sorted(d.glob("*.json"))]
+    # slug is the filename — derive it, don't store it.
+    return [{**json.loads(p.read_text()), "slug": p.stem} for p in sorted(d.glob("*.json"))]
 
 
 def _parse_frontmatter(text: str) -> tuple[dict, str]:

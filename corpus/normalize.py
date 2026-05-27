@@ -17,11 +17,12 @@ import yaml
 
 from corpus.airtable import DATA_DIR
 
+# slug is the filename, and the Airtable rec id is no longer referenced — both omitted.
 BOOK_KEEP = [
-    "id", "bookId", "title", "subtitle", "slug", "authors", "topic", "fiction",
+    "bookId", "title", "subtitle", "authors", "topic", "fiction",
     "publicationYear", "pageCount", "isbn13", "olKey", "synopsis",
 ]
-MEMBER_KEEP = ["id", "name", "slug", "isCurrent", "website"]
+MEMBER_KEEP = ["name", "isCurrent", "website"]
 
 
 def _load_dir(name: str) -> dict[str, dict]:
@@ -59,7 +60,6 @@ def main() -> None:
     # Meetings: own date + book refs (re-resolved from rec ids to current slugs).
     for stem, m in meetings.items():
         _write(DATA_DIR / "meetings" / f"{stem}.json", {
-            "id": m["id"],
             "meetingId": m.get("meetingId"),
             "date": m.get("date"),
             "books": [book_slug_by_id[bid] for bid in (m.get("bookIds") or []) if bid in book_slug_by_id],
@@ -73,7 +73,7 @@ def main() -> None:
     for slug, m in members.items():
         _write(DATA_DIR / "members" / f"{slug}.json", {k: m.get(k) for k in MEMBER_KEEP})
     for slug, a in authors.items():
-        _write(DATA_DIR / "authors" / f"{slug}.json", {"id": a["id"], "name": a["name"]})
+        _write(DATA_DIR / "authors" / f"{slug}.json", {"name": a["name"]})
 
     # Reviews: slug-based frontmatter; drop id arrays + reviewer-name copies.
     for p in sorted((DATA_DIR / "reviews").glob("*.md")):
@@ -92,7 +92,7 @@ def main() -> None:
     for p in sorted((DATA_DIR / "awards").glob("*.json")):
         a = json.loads(p.read_text())
         _write(p, {
-            "id": a["id"], "name": a.get("name"), "year": a.get("year"),
+            "name": a.get("name"), "year": a.get("year"),
             "award": a.get("award"), "notes": a.get("notes"),
             "books": [bk.get("slug") for bk in (a.get("books") or []) if bk.get("slug")],
             "voters": [v.get("slug") for v in (a.get("voters") or []) if v.get("slug")],

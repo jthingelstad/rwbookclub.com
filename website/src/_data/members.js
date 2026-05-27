@@ -30,7 +30,7 @@ module.exports = function () {
   const books = buildBooks(); // enriched (has pickerNames, meetingDate, year)
   const widthsBySlug = photoWidthsBySlug();
 
-  members.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  members.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
   return members.map((m) => {
     const picked = books.filter(

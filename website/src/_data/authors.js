@@ -1,5 +1,4 @@
-// Authors are canonical corpus data — aggregate the per-entity files.
-// Sorted by record id ascending to match the original fetch order.
+// Authors are canonical corpus data — aggregate the per-entity files, sorted by name.
 
 const fs = require("fs");
 const path = require("path");
@@ -12,5 +11,5 @@ module.exports = function () {
     .readdirSync(DIR)
     .filter((f) => f.endsWith(".json"))
     .map((f) => JSON.parse(fs.readFileSync(path.join(DIR, f), "utf8")))
-    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 };

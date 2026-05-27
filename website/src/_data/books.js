@@ -19,7 +19,8 @@ function readJsonDir(name) {
   return fs
     .readdirSync(dir)
     .filter((f) => f.endsWith(".json"))
-    .map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")));
+    // slug is the filename — derive it, don't store it.
+    .map((f) => ({ ...JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")), slug: f.slice(0, -5) }));
 }
 
 function reviewCountBySlug() {
