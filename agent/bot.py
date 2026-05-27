@@ -82,7 +82,9 @@ async def on_message(message: discord.Message) -> None:
 
     async with message.channel.typing():
         try:
-            reply = await asyncio.to_thread(oliver.answer, question)
+            reply = await asyncio.to_thread(
+                oliver.answer, question, str(message.channel.id), message.author.display_name
+            )
         except Exception:
             log.exception("Oliver failed to answer")
             reply = "Sorry — I hit a snag answering that. Try me again in a moment."

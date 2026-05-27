@@ -11,5 +11,10 @@ venv/
 __pycache__/
 *.pyc
 
+# Oliver's private SQLite memory (class B — never committed)
+*.db
+*.db-wal
+*.db-shm
+
 # OS
 .DS_Store
