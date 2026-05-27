@@ -23,7 +23,12 @@ from agent.tools import TOOLS, dispatch
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-MODEL = "claude-opus-4-7"
+# Model strategy: default to Sonnet for the interactive agent loop; use Haiku for
+# cheap internal work (rolling summaries); reserve Opus for selective upgrades when
+# a task genuinely needs the extra horsepower.
+MODEL = "claude-sonnet-4-6"          # default — the user-facing agent loop
+SUMMARY_MODEL = "claude-haiku-4-5"   # cheap internal summarization
+OPUS_MODEL = "claude-opus-4-7"       # reserved: upgrade only as needed
 MAX_TOKENS = 2048
 MAX_TOOL_ROUNDS = 8
 SUMMARIZE_THRESHOLD = 24   # un-summarized turns before folding into the rolling summary
@@ -163,10 +168,11 @@ def _maybe_summarize(channel_id: str, client: anthropic.Anthropic) -> None:
         "use as memory of the conversation — preferences expressed, open threads, decisions, who said "
         f"what. Fold in the prior summary.\n\nPrior summary:\n{summary or '(none)'}\n\nNew messages:\n{convo}"
     )
+    # Haiku for the cheap internal summary — note effort/adaptive-thinking are not
+    # passed here (Haiku 4.5 doesn't accept them).
     resp = client.messages.create(
-        model=MODEL,
+        model=SUMMARY_MODEL,
         max_tokens=500,
-        output_config={"effort": "low"},
         messages=[{"role": "user", "content": prompt}],
     )
     new_summary = _text_of(resp.content)
