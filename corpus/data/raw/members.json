@@ -4,8 +4,8 @@
     "name": "Nick",
     "slug": "nick",
     "isCurrent": true,
-    "website": null,
-    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775872800000/MUUNY9pQCM9_qC7PPv2BsA/_n874pczt0nR09KUGemzSITFYWKyFLRqGJk0vM7ch_iB0-n9lLlNw2g1SjVTimJRu5WyS7PJvb1NF-F-FurVWM9nUR90_mAqi1mE25K9EQI/FLeH1vTrmhvLwgMBbDBx0qGX4Vyj2TZyBuX5oZUu1tE",
+    "website": "https://www.linkedin.com/in/nick-swenson-976b7337/",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/53/53/1779912000000/MexInFyq20FOowXKFh7jOA/zRi9lwcQwHUoduOLz_MOjgTAEkWvXb7vcG4580WyW2pdtxHc48r6yqCRLuDdmaVQ50Qk5tIIIze9DUFnwj2tHVTWvlnGvI0soVkYJLMYm1c/JPuCLmjjSN_9FJa-ShfcbPikQsUYmDa787AvOdYPUt0",
     "hasPhoto": true,
     "pickedCount": 17,
     "pickedBooks": [
@@ -136,8 +136,8 @@
     "name": "Erik",
     "slug": "erik",
     "isCurrent": true,
-    "website": null,
-    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775872800000/qKj0BZScedn_5ecypkYgbA/q284DFccNsQSZKIcFqSNtGClHMNxw1cg4Htmsncu0SH8tZ-oxCPhdraQMxsAtFFGuV-QrACLRCLJT03PVWBxVuFt6y1_qr8gWXKULlTUjOc/6_ZVA5jtI160CGP51EfKSoTK9kypLqcbu-y3AoOFqz0",
+    "website": "https://www.linkedin.com/in/erikjordan/",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/53/53/1779912000000/DCOgEmkLHoTSZDvZTRywdA/lcmRJr8dli7N7Em1BBr80PW5kvsqDPQMZvusRJVI0KI8RaZIhB3GJoCqs8UTGNj98Hm8RS19soEMo_YESUAtPkiFYAHqdNQ3mqARsGv-jWo/nkFyN7OXzlz8WPoutT58ZSQCCAYTq8p20IxJxAC28xk",
     "hasPhoto": true,
     "pickedCount": 37,
     "pickedBooks": [
@@ -436,8 +436,8 @@
     "name": "Tom",
     "slug": "tom",
     "isCurrent": true,
-    "website": "http://tomeri.org",
-    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775872800000/qhwPtMef6XOe8q2-pp8D7g/LInrJwSKrtItw0f4GbYtaafzQ42r3ZcSAcrjZ4qjIMpE8QzGPI8A1L4b5LsluYwkCliWVqffkqQxiJWMKMMan2dXXgra0vEEokusGZU99NreGW3cGJW8-L1sx4iz2xmQO_Nk7dbcxGucfctXgPP-uA/oSANobey0SxdqrB4LO5EqXhzgieU6EsGIAqYFUSVyuU",
+    "website": "https://tomeri.org",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/53/53/1779912000000/GdraCwfXgrBirdPKdnDYug/vDgjX9BKEpUI5_6opZBuJRQiVpe4HCuDgdkfqLpII8a9gzsKMYp0I-VXGOb9kcMtHV7vWpHb4QKstz_g-Dgms1XXU--DmNuF-bhsCgb3zURQPRkh3E369lozdweY3OMpkAoX_GQuXhCZ4chj9WHK8g/4scSHytAUwbzDQg41hJZ3SgxSbLvTMnOf8AT8_4ZSjk",
     "hasPhoto": true,
     "pickedCount": 35,
     "pickedBooks": [
@@ -641,13 +641,13 @@
     "slug": "jamie",
     "isCurrent": true,
     "website": "https://www.thingelstad.com",
-    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775872800000/Y0lb9f9OMWKPMGQD9dj4WA/_VPrmBhIjNHPWuD5xtKS00Q2_-GPyJA7zQWuymnng9unfwDKk0-j0jVxn9PU2AN5fr27zcF0CbKUF1su5e0L7Qjj_LHJ7DYSMpBa7ceE7q4/Vw7q9osSHF3X3YEI-EvF1j-ZdGq6nlSO-Wae6ZH4724",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/53/53/1779912000000/ugi4DMaOSMpKSU2rP8gA_Q/n9OSKfBf2dbnMxvgYEWPsYJNWmWCjhLISyo007PjyGSOVVJ6ENie76yxYeNVzTuhD7l7dey9lt3lrCpGvUjHLdtiuyNGTCXc4DqyVbi3lY8/px0uGV_KAm6JJj8DlZOI3i6XGStb3kKTMVKZa2t_rqA",
     "hasPhoto": true,
     "pickedCount": 34,
     "pickedBooks": [
       {
-        "slug": "the-idea-machine",
-        "title": "The Idea Machine",
+        "slug": "a-world-appears",
+        "title": "A World Appears",
         "year": 2026,
         "date": "2026-05-27T00:00:00.000Z"
       },
@@ -850,8 +850,8 @@
     "name": "Loren",
     "slug": "loren",
     "isCurrent": true,
-    "website": "http://www-users.cs.umn.edu/~terveen/",
-    "photoUrl": "https://v5.airtableusercontent.com/v3/u/52/52/1775872800000/hIfLNsZ3lBSDqC5gBY2uZg/R_4O0st7VV8bIQk1xZZMbu5GeSbE9p7SESjWGz2MK6TNuYa0JyVpfmZrJOiZnXiBOzjJEYTqqxA-kXol66YuD4nCQg1MQ_zRFmYLtTzpLWs/CP8pxCgAFVmcO3VuMZ_LTRpsCr5YAKZE0yJxG7taCek",
+    "website": "https://lorenterveen.com",
+    "photoUrl": "https://v5.airtableusercontent.com/v3/u/53/53/1779912000000/FxmMXm_UGBOpQoUHvdwyTA/WyLQWALOUjNaOancAe33lX9ST3ZqW8lyynQoeaTDycORKXjoyunJPacjgwR1B4RHEdfSXzw62sjySHF-N0kvhgzFrSjM-VnMKUaibTLhGUc/osTKgdQnvOQiO1Nn55X1l5oQm0A9QaxrDVcRBnamxDY",
     "hasPhoto": true,
     "pickedCount": 16,
     "pickedBooks": [
