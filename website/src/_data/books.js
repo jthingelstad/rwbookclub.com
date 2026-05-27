@@ -3,14 +3,15 @@
 // Reads the raw Airtable export and derives `coverWidths`/`hasCover` from
 // whatever JPEGs actually exist on disk under src/assets/images/covers.
 // The filesystem is the source of truth: if a cover file is there it
-// renders; if not, the placeholder shows. This means fetch_airtable.py
-// and process_images.py can be run in either order (or independently)
+// renders; if not, the placeholder shows. This means corpus.fetch
+// and corpus.images can be run in either order (or independently)
 // without leaving the JSON and the asset folder out of sync.
 
 const fs = require("fs");
 const path = require("path");
 
-const RAW_PATH = path.join(__dirname, "raw", "books.json");
+// Canonical data lives in the corpus package, three levels up.
+const RAW_PATH = path.join(__dirname, "..", "..", "..", "corpus", "data", "raw", "books.json");
 const COVERS_DIR = path.join(__dirname, "..", "assets", "images", "covers");
 const FILENAME_RE = /^(.+)-(\d+)\.jpg$/;
 

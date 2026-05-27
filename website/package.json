@@ -1,0 +1,14 @@
+{
+  "name": "rwbookclub-com",
+  "version": "0.1.0",
+  "private": true,
+  "description": "rwbookclub.com — static site for the R/W Book Club, generated from Airtable.",
+  "scripts": {
+    "build": "eleventy",
+    "serve": "eleventy --serve",
+    "clean": "rm -rf _site src/assets/images/covers src/assets/images/members"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.0.0"
+  }
+}

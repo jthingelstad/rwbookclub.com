@@ -1,15 +1,15 @@
 {
-  "name": "rwbookclub-com",
+  "name": "rwbookclub-monorepo",
   "version": "0.1.0",
   "private": true,
-  "description": "rwbookclub.com — static site for the R/W Book Club, generated from Airtable.",
+  "description": "Monorepo for the R/W Book Club: the website, the knowledge corpus, and the Discord agent (Oliver).",
+  "workspaces": [
+    "website"
+  ],
   "scripts": {
-    "fetch": "python scripts/fetch_airtable.py && python scripts/process_images.py",
-    "build": "eleventy",
-    "serve": "eleventy --serve",
-    "clean": "rm -rf _site src/_data/*.json src/_data/raw src/assets/images/covers src/assets/images/members"
-  },
-  "devDependencies": {
-    "@11ty/eleventy": "^3.0.0"
+    "build": "npm run build -w website",
+    "serve": "npm run serve -w website",
+    "clean": "npm run clean -w website",
+    "fetch": "python -m corpus.fetch && python -m corpus.images"
   }
 }

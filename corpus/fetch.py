@@ -1,7 +1,9 @@
 """Fetch every table from the R/W Book Club Airtable base and write
-denormalized JSON files for 11ty to consume.
+denormalized JSON files into corpus/data/ — the canonical knowledge corpus
+consumed by the website and the Discord agent.
 
-Run after `pip install -r requirements.txt`. Reads credentials from .env.
+Run from the repo root as `python -m corpus.fetch` after
+`pip install -r corpus/requirements.txt`. Reads credentials from the root .env.
 """
 
 from __future__ import annotations
@@ -9,7 +11,7 @@ from __future__ import annotations
 import json
 from collections import Counter
 
-from lib import (
+from corpus.airtable import (
     AUTHORS,
     AWARDS,
     BOOKS,
@@ -294,9 +296,9 @@ def main() -> None:
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
-    # Books and members live under raw/ because their *.js siblings in
-    # src/_data enrich them with cover/photo widths derived from the
-    # filesystem at build time.
+    # Books and members live under raw/ because the website's *.js data
+    # modules (website/src/_data) enrich them with cover/photo widths
+    # derived from the filesystem at build time.
     (RAW_DATA_DIR / "books.json").write_text(
         json.dumps(book_records, indent=2, ensure_ascii=False)
     )

@@ -5,7 +5,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const RAW_PATH = path.join(__dirname, "raw", "members.json");
+const RAW_PATH = path.join(__dirname, "..", "..", "..", "corpus", "data", "raw", "members.json");
 const PHOTOS_DIR = path.join(__dirname, "..", "assets", "images", "members");
 const FILENAME_RE = /^(.+)-(\d+)\.jpg$/;
 

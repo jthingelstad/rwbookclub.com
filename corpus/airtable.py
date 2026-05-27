@@ -1,4 +1,9 @@
-"""Shared utilities for the Airtable → 11ty data pipeline."""
+"""Shared Airtable client and path constants for the knowledge corpus.
+
+Imported by the corpus fetch/image scripts and by the Discord agent (Oliver),
+which reuses the client and `slugify` helpers. Run corpus scripts from the
+repo root as `python -m corpus.fetch` / `python -m corpus.images`.
+"""
 
 from __future__ import annotations
 
@@ -11,11 +16,14 @@ import requests
 from dotenv import load_dotenv
 from unidecode import unidecode
 
-ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = ROOT / "src" / "_data"
+CORPUS_DIR = Path(__file__).resolve().parent
+REPO_ROOT = CORPUS_DIR.parent
+DATA_DIR = CORPUS_DIR / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
-COVERS_DIR = ROOT / "src" / "assets" / "images" / "covers"
-MEMBERS_IMG_DIR = ROOT / "src" / "assets" / "images" / "members"
+# Responsive cover/photo variants are website presentation assets, so the
+# image step writes them straight into the website tree.
+COVERS_DIR = REPO_ROOT / "website" / "src" / "assets" / "images" / "covers"
+MEMBERS_IMG_DIR = REPO_ROOT / "website" / "src" / "assets" / "images" / "members"
 
 # Table IDs are stable; names can change. Pulled from CLAUDE.md.
 BOOKS = "tblPqH96wIgGuUSXe"
@@ -28,7 +36,7 @@ AWARDS = "tblrIaGgMtA08xyJE"
 
 def load_env() -> tuple[str, str]:
     """Load Airtable credentials from .env or process env."""
-    load_dotenv(ROOT / ".env")
+    load_dotenv(REPO_ROOT / ".env")
     base = os.environ.get("AIRTABLE_BASE_ID")
     pat = os.environ.get("AIRTABLE_PAT")
     if not base or not pat:

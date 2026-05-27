@@ -1,11 +1,13 @@
 """Download book covers and member photos referenced in
-src/_data/raw/*.json, resize them with Pillow, and write progressive JPEGs
-at multiple widths.
+corpus/data/raw/*.json, resize them with Pillow, and write progressive JPEGs
+at multiple widths into the website's asset tree.
 
-The 11ty data layer (src/_data/books.js, src/_data/members.js) derives
+The website data layer (website/src/_data/books.js, members.js) derives
 `coverWidths`/`photoWidths`/`hasCover`/`hasPhoto` from whatever JPEGs
 exist on disk at build time, so this script no longer needs to write
 anything back into the JSON. Its only job is downloading and resizing.
+
+Run from the repo root as `python -m corpus.images`.
 """
 
 from __future__ import annotations
@@ -17,7 +19,7 @@ from io import BytesIO
 import requests
 from PIL import Image
 
-from lib import COVERS_DIR, MEMBERS_IMG_DIR, RAW_DATA_DIR
+from corpus.airtable import COVERS_DIR, MEMBERS_IMG_DIR, RAW_DATA_DIR
 
 COVER_WIDTHS = [240, 480, 960]
 PHOTO_WIDTHS = [240, 480]

@@ -4,26 +4,36 @@ Project-specific context for Claude Code. The site is live at rwbookclub.com (de
 
 ## Project
 
-rwbookclub.com is the public website for the R/W Book Club, which has been meeting since April 2003. The club reads about 8 books per year, mostly non-fiction (about 88%), and rotates picking and hosting among members.
+rwbookclub.com is the home of the R/W Book Club, which has been meeting since April 2003. The club reads about 8 books per year, mostly non-fiction (about 88%), and rotates picking and hosting among members.
 
-The site is rendered from data in an Airtable base that is the canonical source of truth. Do not maintain a parallel content store; pull from Airtable.
+The data lives in an Airtable base that is the canonical source of truth. Do not maintain a parallel content store; pull from Airtable.
+
+## Monorepo layout
+
+This repo is a flat, polyglot monorepo with three top-level concerns:
+
+- **`website/`** — the Eleventy 3 static site (Node). Consumes the corpus.
+- **`corpus/`** — the canonical knowledge layer (Python): the Airtable client (`corpus/airtable.py`), the fetch pipeline (`corpus/fetch.py`, `corpus/images.py`), and the committed JSON under `corpus/data/`. The agent will eventually own this.
+- **`agent/`** — Oliver, the club's Discord bot (Python). Consumes the corpus; answers questions in `#ask-oliver` via Claude.
+
+A root `package.json` (npm workspace over `website`) provides `npm run build`/`serve`/`fetch`. All Python runs from the repo root (`python -m corpus.fetch`, `python -m agent.bot`). One shared root `.env`.
 
 ## Site build
 
-- **Generator:** Eleventy 3 (`npm run build`, `npm run serve`)
-- **Data refresh:** `npm run fetch` pulls from Airtable and downloads cover/member images
-- **Input:** `src/` with Nunjucks templates; global data in `src/_data/` (JS modules read the cached JSON in `src/_data/raw/`)
-- **Output:** `_site/` — published by GitHub Pages on push to `main`
+- **Generator:** Eleventy 3, in `website/` (`npm run build`, `npm run serve` from the repo root via the workspace)
+- **Data refresh:** `npm run fetch` runs `python -m corpus.fetch && python -m corpus.images` — pulls from Airtable into `corpus/data/` and resizes cover/member images into `website/src/assets/images/`
+- **Input:** `website/src/` with Nunjucks templates; global data in `website/src/_data/` (JS modules read the canonical JSON in `corpus/data/`: `books.js`/`members.js` read `corpus/data/raw/`, and `authors.js`/`reviews.js`/`awards.js` re-export `corpus/data/*.json`)
+- **Output:** `website/_site/` — published by GitHub Pages on push to `main` (the Actions artifact path is `website/_site`)
 - **Pages:** `/` (home), `/books/<slug>/`, `/members/<slug>/`, `/about/`, `/stats/`, `/feed.xml`, `/llms.txt`, `/llms-full.txt`, `/robots.txt`, `/sitemap.xml`
 
 ### Nunjucks whitespace gotcha
 
-Loops and `{% set %}` tags emit a newline per iteration by default. When a loop's only job is to build up a variable (not render output), use `{%-` / `-%}` on every tag in the block, otherwise a 179-iteration loop dumps ~360 blank lines into the output. The `futureBooks` setup block in `src/llms*.txt.njk` is the canonical example.
+Loops and `{% set %}` tags emit a newline per iteration by default. When a loop's only job is to build up a variable (not render output), use `{%-` / `-%}` on every tag in the block, otherwise a 179-iteration loop dumps ~360 blank lines into the output. The `futureBooks` setup block in `website/src/llms*.txt.njk` is the canonical example.
 
 ## Data Source
 
 - **Airtable base ID:** `appmiF5yLSzx0klJc`
-- **Credentials:** `.env` has `AIRTABLE_BASE_ID` and `AIRTABLE_PAT`. Never commit `.env`. Never hard-code the PAT.
+- **Credentials:** the shared root `.env` holds `AIRTABLE_BASE_ID` and `AIRTABLE_PAT` (corpus), the `DISCORD_*` identifiers + `DISCORD_BOT_TOKEN` and `ANTHROPIC_API_KEY` (agent). See `.env.example` for the full list. Never commit `.env`. Never hard-code the PAT, bot token, or API key.
 - **REST API base:** `https://api.airtable.com/v0/{baseId}/{tableId}`
 - **Pagination:** records endpoints return up to 100 per call; follow `offset` until empty
 - **Batch writes:** PATCH/POST `/v0/{baseId}/{tableId}` accepts up to 10 records per call
