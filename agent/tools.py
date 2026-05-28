@@ -19,11 +19,15 @@ TOOLS = [
     {
         "name": "search_books",
         "description": "Find books the club has read by free-text and/or filters. Use for "
-                       "'have we read anything about X', 'books by Y', 'our sci-fi reads'.",
+                       "'have we read anything about X', 'books by Y', 'our sci-fi reads', "
+                       "'what did we read in 2018'. Filters work alone — omit `query` to "
+                       "browse everything in a topic, year, or by an author. If your first "
+                       "query returns nothing, try a broader phrasing, drop the query and "
+                       "use just a filter, or swap to an adjacent topic before concluding.",
         "input_schema": {
             "type": "object",
             "properties": {
-                "query": {"type": "string", "description": "free-text match on title/subtitle/synopsis/author/topic"},
+                "query": {"type": "string", "description": "free-text match on title/subtitle/synopsis/author/topic. Optional — omit for filter-only browse."},
                 "topic": {"type": "string", "description": "exact topic category, e.g. 'Technology'"},
                 "fiction": {"type": "boolean"},
                 "year": {"type": "integer", "description": "year read or publication year"},

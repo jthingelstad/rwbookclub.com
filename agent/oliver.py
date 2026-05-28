@@ -40,11 +40,23 @@ SYSTEM_PROMPT = (
     "2003 in the Minneapolis–Saint Paul area. You know the club's whole reading history and you "
     "talk like a long-time member: warm, curious, a little opinionated, dry-witted — never "
     "sycophantic, and never a help desk.\n\n"
-    "GROUNDING. Ground every factual claim in the corpus — use your tools to look up specific "
-    "books, members, reviews, upcoming meetings, and stats rather than guessing. If something "
-    "isn't in the corpus, say so plainly instead of inventing it. When you learn something durable "
-    "about a member or the club (a taste, a pet peeve, a recurring opinion, a running joke), save "
-    "it with the remember tool so you carry it forward.\n\n"
+    "GROUNDING. Two different standards:\n"
+    "• CLUB FACTS — what we've read, who picked it, when we met, what reviews say, "
+    "members and their tastes, awards, upcoming reads — MUST come from your tools, never "
+    "training. If a tool returns empty, 'no such X,' or doesn't have the field you need, "
+    "say so plainly. Do not fall back on what you might remember about the club; the corpus "
+    "is the source of truth.\n"
+    "• WORLD FACTS — an author's wider bibliography, public history, general book context — "
+    "you can speak from general knowledge, but you must lead any specifics with an explicit "
+    "off-corpus marker: \"outside our reading list…\" / \"not in our corpus, but…\" / \"off "
+    "the top of my head…\". This includes lists of an author's other books, plot details, "
+    "and recommendations of books the club hasn't read. Never blend in-corpus and off-corpus "
+    "specifics in the same sentence.\n"
+    "If a search comes back empty, before concluding we haven't read something: try a "
+    "different phrasing, drop the query and use just a filter (year, topic, author), or "
+    "look at an adjacent angle. Vague recollections often need 2-3 tries.\n"
+    "When you learn something durable about a member or the club (a taste, a pet peeve, a "
+    "recurring opinion, a running joke), save it with the remember tool so you carry it forward.\n\n"
     "IN THE ROOM. You're usually in a shared channel with several members at once, and you only "
     "speak when someone addresses you. So reply only to what's directed at you, keep it to a "
     "sentence or three, address people by name, and don't restate their question back to them. "
@@ -55,7 +67,8 @@ SYSTEM_PROMPT = (
     "review a book or asks how, point them to /review, and use pending_reviews to tell a member "
     "what they still owe.\n\n"
     "Keep replies under ~1500 characters so they fit in one Discord message, and skip markdown "
-    "headings."
+    "headings. After any tool calls, always compose a reply — never end your turn with only "
+    "tool calls (especially remember/recall) and no text. Silence is worse than a half-answer."
 )
 
 _client: anthropic.Anthropic | None = None
@@ -146,7 +159,31 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
         usage["cc"] += u.cache_creation_input_tokens or 0
 
         if resp.stop_reason != "tool_use" or rounds >= MAX_TOOL_ROUNDS:
-            reply = _text_of(resp.content) or "I'm not sure how to answer that one."
+            text = _text_of(resp.content)
+            # Defensive: if the model ended with no text after some tool use, nudge
+            # it once for an actual reply rather than dumping the generic fallback.
+            if not text and rounds > 1 and resp.content:
+                messages.append({"role": "assistant", "content": resp.content})
+                messages.append({"role": "user", "content":
+                    "Write your reply to the speaker now — your previous turn had no "
+                    "visible text. Use what you've already gathered."})
+                try:
+                    resp = client.messages.create(
+                        model=MODEL, max_tokens=MAX_TOKENS,
+                        system=_system_blocks(), tools=TOOLS,
+                        thinking={"type": "adaptive"},
+                        output_config={"effort": "medium"},
+                        messages=messages,
+                    )
+                    u = resp.usage
+                    usage["in"] += u.input_tokens
+                    usage["out"] += u.output_tokens
+                    usage["cr"] += u.cache_read_input_tokens or 0
+                    usage["cc"] += u.cache_creation_input_tokens or 0
+                    text = _text_of(resp.content)
+                except Exception:  # noqa: BLE001 — best-effort retry
+                    pass
+            reply = text or "I'm not sure how to answer that one."
             break
 
         messages.append({"role": "assistant", "content": resp.content})
