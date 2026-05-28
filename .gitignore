@@ -16,5 +16,8 @@ __pycache__/
 *.db-wal
 *.db-shm
 
+# Oliver runtime logs (launchd captures stdout/stderr here)
+agent/logs/
+
 # OS
 .DS_Store
