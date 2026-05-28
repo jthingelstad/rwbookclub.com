@@ -73,7 +73,10 @@ def main() -> None:
     for slug, m in members.items():
         _write(DATA_DIR / "members" / f"{slug}.json", {k: m.get(k) for k in MEMBER_KEEP})
     for slug, a in authors.items():
-        _write(DATA_DIR / "authors" / f"{slug}.json", {"name": a["name"]})
+        rec = {"name": a["name"]}
+        if a.get("bio"):  # preserve Bio when the cold-backup carried it
+            rec["bio"] = a["bio"]
+        _write(DATA_DIR / "authors" / f"{slug}.json", rec)
 
     # Reviews: slug-based frontmatter; drop id arrays + reviewer-name copies.
     for p in sorted((DATA_DIR / "reviews").glob("*.md")):

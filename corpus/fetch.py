@@ -207,6 +207,7 @@ def main() -> None:
         {
             "id": a["id"],
             "name": (a["fields"].get("Author") or "").strip(),
+            "bio": (a["fields"].get("Bio") or "").strip() or None,
             "bookCount": a["fields"].get("Book Count") or 0,
         }
         for a in authors_raw
