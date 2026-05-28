@@ -73,7 +73,10 @@ def process_image(url: str, base_filename: str, out_dir, widths: list[int]) -> l
 
 
 def main() -> None:
-    books = [json.loads(p.read_text()) for p in sorted(BOOKS_DIR.glob("*.json"))]
+    books = [
+        {**json.loads(p.read_text()), "slug": p.stem}
+        for p in sorted(BOOKS_DIR.glob("*.json"))
+    ]
     missing = [b for b in books if not has_cover(b["slug"])]
     print(f"{len(books)} books; {len(missing)} missing covers")
     for b in missing:

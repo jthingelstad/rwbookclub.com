@@ -70,10 +70,12 @@ function enrich() {
   const meetingForBook = earliestMeetingBySlug(meetings);
   const widthsBySlug = buildWidthsBySlug();
   const reviewCounts = reviewCountBySlug();
+  const today = new Date().toISOString().slice(0, 10);
 
   const enriched = books.map((b) => {
     const mt = meetingForBook.get(b.slug) || null;
     const meetingDate = mt ? mt.date || null : null;
+    const isUpcoming = Boolean(mt && mt.placeholder && (meetingDate || "").slice(0, 10) >= today);
     const pickerNames = [];
     const pickerSlugs = [];
     for (const ps of b.picker || []) {
@@ -93,6 +95,7 @@ function enrich() {
       pickerNames: pickerNames.length ? pickerNames : null,
       pickerSlugs: pickerSlugs.length ? pickerSlugs : null,
       placeholder: mt ? Boolean(mt.placeholder) : false,
+      isUpcoming,
       meetingNotes: mt ? mt.notes || null : null,
       meetingLocation: mt ? mt.location || null : null,
       hasCover: Boolean(widths && widths.length),

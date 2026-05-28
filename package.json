@@ -10,6 +10,6 @@
     "build": "npm run build -w website",
     "serve": "npm run serve -w website",
     "clean": "npm run clean -w website",
-    "covers": "python -m corpus.images"
+    "covers": "python3 -m corpus.images"
   }
 }

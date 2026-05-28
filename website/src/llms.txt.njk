@@ -37,7 +37,7 @@ As of this build there are {{ journey.totalBooks }} books across
 
 {%- set futureBooks = [] -%}
 {%- for book in books -%}
-{%- if book.placeholder -%}
+{%- if book.isUpcoming -%}
 {%- set futureBooks = (futureBooks.push(book), futureBooks) -%}
 {%- endif -%}
 {%- endfor %}

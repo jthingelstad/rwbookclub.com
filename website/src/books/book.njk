@@ -19,7 +19,7 @@ eleventyComputed:
       {% include "cover.njk" %}
     </div>
     <div class="book-header-text">
-      {% if book.placeholder %}
+      {% if book.isUpcoming %}
         <p class="kicker kicker--upcoming">Upcoming · {{ book.meetingDate | monthYear }}</p>
       {% else %}
         <p class="kicker">{{ book.meetingDate | monthYear }}</p>

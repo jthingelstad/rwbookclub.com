@@ -4,7 +4,7 @@
 // most-recent-first by the fetch script; this preserves that order
 // inside each year and emits years in descending order.
 //
-// Placeholder books (future/tentative meetings) are separated out so
+// Upcoming books (future/tentative meetings) are separated out so
 // the template can feature the current book and upcoming picks above
 // the historical reading journey.
 
@@ -13,9 +13,11 @@ const buildBooks = require("./books.js");
 module.exports = function () {
   const books = buildBooks();
 
-  // Separate placeholder (future) books from the reading history
-  const futureBooks = books.filter((b) => b.placeholder);
-  const pastBooks = books.filter((b) => !b.placeholder);
+  // Separate future placeholders from the reading history. A placeholder date
+  // that has already passed is treated as part of the journey until someone
+  // flips the corpus flag.
+  const futureBooks = books.filter((b) => b.isUpcoming);
+  const pastBooks = books.filter((b) => !b.isUpcoming);
 
   // Current book = placeholder with earliest meeting date
   // (futureBooks is sorted most-recent-first, so last item is earliest)

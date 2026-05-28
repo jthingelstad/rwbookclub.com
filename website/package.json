@@ -6,7 +6,7 @@
   "scripts": {
     "build": "eleventy",
     "serve": "eleventy --serve",
-    "clean": "rm -rf _site src/assets/images/covers src/assets/images/members"
+    "clean": "rm -rf _site"
   },
   "dependencies": {
     "gray-matter": "^4.0.3"

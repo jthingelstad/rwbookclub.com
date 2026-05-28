@@ -69,6 +69,7 @@ def write_review(book_query: str, member_name: str, *, rating: str | None = None
     book = cr.find_book(book_query)
     if not book:
         raise ReviewError(f"I couldn't find a book matching {book_query!r}.")
+    gitwrite.sync()
 
     rating_val, dnf = _parse_rating(rating)
     discussion_val = _parse_1to5(discussion)
@@ -95,7 +96,6 @@ def write_review(book_query: str, member_name: str, *, rating: str | None = None
     path.write_text(f"---\n{fm}---\n\n{body}\n" if body else f"---\n{fm}---\n")
 
     verb = "Update" if prev else "Add"
-    gitwrite.sync()
     sha = gitwrite.commit_paths([path], f"{verb} review of {book['title']} by {member['name']}")
     return {
         "book": book["title"],

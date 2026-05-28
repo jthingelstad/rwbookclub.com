@@ -9,7 +9,7 @@ eleventyExcludeFromCollections: true
 # {{ book.title | safe }}{% if book.subtitle %}: {{ book.subtitle | safe }}{% endif %}
 
 - **Author:** {{ book.authors | joinNames | safe }}
-{%- if book.placeholder %}
+{%- if book.isUpcoming %}
 - **Status:** Upcoming — Meeting {{ book.meetingDate | monthYear }}
 {%- else %}
 - **Read:** {{ book.meetingDate | monthYear }}

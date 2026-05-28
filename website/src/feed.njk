@@ -10,10 +10,10 @@ eleventyExcludeFromCollections: true
     <atom:link href="{{ site.url }}/feed.xml" rel="self" type="application/rss+xml" />
     <description>{{ site.description }}</description>
     <language>en-us</language>
-    {%- if books.length %}
-    <lastBuildDate>{{ books[0].meetingDate | rfc822Date }}</lastBuildDate>
+    {%- if readBooks.length %}
+    <lastBuildDate>{{ readBooks[0].meetingDate | rfc822Date }}</lastBuildDate>
     {%- endif %}
-    {%- for book in books | limit(20) %}
+    {%- for book in readBooks | limit(20) %}
     <item>
       <title>{{ book.title }}{% if book.subtitle %}: {{ book.subtitle }}{% endif %}</title>
       <link>{{ site.url }}/books/{{ book.slug }}/</link>

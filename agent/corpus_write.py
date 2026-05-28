@@ -40,6 +40,7 @@ def write_book(meta: dict) -> dict:
     title = (meta.get("title") or "").strip()
     if not title:
         raise WriteError("A book needs a title.")
+    gitwrite.sync()
     slug = slugify(title)
     rec = {
         "bookId": meta.get("bookId") or (_max_int("books", "bookId") + 1),
@@ -58,7 +59,6 @@ def write_book(meta: dict) -> dict:
     existed = path.exists()
     path.write_text(json.dumps(rec, indent=2, ensure_ascii=False) + "\n")
     covers = _fetch_cover(slug, rec["olKey"])
-    gitwrite.sync()
     gitwrite.commit_paths([path, *covers],
                           f"{'Update' if existed else 'Add'} book: {title}")
     return {"slug": slug, "title": title, "authors": rec["authors"],
@@ -66,6 +66,7 @@ def write_book(meta: dict) -> dict:
 
 
 def schedule_meeting(book_query: str, date_iso: str, picker_query: str) -> dict:
+    gitwrite.sync()
     book = cr.find_book(book_query)
     if not book:
         raise WriteError(f"No book matching {book_query!r} — add it first with /oliver add-book.")
@@ -91,7 +92,6 @@ def schedule_meeting(book_query: str, date_iso: str, picker_query: str) -> dict:
         "type": ["Book"], "location": None, "notes": None, "placeholder": True,
     }, indent=2, ensure_ascii=False) + "\n")
 
-    gitwrite.sync()
     gitwrite.commit_paths(
         [bpath, mpath],
         f"Schedule {book['title']} for {day} (picked by {member['name']})",
