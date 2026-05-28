@@ -25,9 +25,23 @@ CREATE TABLE IF NOT EXISTS memories (
     subject    TEXT,                              -- e.g. a member slug
     note       TEXT NOT NULL,
     source     TEXT,                              -- who/what recorded it
+    source_user_id TEXT,
+    source_message_id TEXT,
+    confidence REAL NOT NULL DEFAULT 1.0,
+    status     TEXT NOT NULL DEFAULT 'active',     -- active | deleted
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_memories_subject ON memories(subject);
+CREATE INDEX IF NOT EXISTS idx_memories_status ON memories(status);
+
+CREATE TABLE IF NOT EXISTS member_identities (
+    discord_user_id TEXT PRIMARY KEY,
+    member_slug     TEXT NOT NULL,
+    linked_by       TEXT,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_member_identities_slug ON member_identities(member_slug);
 
 CREATE TABLE IF NOT EXISTS conversations (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -110,10 +124,30 @@ def connect() -> sqlite3.Connection:
     return conn
 
 
+def _columns(conn: sqlite3.Connection, table: str) -> set[str]:
+    return {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Small additive migrations for long-lived Oliver SQLite files."""
+    memory_cols = _columns(conn, "memories")
+    additions = {
+        "source_user_id": "TEXT",
+        "source_message_id": "TEXT",
+        "confidence": "REAL NOT NULL DEFAULT 1.0",
+        "status": "TEXT NOT NULL DEFAULT 'active'",
+    }
+    for col, spec in additions.items():
+        if col not in memory_cols:
+            conn.execute(f"ALTER TABLE memories ADD COLUMN {col} {spec}")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_memories_status ON memories(status)")
+
+
 def _ensure_schema() -> None:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with connect() as conn:
         conn.executescript(_SCHEMA)
+        _migrate(conn)
 
 
 _ensure_schema()
@@ -125,18 +159,24 @@ def _now() -> str:
 
 # ── Memories ─────────────────────────────────────────────────────────────────
 def add_memory(note: str, *, scope: str = "general", subject: str | None = None,
-               source: str | None = None) -> int:
+               source: str | None = None, source_user_id: str | None = None,
+               source_message_id: str | None = None, confidence: float = 1.0) -> int:
     with connect() as conn:
         cur = conn.execute(
-            "INSERT INTO memories (scope, subject, note, source) VALUES (?, ?, ?, ?)",
-            (scope, subject, note, source),
+            "INSERT INTO memories "
+            "(scope, subject, note, source, source_user_id, source_message_id, confidence) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (scope, subject, note, source, source_user_id, source_message_id, confidence),
         )
         return cur.lastrowid
 
 
 def get_memories(*, subject: str | None = None, scope: str | None = None,
                  query: str | None = None, limit: int = 50) -> list[dict]:
-    sql = "SELECT scope, subject, note, created_at FROM memories WHERE 1=1"
+    sql = (
+        "SELECT id, scope, subject, note, source, source_user_id, source_message_id, "
+        "confidence, created_at FROM memories WHERE status = 'active'"
+    )
     args: list = []
     if subject:
         sql += " AND subject = ?"; args.append(subject)
@@ -147,6 +187,66 @@ def get_memories(*, subject: str | None = None, scope: str | None = None,
     sql += " ORDER BY id DESC LIMIT ?"; args.append(limit)
     with connect() as conn:
         return [dict(r) for r in conn.execute(sql, args)]
+
+
+def update_memory(memory_id: int, note: str) -> bool:
+    with connect() as conn:
+        cur = conn.execute(
+            "UPDATE memories SET note = ? WHERE id = ? AND status = 'active'",
+            (note, memory_id),
+        )
+        return cur.rowcount > 0
+
+
+def delete_memory(memory_id: int) -> bool:
+    with connect() as conn:
+        cur = conn.execute(
+            "UPDATE memories SET status = 'deleted' WHERE id = ? AND status = 'active'",
+            (memory_id,),
+        )
+        return cur.rowcount > 0
+
+
+# ── Discord identity map ─────────────────────────────────────────────────────
+def link_member_identity(discord_user_id: str, member_slug: str, *, linked_by: str | None = None) -> None:
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO member_identities (discord_user_id, member_slug, linked_by, updated_at) "
+            "VALUES (?, ?, ?, ?) ON CONFLICT(discord_user_id) DO UPDATE SET "
+            "member_slug=excluded.member_slug, linked_by=excluded.linked_by, "
+            "updated_at=excluded.updated_at",
+            (discord_user_id, member_slug, linked_by, _now()),
+        )
+
+
+def member_slug_for_user(discord_user_id: str | None) -> str | None:
+    if not discord_user_id:
+        return None
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT member_slug FROM member_identities WHERE discord_user_id = ?",
+            (discord_user_id,),
+        ).fetchone()
+    return row["member_slug"] if row else None
+
+
+def identity_for_member(member_slug: str) -> dict | None:
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT discord_user_id, member_slug, linked_by, created_at, updated_at "
+            "FROM member_identities WHERE member_slug = ? ORDER BY updated_at DESC LIMIT 1",
+            (member_slug,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def list_member_identities() -> list[dict]:
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT discord_user_id, member_slug, linked_by, created_at, updated_at "
+            "FROM member_identities ORDER BY member_slug"
+        ).fetchall()
+    return [dict(r) for r in rows]
 
 
 # ── Conversations + rolling summary ──────────────────────────────────────────

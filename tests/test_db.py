@@ -31,6 +31,37 @@ class TestMemories:
         assert len(sea) == 1
         assert "sea" in sea[0]["note"]
 
+    def test_update_and_delete(self, fresh_db):
+        db = fresh_db
+        mid = db.add_memory("old note", source_user_id="u1", source_message_id="m1")
+        assert db.update_memory(mid, "new note")
+        out = db.get_memories()
+        assert out[0]["note"] == "new note"
+        assert out[0]["source_user_id"] == "u1"
+        assert out[0]["source_message_id"] == "m1"
+        assert db.delete_memory(mid)
+        assert db.get_memories() == []
+
+
+class TestMemberIdentities:
+    def test_link_and_lookup(self, fresh_db):
+        db = fresh_db
+        db.link_member_identity("123", "jamie", linked_by="admin")
+        assert db.member_slug_for_user("123") == "jamie"
+        assert db.member_slug_for_user("999") is None
+        row = db.identity_for_member("jamie")
+        assert row["discord_user_id"] == "123"
+        assert row["linked_by"] == "admin"
+
+    def test_relink_updates(self, fresh_db):
+        db = fresh_db
+        db.link_member_identity("123", "jamie")
+        db.link_member_identity("123", "tom")
+        assert db.member_slug_for_user("123") == "tom"
+        rows = db.list_member_identities()
+        assert len(rows) == 1
+        assert rows[0]["member_slug"] == "tom"
+
 
 class TestFeedback:
     def test_response_log_and_lookup(self, fresh_db):

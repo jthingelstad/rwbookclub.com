@@ -100,6 +100,10 @@ def _books_signature() -> tuple:
     return tuple(parts)
 
 
+def _today_iso() -> str:
+    return datetime.now(timezone.utc).date().isoformat()
+
+
 def books() -> list[dict]:
     """Books enriched with their derived meeting + picker fields (keeps `picker` too).
 
@@ -112,10 +116,13 @@ def books() -> list[dict]:
 
     mbs = _earliest_meeting_by_book()
     member_by_slug = {m["slug"]: m for m in members()}
+    today = _today_iso()
     out = []
     for b in _load_json_dir("books"):
         mt = mbs.get(b["slug"])
         md = mt.get("date") if mt else None
+        is_upcoming = bool(mt and mt.get("placeholder") and (md or "")[:10] >= today)
+        is_read = bool(md and not is_upcoming)
         pnames, pslugs = [], []
         for ps in b.get("picker") or []:
             mem = member_by_slug.get(ps)
@@ -128,6 +135,8 @@ def books() -> list[dict]:
             "meetingDate": md,
             "year": int(md[:4]) if md else None,
             "placeholder": bool(mt.get("placeholder")) if mt else False,
+            "isUpcoming": is_upcoming,
+            "isRead": is_read,
             "meetingNotes": (mt.get("notes") if mt else None),
             "meetingLocation": (mt.get("location") if mt else None),
             "pickerName": pnames[0] if pnames else None,
@@ -159,6 +168,8 @@ def _book_brief(b: dict) -> dict:
         "yearRead": b.get("year"),
         "pickedBy": b.get("pickerName"),
         "placeholder": bool(b.get("placeholder")),
+        "isUpcoming": bool(b.get("isUpcoming")),
+        "isRead": bool(b.get("isRead")),
         # OL subject tags — up to 5 — give Oliver thematic detail beyond the 11 topics.
         "subjects": subjects[:5] if subjects else None,
     }
@@ -372,10 +383,9 @@ def upcoming_meetings() -> list[dict]:
     is doing double-duty for "approximate date" and "future" — if the meeting
     date has passed, it's no longer upcoming regardless of whether someone
     flipped the flag yet."""
-    today = datetime.now(timezone.utc).date().isoformat()
     future = [
         b for b in books()
-        if b.get("placeholder") and (b.get("meetingDate") or "")[:10] >= today
+        if b.get("isUpcoming")
     ]
     future.sort(key=lambda b: b.get("meetingDate") or "")
     return [
@@ -387,7 +397,7 @@ def upcoming_meetings() -> list[dict]:
 
 
 def club_stats() -> dict:
-    read = [b for b in books() if b.get("meetingDate") and not b.get("placeholder")]
+    read = [b for b in books() if b.get("isRead")]
     topics = Counter(b.get("topic") or "Uncategorized" for b in read)
     years = Counter(b.get("year") for b in read if b.get("year"))
     pickers = Counter(b.get("pickerName") for b in read if b.get("pickerName"))
@@ -416,7 +426,7 @@ def pending_reviews(name_or_slug: str) -> dict | None:
     if not m:
         return None
     reviewed = {r.get("book") for r in reviews() if r.get("member") == m["slug"]}
-    read = [b for b in books() if b.get("meetingDate") and not b.get("placeholder")]
+    read = [b for b in books() if b.get("isRead")]
     pending = [_book_brief(b) for b in read if b.get("slug") not in reviewed]
     pending.sort(key=lambda x: x["yearRead"] or 0, reverse=True)
     return {"member": m["name"], "count": len(pending), "books": pending}

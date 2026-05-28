@@ -46,3 +46,17 @@ class TestDispatchHappyPaths:
         from agent.tools import dispatch
         result = json.loads(dispatch("upcoming_meetings", {}, {}))
         assert isinstance(result, list)
+
+    def test_remember_records_source_metadata(self, fresh_db):
+        from agent.tools import dispatch
+
+        result = json.loads(dispatch(
+            "remember",
+            {"note": "likes infrastructure books", "scope": "member", "subject": "nick"},
+            {"speaker": "Nick", "speaker_user_id": "u1", "source_message_id": "m1"},
+        ))
+        assert result["saved"] is True
+        memories = fresh_db.get_memories(subject="nick")
+        assert memories[0]["source"] == "Nick"
+        assert memories[0]["source_user_id"] == "u1"
+        assert memories[0]["source_message_id"] == "m1"

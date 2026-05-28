@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 import yaml
 
 from corpus.paths import DATA_DIR
+from corpus.validate import validate_data_dir
 from agent import corpus_read as cr
 from agent import gitwrite
 
@@ -60,6 +61,14 @@ def _existing(path) -> dict:
     return data or {}
 
 
+def _validate_or_raise() -> None:
+    errors = validate_data_dir(DATA_DIR)
+    if errors:
+        preview = "; ".join(errors[:3])
+        more = f" (+{len(errors) - 3} more)" if len(errors) > 3 else ""
+        raise ReviewError(f"Corpus validation failed: {preview}{more}")
+
+
 def write_review(book_query: str, member_name: str, *, rating: str | None = None,
                  review: str | None = None, recommend: str | None = None,
                  discussion: str | None = None, quote: str | None = None) -> dict:
@@ -79,6 +88,7 @@ def write_review(book_query: str, member_name: str, *, rating: str | None = None
         raise ReviewError("A review needs at least a rating, a DNF, or some text.")
 
     path = REVIEWS_DIR / f"{book['slug']}--{member['slug']}.md"
+    previous_text = path.read_text() if path.exists() else None
     prev = _existing(path)
     front = {
         "id": prev.get("id") or f"rev_{uuid.uuid4().hex[:16]}",
@@ -96,7 +106,15 @@ def write_review(book_query: str, member_name: str, *, rating: str | None = None
     path.write_text(f"---\n{fm}---\n\n{body}\n" if body else f"---\n{fm}---\n")
 
     verb = "Update" if prev else "Add"
-    sha = gitwrite.commit_paths([path], f"{verb} review of {book['title']} by {member['name']}")
+    try:
+        _validate_or_raise()
+        sha = gitwrite.commit_paths([path], f"{verb} review of {book['title']} by {member['name']}")
+    except Exception:
+        if previous_text is None:
+            path.unlink(missing_ok=True)
+        else:
+            path.write_text(previous_text)
+        raise
     return {
         "book": book["title"],
         "member": member["name"],

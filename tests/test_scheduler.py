@@ -11,6 +11,8 @@ def _fake_book(title, slug, *, picker=None, date=None, placeholder=False):
     return {
         "slug": slug, "title": title, "authors": ["A"],
         "meetingDate": date, "placeholder": placeholder, "pickerName": picker,
+        "isUpcoming": placeholder,
+        "isRead": bool(date and not placeholder),
     }
 
 

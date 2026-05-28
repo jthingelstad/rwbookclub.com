@@ -18,6 +18,7 @@ import asyncio
 import logging
 import re
 import subprocess
+from collections import defaultdict
 
 import discord
 
@@ -61,6 +62,7 @@ class OliverClient(discord.Client):
 
 client = OliverClient()
 commands.setup(client)  # attach the /oliver group + stash the client reference
+_channel_locks: defaultdict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
 
 
 def _check_dirty_tree() -> str | None:
@@ -143,14 +145,16 @@ async def on_message(message: discord.Message) -> None:
     if not question:
         return
 
-    async with message.channel.typing():
-        try:
-            reply = await asyncio.to_thread(
-                oliver.answer, question, str(message.channel.id), message.author.display_name
-            )
-        except Exception:
-            log.exception("Oliver failed to answer")
-            reply = "Sorry — I hit a snag answering that. Try me again in a moment."
+    async with _channel_locks[message.channel.id]:
+        async with message.channel.typing():
+            try:
+                reply = await asyncio.to_thread(
+                    oliver.answer, question, str(message.channel.id),
+                    message.author.display_name, str(message.author.id), str(message.id),
+                )
+            except Exception:
+                log.exception("Oliver failed to answer")
+                reply = "Sorry — I hit a snag answering that. Try me again in a moment."
 
     # Post the reply. message.reply can fail if the original was deleted, the bot
     # lacks Send Messages / Read Message History, or Discord HTTPs out — try a plain

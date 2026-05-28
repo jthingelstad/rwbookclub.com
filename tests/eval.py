@@ -30,11 +30,45 @@ for ext in ("", "-wal", "-shm"):
 
 import anthropic  # noqa: E402
 
-from agent import oliver as oliver_mod  # noqa: E402
+from agent import db, oliver as oliver_mod  # noqa: E402
 
 CLIENT = anthropic.Anthropic()
 MODEL = "claude-sonnet-4-6"
 LOG_PATH = pathlib.Path("oliver-test-log.md")
+FAKE_MEMBER_IDS = {
+    "Jamie": "eval-user-jamie",
+    "Erik": "eval-user-erik",
+    "Tom": "eval-user-tom",
+    "Nick": "eval-user-nick",
+    "Loren": "eval-user-loren",
+}
+
+GOLDEN_SINGLE = [
+    {"category": "identity", "speaker": "Jamie", "question": "who do you think is asking?"},
+    {"category": "memory", "speaker": "Nick", "question": "remember that I like weird infrastructure books"},
+    {"category": "grounding", "speaker": "Tom", "question": "what are we reading next?"},
+    {"category": "past_placeholder", "speaker": "Jamie", "question": "did we already read Patterns in Nature?"},
+]
+
+GOLDEN_MULTI = [
+    {
+        "category": "multi_turn_grounding",
+        "speaker": "Loren",
+        "turns": [
+            "Have we read anything by Michael Pollan?",
+            "Which one was most recent?",
+            "Who picked that one?",
+        ],
+    },
+    {
+        "category": "memory_followup",
+        "speaker": "Nick",
+        "turns": [
+            "remember that I bounce off business books unless they are really sharp",
+            "based on that, what club read would you steer me away from?",
+        ],
+    },
+]
 
 
 # ── Tool-call tracing ────────────────────────────────────────────────────────
@@ -97,6 +131,8 @@ Cover the categories (each represented at least once across the single-turns):
 - logistics — what's next / when's our meeting / has anyone scheduled
 - stats — how many books, what's the most-read topic, etc.
 - opinions — member preferences / discussion follow-ups
+- identity — recognizes the speaker through linked Discord identity, not name vibes
+- memory — saves or recalls durable taste/preference notes appropriately
 - edge_case — ambiguous wording, misspelling, out-of-corpus, multi-step
 
 For multi-turns, each turn should naturally build on prior context (we're testing whether Oliver tracks the conversation, not just answers in isolation).
@@ -145,7 +181,9 @@ JUDGE_SYSTEM = (
     "public history) he may speak from general knowledge but must lead with an explicit "
     "off-corpus marker (\"outside our reading list…\" / \"not in our corpus, but…\"). "
     "Persona: warm, opinionated, brief (≤3 sentences usually), no markdown headings, "
-    "no help-desk tone, no sign-offs. Italics around book titles in Discord are fine."
+    "no help-desk tone, no sign-offs. Italics around book titles in Discord are fine. "
+    "Identity/memory: should use linked member identity when supplied, remember durable "
+    "member preferences when explicitly useful, and not invent personal facts."
 )
 
 JUDGE_USER = """Evaluate this interaction.
@@ -163,12 +201,13 @@ Rate 1–5 (5 = optimal):
 - tool_choice: right tool(s), right inputs, no missing/extra lookups
 - accuracy: claims grounded in tool output; no hallucination; admits unknowns
 - relevance: actually answers the question asked
-- tone: in-voice for a club member; natural, brief, not help-desk-y{context_axis}
+- tone: in-voice for a club member; natural, brief, not help-desk-y
+- identity_memory: uses speaker identity and durable memory appropriately; no spoofing or invented preferences{context_axis}
 
 List CRITICAL ISSUES — anything that scored ≤3 on any axis, any factual error, any wrong/missing tool call. Be specific.
 
 Return ONLY valid JSON:
-{{"tool_choice": int, "accuracy": int, "relevance": int, "tone": int{context_field}, "critical_issues": [strings], "notes": "1–2 sentence assessment"}}"""
+{{"tool_choice": int, "accuracy": int, "relevance": int, "tone": int, "identity_memory": int{context_field}, "critical_issues": [strings], "notes": "1–2 sentence assessment"}}"""
 
 
 def judge_interaction(question, speaker, tools, reply, prior_turns=None):
@@ -207,7 +246,10 @@ def judge_interaction(question, speaker, tools, reply, prior_turns=None):
 # ── Running interactions ─────────────────────────────────────────────────────
 def run_single(q: dict, channel_id: str) -> dict:
     with trace_dispatch() as tools:
-        reply = oliver_mod.answer(q["question"], channel_id=channel_id, speaker=q["speaker"])
+        reply = oliver_mod.answer(
+            q["question"], channel_id=channel_id, speaker=q["speaker"],
+            speaker_user_id=FAKE_MEMBER_IDS.get(q["speaker"]),
+        )
     return {**q, "tools": tools, "reply": reply}
 
 
@@ -215,7 +257,10 @@ def run_multi(conv: dict, channel_id: str) -> list[dict]:
     out = []
     for turn in conv["turns"]:
         with trace_dispatch() as tools:
-            reply = oliver_mod.answer(turn, channel_id=channel_id, speaker=conv["speaker"])
+            reply = oliver_mod.answer(
+                turn, channel_id=channel_id, speaker=conv["speaker"],
+                speaker_user_id=FAKE_MEMBER_IDS.get(conv["speaker"]),
+            )
         out.append({"question": turn, "speaker": conv["speaker"],
                     "tools": tools, "reply": reply})
     return out
@@ -234,6 +279,8 @@ def fmt_tools(tools):
 
 def fmt_scores(j):
     s = f"tool={j['tool_choice']} acc={j['accuracy']} rel={j['relevance']} tone={j['tone']}"
+    if j.get("identity_memory") is not None:
+        s += f" idmem={j['identity_memory']}"
     if j.get("context_retention") is not None:
         s += f" ctx={j['context_retention']}"
     return s
@@ -277,7 +324,7 @@ def round_summary(singles, multis):
         return round(sum(vals) / len(vals), 2) if vals else 0
     fails = sum(
         1 for j in all_j
-        if min(j["tool_choice"], j["accuracy"], j["relevance"], j["tone"]) <= 3
+        if min(j["tool_choice"], j["accuracy"], j["relevance"], j["tone"], j["identity_memory"]) <= 3
     )
     crit = sum(len(j.get("critical_issues") or []) for j in all_j)
     avg_ctx = avg("context_retention")
@@ -287,7 +334,8 @@ def round_summary(singles, multis):
         f"- {n} interactions ({len(singles)} single + "
         f"{sum(len(t) for _, t, _ in multis)} multi-turn)\n"
         f"- Avg scores: tool={avg('tool_choice')}  accuracy={avg('accuracy')}  "
-        f"relevance={avg('relevance')}  tone={avg('tone')}{ctx_note}\n"
+        f"relevance={avg('relevance')}  tone={avg('tone')}  "
+        f"identity_memory={avg('identity_memory')}{ctx_note}\n"
         f"- Interactions with any score ≤3: **{fails}**\n"
         f"- Critical issues flagged: **{crit}**\n"
     )
@@ -304,7 +352,11 @@ def main() -> None:
 
     print(f"Round {args.round}: generating {args.n_single} single + {args.n_multi} multi…")
     t0 = time.time()
+    for name, user_id in FAKE_MEMBER_IDS.items():
+        db.link_member_identity(user_id, name.lower(), linked_by="eval")
     qs = generate_questions(args.round, args.n_single, args.n_multi)
+    qs["single"] = GOLDEN_SINGLE + qs["single"]
+    qs["multi"] = GOLDEN_MULTI + qs["multi"]
     print(f"  questions generated in {time.time()-t0:.1f}s")
 
     print("Running single-turns…")

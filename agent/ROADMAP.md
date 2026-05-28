@@ -10,13 +10,13 @@ member**, not a foreign bot.
 | Class | Examples | Home |
 |---|---|---|
 | **A — Canonical club knowledge** | books, authors, meetings, members, finalized reviews, awards | **Git**, as per-entity text files in `corpus/data/` (source of truth) |
-| **B — Oliver's private memory/state** | conversation summaries, member taste notes, draft reviews, reminders, cost | **SQLite** on Oliver's host (gitignored, backed up) |
-| **C — B→A flow** | a review being collected | SQLite draft → committed to Git on confirm |
+| **B — Oliver's private memory/state** | conversation summaries, member taste notes, Discord identity links, reminders, usage/cost | **SQLite** on Oliver's host (gitignored, backed up) |
+| **C — B→A flow** | a review being submitted | Discord form → validated corpus write → committed to Git |
 
 Consequences: git history is the club's operational audit log; the static site
 builds from committed text; member contribution is enabled for free (the
 contributable surface — corpus + code — is already text-in-Git). Oliver is a
-**self-hosted Claude API agentic loop** (`claude-opus-4-7`, prompt caching,
+**self-hosted Claude API agentic loop** (`claude-sonnet-4-6`, prompt caching,
 adaptive thinking) with a **manual tool-use loop** so irreversible/outward
 actions are gated. Hosting + ops reuse the Weekly Thing pattern (process
 supervisor, SQLite backup, host `.env`).
@@ -33,23 +33,26 @@ idempotent) instead of expiring Airtable URLs. Airtable retired to a read-only
 cold backup; `refresh.yml` removed; CLAUDE.md + memories updated to Git-canonical.
 
 **Phase 2 — Oliver's spine (agent loop + memory).** ✅ **Done.**
-Convert `agent/oliver.py` from one-shot to a manual tool-use loop. Stand up
-SQLite (schema + migrations + backup) for class B: `memories`, `member_state`,
-`reminders`, `review_drafts`, `conversations`, `cost_log`. Tools: read/authority
-(`search_books`, `get_book`, `member_history`, `find_reviews`, `upcoming_meetings`,
-`club_stats`) over the per-entity corpus; memory (`remember`, `recall`,
-`set_reminder`). Per-channel conversation history + rolling summary.
+`agent/oliver.py` is a manual tool-use loop with prompt caching, per-channel
+conversation history, rolling summaries, and usage logging. SQLite class-B state
+holds durable memories with provenance, reminders, conversation summaries,
+feedback, usage logs, scheduler dedup, and private Discord identity links. Tools:
+read/authority (`find_books`, `search_books`, `get_book`, `member_history`,
+`get_author`, `club_awards`, `upcoming_meetings`, `club_stats`, `pending_reviews`)
+plus memory/reminder tools (`remember`, `recall`, `set_reminder`).
 
 **Phase 3 — Reviews (the wedge; exercises B→A).** ✅ **Done.**
-Guided review flow in DM/thread: draft in SQLite → on confirm, write
-`reviews/<book>--<member>.md`, commit, push → site shows it. Proactive nudges
-("you attended the Caste meeting but haven't reviewed it"). Write tools gated:
-draft shown for confirmation before commit.
+Members submit reviews through a Discord modal. Oliver resolves the member through
+the private Discord-user → member identity map, writes
+`reviews/<book>--<member>.md`, validates the corpus, commits, and pushes → site
+shows it. Submitting the modal is the confirmation; validation failures roll back
+the local file before any commit.
 
 **Phase 4 — Meetings & operations.** ✅ **Done.**
 `/oliver add-book` (fetches metadata + cover from Open Library, writes a book file) and
 `/oliver schedule` (book + date + picker → writes a placeholder meeting + sets the book's
-picker), admin-gated, via `agent/corpus_write.py` + `agent/gitwrite.py`. An in-process
+picker), admin-gated, via `agent/corpus_write.py` + `agent/gitwrite.py`; writes validate
+the corpus before commit and create missing author records for new books. An in-process
 `discord.ext.tasks` loop (`agent/scheduler.py`, pure `due_notifications`) posts proactive
 upcoming-meeting reminders, a review nudge for the most-recent read, and milestone/anniversary
 notes to `DISCORD_MAIN_CHANNEL_ID` — deduped via a `notifications_sent` table; `/oliver tick`
@@ -59,21 +62,25 @@ stripped the Airtable cruft, plus consolidating the slash commands under `/olive
 **Phase 5 — "6th member" polish.** ✅ **Done.**
 Oliver is now present in the main channel, not just `#ask-oliver`: he answers there only when
 addressed — @mentioned, called "Oliver" by name, or replied to (`bot.py` `_is_addressed` /
-`_strip_address`; each channel keeps its own conversation thread + rolling summary). The persona
-was deepened to read like a long-time member (real opinions, group-channel etiquette, no help-desk
-tone) and `_question_block` now injects both the speaker's remembered tastes and club-scoped lore,
-so replies personalize. Milestone/anniversary celebration shipped in Phase 4's scheduler.
+`_strip_address`; each channel keeps its own conversation thread + rolling summary and is
+serialized through a per-channel lock). The persona was deepened to read like a long-time member
+(real opinions, group-channel etiquette, no help-desk tone) and `_question_block` now injects
+both the speaker's remembered tastes and club-scoped lore, so replies personalize. Admin memory
+commands (`/oliver memories`, `edit-memory`, `forget`) provide a repair path for bad durable
+notes. Milestone/anniversary celebration shipped in Phase 4's scheduler.
 Awards facilitation (a write path + possible voting flow) is **deferred** — the corpus, site
 rendering, and a sample record already exist, so it's a self-contained later slice.
 
 ## Cross-cutting (from Phase 2 on)
 
-- **Git write path:** Oliver pulls → writes file(s) → commits with a descriptive
-  message → pushes to `main` (auto-deploys); handle the rare push race with
-  pull/rebase + retry.
+- **Git write path:** Oliver pulls → writes file(s) → validates the corpus → commits with a
+  descriptive message → pushes to `main` (auto-deploys); local edits roll back on validation
+  failure, and push races get a pull/rebase + retry.
 - **Guardrails:** promote every irreversible/outward action (commit/push, post, DM)
   to a dedicated, confirmable tool; admin-gate club-wide ops.
 - **Hosting/ops:** Weekly Thing pattern; SQLite backup (litestream or periodic dump).
 - **Iteration:** guild-scoped slash-command sync (`DISCORD_SERVER_ID`) for instant updates.
 - **Cost/observability:** log usage per turn; keep prompt caching on the system +
   corpus + tool-definition prefix.
+- **Evaluation:** `tests/eval.py` mixes generated questions with golden Discord-style
+  conversations for grounding, tone, identity, memory, and multi-turn context.

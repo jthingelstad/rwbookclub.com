@@ -46,6 +46,22 @@ def test_add_book_sync_failure_does_not_write_file(monkeypatch, tmp_path):
     assert not (data_dir / "books" / "new-book.json").exists()
 
 
+def test_add_book_creates_missing_author_records(monkeypatch, tmp_path):
+    from agent import corpus_write
+
+    data_dir = tmp_path / "data"
+    (data_dir / "books").mkdir(parents=True)
+    monkeypatch.setattr(corpus_write, "DATA_DIR", data_dir)
+    monkeypatch.setattr(corpus_write.gitwrite, "sync", lambda: None)
+    monkeypatch.setattr(corpus_write.gitwrite, "commit_paths", lambda *_args, **_kwargs: "sha")
+
+    corpus_write.write_book({"title": "New Book", "authors": ["New Author"]})
+
+    assert (data_dir / "books" / "new-book.json").exists()
+    author = json.loads((data_dir / "authors" / "new-author.json").read_text())
+    assert author == {"name": "New Author", "bio": None}
+
+
 def test_schedule_sync_failure_does_not_touch_book(monkeypatch, tmp_path):
     from agent import corpus_write
     from agent.gitwrite import GitWriteError

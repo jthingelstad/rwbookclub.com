@@ -29,13 +29,13 @@ def _parse(dt: str | None) -> datetime | None:
 
 def due_notifications(now: datetime, already_sent: set[str]) -> list[tuple[str, str]]:
     books = cr.books()
-    read = [b for b in books if b.get("meetingDate") and not b.get("placeholder")]
+    read = [b for b in books if b.get("isRead")]
     out: list[tuple[str, str]] = []
 
     # 1. Upcoming-meeting reminders — placeholder meetings within the window.
     for b in books:
         md = _parse(b.get("meetingDate"))
-        if not b.get("placeholder") or not md:
+        if not b.get("isUpcoming") or not md:
             continue
         days = (md - now).total_seconds() / 86400
         if 0 <= days <= REMIND_WITHIN_DAYS:

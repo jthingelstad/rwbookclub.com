@@ -74,13 +74,20 @@ async def member_autocomplete(interaction: discord.Interaction, current: str):
     return out
 
 
+def _linked_member_for_user(user_id: int) -> dict | None:
+    slug = db.member_slug_for_user(str(user_id))
+    return corpus_read.find_member(slug) if slug else None
+
+
 # ── Modals ───────────────────────────────────────────────────────────────────
 class ReviewModal(discord.ui.Modal):
     """The /oliver review form — five inputs, one submit, written to the Git corpus."""
 
-    def __init__(self, slug: str, title: str, existing: dict | None = None) -> None:
+    def __init__(self, slug: str, title: str, member_slug: str,
+                 existing: dict | None = None) -> None:
         super().__init__(title=f"Review: {title}"[:45])
         self.slug = slug
+        self.member_slug = member_slug
         existing = existing or {}
         rating_default = "DNF" if existing.get("dnf") else (
             str(existing["rating"]) if existing.get("rating") else None)
@@ -105,7 +112,7 @@ class ReviewModal(discord.ui.Modal):
         await interaction.response.defer(ephemeral=True)  # git write may take a few seconds
         try:
             res = await asyncio.to_thread(
-                reviews.write_review, self.slug, interaction.user.display_name,
+                reviews.write_review, self.slug, self.member_slug,
                 rating=self.rating.value, review=self.review.value,
                 recommend=self.recommend.value, discussion=self.discussion.value,
                 quote=self.quote.value,
@@ -140,14 +147,61 @@ async def oliver_stats(interaction: discord.Interaction) -> None:
     )
 
 
+@oliver_cmds.command(name="link-member", description="Link a Discord user to a club member (admin).")
+@discord.app_commands.describe(member="Club member", user="Discord user")
+@discord.app_commands.autocomplete(member=member_autocomplete)
+@admin_only
+async def link_member_cmd(interaction: discord.Interaction, member: str, user: discord.User) -> None:
+    m = corpus_read.find_member(member)
+    if not m:
+        await interaction.response.send_message("I couldn't find that member.", ephemeral=True)
+        return
+    db.link_member_identity(str(user.id), m["slug"], linked_by=str(interaction.user.id))
+    await interaction.response.send_message(
+        f"Linked {user.mention} to {m['name']} (`{m['slug']}`).", ephemeral=True)
+
+
+@oliver_cmds.command(name="identities", description="Show Discord identity links (admin).")
+@admin_only
+async def identities_cmd(interaction: discord.Interaction) -> None:
+    rows = db.list_member_identities()
+    members = corpus_read.members()
+    if not rows:
+        missing = ", ".join(sorted(m["name"] for m in members if m.get("isCurrent")))
+        await interaction.response.send_message(
+            f"No Discord identities linked yet. Current members not linked: {missing}.",
+            ephemeral=True)
+        return
+    names = {m["slug"]: m.get("name") for m in members}
+    linked_slugs = {r["member_slug"] for r in rows}
+    lines = ["**Linked identities:**"]
+    for r in rows:
+        lines.append(f"• {names.get(r['member_slug'], r['member_slug'])}: <@{r['discord_user_id']}>")
+    missing = [m["name"] for m in members if m.get("isCurrent") and m["slug"] not in linked_slugs]
+    if missing:
+        lines.append("\n**Current members not linked:** " + ", ".join(sorted(missing)))
+    await interaction.response.send_message("\n".join(lines), ephemeral=True)
+
+
+@oliver_cmds.command(name="whoami", description="Check which club member Oliver has linked you to.")
+async def whoami_cmd(interaction: discord.Interaction) -> None:
+    member = _linked_member_for_user(interaction.user.id)
+    if member:
+        await interaction.response.send_message(
+            f"I have you linked as {member['name']}.", ephemeral=True)
+        return
+    await interaction.response.send_message(
+        "I don't have your Discord account linked to a club member yet.", ephemeral=True)
+
+
 @oliver_cmds.command(name="review", description="Log your review of a book the club has read.")
 @discord.app_commands.describe(book="The book you're reviewing")
 @discord.app_commands.autocomplete(book=book_autocomplete)
 async def review_cmd(interaction: discord.Interaction, book: str) -> None:
-    member = corpus_read.find_member(interaction.user.display_name)
+    member = _linked_member_for_user(interaction.user.id)
     if not member:
         await interaction.response.send_message(
-            "I can only log reviews from club members — ping Jamie if I've got your name wrong.",
+            "I can only log reviews from linked club members — ask an admin to run `/oliver link-member`.",
             ephemeral=True)
         return
     b = corpus_read.find_book(book)
@@ -161,7 +215,7 @@ async def review_cmd(interaction: discord.Interaction, book: str) -> None:
     if rp.exists():
         data, body = corpus_read.parse_frontmatter(rp.read_text())
         existing = {**(data or {}), "review": body}
-    await interaction.response.send_modal(ReviewModal(b["slug"], b["title"], existing))
+    await interaction.response.send_modal(ReviewModal(b["slug"], b["title"], member["slug"], existing))
 
 
 @oliver_cmds.command(name="add-book", description="Add a book to the corpus (admin) — fetches metadata from Open Library.")
@@ -230,6 +284,42 @@ async def oliver_feedback(interaction: discord.Interaction) -> None:
             q = (r.get("question") or "(no question recorded)")[:100]
             lines.append(f"• {r['user_name']}: \"{q}\"")
     await interaction.response.send_message("\n".join(lines), ephemeral=True)
+
+
+@oliver_cmds.command(name="memories", description="Search Oliver's durable memories (admin).")
+@discord.app_commands.describe(subject="Optional member slug or topic", query="Optional text search")
+@admin_only
+async def memories_cmd(interaction: discord.Interaction, subject: str | None = None,
+                       query: str | None = None) -> None:
+    rows = await asyncio.to_thread(db.get_memories, subject=subject, query=query, limit=10)
+    if not rows:
+        await interaction.response.send_message("No matching memories.", ephemeral=True)
+        return
+    lines = ["**Oliver memories:**"]
+    for r in rows:
+        scope = r.get("scope") or "general"
+        subj = f"/{r['subject']}" if r.get("subject") else ""
+        src = f" · source: {r['source']}" if r.get("source") else ""
+        lines.append(f"• `{r['id']}` [{scope}{subj}] {r['note']}{src}")
+    await interaction.response.send_message("\n".join(lines)[:config.MAX_DISCORD_LEN], ephemeral=True)
+
+
+@oliver_cmds.command(name="edit-memory", description="Edit one of Oliver's memories (admin).")
+@discord.app_commands.describe(memory_id="Memory id from /oliver memories", note="Replacement note")
+@admin_only
+async def edit_memory_cmd(interaction: discord.Interaction, memory_id: int, note: str) -> None:
+    ok = await asyncio.to_thread(db.update_memory, memory_id, note)
+    await interaction.response.send_message(
+        "Updated memory." if ok else "No active memory with that id.", ephemeral=True)
+
+
+@oliver_cmds.command(name="forget", description="Delete one of Oliver's memories (admin).")
+@discord.app_commands.describe(memory_id="Memory id from /oliver memories")
+@admin_only
+async def forget_cmd(interaction: discord.Interaction, memory_id: int) -> None:
+    ok = await asyncio.to_thread(db.delete_memory, memory_id)
+    await interaction.response.send_message(
+        "Forgot that memory." if ok else "No active memory with that id.", ephemeral=True)
 
 
 @oliver_cmds.command(name="tick", description="Run the proactive scheduler now (admin).")

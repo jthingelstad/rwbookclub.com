@@ -13,18 +13,20 @@ import sys
 
 import yaml
 
+from pathlib import Path
+
 from corpus.paths import DATA_DIR
 
 
-def _load_dir(name: str) -> dict[str, dict]:
-    return {p.stem: json.loads(p.read_text()) for p in sorted((DATA_DIR / name).glob("*.json"))}
+def _load_dir(data_dir: Path, name: str) -> dict[str, dict]:
+    return {p.stem: json.loads(p.read_text()) for p in sorted((data_dir / name).glob("*.json"))}
 
 
-def main() -> int:
-    books = _load_dir("books")
-    members = _load_dir("members")
-    meetings = _load_dir("meetings")
-    authors = _load_dir("authors")
+def validate_data_dir(data_dir: Path = DATA_DIR) -> list[str]:
+    books = _load_dir(data_dir, "books")
+    members = _load_dir(data_dir, "members")
+    meetings = _load_dir(data_dir, "meetings")
+    authors = _load_dir(data_dir, "authors")
 
     book_slugs = set(books)
     member_slugs = set(members)
@@ -45,20 +47,30 @@ def main() -> int:
             if bs not in book_slugs:
                 errors.append(f"meetings/{stem}: book '{bs}' does not exist")
 
-    for p in sorted((DATA_DIR / "reviews").glob("*.md")):
+    for p in sorted((data_dir / "reviews").glob("*.md")):
         fm = yaml.safe_load(p.read_text().split("---", 2)[1]) or {}
         if fm.get("book") not in book_slugs:
             errors.append(f"reviews/{p.stem}: book '{fm.get('book')}' does not exist")
         if fm.get("member") not in member_slugs:
             errors.append(f"reviews/{p.stem}: member '{fm.get('member')}' is not a member")
 
-    for stem, a in _load_dir("awards").items():
+    for stem, a in _load_dir(data_dir, "awards").items():
         for bs in a.get("books") or []:
             if bs not in book_slugs:
                 errors.append(f"awards/{stem}: book '{bs}' does not exist")
         for v in a.get("voters") or []:
             if v not in member_slugs:
                 errors.append(f"awards/{stem}: voter '{v}' is not a member")
+
+    return errors
+
+
+def main() -> int:
+    books = _load_dir(DATA_DIR, "books")
+    members = _load_dir(DATA_DIR, "members")
+    meetings = _load_dir(DATA_DIR, "meetings")
+    authors = _load_dir(DATA_DIR, "authors")
+    errors = validate_data_dir(DATA_DIR)
 
     if errors:
         print(f"✗ {len(errors)} dangling reference(s):", file=sys.stderr)

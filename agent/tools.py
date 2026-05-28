@@ -188,6 +188,8 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 scope=tool_input.get("scope", "general"),
                 subject=tool_input.get("subject"),
                 source=ctx.get("speaker"),
+                source_user_id=ctx.get("speaker_user_id"),
+                source_message_id=ctx.get("source_message_id"),
             )
             return _dump({"saved": True, "id": mid})
         if name == "recall":

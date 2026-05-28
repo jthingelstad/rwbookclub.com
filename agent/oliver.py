@@ -118,8 +118,11 @@ def _system_blocks() -> list[dict]:
     ]
 
 
-def _resolve_member(speaker: str | None) -> str | None:
-    """Speaker display-name → member slug, via the canonical resolver."""
+def _resolve_member(speaker: str | None, speaker_user_id: str | None = None) -> str | None:
+    """Discord user id → member slug, with display-name fallback for unlabeled chat."""
+    linked = db.member_slug_for_user(speaker_user_id)
+    if linked:
+        return linked
     if not speaker:
         return None
     m = cr.find_member(speaker)
@@ -157,10 +160,11 @@ def _text_of(content) -> str:
     return "\n".join(b.text for b in content if getattr(b, "type", None) == "text").strip()
 
 
-def answer(question: str, channel_id: str = "default", speaker: str | None = None) -> str:
+def answer(question: str, channel_id: str = "default", speaker: str | None = None,
+           speaker_user_id: str | None = None, source_message_id: str | None = None) -> str:
     """Answer one message. Synchronous — call via asyncio.to_thread from the bot."""
     client = _get_client()
-    member_slug = _resolve_member(speaker)
+    member_slug = _resolve_member(speaker, speaker_user_id)
 
     prior, summary = _history(channel_id)
     messages = prior + [
@@ -215,7 +219,13 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
             break
 
         messages.append({"role": "assistant", "content": resp.content})
-        ctx = {"channel_id": channel_id, "speaker": speaker, "member_slug": member_slug}
+        ctx = {
+            "channel_id": channel_id,
+            "speaker": speaker,
+            "speaker_user_id": speaker_user_id,
+            "source_message_id": source_message_id,
+            "member_slug": member_slug,
+        }
         results = [
             {"type": "tool_result", "tool_use_id": b.id, "content": dispatch(b.name, b.input, ctx)}
             for b in resp.content

@@ -9,12 +9,21 @@ from __future__ import annotations
 import json
 
 from corpus.paths import DATA_DIR, slugify
+from corpus.validate import validate_data_dir
 from agent import corpus_read as cr
 from agent import gitwrite
 
 
 class WriteError(Exception):
     """User-facing problem (missing title, unknown book/member) — surfaced in Discord."""
+
+
+def _validate_or_raise() -> None:
+    errors = validate_data_dir(DATA_DIR)
+    if errors:
+        preview = "; ".join(errors[:3])
+        more = f" (+{len(errors) - 3} more)" if len(errors) > 3 else ""
+        raise WriteError(f"Corpus validation failed: {preview}{more}")
 
 
 def _max_int(name: str, field: str) -> int:
@@ -57,10 +66,34 @@ def write_book(meta: dict) -> dict:
     }
     path = DATA_DIR / "books" / f"{slug}.json"
     existed = path.exists()
+    previous = path.read_text() if existed else None
+    author_previous: dict = {}
+    author_paths = []
     path.write_text(json.dumps(rec, indent=2, ensure_ascii=False) + "\n")
-    covers = _fetch_cover(slug, rec["olKey"])
-    gitwrite.commit_paths([path, *covers],
-                          f"{'Update' if existed else 'Add'} book: {title}")
+    try:
+        author_dir = DATA_DIR / "authors"
+        author_dir.mkdir(parents=True, exist_ok=True)
+        for author in rec["authors"]:
+            if not author:
+                continue
+            apath = author_dir / f"{slugify(author)}.json"
+            if apath.exists():
+                continue
+            author_previous[apath] = None
+            apath.write_text(json.dumps({"name": author, "bio": None}, indent=2, ensure_ascii=False) + "\n")
+            author_paths.append(apath)
+        _validate_or_raise()
+        covers = _fetch_cover(slug, rec["olKey"])
+        gitwrite.commit_paths([path, *author_paths, *covers],
+                              f"{'Update' if existed else 'Add'} book: {title}")
+    except Exception:
+        if previous is None:
+            path.unlink(missing_ok=True)
+        else:
+            path.write_text(previous)
+        for apath in author_previous:
+            apath.unlink(missing_ok=True)
+        raise
     return {"slug": slug, "title": title, "authors": rec["authors"],
             "hasCover": bool(covers), "updated": existed}
 
@@ -80,6 +113,7 @@ def schedule_meeting(book_query: str, date_iso: str, picker_query: str) -> dict:
 
     # Set the picker on the book file (preserve its other fields).
     bpath = DATA_DIR / "books" / f"{book['slug']}.json"
+    previous_book = bpath.read_text()
     braw = json.loads(bpath.read_text())
     braw["picker"] = [member["slug"]]
     bpath.write_text(json.dumps(braw, indent=2, ensure_ascii=False) + "\n")
@@ -92,8 +126,14 @@ def schedule_meeting(book_query: str, date_iso: str, picker_query: str) -> dict:
         "type": ["Book"], "location": None, "notes": None, "placeholder": True,
     }, indent=2, ensure_ascii=False) + "\n")
 
-    gitwrite.commit_paths(
-        [bpath, mpath],
-        f"Schedule {book['title']} for {day} (picked by {member['name']})",
-    )
+    try:
+        _validate_or_raise()
+        gitwrite.commit_paths(
+            [bpath, mpath],
+            f"Schedule {book['title']} for {day} (picked by {member['name']})",
+        )
+    except Exception:
+        bpath.write_text(previous_book)
+        mpath.unlink(missing_ok=True)
+        raise
     return {"book": book["title"], "date": day, "picker": member["name"]}

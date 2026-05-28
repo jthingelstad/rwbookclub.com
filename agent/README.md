@@ -26,25 +26,28 @@ agent/
   whole corpus — Oliver pulls specifics on demand via tools.
 - **Presence**: answers everything in `#ask-oliver`; in `DISCORD_MAIN_CHANNEL_ID` he speaks
   only when addressed — @mentioned, called "Oliver" by name, or replied to (`bot.py`
-  `_is_addressed`). Each channel keeps its own conversation thread + rolling summary.
+  `_is_addressed`). Each channel keeps its own conversation thread + rolling summary, and
+  messages are answered through a per-channel queue so group chat stays in order.
 - **Tools** (`tools.py`): `search_books`, `get_book`, `member_history`, `upcoming_meetings`,
   `club_stats`, `pending_reviews` (read the corpus), plus `remember`, `recall`, `set_reminder`
   (SQLite).
 - **Reviews** (`/oliver review`): members log reviews via a Discord form that writes to the
-  Git corpus (`reviews.py` → `gitwrite.py`) — see below.
+  Git corpus (`reviews.py` → `gitwrite.py`) — see below. Review identity comes from the
+  private Discord-user → member map, not mutable display names.
 - **Operations** (admin, `/oliver`): `add-book` (Open Library → book file + cover), `schedule`
-  (book + date + picker → a meeting), `stats`, `tick`, `feedback` (see below). Writes go
-  through `corpus_write.py`.
+  (book + date + picker → a meeting), `link-member`, `identities`, `stats`, `tick`, `feedback`,
+  and memory maintenance. Writes go through `corpus_write.py` and validate the corpus before
+  commit.
 - **Feedback** (any member): react 👍 or 👎 to any of Oliver's replies. The bot logs the
   reaction (user, message, question that prompted it) to SQLite and confirms with ✅. Use
   `/oliver feedback` (admin) for a quick summary plus the most recent 👍/👎 with context.
 - **Proactive scheduler** (`scheduler.py`): a daily loop posts upcoming-meeting reminders, a
   review nudge, and milestone/anniversary notes to `DISCORD_MAIN_CHANNEL_ID` — deduped, and a
   no-op until that channel id is set.
-- **Memory** (`db.py`): durable notes, per-channel conversation log + rolling summary,
-  reminders, and a usage log. Survives restarts.
-- **Speaker** is matched from the Discord display name to a club member (best-effort) so
-  Oliver can personalize and attribute reviews.
+- **Memory** (`db.py`): durable notes with provenance, per-channel conversation log + rolling
+  summary, reminders, usage log, feedback, and private identity links. Survives restarts.
+- **Speaker** is matched from the linked Discord user ID first, with display-name fallback only
+  for conversational personalization.
 
 ## Run it
 
@@ -79,20 +82,28 @@ that doesn't belong in the public corpus. On the deployment host, point `OLIVER_
 at durable storage and back it up (litestream or a periodic dump, matching the Weekly
 Thing pattern). Backup wiring is a deployment step, not in the repo.
 
+Admins can inspect and repair private state in Discord:
+
+- `/oliver link-member member:<slug> user:<Discord user>` links a stable Discord identity
+- `/oliver identities` shows current identity links
+- `/oliver memories [subject] [query]` searches durable memories
+- `/oliver edit-memory` and `/oliver forget` curate incorrect or stale memories
+
 ## Reviews (`/oliver review`)
 
 Members log book reviews with the `/oliver review` command: pick the book (autocomplete), fill the
 form (rating 1–5 or DNF, the review, recommend?, discussion quality, favorite quote), and
 submit. Oliver writes `corpus/data/reviews/<book>--<member>.md`, commits, and pushes to
-`main` — live after the deploy. Only recognized club members can submit, and submitting the
+`main` — live after the deploy. Only linked club members can submit, and submitting the
 form is the confirmation. `reviews.py` → `gitwrite.py` is the single write path (any future
-front-end reuses it). Set `OLIVER_GIT_PUSH=0` to commit locally without pushing (dev).
+front-end reuses it). Writes are rolled back locally if corpus validation fails before commit.
+Set `OLIVER_GIT_PUSH=0` to commit locally without pushing (dev).
 
 ## Tests
 
 ```bash
 pip install -r tests/requirements.txt    # one-time
-pytest tests/                             # 84 tests, ~0.6s
+pytest tests/                             # 93 tests, ~0.6s
 ```
 
 Pure helpers (`_is_addressed`, `_strip_address`, rating parsers, `parse_frontmatter`,
@@ -101,6 +112,10 @@ paths, db round-trips) all locked in. Tests use a scratch SQLite DB (`tests/conf
 sets `OLIVER_DB_PATH` before any agent module imports) and never touch the live state.
 `OLIVER_GIT_PUSH=0` + `OLIVER_GIT_DRYRUN=1` are set by the conftest as belt-and-suspenders
 against any accidental git activity.
+
+For behavioral quality, `python -m tests.eval --round N --note "..."` runs Oliver through
+generated plus golden Discord-style conversations and judges tool choice, grounding, tone,
+identity, memory use, and multi-turn context. It writes rounds to `oliver-test-log.md`.
 
 ## Discord setup
 
