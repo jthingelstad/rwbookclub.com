@@ -15,5 +15,19 @@
   "picker": [
     "loren",
     "jamie"
+  ],
+  "subjects": [
+    "Information Theory",
+    "Cognitive Science",
+    "Algorithms",
+    "Mathematics",
+    "Philosophy",
+    "Artificial intelligence",
+    "Machine Learning",
+    "Knowledge representation (information theory)",
+    "Social aspects",
+    "Information society",
+    "SCIENCE",
+    "System Theory"
   ]
 }

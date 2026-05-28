@@ -16,6 +16,14 @@ from agent import db
 # Tool definitions sent to the API. Order is stable so the prompt-cache prefix
 # (tools render before system) stays valid across requests.
 TOOLS = [
+    # Anthropic server-side web search — handled by the platform, not by dispatch().
+    # Use sparingly (see SYSTEM_PROMPT): corpus tools first; web only for specific
+    # world facts (dates, numbers, names) you'd otherwise guess at.
+    {
+        "type": "web_search_20250305",
+        "name": "web_search",
+        "max_uses": 3,
+    },
     {
         "name": "find_books",
         "description": "BEST FIRST CHOICE for any vague or exploratory question about books "

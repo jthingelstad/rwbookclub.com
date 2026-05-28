@@ -106,6 +106,7 @@ def _norm(s: str | None) -> str:
 
 
 def _book_brief(b: dict) -> dict:
+    subjects = b.get("subjects") or []
     return {
         "slug": b.get("slug"),
         "title": b.get("title"),
@@ -118,6 +119,8 @@ def _book_brief(b: dict) -> dict:
         "yearRead": b.get("year"),
         "pickedBy": b.get("pickerName"),
         "placeholder": bool(b.get("placeholder")),
+        # OL subject tags — up to 5 — give Oliver thematic detail beyond the 11 topics.
+        "subjects": subjects[:5] if subjects else None,
     }
 
 
@@ -177,6 +180,23 @@ def find_books(query: str, limit: int = 15) -> list[dict]:
             score += 40
         if q in _norm(b.get("subtitle")):
             score += 30
+        # OL subject tags — strong signal for thematic matching.
+        subjects_norm = [_norm(s) for s in b.get("subjects") or []]
+        if any(q == s for s in subjects_norm):
+            score += 45  # exact subject match
+        elif any(q in s for s in subjects_norm):
+            score += 20  # subject substring
+        else:
+            # Token-level fallback for multi-word queries: "urban planning" should
+            # surface books tagged "Urban economics" via the shared "urban" token.
+            q_tokens = [t for t in q.split() if len(t) > 2]
+            if q_tokens and subjects_norm:
+                hits = sum(
+                    1 for st in subjects_norm
+                    if any(tok in st for tok in q_tokens)
+                )
+                if hits:
+                    score += min(hits * 8, 24)
         if q in _norm(b.get("synopsis")):
             score += 10
         if score > 0:

@@ -14,5 +14,19 @@
   "synopsis": "Classic text on the human side of software engineering, containing essays on the management of software teams, projections about how computer languages and tools will evolve, and philosophical speculation. Unlike most other books about computing, Brooks' work has been remarkably enduring, remaining in print for at least four decades. The book is most famous for its statement of Brooks' Law: \"adding manpower to a late software project makes it later\".",
   "picker": [
     "david"
+  ],
+  "subjects": [
+    "Computer programming management",
+    "Addresses, essays, lectures",
+    "Software engineering",
+    "Electronic digital computers",
+    "Programming",
+    "Computer programming",
+    "MULTICS",
+    "Technologie logiciel",
+    "Gestion projet",
+    "Programmation (Informatique)",
+    "Gestion",
+    "Système exploitation 360"
   ]
 }

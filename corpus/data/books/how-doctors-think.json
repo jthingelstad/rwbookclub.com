@@ -14,5 +14,19 @@
   "synopsis": "A physician discusses the thought patterns and actions that lead to misdiagnosis on the part of healthcare providers and suggests methods that patients can use to help doctors assess conditions more accurately.",
   "picker": [
     "john"
+  ],
+  "subjects": [
+    "Logique médicale",
+    "Clinical Medicine",
+    "Prise de décision",
+    "Psychology",
+    "Physicians",
+    "Logic",
+    "Médecins",
+    "Médecine",
+    "Psychologie",
+    "Decision making",
+    "Medical logic",
+    "Jugement"
   ]
 }

@@ -14,5 +14,10 @@
   "synopsis": null,
   "picker": [
     "tom"
+  ],
+  "subjects": [
+    "nyt:paperback-nonfiction=2018-05-27",
+    "New York Times bestseller",
+    "Buddhism"
   ]
 }

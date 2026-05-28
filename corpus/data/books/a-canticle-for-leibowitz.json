@@ -15,5 +15,19 @@
   "picker": [
     "jamie",
     "erik"
+  ],
+  "subjects": [
+    "Hugo Award Winner",
+    "award:hugo_award=1961",
+    "award:hugo_award=novel",
+    "American Science fiction",
+    "apocalypse",
+    "nuclear war",
+    "civilization",
+    "science fiction",
+    "church versus state",
+    "Long Now Manual for Civilization",
+    "Monks",
+    "Monasticism and religious orders"
   ]
 }

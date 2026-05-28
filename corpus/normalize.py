@@ -21,6 +21,7 @@ from corpus.airtable import DATA_DIR
 BOOK_KEEP = [
     "bookId", "title", "subtitle", "authors", "topic", "fiction",
     "publicationYear", "pageCount", "isbn13", "olKey", "synopsis",
+    "subjects",  # OL subject tags backfilled via corpus.openlibrary_subjects
 ]
 MEMBER_KEEP = ["name", "isCurrent", "website"]
 
