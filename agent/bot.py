@@ -1,13 +1,16 @@
 """Oliver's Discord plumbing.
 
-Connects to Discord, answers messages in the #ask-oliver channel via Claude,
-exposes a /ping health check, and gates an admin-only /corpus command on
-DISCORD_ADMIN_USER_ID. Run from the repo root:
+Connects to Discord, answers messages in the #ask-oliver channel via Claude, and
+exposes one `/oliver` command group: open subcommands (ping, review) plus admin
+ones gated on DISCORD_ADMIN_USER_ID (stats, add-book, schedule, tick). A daily
+scheduler loop posts proactive notifications to DISCORD_MAIN_CHANNEL_ID. Run from
+the repo root:
 
     python -m agent.bot
 
 Requires DISCORD_BOT_TOKEN and ANTHROPIC_API_KEY in the root .env, plus the
-DISCORD_ASK_OLIVER_CHANNEL_ID / DISCORD_ADMIN_USER_ID identifiers.
+DISCORD_ASK_OLIVER_CHANNEL_ID / DISCORD_ADMIN_USER_ID identifiers and (for the
+scheduler) DISCORD_MAIN_CHANNEL_ID.
 """
 
 from __future__ import annotations
@@ -18,9 +21,11 @@ import os
 from pathlib import Path
 
 import discord
+from discord.ext import tasks
 from dotenv import load_dotenv
 
-from agent import context as kb, corpus_read, oliver, reviews
+from agent import (context as kb, corpus_read, corpus_write, db, oliver,
+                   openlibrary, reviews, scheduler)
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
@@ -31,6 +36,7 @@ TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
 ASK_CHANNEL_ID = int(os.environ.get("DISCORD_ASK_OLIVER_CHANNEL_ID") or 0)
 ADMIN_USER_ID = int(os.environ.get("DISCORD_ADMIN_USER_ID") or 0)
 SERVER_ID = int(os.environ.get("DISCORD_SERVER_ID") or 0)
+MAIN_CHANNEL_ID = int(os.environ.get("DISCORD_MAIN_CHANNEL_ID") or 0)
 
 MAX_DISCORD_LEN = 2000
 
@@ -59,6 +65,8 @@ client = OliverClient()
 @client.event
 async def on_ready() -> None:
     log.info("Oliver connected as %s — %d books in the corpus.", client.user, kb.book_count())
+    if MAIN_CHANNEL_ID and not scheduler_loop.is_running():
+        scheduler_loop.start()
 
 
 # All slash commands live under one /oliver group for consistency.
@@ -162,6 +170,110 @@ async def review_cmd(interaction: discord.Interaction, book: str) -> None:
         data, body = corpus_read._parse_frontmatter(rp.read_text())
         existing = {**(data or {}), "review": body}
     await interaction.response.send_modal(ReviewModal(b["slug"], b["title"], existing))
+
+
+def _is_admin(interaction: discord.Interaction) -> bool:
+    return interaction.user.id == ADMIN_USER_ID
+
+
+async def member_autocomplete(interaction: discord.Interaction, current: str):
+    cur = current.strip().lower()
+    out = []
+    for m in corpus_read.members():
+        name = m.get("name") or ""
+        if not cur or cur in name.lower():
+            out.append(discord.app_commands.Choice(name=name, value=m.get("slug")))
+        if len(out) >= 25:
+            break
+    return out
+
+
+@oliver_cmds.command(name="add-book", description="Add a book to the corpus (admin) — fetches metadata from Open Library.")
+@discord.app_commands.describe(title="Book title", isbn="ISBN (optional, more precise)")
+async def oliver_add_book(interaction: discord.Interaction, title: str, isbn: str | None = None) -> None:
+    if not _is_admin(interaction):
+        await interaction.response.send_message("That's an admin command.", ephemeral=True)
+        return
+    await interaction.response.defer(ephemeral=True)
+    try:
+        meta = await asyncio.to_thread(openlibrary.lookup, title, isbn)
+        if not meta or not meta.get("title"):
+            await interaction.followup.send(
+                f"Couldn't find “{title}” on Open Library — you can add it by hand in corpus/data/books/.",
+                ephemeral=True)
+            return
+        res = await asyncio.to_thread(corpus_write.write_book, meta)
+    except Exception:
+        log.exception("add-book failed")
+        await interaction.followup.send("Something went wrong adding that book.", ephemeral=True)
+        return
+    authors = ", ".join(res["authors"]) or "unknown author"
+    cover = "with cover" if res["hasCover"] else "no cover found"
+    await interaction.followup.send(
+        f"📗 {'Updated' if res['updated'] else 'Added'} **{res['title']}** by {authors} ({cover}). "
+        f"Edit `corpus/data/books/{res['slug']}.json` if anything's off, then `/oliver schedule` it.",
+        ephemeral=True,
+    )
+
+
+@oliver_cmds.command(name="schedule", description="Schedule the next read — book + date + picker (admin).")
+@discord.app_commands.describe(book="The book", date="Meeting date (YYYY-MM-DD)", picker="Who picked it")
+@discord.app_commands.autocomplete(book=book_autocomplete, picker=member_autocomplete)
+async def oliver_schedule(interaction: discord.Interaction, book: str, date: str, picker: str) -> None:
+    if not _is_admin(interaction):
+        await interaction.response.send_message("That's an admin command.", ephemeral=True)
+        return
+    await interaction.response.defer(ephemeral=True)
+    try:
+        res = await asyncio.to_thread(corpus_write.schedule_meeting, book, date, picker)
+    except corpus_write.WriteError as e:
+        await interaction.followup.send(f"⚠️ {e}", ephemeral=True)
+        return
+    except Exception:
+        log.exception("schedule failed")
+        await interaction.followup.send("Something went wrong scheduling that.", ephemeral=True)
+        return
+    await interaction.followup.send(
+        f"🗓️ Scheduled **{res['book']}** for {res['date']}, picked by {res['picker']}.", ephemeral=True)
+
+
+async def run_scheduler() -> int:
+    """Post any due proactive notifications to the main channel; returns the count posted."""
+    if not MAIN_CHANNEL_ID:
+        return 0
+    channel = client.get_channel(MAIN_CHANNEL_ID)
+    if channel is None:
+        log.warning("DISCORD_MAIN_CHANNEL_ID %s not found", MAIN_CHANNEL_ID)
+        return 0
+    from datetime import datetime, timezone
+    due = await asyncio.to_thread(scheduler.due_notifications, datetime.now(timezone.utc), db.sent_keys())
+    posted = 0
+    for key, msg in due:
+        await channel.send(msg)
+        db.mark_sent(key)
+        posted += 1
+    return posted
+
+
+@tasks.loop(hours=24)
+async def scheduler_loop() -> None:
+    try:
+        n = await run_scheduler()
+        if n:
+            log.info("scheduler posted %d notification(s)", n)
+    except Exception:
+        log.exception("scheduler loop error")
+
+
+@oliver_cmds.command(name="tick", description="Run the proactive scheduler now (admin).")
+async def oliver_tick(interaction: discord.Interaction) -> None:
+    if not _is_admin(interaction):
+        await interaction.response.send_message("That's an admin command.", ephemeral=True)
+        return
+    await interaction.response.defer(ephemeral=True)
+    n = await run_scheduler()
+    await interaction.followup.send(
+        f"Posted {n} notification(s)." if n else "Nothing due right now.", ephemeral=True)
 
 
 client.tree.add_command(oliver_cmds)

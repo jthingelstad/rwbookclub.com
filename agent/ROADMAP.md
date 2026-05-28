@@ -32,7 +32,7 @@ meetings are now first-class. Website data layer globs + aggregates them
 idempotent) instead of expiring Airtable URLs. Airtable retired to a read-only
 cold backup; `refresh.yml` removed; CLAUDE.md + memories updated to Git-canonical.
 
-**Phase 2 — Oliver's spine (agent loop + memory).**
+**Phase 2 — Oliver's spine (agent loop + memory).** ✅ **Done.**
 Convert `agent/oliver.py` from one-shot to a manual tool-use loop. Stand up
 SQLite (schema + migrations + backup) for class B: `memories`, `member_state`,
 `reminders`, `review_drafts`, `conversations`, `cost_log`. Tools: read/authority
@@ -40,18 +40,21 @@ SQLite (schema + migrations + backup) for class B: `memories`, `member_state`,
 `club_stats`) over the per-entity corpus; memory (`remember`, `recall`,
 `set_reminder`). Per-channel conversation history + rolling summary.
 
-**Phase 3 — Reviews (the wedge; exercises B→A).**
+**Phase 3 — Reviews (the wedge; exercises B→A).** ✅ **Done.**
 Guided review flow in DM/thread: draft in SQLite → on confirm, write
 `reviews/<book>--<member>.md`, commit, push → site shows it. Proactive nudges
 ("you attended the Caste meeting but haven't reviewed it"). Write tools gated:
 draft shown for confirmation before commit.
 
-**Phase 4 — Meetings & operations.**
-Meeting tools (`schedule_meeting`, `set_next_book`, `assign_picker`, reminders)
-writing `meetings/` files; an in-process scheduler for upcoming-meeting reminders,
-picker-rotation prompts, and milestone/anniversary detection (179→200 books; the
-April anniversary). Club-wide changes gated behind admin confirmation
-(`DISCORD_ADMIN_USER_ID`).
+**Phase 4 — Meetings & operations.** ✅ **Done.**
+`/oliver add-book` (fetches metadata + cover from Open Library, writes a book file) and
+`/oliver schedule` (book + date + picker → writes a placeholder meeting + sets the book's
+picker), admin-gated, via `agent/corpus_write.py` + `agent/gitwrite.py`. An in-process
+`discord.ext.tasks` loop (`agent/scheduler.py`, pure `due_notifications`) posts proactive
+upcoming-meeting reminders, a review nudge for the most-recent read, and milestone/anniversary
+notes to `DISCORD_MAIN_CHANNEL_ID` — deduped via a `notifications_sent` table; `/oliver tick`
+runs it on demand. (Also shipped along the way: a 3.5 pass that normalized the corpus and
+stripped the Airtable cruft, plus consolidating the slash commands under `/oliver`.)
 
 **Phase 5 — "6th member" polish.**
 Persona grounded in the 24-year history and each member's tastes; presence in the

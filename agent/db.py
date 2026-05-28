@@ -67,6 +67,12 @@ CREATE TABLE IF NOT EXISTS usage_log (
     rounds          INTEGER,
     created_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Dedup for the proactive scheduler: each notification key is posted at most once.
+CREATE TABLE IF NOT EXISTS notifications_sent (
+    key     TEXT PRIMARY KEY,
+    sent_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 
@@ -185,3 +191,14 @@ def log_usage(channel_id: str | None, model: str, *, input_tokens: int, output_t
             "cache_read, cache_creation, rounds) VALUES (?, ?, ?, ?, ?, ?, ?)",
             (channel_id, model, input_tokens, output_tokens, cache_read, cache_creation, rounds),
         )
+
+
+# ── Proactive-notification dedup ─────────────────────────────────────────────
+def sent_keys() -> set[str]:
+    with connect() as conn:
+        return {r["key"] for r in conn.execute("SELECT key FROM notifications_sent")}
+
+
+def mark_sent(key: str) -> None:
+    with connect() as conn:
+        conn.execute("INSERT OR IGNORE INTO notifications_sent (key) VALUES (?)", (key,))

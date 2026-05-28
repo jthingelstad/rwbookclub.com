@@ -1,18 +1,22 @@
 # agent — Oliver
 
 Oliver is the R/W Book Club's Discord agent: a [discord.py](https://discordpy.readthedocs.io/)
-bot that answers in **#ask-oliver** as a **tool-using agent** — `claude-opus-4-7`
-with adaptive thinking, a manual tool-use loop, prompt caching, **persistent memory**
-(SQLite), and per-channel conversation continuity.
+bot that answers in **#ask-oliver** as a **tool-using agent** (`claude-sonnet-4-6`, with
+Haiku for cheap summaries and Opus reserved) — a manual tool-use loop, prompt caching,
+**persistent memory** (SQLite), conversation continuity, and a proactive scheduler.
 
 ```
 agent/
-├── bot.py          # Discord client: on_ready, #ask-oliver listener, /ping, admin /corpus
-├── oliver.py       # the agent loop (tool use, caching, conversation history, usage logging)
-├── tools.py        # tool schemas + dispatch (corpus reads + memory)
-├── corpus_read.py  # query layer over the per-entity Git corpus
+├── bot.py          # Discord client: /oliver group, #ask-oliver listener, scheduler loop
+├── oliver.py       # the agent loop (tool use, caching, conversation history)
+├── tools.py        # read/memory tool schemas + dispatch
+├── corpus_read.py  # query/join layer over the normalized Git corpus
+├── corpus_write.py # write books + meetings (add-book / schedule) via gitwrite
+├── reviews.py      # write reviews   (gitwrite.py = commit/push corpus changes)
+├── scheduler.py    # pure due_notifications (reminders / nudges / milestones)
+├── openlibrary.py  # metadata lookup for add-book
 ├── context.py      # compact club overview for the cached system prompt
-├── db.py           # SQLite memory/state (gitignored)
+├── db.py           # SQLite memory/state + scheduler dedup (gitignored)
 └── requirements.txt
 ```
 
@@ -23,8 +27,13 @@ agent/
 - **Tools** (`tools.py`): `search_books`, `get_book`, `member_history`, `upcoming_meetings`,
   `club_stats`, `pending_reviews` (read the corpus), plus `remember`, `recall`, `set_reminder`
   (SQLite).
-- **Reviews** (`/review`): members log reviews via a Discord form that writes to the Git
-  corpus (`reviews.py` → `gitwrite.py`) — see below.
+- **Reviews** (`/oliver review`): members log reviews via a Discord form that writes to the
+  Git corpus (`reviews.py` → `gitwrite.py`) — see below.
+- **Operations** (admin, `/oliver`): `add-book` (Open Library → book file + cover), `schedule`
+  (book + date + picker → a meeting), `stats`, `tick`. Writes go through `corpus_write.py`.
+- **Proactive scheduler** (`scheduler.py`): a daily loop posts upcoming-meeting reminders, a
+  review nudge, and milestone/anniversary notes to `DISCORD_MAIN_CHANNEL_ID` — deduped, and a
+  no-op until that channel id is set.
 - **Memory** (`db.py`): durable notes, per-channel conversation log + rolling summary,
   reminders, and a usage log. Survives restarts.
 - **Speaker** is matched from the Discord display name to a club member (best-effort) so
@@ -48,10 +57,13 @@ Run from the **repo root** so the `agent` and `corpus` packages resolve.
 |---|---|
 | `DISCORD_BOT_TOKEN` | The bot's login token (Dev Portal → your app → Bot → Reset Token) |
 | `DISCORD_ASK_OLIVER_CHANNEL_ID` | Only messages in this channel get answered |
-| `DISCORD_ADMIN_USER_ID` | Gates the admin `/corpus` command |
+| `DISCORD_MAIN_CHANNEL_ID` | Where the scheduler posts proactive notes (no-op if unset) |
+| `DISCORD_ADMIN_USER_ID` | Gates the admin `/oliver` commands (stats, add-book, schedule, tick) |
+| `DISCORD_SERVER_ID` | Guild for instant (guild-scoped) slash-command sync |
 | `ANTHROPIC_API_KEY` | Claude API key |
 | `DISCORD_BOT_ID` | The bot's user ID (reference) |
 | `OLIVER_DB_PATH` | Optional — SQLite path (default `agent/oliver.db`) |
+| `OLIVER_GIT_PUSH` | Optional — set to `0` to commit corpus writes locally without pushing |
 
 ## Memory & backup
 
@@ -60,9 +72,9 @@ that doesn't belong in the public corpus. On the deployment host, point `OLIVER_
 at durable storage and back it up (litestream or a periodic dump, matching the Weekly
 Thing pattern). Backup wiring is a deployment step, not in the repo.
 
-## Reviews (`/review`)
+## Reviews (`/oliver review`)
 
-Members log book reviews with the `/review` command: pick the book (autocomplete), fill the
+Members log book reviews with the `/oliver review` command: pick the book (autocomplete), fill the
 form (rating 1–5 or DNF, the review, recommend?, discussion quality, favorite quote), and
 submit. Oliver writes `corpus/data/reviews/<book>--<member>.md`, commits, and pushes to
 `main` — live after the deploy. Only recognized club members can submit, and submitting the
@@ -77,6 +89,5 @@ Intents) — without it `on_message` gets empty content.
 
 ## What's next (later phases)
 
-- **Phase 4 — meetings & operations:** meeting tools + an in-process scheduler that fires the
-  reminders stored here, plus proactive review nudges.
-- **Phase 5 — "6th member":** persona depth, main-channel presence, milestone awareness.
+- **Phase 5 — "6th member" polish:** persona depth, conversational presence in the main channel
+  (not just `#ask-oliver`), memory-driven personalization, and awards.
