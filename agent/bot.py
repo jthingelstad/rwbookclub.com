@@ -84,6 +84,37 @@ def _check_dirty_tree() -> str | None:
         return None
 
 
+def _git_commit_short() -> str:
+    try:
+        r = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=gitwrite.REPO_ROOT, capture_output=True, text=True,
+            check=False, timeout=5,
+        )
+        return r.stdout.strip() or "unknown"
+    except (subprocess.SubprocessError, OSError):
+        return "unknown"
+
+
+# Permissions Oliver actually exercises: read+reply in the channel, react with
+# ✅ on feedback, embed cover links, and let members invoke /oliver slash cmds.
+REQUIRED_PERMS = (
+    "view_channel",
+    "send_messages",
+    "read_message_history",
+    "add_reactions",
+    "embed_links",
+    "use_application_commands",
+)
+
+
+def _missing_permissions(channel: discord.abc.GuildChannel | None) -> list[str]:
+    if channel is None or channel.guild is None:
+        return []
+    perms = channel.permissions_for(channel.guild.me)
+    return [name for name in REQUIRED_PERMS if not getattr(perms, name, False)]
+
+
 @client.event
 async def on_ready() -> None:
     log.info("Oliver connected as %s — %d books in the corpus.", client.user, kb.book_count())
@@ -101,6 +132,25 @@ async def on_ready() -> None:
             "letting members exercise write commands. Dirty paths:\n%s",
             dirty[:1000],
         )
+
+    if ask is not None:
+        commit = _git_commit_short()
+        lines = [f"🟢 Oliver online — fresh launch (`{commit}`)."]
+        perm_issues: list[str] = []
+        for label, ch in (("#ask-oliver", ask), ("main channel", main)):
+            if ch is None:
+                continue
+            missing = _missing_permissions(ch)
+            if missing:
+                perm_issues.append(f"• {label}: missing `{', '.join(missing)}`")
+        if perm_issues:
+            lines.append("⚠️  Permission gaps in this guild:")
+            lines.extend(perm_issues)
+        try:
+            await ask.send("\n".join(lines), silent=True)
+        except discord.HTTPException:
+            log.exception("Failed to post startup announcement to #ask-oliver")
+
     commands.start_scheduler()
 
 
