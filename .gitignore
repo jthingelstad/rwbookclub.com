@@ -19,5 +19,8 @@ __pycache__/
 # Oliver runtime logs (launchd captures stdout/stderr here)
 agent/logs/
 
+# Claude Code session state (CronCreate locks, etc.)
+.claude/
+
 # OS
 .DS_Store
