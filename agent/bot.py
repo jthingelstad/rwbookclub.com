@@ -137,6 +137,8 @@ async def on_message(message: discord.Message) -> None:
         is_mention = client.user.mentioned_in(message) and not message.mention_everyone
         has_name = bool(NAME_RE.search(content))
         if not _is_addressed(is_mention, has_name, await _is_reply_to_bot(message)):
+            if content.strip():
+                db.log_message(str(cid), "user", content.strip(), speaker=message.author.display_name)
             return
         question = _strip_address(content, client.user.id)
     else:

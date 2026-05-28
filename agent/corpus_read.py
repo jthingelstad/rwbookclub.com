@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 from collections import Counter
 from datetime import datetime, timezone
+from statistics import mean
 
 import yaml
 
@@ -358,6 +359,110 @@ def get_book(slug_or_title: str) -> dict | None:
     brief["reviews"] = _reviews_for(book_slug=b.get("slug"))
     brief["awards"] = awards_for_book(b.get("slug"))
     return brief
+
+
+def review_summary(slug_or_title: str) -> dict | None:
+    b = find_book(slug_or_title)
+    if not b:
+        return None
+    rs = _reviews_for(book_slug=b["slug"])
+    ratings = [r["rating"] for r in rs if r.get("rating") is not None and not r.get("dnf")]
+    discussions = [
+        r["discussionQuality"] for r in rs
+        if r.get("discussionQuality") is not None
+    ]
+    recommends = [r for r in rs if r.get("wouldRecommend")]
+    excerpts = []
+    for r in rs:
+        body = (r.get("review") or "").strip()
+        if body:
+            excerpts.append({
+                "by": r.get("by"),
+                "rating": r.get("rating"),
+                "dnf": r.get("dnf"),
+                "excerpt": body[:320],
+            })
+    return {
+        "book": _book_brief(b),
+        "reviewCount": len(rs),
+        "ratingAverage": round(mean(ratings), 2) if ratings else None,
+        "recommendCount": len(recommends),
+        "dnfCount": sum(1 for r in rs if r.get("dnf")),
+        "discussionAverage": round(mean(discussions), 2) if discussions else None,
+        "excerpts": excerpts,
+    }
+
+
+def related_books(slug_or_title: str, limit: int = 8) -> dict | None:
+    b = find_book(slug_or_title)
+    if not b:
+        return None
+    base_subjects = set(b.get("subjects") or [])
+    base_authors = set(b.get("authors") or [])
+    base_tokens = {
+        t for t in _norm(" ".join([b.get("title") or "", b.get("synopsis") or ""])).split()
+        if len(t) > 4
+    }
+    scored = []
+    for other in books():
+        if other["slug"] == b["slug"]:
+            continue
+        score = 0
+        reasons = []
+        shared_authors = sorted(base_authors & set(other.get("authors") or []))
+        if shared_authors:
+            score += 60
+            reasons.append("same author: " + ", ".join(shared_authors))
+        if b.get("topic") and b.get("topic") == other.get("topic"):
+            score += 35
+            reasons.append(f"same topic: {b['topic']}")
+        shared_subjects = sorted(base_subjects & set(other.get("subjects") or []))
+        if shared_subjects:
+            score += min(len(shared_subjects) * 12, 48)
+            reasons.append("shared subjects: " + ", ".join(shared_subjects[:3]))
+        if bool(b.get("fiction")) == bool(other.get("fiction")):
+            score += 5
+        other_tokens = {
+            t for t in _norm(" ".join([other.get("title") or "", other.get("synopsis") or ""])).split()
+            if len(t) > 4
+        }
+        overlap = sorted(base_tokens & other_tokens)
+        if overlap:
+            score += min(len(overlap) * 3, 18)
+            reasons.append("shared language: " + ", ".join(overlap[:3]))
+        if score:
+            scored.append((score, other, reasons))
+    scored.sort(key=lambda x: (-x[0], -(x[1].get("year") or 0)))
+    return {
+        "book": _book_brief(b),
+        "related": [
+            {**_book_brief(other), "score": score, "reasons": reasons[:3]}
+            for score, other, reasons in scored[:limit]
+        ],
+    }
+
+
+def compare_books(book_refs: list[str]) -> dict:
+    found = [find_book(ref) for ref in book_refs[:5]]
+    books_found = [b for b in found if b]
+    subject_sets = [set(b.get("subjects") or []) for b in books_found]
+    shared_subjects = sorted(set.intersection(*subject_sets)) if subject_sets else []
+    return {
+        "books": [
+            {
+                **_book_brief(b),
+                "meetingDate": b.get("meetingDate"),
+                "synopsis": b.get("synopsis"),
+                "reviewSummary": review_summary(b["slug"]),
+            }
+            for b in books_found
+        ],
+        "missing": [
+            ref for ref, book in zip(book_refs[:5], found)
+            if book is None
+        ],
+        "sharedSubjects": shared_subjects[:10],
+    }
 
 
 def member_history(name_or_slug: str) -> dict | None:

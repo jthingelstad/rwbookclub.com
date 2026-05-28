@@ -50,6 +50,34 @@ class TestUpcomingMeetingsFilter:
         assert "Patterns in Nature" in {b["title"] for b in cr.pending_reviews("tom")["books"]}
 
 
+# ── richer book relationships ───────────────────────────────────────────────
+class TestBookRelationships:
+    def test_related_books_returns_reasons(self, reset_books_cache):
+        from agent import corpus_read as cr
+
+        related = cr.related_books("the-martian")
+        assert related
+        assert related["book"]["slug"] == "the-martian"
+        assert related["related"]
+        assert related["related"][0]["reasons"]
+
+    def test_review_summary_returns_aggregates(self, reset_books_cache):
+        from agent import corpus_read as cr
+
+        summary = cr.review_summary("the-martian")
+        assert summary
+        assert summary["book"]["slug"] == "the-martian"
+        assert summary["reviewCount"] >= 1
+        assert summary["excerpts"]
+
+    def test_compare_books_reports_missing(self, reset_books_cache):
+        from agent import corpus_read as cr
+
+        comparison = cr.compare_books(["the-martian", "not-a-real-book"])
+        assert [b["slug"] for b in comparison["books"]] == ["the-martian"]
+        assert comparison["missing"] == ["not-a-real-book"]
+
+
 # ── books() cache (T2.12) ────────────────────────────────────────────────────
 class TestBooksCache:
     def test_cache_hit_returns_same_object(self, reset_books_cache):

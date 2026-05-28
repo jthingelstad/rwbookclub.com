@@ -42,6 +42,28 @@ class TestDispatchHappyPaths:
         assert isinstance(result, dict)
         assert "totalRead" in result
 
+    def test_related_books_returns_matches(self):
+        from agent.tools import dispatch
+
+        result = json.loads(dispatch("related_books", {"book": "the-martian"}, {}))
+        assert result["book"]["slug"] == "the-martian"
+        assert result["related"]
+
+    def test_compare_books_returns_side_by_side(self):
+        from agent.tools import dispatch
+
+        result = json.loads(dispatch(
+            "compare_books", {"books": ["the-martian", "thinking-in-systems"]}, {}
+        ))
+        assert [b["slug"] for b in result["books"]] == ["the-martian", "thinking-in-systems"]
+
+    def test_review_summary_returns_aggregate(self):
+        from agent.tools import dispatch
+
+        result = json.loads(dispatch("review_summary", {"book": "the-martian"}, {}))
+        assert result["book"]["slug"] == "the-martian"
+        assert result["reviewCount"] >= 1
+
     def test_upcoming_meetings_returns_list(self):
         from agent.tools import dispatch
         result = json.loads(dispatch("upcoming_meetings", {}, {}))

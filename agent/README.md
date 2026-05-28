@@ -27,13 +27,16 @@ agent/
   whole corpus — Oliver pulls specifics on demand via tools.
 - **Presence**: answers everything in `#ask-oliver`; in `DISCORD_MAIN_CHANNEL_ID` he speaks
   only when addressed — @mentioned, called "Oliver" by name, or replied to (`bot.py`
-  `_is_addressed`). Each channel keeps its own conversation thread + rolling summary, and
-  messages are answered through a per-channel queue so group chat stays in order.
+  `_is_addressed`). Unaddressed main-channel messages are still logged as passive context,
+  so the next addressed reply can account for what happened in the room. Each channel keeps
+  its own conversation thread + rolling summary, and messages are answered through a
+  per-channel queue so group chat stays in order.
 - **Tools** (`tools.py`): `find_books`, `search_books`, `get_book`, `member_history`,
   `upcoming_meetings`, `club_stats`, `pending_reviews` (read the corpus), club-awareness
   tools (`current_club_state`, `current_meeting_status`, `identity_status`,
-  `recent_feedback`, `recent_channel_context`), plus `remember`, `recall`,
-  `set_reminder`, and explicit self-reported `record_availability` (SQLite).
+  `recent_feedback`, `recent_channel_context`), relationship tools (`related_books`,
+  `compare_books`, `review_summary`), plus `remember`, `recall`, `set_reminder`, and
+  explicit self-reported `record_availability` (SQLite).
 - **Reviews** (`/oliver review`): members log reviews via a Discord form that writes to the
   Git corpus (`reviews.py` → `gitwrite.py`) — see below. Review identity comes from the
   private Discord-user → member map, not mutable display names.
@@ -114,12 +117,13 @@ Set `OLIVER_GIT_PUSH=0` to commit locally without pushing (dev).
 
 ```bash
 pip install -r tests/requirements.txt    # one-time
-pytest tests/                             # 103 tests, ~0.6s
+pytest tests/                             # 109 tests, ~0.6s
 ```
 
 Pure helpers (`_is_addressed`, `_strip_address`, rating parsers, `parse_frontmatter`,
-`scheduler.due_notifications`, `meeting_rules`, `find_books` scoring, `books()` cache,
-dispatch error paths, db round-trips) all locked in. Tests use a scratch SQLite DB (`tests/conftest.py`
+`scheduler.due_notifications`, `meeting_rules`, richer corpus relationship tools,
+`find_books` scoring, `books()` cache, dispatch error paths, db round-trips) all locked in.
+Tests use a scratch SQLite DB (`tests/conftest.py`
 sets `OLIVER_DB_PATH` before any agent module imports) and never touch the live state.
 `OLIVER_GIT_PUSH=0` + `OLIVER_GIT_DRYRUN=1` are set by the conftest as belt-and-suspenders
 against any accidental git activity.
@@ -140,4 +144,4 @@ Intents) — without it `on_message` gets empty content.
   maybe a Discord voting flow. The corpus, site rendering, and a sample record already exist.
 - **Presence tuning**: optional unprompted chime-ins and finer name-matching — once addressed-only
   presence has run for a while.
-- **Richer retrieval**: semantic search over reviews, meeting notes, and related materials.
+- **Semantic retrieval**: embeddings over reviews, meeting notes, and related materials.

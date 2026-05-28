@@ -40,8 +40,9 @@ feedback, usage logs, scheduler dedup, and private Discord identity links. Tools
 read/authority (`find_books`, `search_books`, `get_book`, `member_history`,
 `get_author`, `club_awards`, `upcoming_meetings`, `club_stats`, `pending_reviews`)
 plus awareness and local-state tools (`current_club_state`, `current_meeting_status`,
-`identity_status`, `recent_feedback`, `recent_channel_context`, `remember`, `recall`,
-`set_reminder`, `record_availability`).
+`identity_status`, `recent_feedback`, `recent_channel_context`), richer corpus relationship
+tools (`related_books`, `compare_books`, `review_summary`), and memory/reminder tools
+(`remember`, `recall`, `set_reminder`, `record_availability`).
 
 **Phase 3 — Reviews (the wedge; exercises B→A).** ✅ **Done.**
 Members submit reviews through a Discord modal. Oliver resolves the member through
@@ -71,8 +72,9 @@ within 3 days when quorum or picker attendance is not confirmed.
 **Phase 5 — "6th member" polish.** ✅ **Done.**
 Oliver is now present in the main channel, not just `#ask-oliver`: he answers there only when
 addressed — @mentioned, called "Oliver" by name, or replied to (`bot.py` `_is_addressed` /
-`_strip_address`; each channel keeps its own conversation thread + rolling summary and is
-serialized through a per-channel lock). The persona was deepened to read like a long-time member
+`_strip_address`; unaddressed main-channel messages are logged as passive context, and each
+channel keeps its own conversation thread + rolling summary serialized through a per-channel
+lock). The persona was deepened to read like a long-time member
 (real opinions, group-channel etiquette, no help-desk tone) and `_question_block` now injects
 both the speaker's remembered tastes and club-scoped lore, so replies personalize. Admin memory
 commands (`/oliver memories`, `edit-memory`, `forget`) provide a repair path for bad durable

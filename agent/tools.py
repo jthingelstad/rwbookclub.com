@@ -78,6 +78,43 @@ TOOLS = [
         },
     },
     {
+        "name": "related_books",
+        "description": "Find books in the club corpus related to one book by author, topic, Open Library subjects, and synopsis language. Use for 'what else is like X?' or thematic bridges.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "book": {"type": "string", "description": "book slug or title"},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 12},
+            },
+            "required": ["book"],
+        },
+    },
+    {
+        "name": "compare_books",
+        "description": "Compare up to five books from the club corpus side-by-side, including topics, dates, pickers, synopsis, review aggregates, and shared subjects.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "books": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "minItems": 1,
+                    "maxItems": 5,
+                },
+            },
+            "required": ["books"],
+        },
+    },
+    {
+        "name": "review_summary",
+        "description": "Aggregate club reviews for one book: count, average rating, recommendation count, DNF count, discussion average, and short review excerpts.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"book": {"type": "string", "description": "book slug or title"}},
+            "required": ["book"],
+        },
+    },
+    {
         "name": "member_history",
         "description": "A member's picks and reviews. Use for 'what has Tom picked', 'what did Jamie think of things'.",
         "input_schema": {
@@ -210,6 +247,13 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             return _dump(cr.search_books(**tool_input))
         if name == "get_book":
             return _dump(cr.get_book(tool_input["book"]) or {"error": "no such book"})
+        if name == "related_books":
+            limit = max(1, min(int(tool_input.get("limit", 8)), 12))
+            return _dump(cr.related_books(tool_input["book"], limit=limit) or {"error": "no such book"})
+        if name == "compare_books":
+            return _dump(cr.compare_books(tool_input["books"]))
+        if name == "review_summary":
+            return _dump(cr.review_summary(tool_input["book"]) or {"error": "no such book"})
         if name == "member_history":
             return _dump(cr.member_history(tool_input["member"]) or {"error": "no such member"})
         if name == "upcoming_meetings":
