@@ -17,17 +17,31 @@ from agent import db
 # (tools render before system) stays valid across requests.
 TOOLS = [
     {
+        "name": "find_books",
+        "description": "BEST FIRST CHOICE for any vague or exploratory question about books "
+                       "the club has read ('anything about urban planning?', 'sci-fi we've "
+                       "read', 'have we done long history stuff'). One call returns the most "
+                       "relevant matches scored across author / topic / title / synopsis. "
+                       "Use this instead of running multiple search_books variants. If "
+                       "find_books returns [], the corpus genuinely doesn't have anything "
+                       "in that lane — don't keep searching; say so plainly.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"query": {"type": "string", "description": "free-text — a topic, theme, author name, or phrase"}},
+            "required": ["query"],
+        },
+    },
+    {
         "name": "search_books",
-        "description": "Find books the club has read by free-text and/or filters. Use for "
-                       "'have we read anything about X', 'books by Y', 'our sci-fi reads', "
-                       "'what did we read in 2018'. Filters work alone — omit `query` to "
-                       "browse everything in a topic, year, or by an author. If your first "
-                       "query returns nothing, try a broader phrasing, drop the query and "
-                       "use just a filter, or swap to an adjacent topic before concluding.",
+        "description": "Precise filter-based browse — use when you want to LIST everything "
+                       "matching specific criteria (all 2018 reads, all Technology books, "
+                       "all sci-fi). Filters work alone — omit `query` for a pure filter "
+                       "browse. For vague \"do we have anything about X\" questions, use "
+                       "find_books instead.",
         "input_schema": {
             "type": "object",
             "properties": {
-                "query": {"type": "string", "description": "free-text match on title/subtitle/synopsis/author/topic. Optional — omit for filter-only browse."},
+                "query": {"type": "string", "description": "free-text substring match on title/subtitle/synopsis/author/topic. Optional — omit for filter-only browse."},
                 "topic": {"type": "string", "description": "exact topic category, e.g. 'Technology'"},
                 "fiction": {"type": "boolean"},
                 "year": {"type": "integer", "description": "year read or publication year"},
@@ -132,6 +146,8 @@ def _dump(obj) -> str:
 def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
     """Run a tool. ctx carries {channel_id, speaker, member_slug}. Returns a string."""
     try:
+        if name == "find_books":
+            return _dump(cr.find_books(tool_input["query"]))
         if name == "search_books":
             return _dump(cr.search_books(**tool_input))
         if name == "get_book":

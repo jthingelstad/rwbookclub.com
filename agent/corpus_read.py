@@ -147,6 +147,44 @@ def search_books(query: str | None = None, topic: str | None = None,
     return out[:limit]
 
 
+def find_books(query: str, limit: int = 15) -> list[dict]:
+    """Multi-angle relevance search across the corpus, scored.
+
+    Tries each book against the query as: exact author / exact topic / author
+    substring / title substring / subtitle substring / topic substring /
+    synopsis substring, and returns the best matches in one call. Use this
+    for vague exploratory queries ("anything urban-planning related?",
+    "long history stuff") so Oliver doesn't have to run 5-7 search_books
+    variants. Returns [] for an empty query or no matches.
+    """
+    q = _norm(query)
+    if not q:
+        return []
+    scored: dict[str, tuple[dict, int]] = {}
+    for b in books():
+        score = 0
+        authors_norm = [_norm(a) for a in b.get("authors") or []]
+        if any(q == a for a in authors_norm):
+            score += 100  # exact author match
+        elif any(q in a for a in authors_norm):
+            score += 50   # author substring
+        topic_n = _norm(b.get("topic"))
+        if q == topic_n:
+            score += 80   # exact topic
+        elif topic_n and q in topic_n:
+            score += 25   # topic substring
+        if q in _norm(b.get("title")):
+            score += 40
+        if q in _norm(b.get("subtitle")):
+            score += 30
+        if q in _norm(b.get("synopsis")):
+            score += 10
+        if score > 0:
+            scored[b["slug"]] = (b, score)
+    ordered = sorted(scored.values(), key=lambda x: (-x[1], -(x[0].get("year") or 0)))
+    return [_book_brief(b) for b, _ in ordered[:limit]]
+
+
 def find_book(slug_or_title: str) -> dict | None:
     key = _norm(slug_or_title)
     bs = books()
