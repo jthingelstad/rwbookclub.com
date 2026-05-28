@@ -56,10 +56,15 @@ notes to `DISCORD_MAIN_CHANNEL_ID` — deduped via a `notifications_sent` table;
 runs it on demand. (Also shipped along the way: a 3.5 pass that normalized the corpus and
 stripped the Airtable cruft, plus consolidating the slash commands under `/oliver`.)
 
-**Phase 5 — "6th member" polish.**
-Persona grounded in the 24-year history and each member's tastes; presence in the
-main channel (not just `#ask-oliver`); memory-driven personalization; awards
-facilitation; milestone/anniversary celebration.
+**Phase 5 — "6th member" polish.** ✅ **Done.**
+Oliver is now present in the main channel, not just `#ask-oliver`: he answers there only when
+addressed — @mentioned, called "Oliver" by name, or replied to (`bot.py` `_is_addressed` /
+`_strip_address`; each channel keeps its own conversation thread + rolling summary). The persona
+was deepened to read like a long-time member (real opinions, group-channel etiquette, no help-desk
+tone) and `_question_block` now injects both the speaker's remembered tastes and club-scoped lore,
+so replies personalize. Milestone/anniversary celebration shipped in Phase 4's scheduler.
+Awards facilitation (a write path + possible voting flow) is **deferred** — the corpus, site
+rendering, and a sample record already exist, so it's a self-contained later slice.
 
 ## Cross-cutting (from Phase 2 on)
 

@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 from pathlib import Path
 
 import discord
@@ -39,6 +40,20 @@ SERVER_ID = int(os.environ.get("DISCORD_SERVER_ID") or 0)
 MAIN_CHANNEL_ID = int(os.environ.get("DISCORD_MAIN_CHANNEL_ID") or 0)
 
 MAX_DISCORD_LEN = 2000
+
+# Oliver answers everything in #ask-oliver, but in the main channel he speaks only
+# when addressed — @mentioned, called by name, or replied to.
+NAME_RE = re.compile(r"\boliver\b", re.IGNORECASE)
+
+
+def _is_addressed(is_mention: bool, has_name: bool, is_reply_to_bot: bool) -> bool:
+    """Whether a main-channel message is directed at Oliver. Pure (testable)."""
+    return bool(is_mention or has_name or is_reply_to_bot)
+
+
+def _strip_address(content: str, bot_id: int) -> str:
+    """Drop @Oliver mentions so the model sees a clean question. Pure (testable)."""
+    return re.sub(rf"<@!?{bot_id}>", "", content).strip()
 
 
 class OliverClient(discord.Client):
@@ -279,15 +294,44 @@ async def oliver_tick(interaction: discord.Interaction) -> None:
 client.tree.add_command(oliver_cmds)
 
 
+async def _is_reply_to_bot(message: discord.Message) -> bool:
+    """True if this message is a reply to one of Oliver's own messages."""
+    ref = message.reference
+    if not ref:
+        return False
+    if isinstance(ref.resolved, discord.Message):
+        return ref.resolved.author.id == client.user.id
+    if ref.message_id:  # not cached — fetch it
+        try:
+            referenced = await message.channel.fetch_message(ref.message_id)
+        except (discord.NotFound, discord.HTTPException):
+            return False
+        return referenced.author.id == client.user.id
+    return False
+
+
 @client.event
 async def on_message(message: discord.Message) -> None:
     # Ignore our own messages and other bots.
     if message.author.bot or message.author == client.user:
         return
-    # Only answer in the dedicated ask-oliver channel.
-    if ASK_CHANNEL_ID and message.channel.id != ASK_CHANNEL_ID:
+
+    cid = message.channel.id
+    content = message.content or ""
+
+    # #ask-oliver: answer everything. (No ask-channel configured → answer everywhere, dev.)
+    if not ASK_CHANNEL_ID or cid == ASK_CHANNEL_ID:
+        question = content.strip()
+    # Main channel: answer only when addressed.
+    elif MAIN_CHANNEL_ID and cid == MAIN_CHANNEL_ID:
+        is_mention = client.user.mentioned_in(message) and not message.mention_everyone
+        has_name = bool(NAME_RE.search(content))
+        if not _is_addressed(is_mention, has_name, await _is_reply_to_bot(message)):
+            return
+        question = _strip_address(content, client.user.id)
+    else:
         return
-    question = message.content.strip()
+
     if not question:
         return
 

@@ -24,6 +24,9 @@ agent/
 
 - **System prompt** = persona + a compact club overview (`context.py`), cached. Not the
   whole corpus — Oliver pulls specifics on demand via tools.
+- **Presence**: answers everything in `#ask-oliver`; in `DISCORD_MAIN_CHANNEL_ID` he speaks
+  only when addressed — @mentioned, called "Oliver" by name, or replied to (`bot.py`
+  `_is_addressed`). Each channel keeps its own conversation thread + rolling summary.
 - **Tools** (`tools.py`): `search_books`, `get_book`, `member_history`, `upcoming_meetings`,
   `club_stats`, `pending_reviews` (read the corpus), plus `remember`, `recall`, `set_reminder`
   (SQLite).
@@ -57,7 +60,7 @@ Run from the **repo root** so the `agent` and `corpus` packages resolve.
 |---|---|
 | `DISCORD_BOT_TOKEN` | The bot's login token (Dev Portal → your app → Bot → Reset Token) |
 | `DISCORD_ASK_OLIVER_CHANNEL_ID` | Only messages in this channel get answered |
-| `DISCORD_MAIN_CHANNEL_ID` | Where the scheduler posts proactive notes (no-op if unset) |
+| `DISCORD_MAIN_CHANNEL_ID` | Main channel: scheduler posts here, and Oliver replies here when addressed (no-op if unset) |
 | `DISCORD_ADMIN_USER_ID` | Gates the admin `/oliver` commands (stats, add-book, schedule, tick) |
 | `DISCORD_SERVER_ID` | Guild for instant (guild-scoped) slash-command sync |
 | `ANTHROPIC_API_KEY` | Claude API key |
@@ -89,5 +92,7 @@ Intents) — without it `on_message` gets empty content.
 
 ## What's next (later phases)
 
-- **Phase 5 — "6th member" polish:** persona depth, conversational presence in the main channel
-  (not just `#ask-oliver`), memory-driven personalization, and awards.
+- **Awards facilitation** (deferred from Phase 5): a way to record awards to the corpus, and
+  maybe a Discord voting flow. The corpus, site rendering, and a sample record already exist.
+- **Presence tuning**: optional unprompted chime-ins and finer name-matching — once addressed-only
+  presence has run for a while.
