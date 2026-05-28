@@ -20,6 +20,7 @@ import logging
 
 from agent import corpus_read as cr
 from agent import db
+from agent import meeting_rules
 
 log = logging.getLogger("oliver.tools")
 
@@ -119,6 +120,45 @@ TOOLS = [
         },
     },
     {
+        "name": "current_club_state",
+        "description": "Compact snapshot of Oliver's current operating context: current members, identity links, next meeting attendance status, high-level corpus stats, and recent feedback.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "current_meeting_status",
+        "description": "Check roll-call status for the next meeting using club rules: last Tuesday, quorum of 3 of 5 current members, and picker must attend. Read-only.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "identity_status",
+        "description": "Show whether the current Discord speaker is linked to a club member, and which current members still lack Discord identity links.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "recent_feedback",
+        "description": "Oliver's recent thumbs-up/down feedback from Discord, joined to the questions that triggered it. Use when reflecting on what has gone well or poorly.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "recent_channel_context",
+        "description": "Recent Oliver-visible turns in this Discord channel. This is not the whole channel, just prior messages Oliver handled.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"limit": {"type": "integer", "minimum": 1, "maximum": 20}},
+        },
+    },
+    {
+        "name": "record_availability",
+        "description": "Record the current linked speaker's own explicit availability for the next meeting. Use only when they clearly say they will attend, cannot attend, or are unsure; never infer for others.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "status": {"type": "string", "enum": ["yes", "no", "unsure"]},
+            },
+            "required": ["status"],
+        },
+    },
+    {
         "name": "remember",
         "description": "Save a durable note Oliver should remember across conversations (a member's taste, a club fact, a preference). Private to Oliver.",
         "input_schema": {
@@ -182,6 +222,49 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             return _dump(cr.club_stats())
         if name == "pending_reviews":
             return _dump(cr.pending_reviews(tool_input["member"]) or {"error": "no such member"})
+        if name == "current_club_state":
+            return _dump(meeting_rules.summarize_club_state())
+        if name == "current_meeting_status":
+            return _dump(meeting_rules.meeting_status())
+        if name == "identity_status":
+            member_slug = ctx.get("member_slug")
+            identities = db.list_member_identities()
+            linked = {r["member_slug"] for r in identities}
+            current = [m for m in cr.members() if m.get("isCurrent")]
+            return _dump({
+                "speakerUserId": ctx.get("speaker_user_id"),
+                "speakerMemberSlug": member_slug,
+                "speakerMember": cr.find_member(member_slug) if member_slug else None,
+                "linkedCurrentMembers": sorted(linked),
+                "missingCurrentMembers": [
+                    {"slug": m["slug"], "name": m.get("name")}
+                    for m in current if m["slug"] not in linked
+                ],
+            })
+        if name == "recent_feedback":
+            return _dump(db.feedback_stats())
+        if name == "recent_channel_context":
+            limit = max(1, min(int(tool_input.get("limit", 12)), 20))
+            return _dump(db.recent_messages(str(ctx.get("channel_id") or ""), limit=limit))
+        if name == "record_availability":
+            member_slug = ctx.get("member_slug")
+            if not member_slug:
+                return _dump({"error": "speaker is not linked to a club member"})
+            status = tool_input["status"]
+            meeting = meeting_rules.next_meeting()
+            db.upsert_roll_call(
+                meeting_key=meeting["meetingKey"],
+                channel_id=ctx.get("channel_id"),
+                opened_by="oliver",
+            )
+            db.set_attendance(
+                meeting_key=meeting["meetingKey"],
+                member_slug=member_slug,
+                status=status,
+                updated_by_user_id=ctx.get("speaker_user_id"),
+                source="chat",
+            )
+            return _dump({"saved": True, "meetingStatus": meeting_rules.meeting_status(meeting["meetingKey"])})
         if name == "remember":
             mid = db.add_memory(
                 tool_input["note"],

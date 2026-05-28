@@ -32,7 +32,6 @@ CREATE TABLE IF NOT EXISTS memories (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_memories_subject ON memories(subject);
-CREATE INDEX IF NOT EXISTS idx_memories_status ON memories(status);
 
 CREATE TABLE IF NOT EXISTS member_identities (
     discord_user_id TEXT PRIMARY KEY,
@@ -113,6 +112,27 @@ CREATE TABLE IF NOT EXISTS feedback (
 );
 CREATE INDEX IF NOT EXISTS idx_feedback_message ON feedback(message_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_reaction ON feedback(reaction, created_at);
+
+CREATE TABLE IF NOT EXISTS roll_calls (
+    meeting_key TEXT PRIMARY KEY,
+    channel_id  TEXT,
+    message_id  TEXT,
+    status      TEXT NOT NULL DEFAULT 'open', -- open | closed
+    opened_by   TEXT,
+    opened_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    closed_at   TEXT
+);
+
+CREATE TABLE IF NOT EXISTS meeting_attendance (
+    meeting_key        TEXT NOT NULL,
+    member_slug        TEXT NOT NULL,
+    status             TEXT NOT NULL,          -- yes | no | unsure
+    source             TEXT NOT NULL DEFAULT 'button',
+    updated_by_user_id TEXT,
+    responded_at       TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (meeting_key, member_slug)
+);
+CREATE INDEX IF NOT EXISTS idx_attendance_meeting ON meeting_attendance(meeting_key);
 """
 
 
@@ -141,6 +161,22 @@ def _migrate(conn: sqlite3.Connection) -> None:
         if col not in memory_cols:
             conn.execute(f"ALTER TABLE memories ADD COLUMN {col} {spec}")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_memories_status ON memories(status)")
+
+    roll_call_cols = _columns(conn, "roll_calls")
+    roll_call_additions = {
+        "channel_id": "TEXT",
+        "message_id": "TEXT",
+        "status": "TEXT NOT NULL DEFAULT 'open'",
+        "opened_by": "TEXT",
+        "opened_at": "TEXT NOT NULL DEFAULT '1970-01-01T00:00:00+00:00'",
+        "closed_at": "TEXT",
+    }
+    for col, spec in roll_call_additions.items():
+        if col not in roll_call_cols:
+            conn.execute(f"ALTER TABLE roll_calls ADD COLUMN {col} {spec}")
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_roll_calls_status ON roll_calls(status, opened_at)"
+    )
 
 
 def _ensure_schema() -> None:
@@ -287,6 +323,17 @@ def messages_after(channel_id: str, after_id: int, limit: int = 200) -> list[dic
     return [dict(r) for r in rows]
 
 
+def recent_messages(channel_id: str, limit: int = 12) -> list[dict]:
+    """Recent Oliver-visible conversation turns for a channel, newest last."""
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT id, role, speaker, content, created_at FROM conversations "
+            "WHERE channel_id = ? ORDER BY id DESC LIMIT ?",
+            (channel_id, limit),
+        ).fetchall()
+    return [dict(r) for r in reversed(rows)]
+
+
 # ── Reminders (Phase 4 scheduler fires these) ────────────────────────────────
 def add_reminder(due_at: str, text: str, *, channel_id: str | None = None,
                  created_by: str | None = None) -> int:
@@ -392,3 +439,63 @@ def feedback_stats() -> dict:
         "recent_down": [dict(r) for r in recent_down],
         "recent_up": [dict(r) for r in recent_up],
     }
+
+
+# ── Meeting roll call + attendance ──────────────────────────────────────────
+def upsert_roll_call(*, meeting_key: str, channel_id: str | None = None,
+                     message_id: str | None = None, opened_by: str | None = None) -> None:
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO roll_calls (meeting_key, channel_id, message_id, opened_by, status) "
+            "VALUES (?, ?, ?, ?, 'open') "
+            "ON CONFLICT(meeting_key) DO UPDATE SET "
+            "channel_id=COALESCE(excluded.channel_id, roll_calls.channel_id), "
+            "message_id=COALESCE(excluded.message_id, roll_calls.message_id), "
+            "opened_by=COALESCE(excluded.opened_by, roll_calls.opened_by), "
+            "status='open', closed_at=NULL",
+            (meeting_key, channel_id, message_id, opened_by),
+        )
+
+
+def get_roll_call(meeting_key: str) -> dict | None:
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT * FROM roll_calls WHERE meeting_key = ?",
+            (meeting_key,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def close_roll_call(meeting_key: str) -> bool:
+    with connect() as conn:
+        cur = conn.execute(
+            "UPDATE roll_calls SET status = 'closed', closed_at = ? "
+            "WHERE meeting_key = ? AND status != 'closed'",
+            (_now(), meeting_key),
+        )
+        return cur.rowcount > 0
+
+
+def set_attendance(*, meeting_key: str, member_slug: str, status: str,
+                   updated_by_user_id: str | None = None, source: str = "button") -> None:
+    if status not in {"yes", "no", "unsure"}:
+        raise ValueError("attendance status must be yes, no, or unsure")
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO meeting_attendance "
+            "(meeting_key, member_slug, status, source, updated_by_user_id, responded_at) "
+            "VALUES (?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(meeting_key, member_slug) DO UPDATE SET "
+            "status=excluded.status, source=excluded.source, "
+            "updated_by_user_id=excluded.updated_by_user_id, responded_at=excluded.responded_at",
+            (meeting_key, member_slug, status, source, updated_by_user_id, _now()),
+        )
+
+
+def attendance_for_meeting(meeting_key: str) -> list[dict]:
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT * FROM meeting_attendance WHERE meeting_key = ? ORDER BY member_slug",
+            (meeting_key,),
+        ).fetchall()
+    return [dict(r) for r in rows]

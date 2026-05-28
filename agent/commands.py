@@ -17,7 +17,7 @@ import discord
 from discord.ext import tasks
 
 from agent import (config, context as kb, corpus_read, corpus_write, db,
-                   oliver, openlibrary, reviews, scheduler)
+                   meeting_rules, oliver, openlibrary, reviews, scheduler)
 
 log = logging.getLogger("oliver.commands")
 
@@ -77,6 +77,73 @@ async def member_autocomplete(interaction: discord.Interaction, current: str):
 def _linked_member_for_user(user_id: int) -> dict | None:
     slug = db.member_slug_for_user(str(user_id))
     return corpus_read.find_member(slug) if slug else None
+
+
+def _admin_check_message(interaction: discord.Interaction) -> str | None:
+    return None if _is_admin(interaction) else "That's an admin command."
+
+
+def _roll_call_message() -> str:
+    status = meeting_rules.meeting_status()
+    meeting = status["meeting"]
+    title = (meeting.get("book") or {}).get("title") or "the next meeting"
+    return (
+        f"📋 **Roll call:** {title} on {meeting['date']}\n"
+        "Please tap your attendance below. We need 3 of 5 current members, and the picker has to be there."
+    )
+
+
+class AttendanceView(discord.ui.View):
+    """Simple persistent button view for the current meeting roll call."""
+
+    def __init__(self) -> None:
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="I'll be there", style=discord.ButtonStyle.success,
+                       custom_id="oliver:attendance:yes")
+    async def yes(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        await record_attendance_response(interaction, "yes")
+
+    @discord.ui.button(label="I can't make it", style=discord.ButtonStyle.danger,
+                       custom_id="oliver:attendance:no")
+    async def no(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        await record_attendance_response(interaction, "no")
+
+    @discord.ui.button(label="Unsure", style=discord.ButtonStyle.secondary,
+                       custom_id="oliver:attendance:unsure")
+    async def unsure(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        await record_attendance_response(interaction, "unsure")
+
+
+async def record_attendance_response(interaction: discord.Interaction, status: str) -> None:
+    member = _linked_member_for_user(interaction.user.id)
+    if not member:
+        await interaction.response.send_message(
+            "I don't have your Discord account linked to a current club member yet.",
+            ephemeral=True)
+        return
+    meeting = meeting_rules.next_meeting()
+    roll_call = db.get_roll_call(meeting["meetingKey"])
+    if roll_call and roll_call.get("status") == "closed":
+        await interaction.response.send_message("That roll call is closed.", ephemeral=True)
+        return
+    db.upsert_roll_call(
+        meeting_key=meeting["meetingKey"],
+        channel_id=str(interaction.channel_id) if interaction.channel_id else None,
+        opened_by="button",
+    )
+    db.set_attendance(
+        meeting_key=meeting["meetingKey"],
+        member_slug=member["slug"],
+        status=status,
+        updated_by_user_id=str(interaction.user.id),
+        source="button",
+    )
+    status_words = {"yes": "attending", "no": "not attending", "unsure": "unsure"}
+    summary = meeting_rules.meeting_status(meeting["meetingKey"])
+    await interaction.response.send_message(
+        f"Recorded you as {status_words[status]}.\n\n{meeting_rules.format_status(summary)}",
+        ephemeral=True)
 
 
 # ── Modals ───────────────────────────────────────────────────────────────────
@@ -286,6 +353,54 @@ async def oliver_feedback(interaction: discord.Interaction) -> None:
     await interaction.response.send_message("\n".join(lines), ephemeral=True)
 
 
+@oliver_cmds.command(name="roll-call", description="Start, check, remind, or close meeting roll call.")
+@discord.app_commands.describe(action="What to do with the current meeting roll call")
+@discord.app_commands.choices(action=[
+    discord.app_commands.Choice(name="status", value="status"),
+    discord.app_commands.Choice(name="start", value="start"),
+    discord.app_commands.Choice(name="remind", value="remind"),
+    discord.app_commands.Choice(name="close", value="close"),
+])
+async def roll_call_cmd(interaction: discord.Interaction,
+                        action: discord.app_commands.Choice[str]) -> None:
+    act = action.value
+    if act in {"start", "remind", "close"}:
+        msg = _admin_check_message(interaction)
+        if msg:
+            await interaction.response.send_message(msg, ephemeral=True)
+            return
+
+    meeting = meeting_rules.next_meeting()
+    if act == "status":
+        await interaction.response.send_message(
+            meeting_rules.format_status(meeting_rules.meeting_status(meeting["meetingKey"])),
+            ephemeral=True)
+        return
+
+    if act == "close":
+        db.close_roll_call(meeting["meetingKey"])
+        await interaction.response.send_message(
+            meeting_rules.format_status(meeting_rules.meeting_status(meeting["meetingKey"])),
+            ephemeral=True)
+        return
+
+    text = _roll_call_message() if act == "start" else (
+        "🔔 Roll call reminder.\n\n"
+        + meeting_rules.format_status(meeting_rules.meeting_status(meeting["meetingKey"]))
+    )
+    await interaction.response.send_message(text, view=AttendanceView())
+    try:
+        sent = await interaction.original_response()
+        db.upsert_roll_call(
+            meeting_key=meeting["meetingKey"],
+            channel_id=str(sent.channel.id),
+            message_id=str(sent.id),
+            opened_by=str(interaction.user.id),
+        )
+    except discord.HTTPException:
+        log.exception("Failed to record roll-call message")
+
+
 @oliver_cmds.command(name="memories", description="Search Oliver's durable memories (admin).")
 @discord.app_commands.describe(subject="Optional member slug or topic", query="Optional text search")
 @admin_only
@@ -356,6 +471,35 @@ async def run_scheduler() -> int:
             db.mark_sent(key)
             posted += 1
 
+        status = await asyncio.to_thread(meeting_rules.meeting_status)
+        meeting = status["meeting"]
+        try:
+            meeting_date = datetime.fromisoformat(meeting["date"])
+        except ValueError:
+            meeting_date = None
+        if meeting_date:
+            days = (meeting_date.date() - now.date()).days
+            roll_key = f"roll-call-{meeting['meetingKey']}"
+            if 0 <= days <= 10 and roll_key not in db.sent_keys():
+                sent = await main.send(_roll_call_message(), view=AttendanceView())
+                db.upsert_roll_call(
+                    meeting_key=meeting["meetingKey"],
+                    channel_id=str(sent.channel.id),
+                    message_id=str(sent.id),
+                    opened_by="scheduler",
+                )
+                db.mark_sent(roll_key)
+                posted += 1
+            alert_key = f"attendance-alert-{meeting['meetingKey']}"
+            status = await asyncio.to_thread(meeting_rules.meeting_status)
+            if 0 <= days <= 3 and status["recommendation"] != "ready" and alert_key not in db.sent_keys():
+                await main.send(
+                    "⚠️ Attendance may need attention.\n\n"
+                    + meeting_rules.format_status(status)
+                )
+                db.mark_sent(alert_key)
+                posted += 1
+
     # 2. User-set reminders → their original channel (or main as fallback).
     reminders = await asyncio.to_thread(db.due_reminders)
     for r in reminders:
@@ -393,6 +537,7 @@ def setup(client: discord.Client) -> None:
     """Attach the command group to the client's tree and stash the client reference."""
     global _client
     _client = client
+    client.add_view(AttendanceView())
     client.tree.add_command(oliver_cmds)
 
 

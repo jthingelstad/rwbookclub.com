@@ -60,3 +60,48 @@ class TestDispatchHappyPaths:
         assert memories[0]["source"] == "Nick"
         assert memories[0]["source_user_id"] == "u1"
         assert memories[0]["source_message_id"] == "m1"
+
+    def test_identity_status_uses_linked_speaker(self, fresh_db):
+        from agent.tools import dispatch
+
+        fresh_db.link_member_identity("u1", "jamie")
+        result = json.loads(dispatch("identity_status", {}, {
+            "speaker_user_id": "u1",
+            "member_slug": "jamie",
+        }))
+        assert result["speakerMemberSlug"] == "jamie"
+        assert result["speakerMember"]["name"] == "Jamie"
+
+    def test_current_meeting_status_returns_rules(self, fresh_db):
+        from agent.tools import dispatch
+
+        result = json.loads(dispatch("current_meeting_status", {}, {}))
+        assert result["rules"]["standingDate"] == "last Tuesday of the month"
+        assert result["counts"]["quorumRequired"] == 3
+
+    def test_record_availability_requires_linked_speaker(self, fresh_db):
+        from agent.tools import dispatch
+
+        result = json.loads(dispatch("record_availability", {"status": "yes"}, {}))
+        assert "error" in result
+
+    def test_record_availability_saves_for_speaker(self, fresh_db):
+        from agent.tools import dispatch
+
+        fresh_db.link_member_identity("u1", "jamie")
+        result = json.loads(dispatch("record_availability", {"status": "yes"}, {
+            "speaker_user_id": "u1",
+            "member_slug": "jamie",
+            "channel_id": "ch1",
+        }))
+        assert result["saved"] is True
+        rows = fresh_db.attendance_for_meeting(result["meetingStatus"]["meeting"]["meetingKey"])
+        assert rows[0]["member_slug"] == "jamie"
+        assert rows[0]["status"] == "yes"
+
+    def test_recent_channel_context_returns_logged_messages(self, fresh_db):
+        from agent.tools import dispatch
+
+        fresh_db.log_message("ch1", "user", "hello", speaker="Jamie")
+        result = json.loads(dispatch("recent_channel_context", {"limit": 5}, {"channel_id": "ch1"}))
+        assert result[0]["content"] == "hello"

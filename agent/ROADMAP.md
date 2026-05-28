@@ -39,7 +39,9 @@ holds durable memories with provenance, reminders, conversation summaries,
 feedback, usage logs, scheduler dedup, and private Discord identity links. Tools:
 read/authority (`find_books`, `search_books`, `get_book`, `member_history`,
 `get_author`, `club_awards`, `upcoming_meetings`, `club_stats`, `pending_reviews`)
-plus memory/reminder tools (`remember`, `recall`, `set_reminder`).
+plus awareness and local-state tools (`current_club_state`, `current_meeting_status`,
+`identity_status`, `recent_feedback`, `recent_channel_context`, `remember`, `recall`,
+`set_reminder`, `record_availability`).
 
 **Phase 3 — Reviews (the wedge; exercises B→A).** ✅ **Done.**
 Members submit reviews through a Discord modal. Oliver resolves the member through
@@ -58,6 +60,13 @@ upcoming-meeting reminders, a review nudge for the most-recent read, and milesto
 notes to `DISCORD_MAIN_CHANNEL_ID` — deduped via a `notifications_sent` table; `/oliver tick`
 runs it on demand. (Also shipped along the way: a 3.5 pass that normalized the corpus and
 stripped the Airtable cruft, plus consolidating the slash commands under `/oliver`.)
+
+Meeting schedule authority stays deliberately human: the club normally meets on the last
+Tuesday of the month, needs 3 of 5 current members for quorum, and the picker must attend.
+Oliver supports that with roll call rather than scheduling autonomy: `/oliver roll-call
+start|status|remind|close`, persistent attendance buttons, explicit self-reported
+availability via chat, automatic roll-call posting within 10 days, and an attendance warning
+within 3 days when quorum or picker attendance is not confirmed.
 
 **Phase 5 — "6th member" polish.** ✅ **Done.**
 Oliver is now present in the main channel, not just `#ask-oliver`: he answers there only when

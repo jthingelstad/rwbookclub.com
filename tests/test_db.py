@@ -116,3 +116,30 @@ class TestNotificationsDedup:
         # Idempotent — re-marking is safe.
         db.mark_sent("test-key-1")
         assert db.sent_keys() == {"test-key-1", "test-key-2"}
+
+
+class TestRollCall:
+    def test_roll_call_and_attendance_round_trip(self, fresh_db):
+        db = fresh_db
+        db.upsert_roll_call(
+            meeting_key="book-a", channel_id="ch1", message_id="msg1", opened_by="admin"
+        )
+        row = db.get_roll_call("book-a")
+        assert row["status"] == "open"
+        assert row["message_id"] == "msg1"
+
+        db.set_attendance(
+            meeting_key="book-a", member_slug="jamie", status="yes",
+            updated_by_user_id="u1", source="button",
+        )
+        db.set_attendance(
+            meeting_key="book-a", member_slug="tom", status="no",
+            updated_by_user_id="u2", source="chat",
+        )
+        attendance = db.attendance_for_meeting("book-a")
+        assert {r["member_slug"]: r["status"] for r in attendance} == {
+            "jamie": "yes",
+            "tom": "no",
+        }
+        assert db.close_roll_call("book-a")
+        assert db.get_roll_call("book-a")["status"] == "closed"
