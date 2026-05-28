@@ -13,10 +13,15 @@ eleventyExcludeFromCollections: true
 - `{{ site.url }}/llms.txt` — this file. Compact index of every book, with
   a URL to the detailed text file for each one.
 - `{{ site.url }}/books/<slug>.txt` — one plain-text file per book with
-  full metadata, synopsis, meeting notes, and member reviews. Fetch these
-  individually for the book you care about.
-- `{{ site.url }}/books.json` — structured JSON, one row per book, for
-  analytical or cross-book queries.
+  full metadata, subjects (thematic tags), synopsis, meeting notes, member
+  reviews, and a list of related books. Fetch these individually for the book
+  you care about.
+- `{{ site.url }}/books.json` — structured JSON, one row per book (including
+  subjects and a related-books graph), for analytical or cross-book queries.
+- `{{ site.url }}/authors/<slug>/` — a page per author, with a short bio and
+  the books of theirs the club has read.
+- `{{ site.url }}/meetings/` — the full meeting timeline (book discussions
+  plus the occasional spouses' dinner, movie night, and book-picking session).
 
 ## About the club
 

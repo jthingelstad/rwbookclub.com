@@ -1160,6 +1160,197 @@ body.stats-page .page {
   .fun-fact { grid-template-columns: 1fr; gap: 0.1rem; }
 }
 
+/* ─── Author byline links ────────────────────────────────────────────── */
+
+.book-authors a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+}
+.book-authors a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ─── Related reading ────────────────────────────────────────────────── */
+
+.related-books .cover-grid--related {
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  margin-bottom: 0;
+}
+.grid-reason {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  margin: 0.2rem 0 0;
+}
+
+/* ─── Author pages ───────────────────────────────────────────────────── */
+
+.author-detail { padding-top: var(--gap-sm); }
+.author-header {
+  padding-bottom: var(--gap-md);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: var(--gap-lg);
+}
+.author-header h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 400;
+  font-variation-settings: "opsz" 144, "SOFT" 30;
+  margin: 0.3rem 0 0;
+  letter-spacing: -0.02em;
+}
+.author-bio {
+  color: var(--ink-soft);
+  max-width: 36em;
+  line-height: var(--leading);
+  margin: 0;
+}
+.author-books h2 {
+  font-size: var(--type-h2);
+  font-weight: 500;
+  margin: 0 0 1.5rem;
+}
+
+.author-index {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.author-index-row {
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+.author-index-row:last-child { border-bottom: 1px solid var(--rule); }
+.author-index-name { text-decoration: none; }
+.author-index-name:hover { color: var(--accent); }
+.author-index-count {
+  font-size: var(--type-small);
+  color: var(--ink-faint);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* ─── Recent reviews (home) ──────────────────────────────────────────── */
+
+.recent-reviews {
+  margin: 0 0 var(--gap-xl);
+  padding: var(--gap-lg) 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+.recent-reviews > .kicker { margin-bottom: var(--gap-md); }
+.recent-review-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--gap-md);
+}
+.recent-review-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.recent-review-title {
+  font-family: var(--serif);
+  font-size: var(--type-h3);
+  text-decoration: none;
+  color: var(--ink);
+}
+.recent-review-title:hover { color: var(--accent); }
+.recent-review-by {
+  font-size: var(--type-small);
+  color: var(--ink-faint);
+  letter-spacing: 0.04em;
+}
+.recent-review-by a { color: var(--ink-faint); text-decoration: none; }
+.recent-review-by a:hover { color: var(--accent); }
+.recent-review .review-rating { margin: 0.35rem 0 0; }
+.recent-review-body {
+  color: var(--ink-soft);
+  max-width: 40em;
+  line-height: 1.55;
+  margin: 0.5rem 0 0;
+}
+
+/* ─── Meetings timeline ──────────────────────────────────────────────── */
+
+.timeline { margin-top: var(--gap-md); }
+.timeline-year { margin-bottom: var(--gap-lg); }
+.timeline-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.timeline-row {
+  display: grid;
+  grid-template-columns: 11rem 1fr;
+  gap: var(--gap-sm);
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--rule);
+}
+.timeline-row:last-child { border-bottom: 1px solid var(--rule); }
+.timeline-date {
+  margin: 0;
+  font-size: var(--type-small);
+  color: var(--ink-faint);
+  letter-spacing: 0.03em;
+}
+.timeline-tentative {
+  display: inline-block;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+}
+.timeline-body { margin: 0; }
+.timeline-title {
+  font-family: var(--serif);
+  font-size: var(--type-h3);
+  line-height: 1.25;
+  margin: 0;
+}
+.timeline-title a { text-decoration: none; color: var(--ink); }
+.timeline-title a:hover { color: var(--accent); }
+.timeline-title--social {
+  font-style: italic;
+  color: var(--ink-soft);
+}
+.timeline-row--social { background: var(--bg-alt); }
+.timeline-row--social .timeline-date,
+.timeline-row--social .timeline-body { padding-left: 0.6rem; }
+.timeline-tag {
+  display: inline-block;
+  margin-top: 0.3rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+.timeline-loc {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: var(--type-small);
+  color: var(--ink-soft);
+}
+.timeline-notes {
+  margin: 0.4rem 0 0;
+  color: var(--ink-soft);
+  font-size: var(--type-small);
+  line-height: 1.5;
+  max-width: 40em;
+}
+@media (max-width: 560px) {
+  .timeline-row { grid-template-columns: 1fr; gap: 0.2rem; }
+}
+
 /* ─── Misc ───────────────────────────────────────────────────────────── */
 
 .empty {

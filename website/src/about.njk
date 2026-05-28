@@ -34,8 +34,8 @@ permalink: /about/
 
   <h2>How this site is built</h2>
   <p>
-    The Airtable base behind this site is the source of truth. A small Python
-    pipeline pulls every book, meeting, member, and author into JSON, downloads
+    Everything we've read lives as plain text files in a Git repository — one
+    file per book, meeting, member, and author. A small Python pipeline downloads
     and resizes the cover art, and hands the result to
     <a href="https://www.11ty.dev/" rel="external noopener">Eleventy</a>, which
     renders these pages. The whole thing rebuilds and deploys to GitHub Pages

@@ -1,0 +1,52 @@
+---
+layout: layouts/base.njk
+title: Meetings
+permalink: /meetings/
+---
+
+<section class="shelf-header">
+  <a class="back" href="/">← Reading journey</a>
+  <h1>Meetings</h1>
+  <p class="lede">Every time the club has gotten together since {{ site.founded }} — {{ meetings.length }} meetings in all. Mostly to talk about a book, but now and then a spouses' dinner, a movie night, or an evening to pick what's next.</p>
+</section>
+
+{% if meetingYears.length %}
+  <nav class="years-nav" aria-label="Jump to year">
+    {% for bucket in meetingYears %}
+      <a href="#mtg-{{ bucket.year }}">{{ bucket.year }}</a>
+    {% endfor %}
+  </nav>
+
+  <div class="timeline">
+    {% for bucket in meetingYears %}
+      <section class="timeline-year" id="mtg-{{ bucket.year }}">
+        <h2 class="year-marker"><span>{{ bucket.year }}</span></h2>
+        <ol class="timeline-list">
+          {% for mt in bucket.meetings %}
+            <li class="timeline-row{% if mt.nonBookTypes.length and not mt.bookRefs.length %} timeline-row--social{% endif %}">
+              <p class="timeline-date">
+                {{ mt.date | longDate }}{% if mt.placeholder %} <span class="timeline-tentative">tentative</span>{% endif %}
+              </p>
+              <div class="timeline-body">
+                {% if mt.bookRefs.length %}
+                  <p class="timeline-title">
+                    {% for b in mt.bookRefs %}<a href="/books/{{ b.slug }}/">{{ b.title }}</a>{% if not loop.last %} &amp; {% endif %}{% endfor %}
+                  </p>
+                  {% if mt.nonBookTypes.length %}
+                    <span class="timeline-tag">{{ mt.nonBookTypes | join(" · ") }}</span>
+                  {% endif %}
+                {% elif mt.nonBookTypes.length %}
+                  <p class="timeline-title timeline-title--social">{{ mt.nonBookTypes | join(" · ") }}</p>
+                {% endif %}
+                {% if mt.location %}<span class="timeline-loc">{{ mt.location }}</span>{% endif %}
+                {% if mt.notes %}<p class="timeline-notes">{{ mt.notes }}</p>{% endif %}
+              </div>
+            </li>
+          {% endfor %}
+        </ol>
+      </section>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="empty">The meeting history will appear here once the data layer has been fetched.</p>
+{% endif %}

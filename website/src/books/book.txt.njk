@@ -17,6 +17,9 @@ eleventyExcludeFromCollections: true
 {%- if book.topic %}
 - **Topic:** {{ book.topic | safe }}{% if book.fiction %} (Fiction){% endif %}
 {%- endif %}
+{%- if book.subjectTags and book.subjectTags.length %}
+- **Subjects:** {{ book.subjectTags | join(", ") | safe }}
+{%- endif %}
 {%- if book.publicationYear %}
 - **Published:** {{ book.publicationYear }}
 {%- endif %}
@@ -58,4 +61,15 @@ eleventyExcludeFromCollections: true
   Favorite quote: "{{ r.favoriteQuote | stripHtml | safe }}"
 {%- endif %}
 {% endfor %}
+{%- endif %}
+{%- if book.related and book.related.length %}
+## Related books
+{% for rel in book.related %}
+{%- set rbook = null %}
+{%- for b in books %}{% if b.slug == rel.slug %}{% set rbook = b %}{% endif %}{% endfor %}
+{%- if rbook %}
+- {{ rbook.title | safe }} ({{ rel.reason | safe }})
+  {{ site.url }}/books/{{ rbook.slug }}.txt
+{%- endif %}
+{%- endfor %}
 {%- endif %}

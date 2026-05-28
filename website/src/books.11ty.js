@@ -44,6 +44,7 @@ module.exports = class {
           subtitle: b.subtitle || null,
           authors: b.authors || [],
           topic: b.topic || null,
+          subjects: Array.isArray(b.subjectTags) ? b.subjectTags : [],
           fiction: !!b.fiction,
           publicationYear: b.publicationYear || null,
           pageCount: b.pageCount || null,
@@ -64,6 +65,11 @@ module.exports = class {
           synopsis: b.synopsis || null,
           reviewCount: bookReviews.length,
           reviews: bookReviews,
+          related: (b.related || []).map((r) => ({
+            slug: r.slug,
+            url: `${site.url}/books/${r.slug}/`,
+            reason: r.reason,
+          })),
         };
       }),
     };
