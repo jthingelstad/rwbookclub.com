@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 
 import yaml
 
-from corpus.airtable import DATA_DIR
+from corpus.paths import DATA_DIR
 from agent import corpus_read as cr
 from agent import gitwrite
 
@@ -56,7 +56,7 @@ def _parse_1to5(value: str | None) -> int | None:
 def _existing(path) -> dict:
     if not path.exists():
         return {}
-    data, _ = cr._parse_frontmatter(path.read_text())
+    data, _ = cr.parse_frontmatter(path.read_text())
     return data or {}
 
 

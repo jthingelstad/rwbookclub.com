@@ -1,31 +1,28 @@
-"""Shared Airtable client and path constants for the knowledge corpus.
+"""Airtable cold-backup client — only used by fetch.py / migrate.py / restore_*.
 
-Imported by the corpus fetch/image scripts and by the Discord agent (Oliver),
-which reuses the client and `slugify` helpers. Run corpus scripts from the
-repo root as `python -m corpus.fetch` / `python -m corpus.images`.
+Git is the canonical source of truth for the corpus; this module exists so
+the rare cold-backup re-pull path keeps working. Paths and the slug helper
+live in `corpus.paths` — import those from there, not here.
 """
 
 from __future__ import annotations
 
 import os
-import re
 import time
-from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
-from unidecode import unidecode
 
-CORPUS_DIR = Path(__file__).resolve().parent
-REPO_ROOT = CORPUS_DIR.parent
-DATA_DIR = CORPUS_DIR / "data"
-RAW_DATA_DIR = DATA_DIR / "raw"
-# Responsive cover/photo variants are website presentation assets, so the
-# image step writes them straight into the website tree.
-COVERS_DIR = REPO_ROOT / "website" / "src" / "assets" / "images" / "covers"
-MEMBERS_IMG_DIR = REPO_ROOT / "website" / "src" / "assets" / "images" / "members"
+from corpus.paths import REPO_ROOT
 
-# Table IDs are stable; names can change. Pulled from CLAUDE.md.
+# Re-export so existing `from corpus.airtable import DATA_DIR` style imports
+# keep working during the migration. Prefer importing from corpus.paths for
+# new code; this re-export will be retired once all callers are migrated.
+from corpus.paths import (  # noqa: F401
+    CORPUS_DIR, DATA_DIR, RAW_DATA_DIR, COVERS_DIR, MEMBERS_IMG_DIR, slugify,
+)
+
+# Airtable table IDs are stable; names can change. Pulled from CLAUDE.md.
 BOOKS = "tblPqH96wIgGuUSXe"
 MEETINGS = "tblJpQrukeCXaO0Uq"
 MEMBERS = "tblsjVRbdj231zbwj"
@@ -72,18 +69,6 @@ def list_all(session: requests.Session, base: str, table_id: str) -> list[dict]:
         if not offset:
             return out
         time.sleep(0.2)  # gentle rate limit
-
-
-_slug_re = re.compile(r"[^a-z0-9]+")
-
-
-def slugify(text: str) -> str:
-    """URL-safe slug. Transliterates non-ASCII (Cræft → craeft, Freedom™ → freedom)."""
-    if not text:
-        return ""
-    ascii_text = unidecode(text).lower()
-    ascii_text = _slug_re.sub("-", ascii_text).strip("-")
-    return ascii_text
 
 
 def first_attachment_url(field) -> str | None:

@@ -14,20 +14,18 @@ from __future__ import annotations
 import json
 from collections import Counter
 
+from corpus.paths import DATA_DIR, RAW_DATA_DIR, slugify
 from corpus.airtable import (
     AUTHORS,
     AWARDS,
     BOOKS,
-    DATA_DIR,
     MEETINGS,
     MEMBERS,
-    RAW_DATA_DIR,
     REVIEWS,
     airtable_session,
     first_attachment_url,
     list_all,
     load_env,
-    slugify,
 )
 
 

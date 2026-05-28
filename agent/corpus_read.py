@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 
 import yaml
 
-from corpus.airtable import DATA_DIR
+from corpus.paths import DATA_DIR
 
 
 def _load_json_dir(name: str) -> list[dict]:
@@ -26,7 +26,12 @@ def _load_json_dir(name: str) -> list[dict]:
     return [{**json.loads(p.read_text()), "slug": p.stem} for p in sorted(d.glob("*.json"))]
 
 
-def _parse_frontmatter(text: str) -> tuple[dict, str]:
+def parse_frontmatter(text: str) -> tuple[dict, str]:
+    """Split a YAML-frontmatter Markdown doc into (frontmatter dict, body str).
+
+    Public because reviews.py and bot.py reach into this same parser — both
+    need to read review files the same way the loader does.
+    """
     if text.startswith("---"):
         _, fm, *rest = text.split("---", 2)
         return (yaml.safe_load(fm) or {}), (rest[0] if rest else "").strip()
@@ -55,7 +60,7 @@ def reviews() -> list[dict]:
         return []
     out = []
     for p in sorted(d.glob("*.md")):
-        data, body = _parse_frontmatter(p.read_text())
+        data, body = parse_frontmatter(p.read_text())
         data["review"] = body or None
         out.append(data)
     return out
@@ -71,8 +76,40 @@ def _earliest_meeting_by_book() -> dict[str, dict]:
     return m
 
 
+# ── books() cache ────────────────────────────────────────────────────────────
+# books() does ~375 file reads + a join, and Oliver's tools call it many times
+# per turn (find_books → books(); get_book → find_book → books(); etc.). We
+# cache the enriched list keyed on a signature (file count + max mtime) over
+# the three dirs it composes from — any add, remove, or edit changes the
+# signature and the cache rebuilds. Stat overhead is ~370 syscalls (<1ms);
+# savings on a cache hit are the JSON parse + enrichment loop (~10–50ms).
+_books_cache: list[dict] | None = None
+_books_cache_sig: tuple | None = None
+
+
+def _books_signature() -> tuple:
+    parts = []
+    for sub in ("books", "meetings", "members"):
+        d = DATA_DIR / sub
+        if not d.exists():
+            parts.append((sub, 0, 0.0))
+            continue
+        files = list(d.glob("*.json"))
+        mt = max((f.stat().st_mtime for f in files), default=0.0)
+        parts.append((sub, len(files), mt))
+    return tuple(parts)
+
+
 def books() -> list[dict]:
-    """Books enriched with their derived meeting + picker fields (keeps `picker` too)."""
+    """Books enriched with their derived meeting + picker fields (keeps `picker` too).
+
+    Cached on a (count, max-mtime) signature over books/, meetings/, members/.
+    """
+    global _books_cache, _books_cache_sig
+    sig = _books_signature()
+    if _books_cache is not None and sig == _books_cache_sig:
+        return _books_cache
+
     mbs = _earliest_meeting_by_book()
     member_by_slug = {m["slug"]: m for m in members()}
     out = []
@@ -99,7 +136,9 @@ def books() -> list[dict]:
             "pickerSlugs": pslugs or None,
         })
         out.append(eb)
-    return out
+    _books_cache = out
+    _books_cache_sig = sig
+    return _books_cache
 
 
 def _norm(s: str | None) -> str:

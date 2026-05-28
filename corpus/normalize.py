@@ -15,7 +15,7 @@ import json
 
 import yaml
 
-from corpus.airtable import DATA_DIR
+from corpus.paths import DATA_DIR
 
 # slug is the filename, and the Airtable rec id is no longer referenced — both omitted.
 BOOK_KEEP = [

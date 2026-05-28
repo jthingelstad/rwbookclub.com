@@ -24,12 +24,11 @@ from agent.tools import TOOLS, dispatch
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-# Model strategy: default to Sonnet for the interactive agent loop; use Haiku for
-# cheap internal work (rolling summaries); reserve Opus for selective upgrades when
-# a task genuinely needs the extra horsepower.
-MODEL = "claude-sonnet-4-6"          # default — the user-facing agent loop
+# Model strategy: Sonnet for the interactive agent loop; Haiku for cheap
+# internal work (rolling summaries). Opus is intentionally not used — the
+# project mandate is cost-conscious.
+MODEL = "claude-sonnet-4-6"          # user-facing agent loop
 SUMMARY_MODEL = "claude-haiku-4-5"   # cheap internal summarization
-OPUS_MODEL = "claude-opus-4-7"       # reserved: upgrade only as needed
 MAX_TOKENS = 2048
 MAX_TOOL_ROUNDS = 8
 SUMMARIZE_THRESHOLD = 24   # un-summarized turns before folding into the rolling summary
@@ -120,13 +119,11 @@ def _system_blocks() -> list[dict]:
 
 
 def _resolve_member(speaker: str | None) -> str | None:
+    """Speaker display-name → member slug, via the canonical resolver."""
     if not speaker:
         return None
-    s = speaker.strip().lower()
-    for m in cr.members():
-        if s == (m.get("name") or "").lower() or s == (m.get("slug") or "").lower():
-            return m.get("slug")
-    return None
+    m = cr.find_member(speaker)
+    return m.get("slug") if m else None
 
 
 def _history(channel_id: str) -> tuple[list[dict], str | None]:

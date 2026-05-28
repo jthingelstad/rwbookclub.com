@@ -13,7 +13,7 @@ import sys
 
 import yaml
 
-from corpus.airtable import DATA_DIR
+from corpus.paths import DATA_DIR
 
 
 def _load_dir(name: str) -> dict[str, dict]:

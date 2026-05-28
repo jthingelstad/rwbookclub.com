@@ -20,7 +20,7 @@ import time
 
 import requests
 
-from corpus.airtable import DATA_DIR
+from corpus.paths import DATA_DIR
 
 OL = "https://openlibrary.org"
 HEADERS = {"User-Agent": "rwbookclub-subjects-enricher/1.0 (https://rwbookclub.com)"}

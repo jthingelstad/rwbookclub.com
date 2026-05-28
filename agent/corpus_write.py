@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 
-from corpus.airtable import DATA_DIR, slugify
+from corpus.paths import DATA_DIR, slugify
 from agent import corpus_read as cr
 from agent import gitwrite
 

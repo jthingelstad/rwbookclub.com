@@ -20,7 +20,7 @@ from urllib.parse import quote
 
 import requests
 
-from corpus.airtable import DATA_DIR
+from corpus.paths import DATA_DIR
 
 WIKI = "https://en.wikipedia.org/api/rest_v1/page/summary"
 HEADERS = {"User-Agent": "rwbookclub-bio-enricher/1.0 (https://rwbookclub.com)"}

@@ -17,13 +17,12 @@ from collections import Counter
 
 import yaml
 
+from corpus.paths import DATA_DIR, slugify
 from corpus.airtable import (
-    DATA_DIR,
     MEETINGS,
     airtable_session,
     list_all,
     load_env,
-    slugify,
 )
 
 RAW = DATA_DIR / "raw"

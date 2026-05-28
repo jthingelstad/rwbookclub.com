@@ -13,13 +13,12 @@ from __future__ import annotations
 
 import json
 
+from corpus.paths import DATA_DIR, slugify
 from corpus.airtable import (
     AUTHORS,
-    DATA_DIR,
     airtable_session,
     list_all,
     load_env,
-    slugify,
 )
 
 

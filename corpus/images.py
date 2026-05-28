@@ -21,7 +21,7 @@ from io import BytesIO
 import requests
 from PIL import Image
 
-from corpus.airtable import COVERS_DIR, DATA_DIR
+from corpus.paths import COVERS_DIR, DATA_DIR
 
 COVER_WIDTHS = [240, 480, 960]
 JPEG_QUALITY = 82
