@@ -127,3 +127,23 @@ class TestDispatchHappyPaths:
         fresh_db.log_message("ch1", "user", "hello", speaker="Jamie")
         result = json.loads(dispatch("recent_channel_context", {"limit": 5}, {"channel_id": "ch1"}))
         assert result[0]["content"] == "hello"
+
+    def test_propose_action_stages_admin_review(self, fresh_db):
+        from agent.tools import dispatch
+
+        result = json.loads(dispatch("propose_action", {
+            "kind": "meeting_notice",
+            "title": "Warn about quorum",
+            "body": "Only two members are confirmed.",
+        }, {"channel_id": "ch1", "speaker_user_id": "u1"}))
+        assert result["saved"] is True
+        proposals = fresh_db.list_proposals()
+        assert proposals[0]["title"] == "Warn about quorum"
+        assert proposals[0]["channel_id"] == "ch1"
+
+    def test_open_proposals_returns_pending(self, fresh_db):
+        from agent.tools import dispatch
+
+        fresh_db.add_proposal(kind="other", title="Check this", body="A note")
+        result = json.loads(dispatch("open_proposals", {}, {}))
+        assert result[0]["title"] == "Check this"

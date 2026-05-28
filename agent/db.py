@@ -133,6 +133,20 @@ CREATE TABLE IF NOT EXISTS meeting_attendance (
     PRIMARY KEY (meeting_key, member_slug)
 );
 CREATE INDEX IF NOT EXISTS idx_attendance_meeting ON meeting_attendance(meeting_key);
+
+CREATE TABLE IF NOT EXISTS proposals (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind           TEXT NOT NULL,
+    title          TEXT NOT NULL,
+    body           TEXT NOT NULL,
+    status         TEXT NOT NULL DEFAULT 'pending', -- pending | accepted | dismissed
+    channel_id     TEXT,
+    source_user_id TEXT,
+    created_at     TEXT NOT NULL DEFAULT (datetime('now')),
+    resolved_by    TEXT,
+    resolved_at    TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_proposals_status ON proposals(status, created_at);
 """
 
 
@@ -499,3 +513,36 @@ def attendance_for_meeting(meeting_key: str) -> list[dict]:
             (meeting_key,),
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+# ── Oliver action proposals ─────────────────────────────────────────────────
+def add_proposal(*, kind: str, title: str, body: str, channel_id: str | None = None,
+                 source_user_id: str | None = None) -> int:
+    with connect() as conn:
+        cur = conn.execute(
+            "INSERT INTO proposals (kind, title, body, channel_id, source_user_id) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (kind, title, body, channel_id, source_user_id),
+        )
+        return cur.lastrowid
+
+
+def list_proposals(*, status: str = "pending", limit: int = 10) -> list[dict]:
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT * FROM proposals WHERE status = ? ORDER BY id DESC LIMIT ?",
+            (status, limit),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def resolve_proposal(proposal_id: int, status: str, *, resolved_by: str | None = None) -> bool:
+    if status not in {"accepted", "dismissed"}:
+        raise ValueError("proposal status must be accepted or dismissed")
+    with connect() as conn:
+        cur = conn.execute(
+            "UPDATE proposals SET status = ?, resolved_by = ?, resolved_at = ? "
+            "WHERE id = ? AND status = 'pending'",
+            (status, resolved_by, _now(), proposal_id),
+        )
+        return cur.rowcount > 0

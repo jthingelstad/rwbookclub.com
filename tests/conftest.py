@@ -28,7 +28,7 @@ def fresh_db():
     tables = [
         "memories", "conversations", "channel_summaries", "reminders",
         "usage_log", "notifications_sent", "responses", "feedback",
-        "member_identities", "meeting_attendance", "roll_calls",
+        "member_identities", "meeting_attendance", "roll_calls", "proposals",
     ]
     with _db.connect() as conn:
         for t in tables:

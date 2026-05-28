@@ -35,8 +35,9 @@ agent/
   `upcoming_meetings`, `club_stats`, `pending_reviews` (read the corpus), club-awareness
   tools (`current_club_state`, `current_meeting_status`, `identity_status`,
   `recent_feedback`, `recent_channel_context`), relationship tools (`related_books`,
-  `compare_books`, `review_summary`), plus `remember`, `recall`, `set_reminder`, and
-  explicit self-reported `record_availability` (SQLite).
+  `compare_books`, `review_summary`), proposal staging (`propose_action`, `open_proposals`),
+  plus `remember`, `recall`, `set_reminder`, and explicit self-reported `record_availability`
+  (SQLite).
 - **Reviews** (`/oliver review`): members log reviews via a Discord form that writes to the
   Git corpus (`reviews.py` → `gitwrite.py`) — see below. Review identity comes from the
   private Discord-user → member map, not mutable display names.
@@ -102,6 +103,7 @@ Admins can inspect and repair private state in Discord:
 - `/oliver edit-memory` and `/oliver forget` curate incorrect or stale memories
 - `/oliver roll-call status` shows the current attendance/quorum/picker check
 - `/oliver roll-call start|remind|close` runs the attendance flow in Discord
+- `/oliver proposals` and `/oliver resolve-proposal` review staged Oliver suggestions
 
 ## Reviews (`/oliver review`)
 
@@ -117,7 +119,7 @@ Set `OLIVER_GIT_PUSH=0` to commit locally without pushing (dev).
 
 ```bash
 pip install -r tests/requirements.txt    # one-time
-pytest tests/                             # 109 tests, ~0.6s
+pytest tests/                             # 112 tests, ~0.6s
 ```
 
 Pure helpers (`_is_addressed`, `_strip_address`, rating parsers, `parse_frontmatter`,

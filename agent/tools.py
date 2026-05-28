@@ -196,6 +196,33 @@ TOOLS = [
         },
     },
     {
+        "name": "propose_action",
+        "description": "Stage a non-destructive proposal for admins to review later. Use for suggested corpus patches, reading-order concerns, review nudges, memory repairs, meeting notices, or other club operations that should not be executed directly.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "kind": {
+                    "type": "string",
+                    "enum": [
+                        "corpus_patch", "reading_order", "review_nudge",
+                        "memory_update", "meeting_notice", "other",
+                    ],
+                },
+                "title": {"type": "string"},
+                "body": {"type": "string"},
+            },
+            "required": ["kind", "title", "body"],
+        },
+    },
+    {
+        "name": "open_proposals",
+        "description": "List pending admin-review proposals Oliver has staged.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"limit": {"type": "integer", "minimum": 1, "maximum": 10}},
+        },
+    },
+    {
         "name": "remember",
         "description": "Save a durable note Oliver should remember across conversations (a member's taste, a club fact, a preference). Private to Oliver.",
         "input_schema": {
@@ -309,6 +336,18 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 source="chat",
             )
             return _dump({"saved": True, "meetingStatus": meeting_rules.meeting_status(meeting["meetingKey"])})
+        if name == "propose_action":
+            pid = db.add_proposal(
+                kind=tool_input["kind"],
+                title=tool_input["title"],
+                body=tool_input["body"],
+                channel_id=ctx.get("channel_id"),
+                source_user_id=ctx.get("speaker_user_id"),
+            )
+            return _dump({"saved": True, "id": pid})
+        if name == "open_proposals":
+            limit = max(1, min(int(tool_input.get("limit", 10)), 10))
+            return _dump(db.list_proposals(limit=limit))
         if name == "remember":
             mid = db.add_memory(
                 tool_input["note"],

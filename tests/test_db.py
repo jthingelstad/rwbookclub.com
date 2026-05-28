@@ -143,3 +143,20 @@ class TestRollCall:
         }
         assert db.close_roll_call("book-a")
         assert db.get_roll_call("book-a")["status"] == "closed"
+
+
+class TestProposals:
+    def test_proposal_lifecycle(self, fresh_db):
+        db = fresh_db
+        pid = db.add_proposal(
+            kind="meeting_notice",
+            title="Post quorum warning",
+            body="Only two members are confirmed.",
+            channel_id="ch1",
+            source_user_id="u1",
+        )
+        rows = db.list_proposals()
+        assert rows[0]["id"] == pid
+        assert rows[0]["status"] == "pending"
+        assert db.resolve_proposal(pid, "accepted", resolved_by="admin")
+        assert db.list_proposals() == []

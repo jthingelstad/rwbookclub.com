@@ -401,6 +401,37 @@ async def roll_call_cmd(interaction: discord.Interaction,
         log.exception("Failed to record roll-call message")
 
 
+@oliver_cmds.command(name="proposals", description="Show Oliver's pending action proposals (admin).")
+@admin_only
+async def proposals_cmd(interaction: discord.Interaction) -> None:
+    rows = await asyncio.to_thread(db.list_proposals, limit=10)
+    if not rows:
+        await interaction.response.send_message("No pending proposals.", ephemeral=True)
+        return
+    lines = ["**Pending proposals:**"]
+    for r in rows:
+        lines.append(f"• `{r['id']}` [{r['kind']}] **{r['title']}** — {r['body'][:180]}")
+    await interaction.response.send_message("\n".join(lines)[:config.MAX_DISCORD_LEN], ephemeral=True)
+
+
+@oliver_cmds.command(name="resolve-proposal", description="Accept or dismiss an Oliver proposal (admin).")
+@discord.app_commands.describe(proposal_id="Proposal id from /oliver proposals",
+                               decision="Accept or dismiss")
+@discord.app_commands.choices(decision=[
+    discord.app_commands.Choice(name="accept", value="accepted"),
+    discord.app_commands.Choice(name="dismiss", value="dismissed"),
+])
+@admin_only
+async def resolve_proposal_cmd(interaction: discord.Interaction, proposal_id: int,
+                               decision: discord.app_commands.Choice[str]) -> None:
+    ok = await asyncio.to_thread(
+        db.resolve_proposal, proposal_id, decision.value, resolved_by=str(interaction.user.id)
+    )
+    await interaction.response.send_message(
+        f"Proposal {decision.name}ed." if ok else "No pending proposal with that id.",
+        ephemeral=True)
+
+
 @oliver_cmds.command(name="memories", description="Search Oliver's durable memories (admin).")
 @discord.app_commands.describe(subject="Optional member slug or topic", query="Optional text search")
 @admin_only

@@ -41,8 +41,9 @@ read/authority (`find_books`, `search_books`, `get_book`, `member_history`,
 `get_author`, `club_awards`, `upcoming_meetings`, `club_stats`, `pending_reviews`)
 plus awareness and local-state tools (`current_club_state`, `current_meeting_status`,
 `identity_status`, `recent_feedback`, `recent_channel_context`), richer corpus relationship
-tools (`related_books`, `compare_books`, `review_summary`), and memory/reminder tools
-(`remember`, `recall`, `set_reminder`, `record_availability`).
+tools (`related_books`, `compare_books`, `review_summary`), proposal-staging tools
+(`propose_action`, `open_proposals`), and memory/reminder tools (`remember`, `recall`,
+`set_reminder`, `record_availability`).
 
 **Phase 3 — Reviews (the wedge; exercises B→A).** ✅ **Done.**
 Members submit reviews through a Discord modal. Oliver resolves the member through
@@ -68,6 +69,10 @@ Oliver supports that with roll call rather than scheduling autonomy: `/oliver ro
 start|status|remind|close`, persistent attendance buttons, explicit self-reported
 availability via chat, automatic roll-call posting within 10 days, and an attendance warning
 within 3 days when quorum or picker attendance is not confirmed.
+
+For club operations Oliver should not perform directly, he can now stage proposals in SQLite
+for admin review (`/oliver proposals`, `/oliver resolve-proposal`) instead of pretending a
+suggested action is already approved.
 
 **Phase 5 — "6th member" polish.** ✅ **Done.**
 Oliver is now present in the main channel, not just `#ask-oliver`: he answers there only when
