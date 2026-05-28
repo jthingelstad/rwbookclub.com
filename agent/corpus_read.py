@@ -40,6 +40,14 @@ def meetings() -> list[dict]:
     return _load_json_dir("meetings")
 
 
+def authors() -> list[dict]:
+    return _load_json_dir("authors")
+
+
+def awards() -> list[dict]:
+    return _load_json_dir("awards")
+
+
 def reviews() -> list[dict]:
     d = DATA_DIR / "reviews"
     if not d.exists():
@@ -165,6 +173,48 @@ def find_member(name_or_slug: str) -> dict | None:
     return None
 
 
+def find_author(name_or_slug: str) -> dict | None:
+    key = _norm(name_or_slug)
+    for a in authors():
+        if _norm(a.get("slug")) == key or _norm(a.get("name")) == key:
+            return a
+    for a in authors():
+        if key and (key in _norm(a.get("name")) or key in _norm(a.get("slug"))):
+            return a
+    return None
+
+
+def get_author(name_or_slug: str) -> dict | None:
+    """Author bio + the books the club has read by them."""
+    a = find_author(name_or_slug)
+    if not a:
+        return None
+    name = a.get("name")
+    read = [
+        {"slug": b["slug"], "title": b.get("title"), "year": b.get("year"),
+         "topic": b.get("topic")}
+        for b in books()
+        if name and name in (b.get("authors") or [])
+    ]
+    read.sort(key=lambda x: x.get("year") or 0, reverse=True)
+    return {
+        "name": name,
+        "slug": a.get("slug"),
+        "bio": a.get("bio"),
+        "books": read,
+        "bookCount": len(read),
+    }
+
+
+def awards_for_book(book_slug: str) -> list[dict]:
+    return [
+        {"name": a.get("name"), "year": a.get("year"),
+         "award": a.get("award"), "notes": a.get("notes")}
+        for a in awards()
+        if book_slug in (a.get("books") or [])
+    ]
+
+
 def _reviews_for(*, book_slug: str | None = None, member_slug: str | None = None) -> list[dict]:
     titles = {b["slug"]: b.get("title") for b in _load_json_dir("books")}
     names = {m["slug"]: m.get("name") for m in members()}
@@ -197,6 +247,7 @@ def get_book(slug_or_title: str) -> dict | None:
     brief["meetingDate"] = b.get("meetingDate")
     brief["meetingNotes"] = b.get("meetingNotes")
     brief["reviews"] = _reviews_for(book_slug=b.get("slug"))
+    brief["awards"] = awards_for_book(b.get("slug"))
     return brief
 
 

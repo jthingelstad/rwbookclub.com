@@ -55,6 +55,20 @@ TOOLS = [
         "input_schema": {"type": "object", "properties": {}},
     },
     {
+        "name": "get_author",
+        "description": "Author bio + the books the club has read by them. Use whenever someone asks about an author.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"author": {"type": "string", "description": "author name or slug"}},
+            "required": ["author"],
+        },
+    },
+    {
+        "name": "club_awards",
+        "description": "All awards the club has bestowed (Book of the Year, etc.) with book and year.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
         "name": "club_stats",
         "description": "Aggregate stats: totals, topic mix, fiction split, books-by-year, picker leaderboard, page stats.",
         "input_schema": {"type": "object", "properties": {}},
@@ -122,6 +136,10 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             return _dump(cr.member_history(tool_input["member"]) or {"error": "no such member"})
         if name == "upcoming_meetings":
             return _dump(cr.upcoming_meetings())
+        if name == "get_author":
+            return _dump(cr.get_author(tool_input["author"]) or {"error": "no such author"})
+        if name == "club_awards":
+            return _dump(cr.awards())
         if name == "club_stats":
             return _dump(cr.club_stats())
         if name == "pending_reviews":
