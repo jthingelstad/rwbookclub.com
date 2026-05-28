@@ -80,6 +80,12 @@ client = OliverClient()
 @client.event
 async def on_ready() -> None:
     log.info("Oliver connected as %s — %d books in the corpus.", client.user, kb.book_count())
+    guilds = list(client.guilds)
+    log.info("In %d guild(s): %s", len(guilds), ", ".join(g.name for g in guilds) or "(none)")
+    ask = client.get_channel(ASK_CHANNEL_ID) if ASK_CHANNEL_ID else None
+    main = client.get_channel(MAIN_CHANNEL_ID) if MAIN_CHANNEL_ID else None
+    log.info("  ASK_CHANNEL_ID=%s -> %s", ASK_CHANNEL_ID, ask)
+    log.info("  MAIN_CHANNEL_ID=%s -> %s", MAIN_CHANNEL_ID, main)
     if MAIN_CHANNEL_ID and not scheduler_loop.is_running():
         scheduler_loop.start()
 
