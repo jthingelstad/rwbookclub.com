@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from datetime import datetime, timezone
 
 import yaml
 
@@ -327,7 +328,16 @@ def member_history(name_or_slug: str) -> dict | None:
 
 
 def upcoming_meetings() -> list[dict]:
-    future = [b for b in books() if b.get("placeholder")]
+    """Placeholder (= approximate-date / not-yet-confirmed) meetings that haven't
+    happened yet. We filter past placeholders out because the placeholder flag
+    is doing double-duty for "approximate date" and "future" — if the meeting
+    date has passed, it's no longer upcoming regardless of whether someone
+    flipped the flag yet."""
+    today = datetime.now(timezone.utc).date().isoformat()
+    future = [
+        b for b in books()
+        if b.get("placeholder") and (b.get("meetingDate") or "")[:10] >= today
+    ]
     future.sort(key=lambda b: b.get("meetingDate") or "")
     return [
         {"title": b.get("title"), "authors": b.get("authors") or [],

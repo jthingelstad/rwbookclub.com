@@ -32,9 +32,11 @@ def _parse_rating(value: str | None) -> tuple[int | None, bool]:
         return None, False
     if s.replace(" ", "") in {"dnf", "didnotfinish", "didn'tfinish"}:
         return None, True
-    m = re.match(r"([1-5])", s)
+    # Anchored: "5" works, "11" / "5stars" / "5/5" reject. The modal label
+    # says "Rating (1–5, or DNF)" so a single digit is the contract.
+    m = re.fullmatch(r"[1-5]", s)
     if m:
-        return int(m.group(1)), False
+        return int(s), False
     raise ReviewError(f"Rating should be 1–5 or DNF (got {value!r}).")
 
 
@@ -46,10 +48,9 @@ def _parse_1to5(value: str | None) -> int | None:
     s = (value or "").strip()
     if not s:
         return None
-    m = re.match(r"([1-5])", s)
-    if not m:
+    if not re.fullmatch(r"[1-5]", s):
         raise ReviewError(f"Discussion quality should be 1–5 (got {value!r}).")
-    return int(m.group(1))
+    return int(s)
 
 
 def _existing(path) -> dict:

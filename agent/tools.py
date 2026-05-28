@@ -1,17 +1,27 @@
 """Oliver's tool surface: Anthropic tool schemas + a dispatcher.
 
-Phase 2 tools are all read-only (corpus) or write to SQLite (memory/reminders) —
-nothing irreversible. `dispatch` is called by the agent loop with the tool name,
-the model's input, and a per-turn context (channel + speaker). Results are returned
-as compact JSON strings for the model to read.
+Two kinds of tools live here:
+- **Server-side** (Anthropic-hosted): `web_search` — the platform resolves it,
+  `dispatch()` never sees it because the response blocks have type
+  `server_tool_use`, not `tool_use`.
+- **Client-side** (this module): corpus reads (find_books, get_book, …) plus
+  SQLite writes (remember/recall/set_reminder). All read-only or local-only —
+  nothing irreversible. `dispatch` is called by the agent loop with the tool
+  name, model's input, and per-turn context; returns a compact JSON string.
+
+Tool errors are caught and returned to the model as `{"error": ...}` so the
+loop survives — but also `log.exception` so the operator can see what broke.
 """
 
 from __future__ import annotations
 
 import json
+import logging
 
 from agent import corpus_read as cr
 from agent import db
+
+log = logging.getLogger("oliver.tools")
 
 # Tool definitions sent to the API. Order is stable so the prompt-cache prefix
 # (tools render before system) stays valid across requests.
@@ -190,4 +200,7 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             return _dump({"saved": True, "id": rid})
         return _dump({"error": f"unknown tool {name}"})
     except Exception as e:  # noqa: BLE001 - surface tool errors to the model, don't crash the loop
+        # Also log so the operator sees it — bare error strings to the model
+        # used to be invisible to anyone watching the bot.
+        log.exception("tool %s failed (input=%r)", name, tool_input)
         return _dump({"error": f"{type(e).__name__}: {e}"})

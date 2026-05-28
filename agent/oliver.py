@@ -1,11 +1,12 @@
 """Oliver's brain: a tool-using agent loop over the club corpus + SQLite memory.
 
-claude-opus-4-7 with adaptive thinking and prompt caching. The stable prefix
-(tools -> system: persona + compact club overview) is cached; the volatile tail
-(per-channel conversation history, speaker, question) follows the breakpoint.
-Oliver retrieves specifics via tools (agent/tools.py) and remembers across
-conversations via SQLite (agent/db.py). A manual loop (not the SDK tool runner)
-so Phase 3 can gate write tools behind confirmation.
+Sonnet by default (claude-sonnet-4-6) with adaptive thinking and prompt caching;
+Haiku for cheap internal rolling summaries; Opus reserved for selective upgrades.
+The stable prefix (tools → system: persona + compact club overview) is cached;
+the volatile tail (per-channel conversation history, speaker, question) follows
+the breakpoint. Oliver retrieves specifics via tools (agent/tools.py) and
+remembers across conversations via SQLite (agent/db.py). A manual loop rather
+than the SDK tool runner so write tools can be gated behind confirmation.
 """
 
 from __future__ import annotations
@@ -104,7 +105,10 @@ _client: anthropic.Anthropic | None = None
 def _get_client() -> anthropic.Anthropic:
     global _client
     if _client is None:
-        _client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY
+        # Cap at 120s — adaptive thinking + a few web searches fit easily inside
+        # this, but a hung request can't tie up a Discord interaction past its
+        # 15-minute defer ceiling. SDK default is 600s, which is too generous.
+        _client = anthropic.Anthropic(timeout=120.0)  # reads ANTHROPIC_API_KEY
     return _client
 
 

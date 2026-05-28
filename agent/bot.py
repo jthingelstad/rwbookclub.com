@@ -19,14 +19,16 @@ import asyncio
 import logging
 import os
 import re
+import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
 import discord
 from discord.ext import tasks
 from dotenv import load_dotenv
 
-from agent import (context as kb, corpus_read, corpus_write, db, oliver,
-                   openlibrary, reviews, scheduler)
+from agent import (context as kb, corpus_read, corpus_write, db, gitwrite,
+                   oliver, openlibrary, reviews, scheduler)
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
@@ -77,6 +79,25 @@ class OliverClient(discord.Client):
 client = OliverClient()
 
 
+def _check_dirty_tree() -> str | None:
+    """Return a non-empty status string if the working tree is dirty, else None.
+
+    A dirty tree breaks `gitwrite.sync()` (pull --rebase exits 128), which
+    surfaces to the user as a generic "couldn't save that" — the failure we
+    actually shipped to the user once. Logging a loud warning at startup
+    means future operators see it before a /review attempt does.
+    """
+    try:
+        r = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=gitwrite.REPO_ROOT, capture_output=True, text=True,
+            check=False, timeout=5,
+        )
+        return r.stdout.strip() or None
+    except (subprocess.SubprocessError, OSError):
+        return None
+
+
 @client.event
 async def on_ready() -> None:
     log.info("Oliver connected as %s — %d books in the corpus.", client.user, kb.book_count())
@@ -86,6 +107,14 @@ async def on_ready() -> None:
     main = client.get_channel(MAIN_CHANNEL_ID) if MAIN_CHANNEL_ID else None
     log.info("  ASK_CHANNEL_ID=%s -> %s", ASK_CHANNEL_ID, ask)
     log.info("  MAIN_CHANNEL_ID=%s -> %s", MAIN_CHANNEL_ID, main)
+    dirty = _check_dirty_tree()
+    if dirty:
+        log.warning(
+            "⚠️  Working tree is DIRTY — corpus writes (review, add-book, schedule) "
+            "will fail at the gitwrite pull-rebase step. Commit or stash before "
+            "letting members exercise write commands. Dirty paths:\n%s",
+            dirty[:1000],
+        )
     if MAIN_CHANNEL_ID and not scheduler_loop.is_running():
         scheduler_loop.start()
 
@@ -259,20 +288,46 @@ async def oliver_schedule(interaction: discord.Interaction, book: str, date: str
 
 
 async def run_scheduler() -> int:
-    """Post any due proactive notifications to the main channel; returns the count posted."""
-    if not MAIN_CHANNEL_ID:
-        return 0
-    channel = client.get_channel(MAIN_CHANNEL_ID)
-    if channel is None:
-        log.warning("DISCORD_MAIN_CHANNEL_ID %s not found", MAIN_CHANNEL_ID)
-        return 0
-    from datetime import datetime, timezone
-    due = await asyncio.to_thread(scheduler.due_notifications, datetime.now(timezone.utc), db.sent_keys())
+    """Post anything due to its target channel; returns the count posted.
+
+    Two sources:
+    - Corpus-derived notifications (scheduler.due_notifications) go to MAIN_CHANNEL_ID.
+    - User-set reminders (db.due_reminders) fire in the channel they were set in
+      (falling back to MAIN_CHANNEL_ID if none was recorded).
+    """
     posted = 0
-    for key, msg in due:
-        await channel.send(msg)
-        db.mark_sent(key)
-        posted += 1
+    now = datetime.now(timezone.utc)
+
+    # 1. Corpus-derived notifications → main channel.
+    main = client.get_channel(MAIN_CHANNEL_ID) if MAIN_CHANNEL_ID else None
+    if MAIN_CHANNEL_ID and main is None:
+        log.warning("DISCORD_MAIN_CHANNEL_ID %s not found", MAIN_CHANNEL_ID)
+    if main is not None:
+        due = await asyncio.to_thread(scheduler.due_notifications, now, db.sent_keys())
+        for key, msg in due:
+            await main.send(msg)
+            db.mark_sent(key)
+            posted += 1
+
+    # 2. User-set reminders → their original channel (or main as fallback).
+    reminders = await asyncio.to_thread(db.due_reminders)
+    for r in reminders:
+        target_id = int(r["channel_id"]) if r.get("channel_id") else MAIN_CHANNEL_ID
+        target = client.get_channel(target_id) if target_id else None
+        if target is None:
+            log.warning("reminder %s: channel %s not found, skipping", r["id"], target_id)
+            db.mark_reminder_fired(r["id"])  # don't keep retrying a missing channel
+            continue
+        msg = f"⏰ Reminder: {r['text']}"
+        if r.get("created_by"):
+            msg += f"\n_(set by {r['created_by']})_"
+        try:
+            await target.send(msg)
+            db.mark_reminder_fired(r["id"])
+            posted += 1
+        except discord.HTTPException:
+            log.exception("Failed to post reminder %s; will retry next tick", r["id"])
+
     return posted
 
 

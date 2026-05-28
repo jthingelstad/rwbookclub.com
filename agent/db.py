@@ -208,6 +208,15 @@ def due_reminders(now_iso: str | None = None) -> list[dict]:
     return [dict(r) for r in rows]
 
 
+def mark_reminder_fired(reminder_id: int) -> None:
+    """Stamp a reminder as fired so it won't surface again on the next tick."""
+    with connect() as conn:
+        conn.execute(
+            "UPDATE reminders SET fired_at = ? WHERE id = ?",
+            (_now(), reminder_id),
+        )
+
+
 # ── Usage / cost ─────────────────────────────────────────────────────────────
 def log_usage(channel_id: str | None, model: str, *, input_tokens: int, output_tokens: int,
               cache_read: int, cache_creation: int, rounds: int) -> None:
