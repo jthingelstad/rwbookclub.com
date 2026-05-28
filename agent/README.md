@@ -33,7 +33,11 @@ agent/
 - **Reviews** (`/oliver review`): members log reviews via a Discord form that writes to the
   Git corpus (`reviews.py` → `gitwrite.py`) — see below.
 - **Operations** (admin, `/oliver`): `add-book` (Open Library → book file + cover), `schedule`
-  (book + date + picker → a meeting), `stats`, `tick`. Writes go through `corpus_write.py`.
+  (book + date + picker → a meeting), `stats`, `tick`, `feedback` (see below). Writes go
+  through `corpus_write.py`.
+- **Feedback** (any member): react 👍 or 👎 to any of Oliver's replies. The bot logs the
+  reaction (user, message, question that prompted it) to SQLite and confirms with ✅. Use
+  `/oliver feedback` (admin) for a quick summary plus the most recent 👍/👎 with context.
 - **Proactive scheduler** (`scheduler.py`): a daily loop posts upcoming-meeting reminders, a
   review nudge, and milestone/anniversary notes to `DISCORD_MAIN_CHANNEL_ID` — deduped, and a
   no-op until that channel id is set.

@@ -286,6 +286,31 @@ async def scheduler_loop() -> None:
         log.exception("scheduler loop error")
 
 
+@oliver_cmds.command(name="feedback", description="Recent 👍/👎 feedback on Oliver's replies (admin).")
+async def oliver_feedback(interaction: discord.Interaction) -> None:
+    if not _is_admin(interaction):
+        await interaction.response.send_message("That's an admin command.", ephemeral=True)
+        return
+    stats = await asyncio.to_thread(db.feedback_stats)
+    if not stats["total"]:
+        await interaction.response.send_message(
+            "No feedback yet — members can 👍/👎 any of my replies and I'll log it.",
+            ephemeral=True)
+        return
+    lines = [f"📊 **Feedback to date:** {stats['up']} 👍 · {stats['down']} 👎  ({stats['total']} total)"]
+    if stats["recent_down"]:
+        lines.append("\n**Recent 👎:**")
+        for r in stats["recent_down"]:
+            q = (r.get("question") or "(no question recorded)")[:100]
+            lines.append(f"• {r['user_name']}: \"{q}\"")
+    if stats["recent_up"]:
+        lines.append("\n**Recent 👍:**")
+        for r in stats["recent_up"]:
+            q = (r.get("question") or "(no question recorded)")[:100]
+            lines.append(f"• {r['user_name']}: \"{q}\"")
+    await interaction.response.send_message("\n".join(lines), ephemeral=True)
+
+
 @oliver_cmds.command(name="tick", description="Run the proactive scheduler now (admin).")
 async def oliver_tick(interaction: discord.Interaction) -> None:
     if not _is_admin(interaction):
@@ -354,14 +379,67 @@ async def on_message(message: discord.Message) -> None:
     # lacks Send Messages / Read Message History, or Discord HTTPs out — try a plain
     # channel.send as a fallback so the user doesn't silently get nothing.
     text = reply[:MAX_DISCORD_LEN]
+    sent: discord.Message | None = None
     try:
-        await message.reply(text, mention_author=False)
+        sent = await message.reply(text, mention_author=False)
     except discord.HTTPException:
         log.exception("message.reply failed in channel %s; trying channel.send", message.channel.id)
         try:
-            await message.channel.send(text)
+            sent = await message.channel.send(text)
         except discord.HTTPException:
             log.exception("channel.send also failed in %s — user got no reply", message.channel.id)
+
+    # Record what we sent so on_raw_reaction_add can attribute 👍/👎 feedback
+    # back to the question that triggered it.
+    if sent is not None:
+        db.log_response(
+            message_id=str(sent.id), channel_id=str(message.channel.id),
+            speaker=message.author.display_name, question=question, reply=text,
+        )
+
+
+@client.event
+async def on_raw_reaction_add(payload: discord.RawReactionActionEvent) -> None:
+    """Members can 👍 / 👎 any of Oliver's replies; we log and confirm with ✅.
+
+    Uses the raw event (not on_reaction_add) so it works for messages outside
+    the cache. We avoid fetching the message until we know it's worth handling
+    by checking the responses table first.
+    """
+    if payload.user_id == client.user.id:
+        return  # our own ✅ confirmation
+    emoji = str(payload.emoji)
+    # Match both bare 👍/👎 and skin-tone variants.
+    if emoji.startswith("👍"):
+        direction = "up"
+    elif emoji.startswith("👎"):
+        direction = "down"
+    else:
+        return
+    msg_id = str(payload.message_id)
+    if not db.is_oliver_message(msg_id):
+        return  # not one of Oliver's replies
+
+    name = payload.member.display_name if payload.member else str(payload.user_id)
+    try:
+        db.add_feedback(
+            message_id=msg_id, channel_id=str(payload.channel_id),
+            user_id=str(payload.user_id), user_name=name, reaction=direction,
+        )
+    except Exception:
+        log.exception("Failed to record feedback")
+        return
+
+    log.info("feedback: %s %s on message %s", name, direction, msg_id)
+
+    # Confirm receipt. Discord deduplicates ✅ per emoji+user, so re-adding on
+    # subsequent feedback is a silent no-op (one checkmark sits on the message).
+    try:
+        channel = client.get_channel(payload.channel_id) or await client.fetch_channel(payload.channel_id)
+        msg = await channel.fetch_message(payload.message_id)
+        await msg.add_reaction("✅")
+    except discord.HTTPException:
+        log.exception("Failed to add ✅ confirmation for message %s", msg_id)
 
 
 def main() -> None:

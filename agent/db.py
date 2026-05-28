@@ -73,6 +73,32 @@ CREATE TABLE IF NOT EXISTS notifications_sent (
     key     TEXT PRIMARY KEY,
     sent_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Each reply Oliver posts to Discord — keyed by Discord message id so reaction
+-- handlers can cheaply check "is this one of mine?" without fetching the message.
+CREATE TABLE IF NOT EXISTS responses (
+    message_id  TEXT PRIMARY KEY,
+    channel_id  TEXT NOT NULL,
+    speaker     TEXT,
+    question    TEXT,
+    reply       TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_responses_channel ON responses(channel_id, created_at);
+
+-- 👍/👎 reactions members give to Oliver's replies. One row per reaction event;
+-- analysis can group by (user_id, message_id) and take the latest.
+CREATE TABLE IF NOT EXISTS feedback (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id  TEXT NOT NULL,
+    channel_id  TEXT NOT NULL,
+    user_id     TEXT NOT NULL,
+    user_name   TEXT,
+    reaction    TEXT NOT NULL,           -- 'up' or 'down'
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_feedback_message ON feedback(message_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_reaction ON feedback(reaction, created_at);
 """
 
 
@@ -202,3 +228,58 @@ def sent_keys() -> set[str]:
 def mark_sent(key: str) -> None:
     with connect() as conn:
         conn.execute("INSERT OR IGNORE INTO notifications_sent (key) VALUES (?)", (key,))
+
+
+# ── Response logging + 👍/👎 feedback ───────────────────────────────────────
+def log_response(*, message_id: str, channel_id: str, speaker: str | None,
+                 question: str, reply: str) -> None:
+    """Record a reply Oliver sent so we can join feedback back to its question."""
+    with connect() as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO responses "
+            "(message_id, channel_id, speaker, question, reply) VALUES (?, ?, ?, ?, ?)",
+            (message_id, channel_id, speaker, question, reply),
+        )
+
+
+def is_oliver_message(message_id: str) -> bool:
+    with connect() as conn:
+        return conn.execute(
+            "SELECT 1 FROM responses WHERE message_id = ?", (message_id,)
+        ).fetchone() is not None
+
+
+def add_feedback(*, message_id: str, channel_id: str, user_id: str,
+                 user_name: str | None, reaction: str) -> None:
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO feedback (message_id, channel_id, user_id, user_name, reaction) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (message_id, channel_id, user_id, user_name, reaction),
+        )
+
+
+def feedback_stats() -> dict:
+    """Counts + the 5 most recent downvotes (with the question that triggered them)."""
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT reaction, COUNT(*) c FROM feedback GROUP BY reaction"
+        ).fetchall()
+        counts = {r["reaction"]: r["c"] for r in rows}
+        recent_down = conn.execute(
+            "SELECT f.user_name, f.created_at, r.question "
+            "FROM feedback f LEFT JOIN responses r ON r.message_id = f.message_id "
+            "WHERE f.reaction = 'down' ORDER BY f.id DESC LIMIT 5"
+        ).fetchall()
+        recent_up = conn.execute(
+            "SELECT f.user_name, f.created_at, r.question "
+            "FROM feedback f LEFT JOIN responses r ON r.message_id = f.message_id "
+            "WHERE f.reaction = 'up' ORDER BY f.id DESC LIMIT 5"
+        ).fetchall()
+    return {
+        "up": counts.get("up", 0),
+        "down": counts.get("down", 0),
+        "total": sum(counts.values()),
+        "recent_down": [dict(r) for r in recent_down],
+        "recent_up": [dict(r) for r in recent_up],
+    }
