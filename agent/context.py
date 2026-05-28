@@ -7,6 +7,8 @@ current roster, what's next). Oliver pulls specifics on demand via tools
 
 from __future__ import annotations
 
+from collections import Counter
+
 from agent import corpus_read as cr
 
 
@@ -14,11 +16,22 @@ def book_count() -> int:
     return len(cr.books())
 
 
+def _picks_by_slug() -> Counter:
+    """Career pick count per member slug (member JSON files don't store it —
+    it's derived from books.picker, same as corpus_read.member_history)."""
+    picks: Counter = Counter()
+    for b in cr.books():
+        for slug in (b.get("picker") or []):
+            picks[slug] += 1
+    return picks
+
+
 def club_context() -> str:
     stats = cr.club_stats()
+    picks = _picks_by_slug()
     current = sorted(
         (m for m in cr.members() if m.get("isCurrent")),
-        key=lambda m: m.get("pickedCount") or 0,
+        key=lambda m: picks[m.get("slug")],
         reverse=True,
     )
     upcoming = cr.upcoming_meetings()
@@ -32,7 +45,7 @@ def club_context() -> str:
         f"{stats['firstYear']}–{stats['lastYear']}.",
         "Top topics: " + ", ".join(f"{t} ({n})" for t, n in stats["topics"][:6]) + ".",
         "Current members (by picks): "
-        + ", ".join(f"{m['name']} ({m.get('pickedCount') or 0})" for m in current) + ".",
+        + ", ".join(f"{m['name']} ({picks[m.get('slug')]})" for m in current) + ".",
     ]
     if upcoming:
         nxt = "; ".join(

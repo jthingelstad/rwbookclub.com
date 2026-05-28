@@ -248,7 +248,9 @@ TOOLS = [
     },
     {
         "name": "set_reminder",
-        "description": "Store a reminder to surface later (e.g. a meeting nudge). Provide an ISO 8601 datetime.",
+        "description": "Store a reminder to surface later (e.g. a meeting nudge). Provide an ISO 8601 "
+                       "datetime. Reminders are checked about once an hour, so they're nudge-grade — "
+                       "good to the hour, not to the minute.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -349,15 +351,22 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             limit = max(1, min(int(tool_input.get("limit", 10)), 10))
             return _dump(db.list_proposals(limit=limit))
         if name == "remember":
+            scope = tool_input.get("scope", "general")
+            # Club-scope notes are injected into *every* future turn's context
+            # (oliver._question_block), so only a linked club member can shape
+            # that shared lore. From anyone else, record it as a general note
+            # rather than letting it poison the global overview.
+            if scope == "club" and not ctx.get("member_slug"):
+                scope = "general"
             mid = db.add_memory(
                 tool_input["note"],
-                scope=tool_input.get("scope", "general"),
+                scope=scope,
                 subject=tool_input.get("subject"),
                 source=ctx.get("speaker"),
                 source_user_id=ctx.get("speaker_user_id"),
                 source_message_id=ctx.get("source_message_id"),
             )
-            return _dump({"saved": True, "id": mid})
+            return _dump({"saved": True, "id": mid, "scope": scope})
         if name == "recall":
             return _dump(db.get_memories(subject=tool_input.get("subject"), query=tool_input.get("query")))
         if name == "set_reminder":

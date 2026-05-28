@@ -160,10 +160,25 @@ def _resolve_member(speaker: str | None, speaker_user_id: str | None = None) -> 
 
 
 def _history(channel_id: str) -> tuple[list[dict], str | None]:
-    """Return (prior turns as messages, rolling summary) for a channel."""
+    """Return (prior turns as messages, rolling summary) for a channel.
+
+    Two main-channel quirks are handled here. (1) Passive messages are logged
+    with a speaker but no reply, so we prefix user turns with "Speaker:" to keep
+    attribution Oliver would otherwise lose on replay. (2) Those passive turns
+    arrive in runs with no assistant turn between them; we merge consecutive
+    same-role turns so the replayed history stays compact and well-formed.
+    """
     summary, last_id = db.get_summary(channel_id)
     tail = db.messages_after(channel_id, last_id)
-    msgs = [{"role": t["role"], "content": t["content"]} for t in tail]
+    msgs: list[dict] = []
+    for t in tail:
+        content = t["content"]
+        if t["role"] == "user" and t.get("speaker"):
+            content = f"{t['speaker']}: {content}"
+        if msgs and msgs[-1]["role"] == t["role"]:
+            msgs[-1]["content"] += f"\n{content}"
+        else:
+            msgs.append({"role": t["role"], "content": content})
     return msgs, summary
 
 
@@ -293,6 +308,13 @@ def _maybe_summarize(channel_id: str, client: anthropic.Anthropic) -> None:
         max_tokens=500,
         messages=[{"role": "user", "content": prompt}],
     )
+    # Log the summary call too, so the cost report sees Haiku spend (rounds=0
+    # marks it as the internal summary path, not a user-facing agent turn).
+    u = resp.usage
+    db.log_usage(channel_id, SUMMARY_MODEL,
+                 input_tokens=u.input_tokens, output_tokens=u.output_tokens,
+                 cache_read=u.cache_read_input_tokens or 0,
+                 cache_creation=u.cache_creation_input_tokens or 0, rounds=0)
     new_summary = _text_of(resp.content)
     if new_summary:
         db.set_summary(channel_id, new_summary, to_fold[-1]["id"])

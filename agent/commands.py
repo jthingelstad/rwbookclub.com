@@ -553,7 +553,11 @@ async def run_scheduler() -> int:
     return posted
 
 
-@tasks.loop(hours=24)
+# Hourly, not daily: corpus-derived notifications are deduped by key
+# (notifications_sent), so re-checking costs nothing, and user-set reminders
+# from db.due_reminders fire within an hour of their due time instead of
+# waiting up to a full day for the next tick.
+@tasks.loop(hours=1)
 async def scheduler_loop() -> None:
     try:
         n = await run_scheduler()
