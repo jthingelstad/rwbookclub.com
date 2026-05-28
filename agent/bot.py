@@ -349,7 +349,19 @@ async def on_message(message: discord.Message) -> None:
         except Exception:
             log.exception("Oliver failed to answer")
             reply = "Sorry — I hit a snag answering that. Try me again in a moment."
-    await message.reply(reply[:MAX_DISCORD_LEN], mention_author=False)
+
+    # Post the reply. message.reply can fail if the original was deleted, the bot
+    # lacks Send Messages / Read Message History, or Discord HTTPs out — try a plain
+    # channel.send as a fallback so the user doesn't silently get nothing.
+    text = reply[:MAX_DISCORD_LEN]
+    try:
+        await message.reply(text, mention_author=False)
+    except discord.HTTPException:
+        log.exception("message.reply failed in channel %s; trying channel.send", message.channel.id)
+        try:
+            await message.channel.send(text)
+        except discord.HTTPException:
+            log.exception("channel.send also failed in %s — user got no reply", message.channel.id)
 
 
 def main() -> None:
