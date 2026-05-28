@@ -88,6 +88,20 @@ submit. Oliver writes `corpus/data/reviews/<book>--<member>.md`, commits, and pu
 form is the confirmation. `reviews.py` → `gitwrite.py` is the single write path (any future
 front-end reuses it). Set `OLIVER_GIT_PUSH=0` to commit locally without pushing (dev).
 
+## Tests
+
+```bash
+pip install -r tests/requirements.txt    # one-time
+pytest tests/                             # 84 tests, ~0.6s
+```
+
+Pure helpers (`_is_addressed`, `_strip_address`, rating parsers, `parse_frontmatter`,
+`scheduler.due_notifications`, `find_books` scoring, `books()` cache, dispatch error
+paths, db round-trips) all locked in. Tests use a scratch SQLite DB (`tests/conftest.py`
+sets `OLIVER_DB_PATH` before any agent module imports) and never touch the live state.
+`OLIVER_GIT_PUSH=0` + `OLIVER_GIT_DRYRUN=1` are set by the conftest as belt-and-suspenders
+against any accidental git activity.
+
 ## Discord setup
 
 The bot must be invited with the `bot` + `applications.commands` scopes and have the
