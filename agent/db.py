@@ -348,6 +348,32 @@ def recent_messages(channel_id: str, limit: int = 12) -> list[dict]:
     return [dict(r) for r in reversed(rows)]
 
 
+def search_conversations(query: str, *, limit: int = 12,
+                         channel_ids: list[str] | None = None) -> list[dict]:
+    """Keyword search over logged turns across ALL channels, newest first.
+
+    Splits the query into whitespace terms; a row must contain every term
+    (AND match). No channel filter by default, so this spans every channel
+    Oliver has logged. The simple LIKE backend is swappable for FTS5/embeddings
+    later without changing callers.
+    """
+    terms = [t for t in query.split() if t]
+    if not terms:
+        return []
+    sql = (
+        "SELECT id, channel_id, role, speaker, content, created_at FROM conversations "
+        "WHERE " + " AND ".join("content LIKE ?" for _ in terms)
+    )
+    args: list = [f"%{t}%" for t in terms]
+    if channel_ids:
+        sql += f" AND channel_id IN ({','.join('?' for _ in channel_ids)})"
+        args += channel_ids
+    sql += " ORDER BY id DESC LIMIT ?"
+    args.append(limit)
+    with connect() as conn:
+        return [dict(r) for r in conn.execute(sql, args)]
+
+
 # ── Reminders (Phase 4 scheduler fires these) ────────────────────────────────
 def add_reminder(due_at: str, text: str, *, channel_id: str | None = None,
                  created_by: str | None = None) -> int:

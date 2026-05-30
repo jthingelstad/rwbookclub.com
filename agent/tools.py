@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import logging
 
+from agent import config
 from agent import corpus_read as cr
 from agent import db
 from agent import meeting_rules
@@ -260,6 +261,24 @@ TOOLS = [
             "required": ["due", "text"],
         },
     },
+    {
+        "name": "search_discussion",
+        "description": "Keyword-search what MEMBERS have actually said in the club's Discord "
+                       "channels (#ask-oliver, #general, #book-talk), newest first. This is live "
+                       "chat history, NOT the book corpus — reach for it when a question references "
+                       "a past conversation or another channel ('didn't we talk about…', 'what did "
+                       "someone say in book-talk about…', 'did anyone mention…'). For questions "
+                       "about books the club has read, use find_books/get_book instead. Returns "
+                       "matching turns tagged with the channel they came from.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "words to look for; a turn must contain every word (AND match)"},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 20},
+            },
+            "required": ["query"],
+        },
+    },
 ]
 
 
@@ -319,6 +338,13 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
         if name == "recent_channel_context":
             limit = max(1, min(int(tool_input.get("limit", 12)), 20))
             return _dump(db.recent_messages(str(ctx.get("channel_id") or ""), limit=limit))
+        if name == "search_discussion":
+            limit = max(1, min(int(tool_input.get("limit", 12)), 20))
+            rows = db.search_conversations(tool_input["query"], limit=limit)
+            for r in rows:
+                r["channel"] = config.CHANNEL_NAMES.get(int(r["channel_id"]), r["channel_id"])
+                r["content"] = (r["content"] or "")[:300]  # keep tool result compact
+            return _dump(rows)
         if name == "record_availability":
             member_slug = ctx.get("member_slug")
             if not member_slug:

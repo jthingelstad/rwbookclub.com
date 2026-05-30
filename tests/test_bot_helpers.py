@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from agent.bot import _is_addressed, _strip_address
+from agent.bot import _channel_mode, _is_addressed, _strip_address
 
 
 class TestIsAddressed:
@@ -42,3 +42,18 @@ class TestStripAddress:
 
     def test_strips_surrounding_whitespace(self):
         assert _strip_address("   <@123>  query  ", 123) == "query"
+
+
+class TestChannelMode:
+    def test_ask_channel_answers(self):
+        assert _channel_mode(10, ask_id=10, monitored_ids={20, 30}) == "answer"
+
+    def test_monitored_channel(self):
+        assert _channel_mode(20, ask_id=10, monitored_ids={20, 30}) == "monitored"
+
+    def test_unknown_channel_ignored(self):
+        assert _channel_mode(99, ask_id=10, monitored_ids={20, 30}) == "ignore"
+
+    def test_no_ask_channel_is_dev_fallback(self):
+        # With no ask channel configured, Oliver answers everywhere (dev mode).
+        assert _channel_mode(99, ask_id=0, monitored_ids=set()) == "answer"

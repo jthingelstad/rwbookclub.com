@@ -24,11 +24,15 @@ from agent.tools import TOOLS, dispatch
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-# Model strategy: Sonnet for the interactive agent loop; Haiku for cheap
-# internal work (rolling summaries). Opus is intentionally not used — the
+# Model strategy: Sonnet for the interactive agent loop AND for rolling
+# summaries. The summary is load-bearing — once turns are folded it becomes
+# Oliver's only memory of them, and it recursively folds the prior summary, so a
+# weak summary compounds. The task is cheap and infrequent (fires only past the
+# threshold, capped at 500 output tokens), so Sonnet's marginal cost is
+# negligible against the faithfulness gain. Opus is intentionally not used — the
 # project mandate is cost-conscious.
 MODEL = "claude-sonnet-4-6"          # user-facing agent loop
-SUMMARY_MODEL = "claude-haiku-4-5"   # cheap internal summarization
+SUMMARY_MODEL = "claude-sonnet-4-6"  # rolling internal summarization
 MAX_TOKENS = 2048
 MAX_TOOL_ROUNDS = 8
 SUMMARIZE_THRESHOLD = 24   # un-summarized turns before folding into the rolling summary
@@ -55,7 +59,11 @@ SYSTEM_PROMPT = (
     "the corpus genuinely doesn't have it; don't keep searching, say so plainly. Use "
     "search_books for precise filter browsing (all 2018 reads, all Technology books). Use "
     "related_books, compare_books, and review_summary when someone asks for connections, "
-    "contrasts, or what the group thought after reading.\n"
+    "contrasts, or what the group thought after reading. When a question instead points "
+    "at something MEMBERS said in chat — \"didn't we talk about…\", \"what did someone in "
+    "book-talk say about…\", a reference to another channel — use search_discussion, which "
+    "searches the live Discord conversation across all channels (distinct from find_books "
+    "and the book corpus).\n"
     "WEB SEARCH. web_search lets you check off-corpus facts in real time, and you should "
     "USE IT whenever you'd otherwise state a specific verifiable world fact you don't have "
     "absolute confidence in — an author's other books, a publication year, what someone "
@@ -301,14 +309,14 @@ def _maybe_summarize(channel_id: str, client: anthropic.Anthropic) -> None:
         "use as memory of the conversation — preferences expressed, open threads, decisions, who said "
         f"what. Fold in the prior summary.\n\nPrior summary:\n{summary or '(none)'}\n\nNew messages:\n{convo}"
     )
-    # Haiku for the cheap internal summary — note effort/adaptive-thinking are not
-    # passed here (Haiku 4.5 doesn't accept them).
+    # A bounded extraction, so the simple call shape is sufficient — no thinking
+    # or output_config needed even though SUMMARY_MODEL is now Sonnet.
     resp = client.messages.create(
         model=SUMMARY_MODEL,
         max_tokens=500,
         messages=[{"role": "user", "content": prompt}],
     )
-    # Log the summary call too, so the cost report sees Haiku spend (rounds=0
+    # Log the summary call too, so the cost report sees its spend (rounds=0
     # marks it as the internal summary path, not a user-facing agent turn).
     u = resp.usage
     db.log_usage(channel_id, SUMMARY_MODEL,

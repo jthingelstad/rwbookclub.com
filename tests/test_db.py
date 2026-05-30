@@ -145,6 +145,47 @@ class TestRollCall:
         assert db.get_roll_call("book-a")["status"] == "closed"
 
 
+class TestSearchConversations:
+    def test_spans_channels_newest_first(self, fresh_db):
+        db = fresh_db
+        db.log_message("ch1", "user", "we discussed dune at length", speaker="Jamie")
+        db.log_message("ch2", "user", "dune came up in book-talk too", speaker="Tom")
+        rows = db.search_conversations("dune")
+        assert {r["channel_id"] for r in rows} == {"ch1", "ch2"}
+        # Newest first: the ch2 row was inserted last, so it leads.
+        assert rows[0]["channel_id"] == "ch2"
+
+    def test_multi_term_and_match(self, fresh_db):
+        db = fresh_db
+        db.log_message("ch1", "user", "the mars trilogy is great", speaker="Jamie")
+        db.log_message("ch1", "user", "mars on its own, no series", speaker="Tom")
+        # Both terms must appear (anywhere); only the first row has "trilogy".
+        rows = db.search_conversations("mars trilogy")
+        assert len(rows) == 1
+        assert "trilogy" in rows[0]["content"]
+
+    def test_limit_respected(self, fresh_db):
+        db = fresh_db
+        for i in range(5):
+            db.log_message("ch1", "user", f"note {i} about kafka", speaker="Jamie")
+        rows = db.search_conversations("kafka", limit=2)
+        assert len(rows) == 2
+
+    def test_empty_query_returns_empty(self, fresh_db):
+        db = fresh_db
+        db.log_message("ch1", "user", "something", speaker="Jamie")
+        assert db.search_conversations("") == []
+        assert db.search_conversations("   ") == []
+
+    def test_channel_ids_filter(self, fresh_db):
+        db = fresh_db
+        db.log_message("ch1", "user", "orwell in general", speaker="Jamie")
+        db.log_message("ch2", "user", "orwell in book-talk", speaker="Tom")
+        rows = db.search_conversations("orwell", channel_ids=["ch1"])
+        assert len(rows) == 1
+        assert rows[0]["channel_id"] == "ch1"
+
+
 class TestProposals:
     def test_proposal_lifecycle(self, fresh_db):
         db = fresh_db

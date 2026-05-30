@@ -37,6 +37,21 @@ def _is_addressed(is_mention: bool, has_name: bool, is_reply_to_bot: bool) -> bo
     return bool(is_mention or has_name or is_reply_to_bot)
 
 
+def _channel_mode(cid: int, ask_id: int, monitored_ids: set[int]) -> str:
+    """How Oliver treats a channel. Pure (testable).
+
+    "answer"    — respond to everything (the #ask-oliver channel; also the dev
+                  fallback when no ask channel is configured).
+    "monitored" — passively log every message, reply only when addressed.
+    "ignore"    — not Oliver's channel; drop it.
+    """
+    if not ask_id or cid == ask_id:
+        return "answer"
+    if cid in monitored_ids:
+        return "monitored"
+    return "ignore"
+
+
 def _strip_address(content: str, bot_id: int) -> str:
     """Drop @Oliver mentions so the model sees a clean question. Pure (testable)."""
     return re.sub(rf"<@!?{bot_id}>", "", content).strip()
@@ -121,9 +136,10 @@ async def on_ready() -> None:
     guilds = list(client.guilds)
     log.info("In %d guild(s): %s", len(guilds), ", ".join(g.name for g in guilds) or "(none)")
     ask = client.get_channel(config.ASK_CHANNEL_ID) if config.ASK_CHANNEL_ID else None
-    main = client.get_channel(config.MAIN_CHANNEL_ID) if config.MAIN_CHANNEL_ID else None
     log.info("  ASK_CHANNEL_ID=%s -> %s", config.ASK_CHANNEL_ID, ask)
-    log.info("  MAIN_CHANNEL_ID=%s -> %s", config.MAIN_CHANNEL_ID, main)
+    monitored = [(cid, client.get_channel(cid)) for cid in sorted(config.MONITORED_CHANNEL_IDS)]
+    for cid, ch in monitored:
+        log.info("  monitored %s (%s) -> %s", config.CHANNEL_NAMES.get(cid, cid), cid, ch)
     dirty = _check_dirty_tree()
     if dirty:
         log.warning(
@@ -137,7 +153,10 @@ async def on_ready() -> None:
         commit = _git_commit_short()
         lines = [f"🟢 Oliver online — fresh launch (`{commit}`)."]
         perm_issues: list[str] = []
-        for label, ch in (("#ask-oliver", ask), ("main channel", main)):
+        channels_to_check = [("#ask-oliver", ask)] + [
+            (config.CHANNEL_NAMES.get(cid, str(cid)), ch) for cid, ch in monitored
+        ]
+        for label, ch in channels_to_check:
             if ch is None:
                 continue
             missing = _missing_permissions(ch)
@@ -179,11 +198,12 @@ async def on_message(message: discord.Message) -> None:
     cid = message.channel.id
     content = message.content or ""
 
+    mode = _channel_mode(cid, config.ASK_CHANNEL_ID, config.MONITORED_CHANNEL_IDS)
     # #ask-oliver: answer everything. (No ask-channel configured → answer everywhere, dev.)
-    if not config.ASK_CHANNEL_ID or cid == config.ASK_CHANNEL_ID:
+    if mode == "answer":
         question = content.strip()
-    # Main channel: answer only when addressed.
-    elif config.MAIN_CHANNEL_ID and cid == config.MAIN_CHANNEL_ID:
+    # Monitored channels (#general, #book-talk, …): answer only when addressed.
+    elif mode == "monitored":
         is_mention = client.user.mentioned_in(message) and not message.mention_everyone
         has_name = bool(NAME_RE.search(content))
         if not _is_addressed(is_mention, has_name, await _is_reply_to_bot(message)):

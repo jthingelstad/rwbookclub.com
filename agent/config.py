@@ -18,5 +18,22 @@ ASK_CHANNEL_ID = int(os.environ.get("DISCORD_ASK_OLIVER_CHANNEL_ID") or 0)
 ADMIN_USER_ID = int(os.environ.get("DISCORD_ADMIN_USER_ID") or 0)
 SERVER_ID = int(os.environ.get("DISCORD_SERVER_ID") or 0)
 MAIN_CHANNEL_ID = int(os.environ.get("DISCORD_MAIN_CHANNEL_ID") or 0)
+BOOK_TALK_CHANNEL_ID = int(os.environ.get("DISCORD_BOOK_TALK_CHANNEL_ID") or 0)
+
+# Channels Oliver monitors passively: he logs every message and replies only when
+# addressed (vs. ASK_CHANNEL_ID, where he answers everything). Add a channel here
+# and it behaves like #general with no other code change.
+MONITORED_CHANNEL_IDS = {cid for cid in (MAIN_CHANNEL_ID, BOOK_TALK_CHANNEL_ID) if cid}
+
+# id → human label, for tagging cross-channel search results to the model.
+CHANNEL_NAMES = {
+    cid: name
+    for cid, name in (
+        (ASK_CHANNEL_ID, "#ask-oliver"),
+        (MAIN_CHANNEL_ID, "#general"),
+        (BOOK_TALK_CHANNEL_ID, "#book-talk"),
+    )
+    if cid
+}
 
 MAX_DISCORD_LEN = 2000

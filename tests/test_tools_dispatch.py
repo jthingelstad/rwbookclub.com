@@ -147,3 +147,36 @@ class TestDispatchHappyPaths:
         fresh_db.add_proposal(kind="other", title="Check this", body="A note")
         result = json.loads(dispatch("open_proposals", {}, {}))
         assert result[0]["title"] == "Check this"
+
+    def test_search_discussion_returns_rows_with_channel_label(self, fresh_db):
+        from agent.tools import dispatch
+
+        fresh_db.log_message("100", "user", "we loved the foundation series", speaker="Jamie")
+        fresh_db.log_message("200", "user", "foundation came up in book-talk", speaker="Tom")
+        result = json.loads(dispatch("search_discussion", {"query": "foundation"}, {}))
+        assert isinstance(result, list)
+        assert len(result) == 2
+        # Every row carries a human "channel" label (falls back to the raw id here).
+        assert all("channel" in r for r in result)
+
+    def test_search_discussion_truncates_content(self, fresh_db):
+        from agent.tools import dispatch
+
+        fresh_db.log_message("100", "user", "kafka " * 200, speaker="Jamie")
+        result = json.loads(dispatch("search_discussion", {"query": "kafka"}, {}))
+        assert len(result[0]["content"]) == 300
+
+    def test_search_discussion_clamps_limit(self, fresh_db):
+        from agent.tools import dispatch
+
+        for i in range(30):
+            fresh_db.log_message("100", "user", f"note {i} mentions borges", speaker="Jamie")
+        result = json.loads(dispatch("search_discussion", {"query": "borges", "limit": 99}, {}))
+        assert len(result) == 20  # clamped to the 20-row ceiling
+
+    def test_search_discussion_requires_query(self, fresh_db):
+        from agent.tools import dispatch
+
+        result = json.loads(dispatch("search_discussion", {}, {}))
+        assert "error" in result
+        assert "KeyError" in result["error"]
