@@ -1,4 +1,4 @@
-requests>=2.31
+requests>=2.34.2
 python-dotenv>=1.2.2
 Pillow>=10.2
 Unidecode>=1.3
