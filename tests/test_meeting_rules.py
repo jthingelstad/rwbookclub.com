@@ -19,6 +19,16 @@ def test_next_last_tuesday_moves_to_next_month_after_date():
     assert meeting_rules.next_last_tuesday(date(2026, 6, 1)).isoformat() == "2026-06-30"
 
 
+def test_next_meeting_knows_current_scheduled_book():
+    from agent import meeting_rules
+
+    meeting = meeting_rules.next_meeting()
+    assert meeting["meetingKey"] == "a-world-appears"
+    assert meeting["date"] == "2026-06-30"
+    assert meeting["book"]["title"] == "A World Appears"
+    assert meeting["book"]["authors"] == ["Michael Pollan"]
+
+
 def test_meeting_status_flags_picker_conflict(fresh_db):
     from agent import db, meeting_rules
 

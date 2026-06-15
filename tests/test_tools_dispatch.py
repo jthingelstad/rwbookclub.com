@@ -87,12 +87,14 @@ class TestDispatchHappyPaths:
         from agent.tools import dispatch
 
         fresh_db.link_member_identity("u1", "jamie")
+        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
         result = json.loads(dispatch("identity_status", {}, {
             "speaker_user_id": "u1",
             "member_slug": "jamie",
         }))
         assert result["speakerMemberSlug"] == "jamie"
         assert result["speakerMember"]["name"] == "Jamie"
+        assert "jamie" in result["emailLinkedCurrentMembers"]
 
     def test_current_meeting_status_returns_rules(self, fresh_db):
         from agent.tools import dispatch
@@ -120,6 +122,267 @@ class TestDispatchHappyPaths:
         rows = fresh_db.attendance_for_meeting(result["meetingStatus"]["meeting"]["meetingKey"])
         assert rows[0]["member_slug"] == "jamie"
         assert rows[0]["status"] == "yes"
+
+    def test_record_availability_saves_email_source(self, fresh_db):
+        from agent.tools import dispatch
+
+        result = json.loads(dispatch("record_availability", {"status": "no"}, {
+            "speaker_user_id": "email:jamie@thingelstad.com",
+            "member_slug": "jamie",
+            "channel_id": "email:t1",
+        }))
+        assert result["saved"] is True
+        rows = fresh_db.attendance_for_meeting(result["meetingStatus"]["meeting"]["meetingKey"])
+        assert rows[0]["source"] == "email"
+
+    def test_record_reading_status_requires_linked_speaker(self, fresh_db):
+        from agent.tools import dispatch
+
+        result = json.loads(dispatch("record_reading_status", {"status": "on_track"}, {}))
+        assert "error" in result
+
+    def test_record_reading_status_saves_for_email_speaker(self, fresh_db):
+        from agent.tools import dispatch
+
+        result = json.loads(dispatch("record_reading_status", {
+            "status": "on_track",
+            "progress": "halfway",
+            "percent": 50,
+        }, {
+            "speaker_user_id": "email:jamie@thingelstad.com",
+            "member_slug": "jamie",
+        }))
+        assert result["saved"] is True
+        meeting_key = result["readingStatus"]["meeting"]["meetingKey"]
+        row = fresh_db.reading_status_for_member(meeting_key, "jamie")
+        assert row["status"] == "on_track"
+        assert row["source"] == "email"
+
+    def test_reading_status_returns_current_book(self, fresh_db):
+        from agent.tools import dispatch
+
+        result = json.loads(dispatch("reading_status", {}, {}))
+        assert result["meeting"]["meetingKey"] == "a-world-appears"
+        assert result["book"]["title"] == "A World Appears"
+
+    def test_request_reading_update_requires_email_config_before_send(self, fresh_db):
+        from agent.tools import dispatch
+
+        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        result = json.loads(dispatch("request_reading_update", {"member": "jamie"}, {
+            "speaker_user_id": "u1",
+            "member_slug": "jamie",
+        }))
+        assert result == {"error": "email is not configured"}
+
+    def test_send_email_blocked_inside_inbound_email_channel(self, monkeypatch):
+        from agent import email_jmap
+        from agent.tools import dispatch
+
+        monkeypatch.setattr(email_jmap, "enabled", lambda: True)
+        result = json.loads(dispatch("send_email", {
+            "to": ["jamie@thingelstad.com"],
+            "subject": "test",
+            "body": "test",
+        }, {"channel_id": "email:thread1"}))
+        assert result == {
+            "error": "inbound email replies are sent automatically; write response text instead"
+        }
+
+    def test_request_reading_update_blocked_inside_inbound_email_channel(self, monkeypatch, fresh_db):
+        from agent import email_jmap
+        from agent.tools import dispatch
+
+        monkeypatch.setattr(email_jmap, "enabled", lambda: True)
+        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        result = json.loads(dispatch("request_reading_update", {"member": "jamie"}, {
+            "channel_id": "email:thread1",
+            "speaker_user_id": "email:jamie@thingelstad.com",
+            "member_slug": "jamie",
+        }))
+        assert result == {"error": "email check-ins cannot be initiated from inbound email"}
+
+    def test_request_roll_call_update_requires_email_config_before_send(self, fresh_db):
+        from agent.tools import dispatch
+
+        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        result = json.loads(dispatch("request_roll_call_update", {"member": "jamie"}, {
+            "speaker_user_id": "email:jamie@thingelstad.com",
+            "member_slug": "jamie",
+        }))
+        assert result == {"error": "email is not configured"}
+
+    def test_request_roll_call_update_sends_to_linked_current_members(self, monkeypatch, fresh_db):
+        from agent import config, email_jmap
+        from agent.tools import dispatch
+
+        sent = []
+        monkeypatch.setattr(email_jmap, "enabled", lambda: True)
+        monkeypatch.setattr(email_jmap, "send_email", lambda **kwargs: sent.append(kwargs) or {
+            "emailId": f"e{len(sent)}",
+            "to": kwargs["to"],
+            "subject": kwargs["subject"],
+        })
+        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        fresh_db.link_member_email("tom@tomeri.org", "tom")
+        result = json.loads(dispatch("request_roll_call_update", {}, {
+            "speaker_user_id": str(config.ADMIN_USER_ID),
+            "member_slug": "jamie",
+            "channel_id": "ch1",
+        }))
+        assert len(result["sent"]) == 2
+        assert {call["to"][0] for call in sent} == {"jamie@thingelstad.com", "tom@tomeri.org"}
+        assert all("Roll call: A World Appears on 2026-06-30" == call["subject"] for call in sent)
+        assert all("yes, no, or unsure" in call["body"] for call in sent)
+        assert all("2026-06-30" in call["body"] for call in sent)
+
+    def test_request_roll_call_update_skips_confirmed_members(self, monkeypatch, fresh_db):
+        from agent import config, email_jmap, meeting_rules
+        from agent.tools import dispatch
+
+        sent = []
+        monkeypatch.setattr(email_jmap, "enabled", lambda: True)
+        monkeypatch.setattr(email_jmap, "send_email", lambda **kwargs: sent.append(kwargs) or {
+            "emailId": f"e{len(sent)}",
+            "to": kwargs["to"],
+            "subject": kwargs["subject"],
+        })
+        meeting = meeting_rules.next_meeting()
+        fresh_db.set_attendance(
+            meeting_key=meeting["meetingKey"],
+            member_slug="jamie",
+            status="yes",
+            source="email",
+        )
+        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        fresh_db.link_member_email("tom@tomeri.org", "tom")
+        result = json.loads(dispatch("request_roll_call_update", {}, {
+            "speaker_user_id": str(config.ADMIN_USER_ID),
+            "member_slug": "jamie",
+            "channel_id": "ch1",
+        }))
+        assert {call["to"][0] for call in sent} == {"tom@tomeri.org"}
+        assert result["skipped"] == [{"member": "jamie", "reason": "already yes"}]
+
+    def test_request_roll_call_update_all_skipped_does_not_open_roll_call(self, monkeypatch, fresh_db):
+        from agent import config, email_jmap, meeting_rules
+        from agent.tools import dispatch
+
+        sent = []
+        monkeypatch.setattr(email_jmap, "enabled", lambda: True)
+        monkeypatch.setattr(email_jmap, "send_email", lambda **kwargs: sent.append(kwargs) or {
+            "emailId": f"e{len(sent)}",
+            "to": kwargs["to"],
+            "subject": kwargs["subject"],
+        })
+        meeting = meeting_rules.next_meeting()
+        fresh_db.set_attendance(meeting_key=meeting["meetingKey"], member_slug="jamie", status="yes")
+        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        result = json.loads(dispatch("request_roll_call_update", {"member": "jamie"}, {
+            "speaker_user_id": str(config.ADMIN_USER_ID),
+            "member_slug": "jamie",
+            "channel_id": "ch1",
+        }))
+        assert result["sent"] == []
+        assert sent == []
+        assert fresh_db.get_roll_call(meeting["meetingKey"]) is None
+
+    def test_request_roll_call_update_blocked_inside_inbound_email_channel(self, monkeypatch, fresh_db):
+        from agent import email_jmap
+        from agent.tools import dispatch
+
+        monkeypatch.setattr(email_jmap, "enabled", lambda: True)
+        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        result = json.loads(dispatch("request_roll_call_update", {"member": "jamie"}, {
+            "channel_id": "email:thread1",
+            "speaker_user_id": "email:jamie@thingelstad.com",
+            "member_slug": "jamie",
+        }))
+        assert result == {"error": "roll-call emails cannot be initiated from inbound email"}
+
+    def test_request_reading_update_skips_finished_member(self, monkeypatch, fresh_db):
+        from agent import email_jmap, meeting_rules
+        from agent.tools import dispatch
+
+        monkeypatch.setattr(email_jmap, "enabled", lambda: True)
+        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        meeting = meeting_rules.next_meeting()
+        fresh_db.set_reading_status(
+            meeting_key=meeting["meetingKey"],
+            member_slug="jamie",
+            status="finished",
+            source="email",
+        )
+        result = json.loads(dispatch("request_reading_update", {"member": "jamie"}, {
+            "speaker_user_id": "email:jamie@thingelstad.com",
+            "member_slug": "jamie",
+        }))
+        assert result["sent"] is False
+        assert "already marked finished" in result["reason"]
+
+    def test_meeting_readiness_combines_attendance_and_reading(self, fresh_db):
+        from agent import meeting_rules
+        from agent.tools import dispatch
+
+        meeting = meeting_rules.next_meeting()
+        fresh_db.set_attendance(meeting_key=meeting["meetingKey"], member_slug="jamie", status="yes")
+        fresh_db.set_reading_status(
+            meeting_key=meeting["meetingKey"],
+            member_slug="jamie",
+            status="finished",
+        )
+        result = json.loads(dispatch("meeting_readiness", {}, {}))
+        assert result["counts"]["attending"] == 1
+        assert result["counts"]["attendingAndFinished"] == 1
+        assert result["counts"]["needsRollCall"] == 4
+        assert result["needsReading"] == []
+
+    def test_meeting_readiness_requires_picker_attendance(self, fresh_db):
+        from agent import corpus_read, meeting_rules
+        from agent.tools import dispatch
+
+        meeting = meeting_rules.next_meeting()
+        pickers = set(meeting["pickerSlugs"])
+        non_pickers = [
+            m for m in corpus_read.members()
+            if m.get("isCurrent") and m["slug"] not in pickers
+        ]
+        for member in non_pickers[:3]:
+            fresh_db.set_attendance(
+                meeting_key=meeting["meetingKey"],
+                member_slug=member["slug"],
+                status="yes",
+            )
+            fresh_db.set_reading_status(
+                meeting_key=meeting["meetingKey"],
+                member_slug=member["slug"],
+                status="finished",
+            )
+        result = json.loads(dispatch("meeting_readiness", {}, {}))
+        assert result["attendance"]["hasQuorum"] is True
+        assert result["attendance"]["pickerAvailable"] is False
+        assert result["ready"] is False
+
+    def test_meeting_campaign_returns_recommended_actions_and_contacts(self, fresh_db):
+        from agent import meeting_rules
+        from agent.tools import dispatch
+
+        meeting = meeting_rules.next_meeting()
+        fresh_db.link_member_email("jamie@example.test", "jamie")
+        fresh_db.add_member_contact(
+            meeting_key=meeting["meetingKey"],
+            member_slug="jamie",
+            kind="reading_checkin",
+            surface="email",
+            direction="outbound",
+            status="sent",
+            subject="Reading check-in",
+        )
+        result = json.loads(dispatch("meeting_campaign", {}, {}))
+        jamie = next(m for m in result["members"] if m["memberSlug"] == "jamie")
+        assert jamie["emailLinked"] is True
+        assert jamie["lastContact"]["kind"] == "reading_checkin"
+        assert result["recommendedActions"]
 
     def test_recent_channel_context_returns_logged_messages(self, fresh_db):
         from agent.tools import dispatch

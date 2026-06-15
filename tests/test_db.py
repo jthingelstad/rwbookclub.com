@@ -62,6 +62,15 @@ class TestMemberIdentities:
         assert len(rows) == 1
         assert rows[0]["member_slug"] == "tom"
 
+    def test_email_link_and_lookup(self, fresh_db):
+        db = fresh_db
+        db.link_member_email("Jamie@Thingelstad.COM", "jamie", linked_by="admin")
+        assert db.member_slug_for_email("jamie@thingelstad.com") == "jamie"
+        assert db.member_slug_for_email("JAMIE@THINGELSTAD.COM") == "jamie"
+        row = db.email_for_member("jamie")
+        assert row["email"] == "jamie@thingelstad.com"
+        assert row["linked_by"] == "admin"
+
 
 class TestFeedback:
     def test_response_log_and_lookup(self, fresh_db):
@@ -201,3 +210,115 @@ class TestProposals:
         assert rows[0]["status"] == "pending"
         assert db.resolve_proposal(pid, "accepted", resolved_by="admin")
         assert db.list_proposals() == []
+
+
+class TestInboundEmail:
+    def test_processing_claim_dedupes(self, fresh_db):
+        db = fresh_db
+        assert db.mark_email_processing(email_id="m1", thread_id="t1", from_email="a@example.test")
+        assert not db.mark_email_processing(email_id="m1")
+        assert not db.email_processed("m1")
+        db.mark_email_processed("m1", reply_email_id="reply1")
+        assert db.email_processed("m1")
+
+    def test_ignored_counts_as_processed(self, fresh_db):
+        db = fresh_db
+        assert db.mark_email_processing(email_id="m2")
+        db.mark_email_processed("m2", status="ignored")
+        assert db.email_processed("m2")
+
+    def test_failed_can_be_claimed_again_for_retry(self, fresh_db):
+        db = fresh_db
+        assert db.mark_email_processing(email_id="m3")
+        db.mark_email_processed("m3", status="failed", error="boom")
+        assert not db.email_processed("m3")
+        assert db.mark_email_processing(email_id="m3")
+
+
+class TestReadingStatus:
+    def test_set_and_get_reading_status(self, fresh_db):
+        db = fresh_db
+        db.set_reading_status(
+            meeting_key="a-world-appears",
+            member_slug="jamie",
+            status="on_track",
+            progress="halfway",
+            page=120,
+            percent=50,
+            source="email",
+            updated_by="email:jamie@thingelstad.com",
+        )
+        row = db.reading_status_for_member("a-world-appears", "jamie")
+        assert row["status"] == "on_track"
+        assert row["progress"] == "halfway"
+        rows = db.reading_status_for_meeting("a-world-appears")
+        assert rows[0]["member_slug"] == "jamie"
+
+    def test_reading_status_validates_values(self, fresh_db):
+        db = fresh_db
+        import pytest
+
+        with pytest.raises(ValueError):
+            db.set_reading_status(meeting_key="m", member_slug="jamie", status="unknown")
+        with pytest.raises(ValueError):
+            db.set_reading_status(meeting_key="m", member_slug="jamie", status="started", percent=101)
+
+
+class TestActivityEvents:
+    def test_activity_queue_round_trip(self, fresh_db):
+        db = fresh_db
+        aid = db.add_activity("email_sent", "Email sent", "To: jamie@example.test")
+        rows = db.pending_activity()
+        assert rows[0]["id"] == aid
+        assert rows[0]["kind"] == "email_sent"
+        assert rows[0]["title"] == "Email sent"
+        db.mark_activity_posted(aid)
+        assert db.pending_activity() == []
+
+    def test_activity_failure_retries_then_dead_letters(self, fresh_db):
+        db = fresh_db
+        aid = db.add_activity("email_sent", "Email sent", "To: jamie@example.test")
+        db.mark_activity_failed(aid, "webhook 500", max_attempts=2, retry_delay_seconds=0)
+        assert db.pending_activity()[0]["attempts"] == 1
+        db.mark_activity_failed(aid, "webhook 500", max_attempts=2, retry_delay_seconds=0)
+        assert db.pending_activity() == []
+
+
+class TestInboundEmails:
+    def test_stale_processing_email_can_be_reclaimed(self, fresh_db):
+        db = fresh_db
+        assert db.mark_email_processing(email_id="m1", from_email="jamie@example.test")
+        assert not db.mark_email_processing(email_id="m1", from_email="jamie@example.test")
+        with db.connect() as conn:
+            conn.execute(
+                "UPDATE inbound_emails SET processed_at = '2000-01-01 00:00:00' WHERE email_id = 'm1'"
+            )
+        assert db.mark_email_processing(email_id="m1", from_email="jamie@example.test")
+
+
+class TestMemberContacts:
+    def test_contact_and_email_open_round_trip(self, fresh_db):
+        db = fresh_db
+        cid = db.add_member_contact(
+            meeting_key="a-world-appears",
+            member_slug="jamie",
+            kind="reading_checkin",
+            surface="email",
+            direction="outbound",
+            status="sent",
+            subject="Reading check-in",
+        )
+        db.add_email_tracking(
+            token="tok1",
+            contact_id=cid,
+            meeting_key="a-world-appears",
+            member_slug="jamie",
+            kind="reading_checkin",
+            subject="Reading check-in",
+        )
+        row = db.record_email_open("tok1", remote_addr="127.0.0.1", user_agent="test")
+        assert row["member_slug"] == "jamie"
+        contacts = db.member_contacts_for_meeting("a-world-appears")
+        assert contacts[0]["status"] == "opened"
+        summary = db.email_open_summary("a-world-appears")
+        assert summary["jamie"]["open_count"] == 1

@@ -9,7 +9,8 @@ Haiku for cheap summaries and Opus reserved) — a manual tool-use loop, prompt 
 agent/
 ├── bot.py          # Discord client: /oliver group, #ask-oliver listener, scheduler loop
 ├── oliver.py       # the agent loop (tool use, caching, conversation history)
-├── tools.py        # read/memory tool schemas + dispatch
+├── tools.py        # read/memory/email tool schemas + dispatch
+├── email_jmap.py   # Fastmail JMAP send/receive, scoped to Inbox/Oliver + Sent/Oliver
 ├── corpus_read.py  # query/join layer over the normalized Git corpus
 ├── corpus_write.py # write books + meetings (add-book / schedule) via gitwrite
 ├── reviews.py      # write reviews   (gitwrite.py = commit/push corpus changes)
@@ -35,9 +36,9 @@ agent/
   `upcoming_meetings`, `club_stats`, `pending_reviews` (read the corpus), club-awareness
   tools (`current_club_state`, `current_meeting_status`, `identity_status`,
   `recent_feedback`, `recent_channel_context`), relationship tools (`related_books`,
-  `compare_books`, `review_summary`), proposal staging (`propose_action`, `open_proposals`),
-  plus `remember`, `recall`, `set_reminder`, and explicit self-reported `record_availability`
-  (SQLite).
+  `compare_books`, `review_summary`), email (`send_email`, `email_status`), proposal staging
+  (`propose_action`, `open_proposals`), plus `remember`, `recall`, `set_reminder`, and explicit
+  self-reported `record_availability` (SQLite).
 - **Reviews** (`/oliver review`): members log reviews via a Discord form that writes to the
   Git corpus (`reviews.py` → `gitwrite.py`) — see below. Review identity comes from the
   private Discord-user → member map, not mutable display names.
@@ -51,12 +52,34 @@ agent/
 - **Meeting roll call** (`meeting_rules.py` + `commands.py`): Oliver knows the club's standing
   mechanics — last Tuesday of the month, quorum is 3 of 5 current members, and the picker must
   attend. He can open roll call with buttons, record explicit self-reported availability, show
-  status, and flag quorum/picker trouble. He does **not** cancel, reschedule, or change reading
-  order.
+  status, email roll-call prompts to linked member addresses, and flag quorum/picker trouble.
+  Replies from linked email addresses update the same attendance tracker as Discord. He does
+  **not** cancel, reschedule, or change reading order.
 - **Proactive scheduler** (`scheduler.py` + `commands.py`): a daily loop posts
-  upcoming-meeting reminders, starts roll call within 10 days of the next meeting, flags
+  upcoming-meeting reminders, starts roll call 14 days before the next meeting, flags
   unresolved attendance trouble within 3 days, posts review nudges, and milestone/anniversary
   notes to `DISCORD_MAIN_CHANNEL_ID` — deduped, and a no-op until that channel id is set.
+  Once a member confirms attendance, Oliver may email reading-status check-ins at most three
+  times before the meeting: first in the 14-day window, second in the 7-day window, and final
+  in the 2-day window, with at least two days between automated asks.
+- **Email** (`email_jmap.py` + `bot.py`): optional Fastmail JMAP integration. Oliver sends HTML
+  plus plain-text alternative mail from
+  `OLIVER_EMAIL_ADDRESS`, polls only `Inbox/Oliver` for unread mail, replies through the normal
+  `oliver.answer` path, stores sent messages in `Sent/Oliver`, marks handled inbound mail seen,
+  and dedupes processed inbound email ids in SQLite. If `TINYLYTICS_SITE_ID`,
+  `TINYLYTICS_SITE_ID_NUMERIC`, and `TINYLYTICS_API_KEY` are configured, operational emails
+  include a Tinylytics open pixel and a visible disclosure note; Oliver polls Tinylytics and
+  records observed opens in SQLite.
+- **Meeting campaign** (`meeting_campaign.py` + `/oliver meeting-dashboard`): combines the
+  current book/date, days remaining, roll call, picker requirement, reading status, last member
+  contact, email opens, and recommended next actions into one dashboard/tool snapshot.
+- **Activity log** (`db.py` + `bot.py`): startup, email, reading-progress, roll-call, reminder,
+  and scheduler activity is queued in SQLite and posted to `#oliver-log` through
+  `DISCORD_OLIVER_LOG_WEBHOOK_URL`. Startup no longer posts to `#ask-oliver`.
+- **Reading progress** (`db.py` + `tools.py` + `/oliver reading-status`): tracks each current
+  member's status for the next scheduled book from the corpus. Updates can come from linked
+  Discord users or linked email addresses; `/oliver reading-checkin` emails a member for an update.
+  Oliver skips members already marked `finished`.
 - **Memory** (`db.py`): durable notes with provenance, per-channel conversation log + rolling
   summary, reminders, usage log, feedback, and private identity links. Survives restarts.
 - **Speaker** is matched from the linked Discord user ID first, with display-name fallback only
@@ -87,6 +110,16 @@ Run from the **repo root** so the `agent` and `corpus` packages resolve.
 | `DISCORD_BOT_ID` | The bot's user ID (reference) |
 | `OLIVER_DB_PATH` | Optional — SQLite path (default `agent/oliver.db`) |
 | `OLIVER_GIT_PUSH` | Optional — set to `0` to commit corpus writes locally without pushing |
+| `FASTMAIL_JMAP_TOKEN` | Optional — Fastmail API token for Oliver email |
+| `OLIVER_EMAIL_ADDRESS` | Optional — defaults to `oliver@rwbookclub.com` |
+| `OLIVER_EMAIL_INBOX_PARENT` / `OLIVER_EMAIL_INBOX_FOLDER` | Optional — defaults to `Inbox` / `Oliver`; only this folder is polled |
+| `OLIVER_EMAIL_SENT_PARENT` / `OLIVER_EMAIL_SENT_FOLDER` | Optional — defaults to `Sent` / `Oliver`; sent mail is moved here |
+| `OLIVER_EMAIL_POLL_SECONDS` | Optional — defaults to `120` |
+| `OLIVER_EMAIL_HTML_ENABLED` | Optional — defaults to `1`; sends HTML plus plain-text alternative mail |
+| `TINYLYTICS_SITE_ID` / `TINYLYTICS_SITE_ID_NUMERIC` | Optional — Tinylytics site identifiers for email open pixels/API reads |
+| `TINYLYTICS_API_KEY` | Optional — read-only Tinylytics API key for syncing observed email opens |
+| `TINYLYTICS_SYNC_SECONDS` | Optional — defaults to `600`; Tinylytics email-open polling interval |
+| `DISCORD_OLIVER_LOG_WEBHOOK_URL` | Optional — webhook for `#oliver-log` operational activity |
 
 ## Memory & backup
 
@@ -98,11 +131,16 @@ Thing pattern). Backup wiring is a deployment step, not in the repo.
 Admins can inspect and repair private state in Discord:
 
 - `/oliver link-member member:<slug> user:<Discord user>` links a stable Discord identity
+- `/oliver link-email member:<slug> email:<address>` links a stable email identity
 - `/oliver identities` shows current identity links
+- `/oliver reading-status [status] [progress] [page] [percent]` shows or updates the next-book tracker
+- `/oliver reading-checkin member:<slug>` emails a member for a next-book progress update
 - `/oliver memories [subject] [query]` searches durable memories
 - `/oliver edit-memory` and `/oliver forget` curate incorrect or stale memories
 - `/oliver roll-call status` shows the current attendance/quorum/picker check
-- `/oliver roll-call start|remind|close` runs the attendance flow in Discord
+- `/oliver roll-call start|remind|email|close` runs the attendance flow in Discord or email.
+  Email roll call targets pending members only.
+- `/oliver meeting-dashboard` shows readiness, last contact/open state, and next actions
 - `/oliver proposals` and `/oliver resolve-proposal` review staged Oliver suggestions
 
 ## Reviews (`/oliver review`)

@@ -21,8 +21,13 @@ import subprocess
 from collections import defaultdict
 
 import discord
+import requests
+from discord.ext import tasks
 
-from agent import commands, config, context as kb, db, gitwrite, oliver
+from agent import (
+    commands, config, context as kb, db, email_jmap, gitwrite, meeting_rules,
+    oliver, tinylytics,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("oliver")
@@ -78,6 +83,7 @@ class OliverClient(discord.Client):
 client = OliverClient()
 commands.setup(client)  # attach the /oliver group + stash the client reference
 _channel_locks: defaultdict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
+_email_lock = asyncio.Lock()
 
 
 def _check_dirty_tree() -> str | None:
@@ -109,6 +115,25 @@ def _git_commit_short() -> str:
         return r.stdout.strip() or "unknown"
     except (subprocess.SubprocessError, OSError):
         return "unknown"
+
+
+def _activity_text(event: dict) -> str:
+    body = (event.get("body") or "").strip()
+    title = event["title"].strip()
+    prefix = f"**{title}**"
+    text = f"{prefix}\n{body}" if body else prefix
+    return text[:1900]
+
+
+def _post_webhook(content: str) -> None:
+    if not config.OLIVER_LOG_WEBHOOK_URL:
+        raise RuntimeError("DISCORD_OLIVER_LOG_WEBHOOK_URL is not configured")
+    r = requests.post(
+        config.OLIVER_LOG_WEBHOOK_URL,
+        json={"content": content, "username": "Oliver"},
+        timeout=15,
+    )
+    r.raise_for_status()
 
 
 # Permissions Oliver actually exercises: read+reply in the channel, react with
@@ -149,28 +174,177 @@ async def on_ready() -> None:
             dirty[:1000],
         )
 
-    if ask is not None:
-        commit = _git_commit_short()
-        lines = [f"🟢 Oliver online — fresh launch (`{commit}`)."]
-        perm_issues: list[str] = []
-        channels_to_check = [("#ask-oliver", ask)] + [
-            (config.CHANNEL_NAMES.get(cid, str(cid)), ch) for cid, ch in monitored
-        ]
-        for label, ch in channels_to_check:
-            if ch is None:
-                continue
-            missing = _missing_permissions(ch)
-            if missing:
-                perm_issues.append(f"• {label}: missing `{', '.join(missing)}`")
-        if perm_issues:
-            lines.append("⚠️  Permission gaps in this guild:")
-            lines.extend(perm_issues)
-        try:
-            await ask.send("\n".join(lines), silent=True)
-        except discord.HTTPException:
-            log.exception("Failed to post startup announcement to #ask-oliver")
+    commit = _git_commit_short()
+    perm_issues: list[str] = []
+    channels_to_check = [("#ask-oliver", ask)] + [
+        (config.CHANNEL_NAMES.get(cid, str(cid)), ch) for cid, ch in monitored
+    ]
+    for label, ch in channels_to_check:
+        if ch is None:
+            continue
+        missing = _missing_permissions(ch)
+        if missing:
+            perm_issues.append(f"• {label}: missing `{', '.join(missing)}`")
+    body = f"Connected as {client.user}; {kb.book_count()} books in corpus; commit `{commit}`."
+    if perm_issues:
+        body += "\nPermission gaps:\n" + "\n".join(perm_issues)
+    db.add_activity("startup", "Oliver online", body)
+    if dirty:
+        db.add_activity("warning", "Working tree is dirty", dirty[:1500])
 
     commands.start_scheduler()
+    start_activity_logger()
+    start_tinylytics_poller()
+    start_email_poller()
+
+
+def start_activity_logger() -> None:
+    if not config.OLIVER_LOG_WEBHOOK_URL:
+        log.warning("Activity log disabled: configure DISCORD_OLIVER_LOG_WEBHOOK_URL")
+        return
+    if not post_activity.is_running():
+        post_activity.start()
+
+
+@tasks.loop(seconds=10)
+async def post_activity() -> None:
+    events = await asyncio.to_thread(db.pending_activity, limit=10)
+    if not events:
+        return
+    for event in events:
+        text = _activity_text(event)
+        try:
+            await asyncio.to_thread(_post_webhook, text)
+            db.mark_activity_posted(event["id"])
+        except Exception as e:
+            db.mark_activity_failed(event["id"], f"{type(e).__name__}: {e}")
+            log.exception("Failed to post activity event %s", event["id"])
+            return
+
+
+@post_activity.before_loop
+async def before_post_activity() -> None:
+    await client.wait_until_ready()
+
+
+def start_email_poller() -> None:
+    if not email_jmap.enabled():
+        log.info("Email disabled: FASTMAIL_JMAP_TOKEN is not configured")
+        return
+    if not poll_email.is_running():
+        poll_email.start()
+
+
+def start_tinylytics_poller() -> None:
+    if not tinylytics.enabled():
+        log.info("Tinylytics email open sync disabled: configure TINYLYTICS_* variables")
+        return
+    if not poll_tinylytics.is_running():
+        poll_tinylytics.start()
+
+
+@tasks.loop(seconds=config.TINYLYTICS_SYNC_SECONDS)
+async def poll_tinylytics() -> None:
+    try:
+        synced = await asyncio.to_thread(tinylytics.sync_email_opens)
+    except Exception:
+        log.exception("Failed to sync Tinylytics email opens")
+        return
+    if synced:
+        db.add_activity(
+            "email_opened",
+            "Email opens synced",
+            f"Recorded {synced} Tinylytics email open(s).",
+        )
+
+
+@poll_tinylytics.before_loop
+async def before_poll_tinylytics() -> None:
+    await client.wait_until_ready()
+
+
+@tasks.loop(seconds=config.OLIVER_EMAIL_POLL_SECONDS)
+async def poll_email() -> None:
+    async with _email_lock:
+        try:
+            messages = await asyncio.to_thread(
+                email_jmap.unread_oliver_email,
+                limit=config.OLIVER_EMAIL_MAX_PER_POLL,
+            )
+        except Exception:
+            log.exception("Failed to poll Oliver email")
+            return
+        for msg in messages:
+            await _handle_inbound_email(msg)
+
+
+@poll_email.before_loop
+async def before_poll_email() -> None:
+    await client.wait_until_ready()
+
+
+async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
+    if db.email_processed(msg.id):
+        return
+    if msg.from_email.lower() == config.OLIVER_EMAIL_ADDRESS.lower():
+        await asyncio.to_thread(email_jmap.mark_seen, msg.id)
+        db.mark_email_processing(
+            email_id=msg.id, thread_id=msg.thread_id, from_email=msg.from_email,
+            subject=msg.subject, received_at=msg.received_at,
+        )
+        db.mark_email_processed(msg.id, status="ignored")
+        return
+    claimed = db.mark_email_processing(
+        email_id=msg.id, thread_id=msg.thread_id, from_email=msg.from_email,
+        subject=msg.subject, received_at=msg.received_at,
+    )
+    if not claimed:
+        return
+    db.add_activity(
+        "email_received",
+        "Email received",
+        f"From: {msg.speaker} <{msg.from_email}>\nSubject: {msg.subject or '(no subject)'}",
+    )
+    member_slug = db.member_slug_for_email(msg.from_email)
+    if member_slug:
+        meeting = meeting_rules.next_meeting()
+        db.add_member_contact(
+            meeting_key=meeting["meetingKey"],
+            member_slug=member_slug,
+            kind="email_reply",
+            surface="email",
+            direction="inbound",
+            status="received",
+            subject=msg.subject or None,
+        )
+    channel_id = f"email:{msg.thread_id or msg.from_email.lower()}"
+    prompt = (
+        f"[Email from {msg.speaker} <{msg.from_email}>]\n"
+        f"Subject: {msg.subject or '(no subject)'}\n\n{msg.text}"
+    )
+    try:
+        reply = await asyncio.to_thread(
+            oliver.answer, prompt, channel_id, msg.speaker, f"email:{msg.from_email.lower()}", msg.id,
+        )
+        sent = await asyncio.to_thread(
+            email_jmap.send_email,
+            to=[msg.from_email],
+            subject=msg.reply_subject,
+            body=reply,
+            in_reply_to=msg.message_id,
+            references=msg.references,
+        )
+        await asyncio.to_thread(email_jmap.mark_seen, msg.id, answered=True)
+        db.mark_email_processed(msg.id, reply_email_id=sent.get("emailId"))
+        db.add_activity(
+            "email_sent",
+            "Email reply sent",
+            f"To: {msg.from_email}\nSubject: {msg.reply_subject}\nEmail ID: {sent.get('emailId')}",
+        )
+        log.info("Replied to email %s from %s", msg.id, msg.from_email)
+    except Exception as e:
+        db.mark_email_processed(msg.id, status="failed", error=f"{type(e).__name__}: {e}")
+        log.exception("Failed to handle inbound email %s", msg.id)
 
 
 async def _is_reply_to_bot(message: discord.Message) -> bool:

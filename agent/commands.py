@@ -11,13 +11,15 @@ from __future__ import annotations
 import asyncio
 import functools
 import logging
-from datetime import datetime, timezone
+from datetime import date, datetime
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import discord
 from discord.ext import tasks
 
 from agent import (config, context as kb, corpus_read, corpus_write, db,
-                   meeting_rules, oliver, openlibrary, reviews, scheduler)
+                   email_jmap, email_tracking, meeting_campaign, meeting_rules, oliver,
+                   openlibrary, reviews, scheduler)
 
 log = logging.getLogger("oliver.commands")
 
@@ -79,8 +81,64 @@ def _linked_member_for_user(user_id: int) -> dict | None:
     return corpus_read.find_member(slug) if slug else None
 
 
+def _reading_status_text() -> str:
+    meeting = meeting_rules.next_meeting()
+    book = meeting.get("book") or {}
+    title = book.get("title") or "the current book"
+    rows = {r["member_slug"]: r for r in db.reading_status_for_meeting(meeting["meetingKey"])}
+    current = sorted(
+        [m for m in corpus_read.members() if m.get("isCurrent")],
+        key=lambda m: m.get("name") or m["slug"],
+    )
+    lines = [f"Reading status for **{title}** on {meeting['date']}:"]
+    for member in current:
+        row = rows.get(member["slug"])
+        if not row:
+            lines.append(f"• {member['name']}: unknown")
+            continue
+        details = []
+        if row.get("progress"):
+            details.append(row["progress"])
+        if row.get("page") is not None:
+            details.append(f"page {row['page']}")
+        if row.get("percent") is not None:
+            details.append(f"{row['percent']}%")
+        suffix = f" — {', '.join(details)}" if details else ""
+        lines.append(f"• {member['name']}: {row['status'].replace('_', ' ')}{suffix}")
+    return "\n".join(lines)
+
+
+def _reading_status_by_member(meeting_key: str) -> dict[str, dict]:
+    return {r["member_slug"]: r for r in db.reading_status_for_meeting(meeting_key)}
+
+
+def _attendance_by_member(status: dict) -> dict[str, str]:
+    return {r["memberSlug"]: r["status"] for r in status["attendance"]}
+
+
+def _days_until_text(meeting_date: str) -> str:
+    try:
+        days = (date.fromisoformat(meeting_date) - date.today()).days
+    except ValueError:
+        return ""
+    if days == 0:
+        return "today"
+    if days == 1:
+        return "tomorrow"
+    if days > 1:
+        return f"in {days} days"
+    return f"{abs(days)} days ago"
+
+
 def _admin_check_message(interaction: discord.Interaction) -> str | None:
     return None if _is_admin(interaction) else "That's an admin command."
+
+
+def _club_now() -> datetime:
+    try:
+        return datetime.now(ZoneInfo(config.CLUB_TIMEZONE))
+    except ZoneInfoNotFoundError:
+        return datetime.now().astimezone()
 
 
 def _roll_call_message() -> str:
@@ -91,6 +149,161 @@ def _roll_call_message() -> str:
         f"📋 **Roll call:** {title} on {meeting['date']}\n"
         "Please tap your attendance below. We need 3 of 5 current members, and the picker has to be there."
     )
+
+
+def _roll_call_email_body(member_name: str, status: dict) -> str:
+    meeting = status["meeting"]
+    title = (meeting.get("book") or {}).get("title") or "the next meeting"
+    timing = _days_until_text(meeting["date"])
+    meeting_when = f"{meeting['date']}" + (f" ({timing})" if timing else "")
+    picker = ", ".join(meeting.get("pickerNames") or [])
+    picker_line = f"\n\n{picker} picked this one, and the picker needs to be able to attend." if picker else ""
+    return (
+        f"Hi {member_name},\n\n"
+        f"Roll call for {title}: the meeting is {meeting_when}.\n\n"
+        "Can you make it? Reply with yes, no, or unsure and I'll update the roll-call tracker."
+        f"{picker_line}\n\n"
+        f"Current status: {status['counts']['yes']} yes, {status['counts']['no']} no, "
+        f"{status['counts']['unsure']} unsure, {status['counts']['pending']} pending. "
+        f"We need {status['counts']['quorumRequired']} yes responses.\n\n"
+        "Oliver"
+    )
+
+
+def _reading_checkin_body(member_name: str, meeting: dict, *, note: str | None = None) -> str:
+    book = meeting.get("book") or {}
+    title = book.get("title") or "the current book"
+    timing = _days_until_text(meeting["date"])
+    meeting_when = f"{meeting['date']}" + (f" ({timing})" if timing else "")
+    extra = f"\n\n{note.strip()}" if note else ""
+    return (
+        f"Hi {member_name},\n\n"
+        f"Quick reading check-in for {title}. The meeting is {meeting_when}. "
+        "Where are you in the book, and do you feel on track?\n\n"
+        "Reply with something short like \"halfway and on track\", "
+        "\"page 120, behind\", or \"finished\" and I'll update the tracker."
+        f"{extra}\n\nOliver"
+    )
+
+
+async def _send_roll_call_email_to_member(member: dict, status: dict) -> dict | None:
+    email = db.email_for_member(member["slug"])
+    if not email:
+        return None
+    meeting = status["meeting"]
+    title = (meeting.get("book") or {}).get("title") or "the next meeting"
+    subject = f"Roll call: {title} on {meeting['date']}"
+    body = _roll_call_email_body(member["name"], status)
+    contact_id = None
+    try:
+        contact_id, html_body, tracking_token = email_tracking.prepare_outbound(
+            text=body,
+            meeting_key=meeting["meetingKey"],
+            member_slug=member["slug"],
+            kind="roll_call",
+            subject=subject,
+        )
+        sent_email = await asyncio.to_thread(
+            email_jmap.send_email,
+            to=[email["email"]],
+            subject=subject,
+            body=body,
+            html_body=html_body,
+        )
+        email_tracking.mark_outbound_sent(contact_id, tracking_token, sent_email.get("emailId"))
+        db.add_activity(
+            "email_sent",
+            "Roll-call email sent",
+            f"Member: {member['slug']}\nTo: {email['email']}\nSubject: {subject}",
+        )
+        return sent_email
+    except Exception:
+        if contact_id is not None:
+            email_tracking.mark_outbound_failed(contact_id)
+        raise
+
+
+async def _send_reading_checkin_email_to_member(member: dict, meeting: dict,
+                                                *, note: str | None = None) -> dict | None:
+    email = db.email_for_member(member["slug"])
+    if not email:
+        return None
+    title = (meeting.get("book") or {}).get("title") or "the current book"
+    subject = f"Reading check-in: {title}"
+    body = _reading_checkin_body(member["name"], meeting, note=note)
+    contact_id = None
+    try:
+        contact_id, html_body, tracking_token = email_tracking.prepare_outbound(
+            text=body,
+            meeting_key=meeting["meetingKey"],
+            member_slug=member["slug"],
+            kind="reading_checkin",
+            subject=subject,
+        )
+        sent = await asyncio.to_thread(
+            email_jmap.send_email,
+            to=[email["email"]],
+            subject=subject,
+            body=body,
+            html_body=html_body,
+        )
+        email_tracking.mark_outbound_sent(contact_id, tracking_token, sent.get("emailId"))
+        db.add_activity(
+            "email_sent",
+            "Reading check-in email sent",
+            f"Member: {member['slug']}\nTo: {email['email']}\nSubject: {subject}\nEmail ID: {sent.get('emailId')}",
+        )
+        return sent
+    except Exception:
+        if contact_id is not None:
+            email_tracking.mark_outbound_failed(contact_id)
+        raise
+
+
+async def _email_roll_call(interaction: discord.Interaction) -> None:
+    if not email_jmap.enabled():
+        await interaction.response.send_message("Email is not configured.", ephemeral=True)
+        return
+    status = meeting_rules.meeting_status()
+    meeting = status["meeting"]
+    title = (meeting.get("book") or {}).get("title") or "the next meeting"
+    current = sorted(
+        [m for m in corpus_read.members() if m.get("isCurrent")],
+        key=lambda m: m.get("name") or m["slug"],
+    )
+    attendance = _attendance_by_member(status)
+    current = [m for m in current if attendance.get(m["slug"], "pending") == "pending"]
+    sent: list[str] = []
+    skipped: list[str] = [
+        f"{m.get('member')} ({m.get('status')})"
+        for m in status["attendance"]
+        if m.get("status") != "pending"
+    ]
+    missing: list[str] = []
+    await interaction.response.defer(ephemeral=True)
+    for member in current:
+        email = db.email_for_member(member["slug"])
+        if not email:
+            missing.append(member["name"])
+            continue
+        try:
+            await _send_roll_call_email_to_member(member, status)
+            sent.append(member["name"])
+        except Exception:
+            log.exception("roll-call email failed for %s", member["slug"])
+            missing.append(f"{member['name']} (send failed)")
+    if sent:
+        db.upsert_roll_call(
+            meeting_key=meeting["meetingKey"],
+            channel_id=str(interaction.channel_id) if interaction.channel_id else None,
+            opened_by=f"email:{interaction.user.id}",
+        )
+    lines = [f"Sent roll-call email to {len(sent)} pending member(s): {', '.join(sent) or 'none'}."]
+    if skipped:
+        lines.append("Skipped already-confirmed: " + ", ".join(skipped) + ".")
+    if missing:
+        lines.append("Not emailed: " + ", ".join(missing) + ".")
+    await interaction.followup.send("\n".join(lines), ephemeral=True)
 
 
 class AttendanceView(discord.ui.View):
@@ -138,6 +351,11 @@ async def record_attendance_response(interaction: discord.Interaction, status: s
         status=status,
         updated_by_user_id=str(interaction.user.id),
         source="button",
+    )
+    db.add_activity(
+        "roll_call_update",
+        "Roll-call response recorded",
+        f"Member: {member['slug']}\nStatus: {status}\nSource: Discord button\nMeeting: {meeting['meetingKey']}",
     )
     status_words = {"yes": "attending", "no": "not attending", "unsure": "unsure"}
     summary = meeting_rules.meeting_status(meeting["meetingKey"])
@@ -228,12 +446,31 @@ async def link_member_cmd(interaction: discord.Interaction, member: str, user: d
         f"Linked {user.mention} to {m['name']} (`{m['slug']}`).", ephemeral=True)
 
 
-@oliver_cmds.command(name="identities", description="Show Discord identity links (admin).")
+@oliver_cmds.command(name="link-email", description="Link an email address to a club member (admin).")
+@discord.app_commands.describe(member="Club member", email="Email address")
+@discord.app_commands.autocomplete(member=member_autocomplete)
+@admin_only
+async def link_email_cmd(interaction: discord.Interaction, member: str, email: str) -> None:
+    m = corpus_read.find_member(member)
+    if not m:
+        await interaction.response.send_message("I couldn't find that member.", ephemeral=True)
+        return
+    try:
+        db.link_member_email(email, m["slug"], linked_by=str(interaction.user.id))
+    except ValueError as e:
+        await interaction.response.send_message(str(e), ephemeral=True)
+        return
+    await interaction.response.send_message(
+        f"Linked `{email.strip().lower()}` to {m['name']} (`{m['slug']}`).", ephemeral=True)
+
+
+@oliver_cmds.command(name="identities", description="Show Discord and email identity links (admin).")
 @admin_only
 async def identities_cmd(interaction: discord.Interaction) -> None:
     rows = db.list_member_identities()
+    email_rows = db.list_member_emails()
     members = corpus_read.members()
-    if not rows:
+    if not rows and not email_rows:
         missing = ", ".join(sorted(m["name"] for m in members if m.get("isCurrent")))
         await interaction.response.send_message(
             f"No Discord identities linked yet. Current members not linked: {missing}.",
@@ -241,12 +478,20 @@ async def identities_cmd(interaction: discord.Interaction) -> None:
         return
     names = {m["slug"]: m.get("name") for m in members}
     linked_slugs = {r["member_slug"] for r in rows}
+    email_linked_slugs = {r["member_slug"] for r in email_rows}
     lines = ["**Linked identities:**"]
     for r in rows:
-        lines.append(f"• {names.get(r['member_slug'], r['member_slug'])}: <@{r['discord_user_id']}>")
+        lines.append(f"• {names.get(r['member_slug'], r['member_slug'])}: Discord <@{r['discord_user_id']}>")
+    for r in email_rows:
+        lines.append(f"• {names.get(r['member_slug'], r['member_slug'])}: email `{r['email']}`")
     missing = [m["name"] for m in members if m.get("isCurrent") and m["slug"] not in linked_slugs]
     if missing:
-        lines.append("\n**Current members not linked:** " + ", ".join(sorted(missing)))
+        lines.append("\n**Current members without Discord:** " + ", ".join(sorted(missing)))
+    missing_email = [
+        m["name"] for m in members if m.get("isCurrent") and m["slug"] not in email_linked_slugs
+    ]
+    if missing_email:
+        lines.append("\n**Current members without email:** " + ", ".join(sorted(missing_email)))
     await interaction.response.send_message("\n".join(lines), ephemeral=True)
 
 
@@ -259,6 +504,92 @@ async def whoami_cmd(interaction: discord.Interaction) -> None:
         return
     await interaction.response.send_message(
         "I don't have your Discord account linked to a club member yet.", ephemeral=True)
+
+
+@oliver_cmds.command(name="reading-status", description="Show or update your reading progress for the next book.")
+@discord.app_commands.describe(
+    status="Optional status: not_started, started, on_track, behind, finished, paused",
+    progress="Optional short note, e.g. 'chapter 6' or 'halfway'",
+    page="Optional page number",
+    percent="Optional percent complete",
+)
+async def reading_status_cmd(interaction: discord.Interaction, status: str | None = None,
+                             progress: str | None = None, page: int | None = None,
+                             percent: int | None = None) -> None:
+    if not any(v is not None for v in (status, progress, page, percent)):
+        await interaction.response.send_message(_reading_status_text(), ephemeral=True)
+        return
+    member = _linked_member_for_user(interaction.user.id)
+    if not member:
+        await interaction.response.send_message(
+            "I can only update reading status from linked club members.", ephemeral=True)
+        return
+    normalized = (status or "started").strip().lower().replace("-", "_").replace(" ", "_")
+    try:
+        meeting = meeting_rules.next_meeting()
+        db.set_reading_status(
+            meeting_key=meeting["meetingKey"],
+            member_slug=member["slug"],
+            status=normalized,
+            progress=progress,
+            page=page,
+            percent=percent,
+            source="discord",
+            updated_by=str(interaction.user.id),
+        )
+        db.add_activity(
+            "reading_update",
+            "Reading status recorded",
+            f"Member: {member['slug']}\nStatus: {normalized}\nProgress: {progress or '-'}\nSource: Discord command\nMeeting: {meeting['meetingKey']}",
+        )
+    except ValueError as e:
+        await interaction.response.send_message(str(e), ephemeral=True)
+        return
+    await interaction.response.send_message(_reading_status_text(), ephemeral=True)
+
+
+@oliver_cmds.command(name="reading-checkin", description="Email a reading-status check-in to a member (admin).")
+@discord.app_commands.describe(member="Club member", note="Optional extra sentence")
+@discord.app_commands.autocomplete(member=member_autocomplete)
+@admin_only
+async def reading_checkin_cmd(interaction: discord.Interaction, member: str,
+                              note: str | None = None) -> None:
+    m = corpus_read.find_member(member)
+    if not m:
+        await interaction.response.send_message("I couldn't find that member.", ephemeral=True)
+        return
+    email = db.email_for_member(m["slug"])
+    if not email:
+        await interaction.response.send_message(
+            f"{m['name']} does not have a linked email address.", ephemeral=True)
+        return
+    if not email_jmap.enabled():
+        await interaction.response.send_message("Email is not configured.", ephemeral=True)
+        return
+    meeting = meeting_rules.next_meeting()
+    book = meeting.get("book") or {}
+    title = book.get("title") or "the current book"
+    existing = db.reading_status_for_member(meeting["meetingKey"], m["slug"])
+    if existing and existing["status"] == "finished":
+        db.add_activity(
+            "reading_checkin_skipped",
+            "Reading check-in skipped",
+            f"Member: {m['slug']}\nReason: already finished\nBook: {title}",
+        )
+        await interaction.response.send_message(
+            f"{m['name']} is already marked finished for {title}; not sending a check-in.",
+            ephemeral=True)
+        return
+    await interaction.response.defer(ephemeral=True)
+    try:
+        sent = await _send_reading_checkin_email_to_member(m, meeting, note=note)
+    except Exception:
+        log.exception("reading-checkin email failed")
+        await interaction.followup.send("I couldn't send that email.", ephemeral=True)
+        return
+    await interaction.followup.send(
+        f"Sent reading check-in to {m['name']} at `{email['email']}` (`{sent.get('emailId')}`).",
+        ephemeral=True)
 
 
 @oliver_cmds.command(name="review", description="Log your review of a book the club has read.")
@@ -359,12 +690,13 @@ async def oliver_feedback(interaction: discord.Interaction) -> None:
     discord.app_commands.Choice(name="status", value="status"),
     discord.app_commands.Choice(name="start", value="start"),
     discord.app_commands.Choice(name="remind", value="remind"),
+    discord.app_commands.Choice(name="email", value="email"),
     discord.app_commands.Choice(name="close", value="close"),
 ])
 async def roll_call_cmd(interaction: discord.Interaction,
                         action: discord.app_commands.Choice[str]) -> None:
     act = action.value
-    if act in {"start", "remind", "close"}:
+    if act in {"start", "remind", "email", "close"}:
         msg = _admin_check_message(interaction)
         if msg:
             await interaction.response.send_message(msg, ephemeral=True)
@@ -384,6 +716,10 @@ async def roll_call_cmd(interaction: discord.Interaction,
             ephemeral=True)
         return
 
+    if act == "email":
+        await _email_roll_call(interaction)
+        return
+
     text = _roll_call_message() if act == "start" else (
         "🔔 Roll call reminder.\n\n"
         + meeting_rules.format_status(meeting_rules.meeting_status(meeting["meetingKey"]))
@@ -399,6 +735,13 @@ async def roll_call_cmd(interaction: discord.Interaction,
         )
     except discord.HTTPException:
         log.exception("Failed to record roll-call message")
+
+
+@oliver_cmds.command(name="meeting-dashboard", description="Show the next meeting readiness dashboard (admin).")
+@admin_only
+async def meeting_dashboard_cmd(interaction: discord.Interaction) -> None:
+    text = await asyncio.to_thread(meeting_campaign.format_dashboard)
+    await interaction.response.send_message(text[:config.MAX_DISCORD_LEN], ephemeral=True)
 
 
 @oliver_cmds.command(name="proposals", description="Show Oliver's pending action proposals (admin).")
@@ -489,7 +832,7 @@ async def run_scheduler() -> int:
     if _client is None:
         return 0
     posted = 0
-    now = datetime.now(timezone.utc)
+    now = _club_now()
 
     # 1. Corpus-derived notifications → main channel.
     main = _client.get_channel(config.MAIN_CHANNEL_ID) if config.MAIN_CHANNEL_ID else None
@@ -511,7 +854,7 @@ async def run_scheduler() -> int:
         if meeting_date:
             days = (meeting_date.date() - now.date()).days
             roll_key = f"roll-call-{meeting['meetingKey']}"
-            if 0 <= days <= 10 and roll_key not in db.sent_keys():
+            if 0 <= days <= meeting_campaign.ROLL_CALL_START_DAYS and roll_key not in db.sent_keys():
                 sent = await main.send(_roll_call_message(), view=AttendanceView())
                 db.upsert_roll_call(
                     meeting_key=meeting["meetingKey"],
@@ -520,7 +863,29 @@ async def run_scheduler() -> int:
                     opened_by="scheduler",
                 )
                 db.mark_sent(roll_key)
+                db.add_activity(
+                    "roll_call_started",
+                    "Roll call started in Discord",
+                    f"Meeting: {meeting['meetingKey']}\nChannel: {sent.channel.id}",
+                )
                 posted += 1
+                if email_jmap.enabled():
+                    attendance = _attendance_by_member(status)
+                    current = sorted(
+                        [m for m in corpus_read.members() if m.get("isCurrent")],
+                        key=lambda m: m.get("name") or m["slug"],
+                    )
+                    for member in current:
+                        if attendance.get(member["slug"], "pending") != "pending":
+                            continue
+                        if not db.email_for_member(member["slug"]):
+                            continue
+                        try:
+                            sent_email = await _send_roll_call_email_to_member(member, status)
+                            if sent_email:
+                                posted += 1
+                        except Exception:
+                            log.exception("scheduled roll-call email failed for %s", member["slug"])
             alert_key = f"attendance-alert-{meeting['meetingKey']}"
             status = await asyncio.to_thread(meeting_rules.meeting_status)
             if 0 <= days <= 3 and status["recommendation"] != "ready" and alert_key not in db.sent_keys():
@@ -529,7 +894,43 @@ async def run_scheduler() -> int:
                     + meeting_rules.format_status(status)
                 )
                 db.mark_sent(alert_key)
+                db.add_activity(
+                    "attendance_alert",
+                    "Attendance alert posted",
+                    f"Meeting: {meeting['meetingKey']}\nRecommendation: {status['recommendation']}",
+                )
                 posted += 1
+
+            if email_jmap.enabled():
+                campaign = await asyncio.to_thread(meeting_campaign.snapshot)
+                candidates = meeting_campaign.reading_checkin_candidates(
+                    campaign, today=now.date()
+                )
+                for candidate in candidates:
+                    slug = candidate["memberSlug"]
+                    key = f"reading-checkin-{meeting['meetingKey']}-{slug}-{candidate['checkinNumber']}"
+                    if key in db.sent_keys():
+                        continue
+                    member = corpus_read.find_member(slug)
+                    if not member or not db.email_for_member(slug):
+                        continue
+                    try:
+                        sent_email = await _send_reading_checkin_email_to_member(
+                            member,
+                            meeting,
+                            note=f"Automated check-in {candidate['checkinNumber']} of {candidate['maxCheckins']}.",
+                        )
+                    except Exception:
+                        log.exception("scheduled reading-checkin email failed for %s", slug)
+                        continue
+                    if sent_email:
+                        db.mark_sent(key)
+                        db.add_activity(
+                            "reading_checkin_scheduled",
+                            "Scheduled reading check-in sent",
+                            f"Member: {slug}\nMeeting: {meeting['meetingKey']}\nCheck-in: {candidate['checkinNumber']} of {candidate['maxCheckins']}",
+                        )
+                        posted += 1
 
     # 2. User-set reminders → their original channel (or main as fallback).
     reminders = await asyncio.to_thread(db.due_reminders)
@@ -546,6 +947,11 @@ async def run_scheduler() -> int:
         try:
             await target.send(msg)
             db.mark_reminder_fired(r["id"])
+            db.add_activity(
+                "reminder_sent",
+                "Reminder sent",
+                f"Reminder ID: {r['id']}\nChannel: {target_id}\nText: {r['text'][:500]}",
+            )
             posted += 1
         except discord.HTTPException:
             log.exception("Failed to post reminder %s; will retry next tick", r["id"])

@@ -17,10 +17,14 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import date
 
 from agent import config
 from agent import corpus_read as cr
 from agent import db
+from agent import email_jmap
+from agent import email_tracking
+from agent import meeting_campaign
 from agent import meeting_rules
 
 log = logging.getLogger("oliver.tools")
@@ -168,6 +172,18 @@ TOOLS = [
         "input_schema": {"type": "object", "properties": {}},
     },
     {
+        "name": "meeting_readiness",
+        "description": "Combined readiness for the next meeting: attendance, reading status, quorum, "
+                       "and who still needs roll-call or reading nudges.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "meeting_campaign",
+        "description": "Operational dashboard for the next meeting: current book/date, days left, "
+                       "attendance, picker, reading progress, last member contact, and recommended next actions.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
         "name": "identity_status",
         "description": "Show whether the current Discord speaker is linked to a club member, and which current members still lack Discord identity links.",
         "input_schema": {"type": "object", "properties": {}},
@@ -262,6 +278,94 @@ TOOLS = [
         },
     },
     {
+        "name": "send_email",
+        "description": "Send a plain-text email from Oliver's rwbookclub.com address. "
+                       "Use only when a member explicitly asks Oliver to email someone, "
+                       "from Discord. Inbound email replies are sent automatically by the "
+                       "runtime; do not use this tool for those. Keep messages brief and club-relevant.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "to": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "minItems": 1,
+                    "maxItems": 10,
+                    "description": "Recipient email addresses, optionally with display names.",
+                },
+                "subject": {"type": "string"},
+                "body": {"type": "string"},
+                "cc": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "maxItems": 10,
+                },
+            },
+            "required": ["to", "subject", "body"],
+        },
+    },
+    {
+        "name": "email_status",
+        "description": "Check whether Oliver's JMAP email integration is configured.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "record_reading_status",
+        "description": "Record the current linked speaker's reading progress for the next/current book. "
+                       "Use when they explicitly report where they are in the book, whether by Discord "
+                       "or email. Never record progress for someone else.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "enum": ["not_started", "started", "on_track", "behind", "finished", "paused"],
+                },
+                "progress": {
+                    "type": "string",
+                    "description": "Short natural-language status, e.g. 'chapter 4' or 'about halfway'.",
+                },
+                "page": {"type": "integer", "minimum": 0},
+                "percent": {"type": "integer", "minimum": 0, "maximum": 100},
+            },
+            "required": ["status"],
+        },
+    },
+    {
+        "name": "reading_status",
+        "description": "Show the reading-progress tracker for the next/current book.",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "request_reading_update",
+        "description": "Send an email check-in asking one club member for their reading status on the "
+                       "next/current book. Use only when an admin or the member explicitly asks for it.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "member": {"type": "string", "description": "Member slug or name"},
+                "note": {"type": "string", "description": "Optional extra sentence to include."},
+            },
+            "required": ["member"],
+        },
+    },
+    {
+        "name": "request_roll_call_update",
+        "description": "Send roll-call email asking for attendance for the next meeting. "
+                       "Use only when an admin explicitly asks Oliver to email roll call, "
+                       "or when a member asks for their own roll-call email.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "member": {
+                    "type": "string",
+                    "description": "Optional member slug or name. Omit to email all current members with linked email addresses.",
+                },
+                "note": {"type": "string", "description": "Optional extra sentence to include."},
+            },
+        },
+    },
+    {
         "name": "search_discussion",
         "description": "Keyword-search what MEMBERS have actually said in the club's Discord "
                        "channels (#ask-oliver, #general, #book-talk), newest first. This is live "
@@ -318,19 +422,30 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             return _dump(meeting_rules.summarize_club_state())
         if name == "current_meeting_status":
             return _dump(meeting_rules.meeting_status())
+        if name == "meeting_readiness":
+            return _dump(_meeting_readiness_snapshot())
+        if name == "meeting_campaign":
+            return _dump(meeting_campaign.snapshot())
         if name == "identity_status":
             member_slug = ctx.get("member_slug")
             identities = db.list_member_identities()
             linked = {r["member_slug"] for r in identities}
+            email_links = db.list_member_emails()
+            email_linked = {r["member_slug"] for r in email_links}
             current = [m for m in cr.members() if m.get("isCurrent")]
             return _dump({
                 "speakerUserId": ctx.get("speaker_user_id"),
                 "speakerMemberSlug": member_slug,
                 "speakerMember": cr.find_member(member_slug) if member_slug else None,
                 "linkedCurrentMembers": sorted(linked),
+                "emailLinkedCurrentMembers": sorted(email_linked),
                 "missingCurrentMembers": [
                     {"slug": m["slug"], "name": m.get("name")}
                     for m in current if m["slug"] not in linked
+                ],
+                "missingEmailCurrentMembers": [
+                    {"slug": m["slug"], "name": m.get("name")}
+                    for m in current if m["slug"] not in email_linked
                 ],
             })
         if name == "recent_feedback":
@@ -361,7 +476,12 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 member_slug=member_slug,
                 status=status,
                 updated_by_user_id=ctx.get("speaker_user_id"),
-                source="chat",
+                source=("email" if str(ctx.get("speaker_user_id") or "").startswith("email:") else "chat"),
+            )
+            db.add_activity(
+                "roll_call_update",
+                "Roll-call response recorded",
+                f"Member: {member_slug}\nStatus: {status}\nMeeting: {meeting['meetingKey']}",
             )
             return _dump({"saved": True, "meetingStatus": meeting_rules.meeting_status(meeting["meetingKey"])})
         if name == "propose_action":
@@ -401,9 +521,286 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 channel_id=ctx.get("channel_id"), created_by=ctx.get("speaker"),
             )
             return _dump({"saved": True, "id": rid})
+        if name == "send_email":
+            if str(ctx.get("channel_id") or "").startswith("email:"):
+                return _dump({
+                    "error": "inbound email replies are sent automatically; write response text instead"
+                })
+            if not email_jmap.enabled():
+                return _dump({"error": "email is not configured"})
+            result = email_jmap.send_email(
+                to=tool_input["to"],
+                subject=tool_input["subject"],
+                body=tool_input["body"],
+                cc=tool_input.get("cc"),
+            )
+            db.add_activity(
+                "email_sent",
+                "Email sent",
+                f"To: {', '.join(result.get('to') or [])}\nSubject: {result.get('subject')}\nEmail ID: {result.get('emailId')}",
+            )
+            return _dump({"sent": True, **result})
+        if name == "email_status":
+            return _dump({
+                "configured": email_jmap.enabled(),
+                "address": config.OLIVER_EMAIL_ADDRESS,
+                "inbox": f"{config.OLIVER_EMAIL_INBOX_PARENT}/{config.OLIVER_EMAIL_INBOX_FOLDER}",
+                "sent": f"{config.OLIVER_EMAIL_SENT_PARENT}/{config.OLIVER_EMAIL_SENT_FOLDER}",
+            })
+        if name == "record_reading_status":
+            member_slug = ctx.get("member_slug")
+            if not member_slug:
+                return _dump({"error": "speaker is not linked to a club member"})
+            meeting = meeting_rules.next_meeting()
+            db.set_reading_status(
+                meeting_key=meeting["meetingKey"],
+                member_slug=member_slug,
+                status=tool_input["status"],
+                progress=tool_input.get("progress"),
+                page=tool_input.get("page"),
+                percent=tool_input.get("percent"),
+                source=("email" if str(ctx.get("speaker_user_id") or "").startswith("email:") else "discord"),
+                updated_by=ctx.get("speaker_user_id"),
+            )
+            db.add_activity(
+                "reading_update",
+                "Reading status recorded",
+                f"Member: {member_slug}\nStatus: {tool_input['status']}\nProgress: {tool_input.get('progress') or '-'}\nMeeting: {meeting['meetingKey']}",
+            )
+            return _dump({"saved": True, "readingStatus": _reading_status_snapshot(meeting)})
+        if name == "reading_status":
+            return _dump(_reading_status_snapshot(meeting_rules.next_meeting()))
+        if name == "request_reading_update":
+            if str(ctx.get("channel_id") or "").startswith("email:"):
+                return _dump({"error": "email check-ins cannot be initiated from inbound email"})
+            if not email_jmap.enabled():
+                return _dump({"error": "email is not configured"})
+            member = cr.find_member(tool_input["member"])
+            if not member:
+                return _dump({"error": "no such member"})
+            speaker_user_id = str(ctx.get("speaker_user_id") or "")
+            if ctx.get("member_slug") != member["slug"] and speaker_user_id != str(config.ADMIN_USER_ID):
+                return _dump({"error": "only an admin can request check-ins for other members"})
+            email = db.email_for_member(member["slug"])
+            if not email:
+                return _dump({"error": f"{member['name']} has no linked email address"})
+            meeting = meeting_rules.next_meeting()
+            book = meeting.get("book") or {}
+            title = book.get("title") or "the current book"
+            existing = db.reading_status_for_member(meeting["meetingKey"], member["slug"])
+            if existing and existing["status"] == "finished":
+                db.add_activity(
+                    "reading_checkin_skipped",
+                    "Reading check-in skipped",
+                    f"Member: {member['slug']}\nReason: already finished\nBook: {title}",
+                )
+                return _dump({
+                    "sent": False,
+                    "member": member["slug"],
+                    "reason": f"{member['name']} is already marked finished for {title}",
+                    "readingStatus": _reading_status_snapshot(meeting),
+                })
+            timing = _days_until_text(meeting["date"])
+            meeting_when = f"{meeting['date']}" + (f" ({timing})" if timing else "")
+            extra = f"\n\n{tool_input['note'].strip()}" if tool_input.get("note") else ""
+            body = (
+                f"Hi {member['name']},\n\n"
+                f"Quick reading check-in for {title}. The meeting is {meeting_when}. "
+                "Where are you in the book, and do you feel on track?\n\n"
+                "Reply with something short like \"halfway and on track\", "
+                "\"page 120, behind\", or \"finished\" and I'll update the tracker."
+                f"{extra}\n\nOliver"
+            )
+            subject = f"Reading check-in: {title}"
+            contact_id, html_body, tracking_token = email_tracking.prepare_outbound(
+                text=body,
+                meeting_key=meeting["meetingKey"],
+                member_slug=member["slug"],
+                kind="reading_checkin",
+                subject=subject,
+            )
+            try:
+                sent = email_jmap.send_email(
+                    to=[email["email"]],
+                    subject=subject,
+                    body=body,
+                    html_body=html_body,
+                )
+            except Exception:
+                email_tracking.mark_outbound_failed(contact_id)
+                raise
+            email_tracking.mark_outbound_sent(contact_id, tracking_token, sent.get("emailId"))
+            db.add_activity(
+                "email_sent",
+                "Reading check-in email sent",
+                f"Member: {member['slug']}\nTo: {email['email']}\nSubject: {subject}\nEmail ID: {sent.get('emailId')}",
+            )
+            return _dump({"sent": True, "member": member["slug"], **sent})
+        if name == "request_roll_call_update":
+            if str(ctx.get("channel_id") or "").startswith("email:"):
+                return _dump({"error": "roll-call emails cannot be initiated from inbound email"})
+            if not email_jmap.enabled():
+                return _dump({"error": "email is not configured"})
+            speaker_user_id = str(ctx.get("speaker_user_id") or "")
+            requested_member = tool_input.get("member")
+            if requested_member:
+                member = cr.find_member(requested_member)
+                if not member:
+                    return _dump({"error": "no such member"})
+                if ctx.get("member_slug") != member["slug"] and speaker_user_id != str(config.ADMIN_USER_ID):
+                    return _dump({"error": "only an admin can request roll-call emails for other members"})
+                targets = [member]
+            else:
+                if speaker_user_id != str(config.ADMIN_USER_ID):
+                    return _dump({"error": "only an admin can email roll call to all members"})
+                targets = sorted(
+                    [m for m in cr.members() if m.get("isCurrent")],
+                    key=lambda m: m.get("name") or m["slug"],
+                )
+            status = meeting_rules.meeting_status()
+            meeting = status["meeting"]
+            attendance = {r["memberSlug"]: r["status"] for r in status["attendance"]}
+            skipped = []
+            filtered_targets = []
+            for member in targets:
+                member_status = attendance.get(member["slug"], "pending")
+                if member_status != "pending":
+                    skipped.append({"member": member["slug"], "reason": f"already {member_status}"})
+                    continue
+                filtered_targets.append(member)
+            sent_rows = []
+            missing = []
+            note = tool_input.get("note")
+            for member in filtered_targets:
+                email = db.email_for_member(member["slug"])
+                if not email:
+                    missing.append({"member": member["slug"], "reason": "no linked email address"})
+                    continue
+                subject = _roll_call_subject(status)
+                body = _roll_call_email_body(member.get("name") or member["slug"], status, note=note)
+                contact_id, html_body, tracking_token = email_tracking.prepare_outbound(
+                    text=body,
+                    meeting_key=meeting["meetingKey"],
+                    member_slug=member["slug"],
+                    kind="roll_call",
+                    subject=subject,
+                )
+                try:
+                    sent = email_jmap.send_email(
+                        to=[email["email"]],
+                        subject=subject,
+                        body=body,
+                        html_body=html_body,
+                    )
+                except Exception:
+                    email_tracking.mark_outbound_failed(contact_id)
+                    raise
+                email_tracking.mark_outbound_sent(contact_id, tracking_token, sent.get("emailId"))
+                db.add_activity(
+                    "email_sent",
+                    "Roll-call email sent",
+                    f"Member: {member['slug']}\nTo: {email['email']}\nSubject: {subject}\nEmail ID: {sent.get('emailId')}",
+                )
+                sent_rows.append({"member": member["slug"], **sent})
+            if sent_rows:
+                db.upsert_roll_call(
+                    meeting_key=meeting["meetingKey"],
+                    channel_id=ctx.get("channel_id"),
+                    opened_by="email-tool",
+                )
+            return _dump({
+                "sent": sent_rows,
+                "skipped": skipped,
+                "missing": missing,
+                "meetingStatus": meeting_rules.meeting_status(meeting["meetingKey"]),
+            })
         return _dump({"error": f"unknown tool {name}"})
     except Exception as e:  # noqa: BLE001 - surface tool errors to the model, don't crash the loop
         # Also log so the operator sees it — bare error strings to the model
         # used to be invisible to anyone watching the bot.
         log.exception("tool %s failed (input=%r)", name, tool_input)
         return _dump({"error": f"{type(e).__name__}: {e}"})
+
+
+def _reading_status_snapshot(meeting: dict) -> dict:
+    rows = {r["member_slug"]: r for r in db.reading_status_for_meeting(meeting["meetingKey"])}
+    members = [m for m in cr.members() if m.get("isCurrent")]
+    statuses = []
+    for member in sorted(members, key=lambda m: m.get("name") or m["slug"]):
+        row = rows.get(member["slug"])
+        statuses.append({
+            "member": member.get("name"),
+            "memberSlug": member["slug"],
+            "status": row.get("status") if row else "unknown",
+            "progress": row.get("progress") if row else None,
+            "page": row.get("page") if row else None,
+            "percent": row.get("percent") if row else None,
+            "source": row.get("source") if row else None,
+            "updatedAt": row.get("updated_at") if row else None,
+        })
+    return {
+        "meeting": meeting,
+        "book": meeting.get("book"),
+        "statuses": statuses,
+    }
+
+
+def _meeting_readiness_snapshot() -> dict:
+    campaign = meeting_campaign.snapshot()
+    return {
+        **campaign,
+        "reading": _reading_status_snapshot(campaign["meeting"]),
+        "counts": {
+            **campaign["counts"],
+            "attendingAndFinished": len([
+                m for m in campaign["members"]
+                if m["attendance"] == "yes" and m["reading"] == "finished"
+            ]),
+            "attendingNotFinished": len([
+                m for m in campaign["members"]
+                if m["attendance"] == "yes" and m["reading"] != "finished"
+            ]),
+        },
+    }
+
+
+def _days_until_text(meeting_date: str) -> str:
+    try:
+        days = (date.fromisoformat(meeting_date) - date.today()).days
+    except ValueError:
+        return ""
+    if days == 0:
+        return "today"
+    if days == 1:
+        return "tomorrow"
+    if days > 1:
+        return f"in {days} days"
+    return f"{abs(days)} days ago"
+
+
+def _roll_call_subject(status: dict) -> str:
+    meeting = status["meeting"]
+    title = (meeting.get("book") or {}).get("title") or "the next meeting"
+    return f"Roll call: {title} on {meeting['date']}"
+
+
+def _roll_call_email_body(member_name: str, status: dict, *, note: str | None = None) -> str:
+    meeting = status["meeting"]
+    title = (meeting.get("book") or {}).get("title") or "the next meeting"
+    timing = _days_until_text(meeting["date"])
+    meeting_when = f"{meeting['date']}" + (f" ({timing})" if timing else "")
+    picker = ", ".join(meeting.get("pickerNames") or [])
+    picker_line = f"\n\n{picker} picked this one, and the picker needs to be able to attend." if picker else ""
+    extra = f"\n\n{note.strip()}" if note else ""
+    counts = status["counts"]
+    return (
+        f"Hi {member_name},\n\n"
+        f"Roll call for {title}: the meeting is {meeting_when}.\n\n"
+        "Can you make it? Reply with yes, no, or unsure and I'll update the roll-call tracker."
+        f"{picker_line}"
+        f"{extra}\n\n"
+        f"Current status: {counts['yes']} yes, {counts['no']} no, "
+        f"{counts['unsure']} unsure, {counts['pending']} pending. "
+        f"We need {counts['quorumRequired']} yes responses.\n\n"
+        "Oliver"
+    )

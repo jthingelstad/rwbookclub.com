@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import os
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 DB_PATH = Path(os.environ.get("OLIVER_DB_PATH") or Path(__file__).resolve().parent / "oliver.db")
@@ -41,6 +41,15 @@ CREATE TABLE IF NOT EXISTS member_identities (
     updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_member_identities_slug ON member_identities(member_slug);
+
+CREATE TABLE IF NOT EXISTS member_emails (
+    email       TEXT PRIMARY KEY,
+    member_slug TEXT NOT NULL,
+    linked_by   TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_member_emails_slug ON member_emails(member_slug);
 
 CREATE TABLE IF NOT EXISTS conversations (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -147,6 +156,83 @@ CREATE TABLE IF NOT EXISTS proposals (
     resolved_at    TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_proposals_status ON proposals(status, created_at);
+
+CREATE TABLE IF NOT EXISTS inbound_emails (
+    email_id       TEXT PRIMARY KEY,
+    thread_id      TEXT,
+    from_email     TEXT,
+    subject        TEXT,
+    status         TEXT NOT NULL DEFAULT 'processed', -- processing | processed | ignored | failed
+    reply_email_id TEXT,
+    error          TEXT,
+    received_at    TEXT,
+    processed_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_inbound_emails_status ON inbound_emails(status, processed_at);
+
+CREATE TABLE IF NOT EXISTS reading_statuses (
+    meeting_key  TEXT NOT NULL,
+    member_slug  TEXT NOT NULL,
+    status       TEXT NOT NULL,
+    progress     TEXT,
+    page         INTEGER,
+    percent      INTEGER,
+    source       TEXT,
+    updated_by   TEXT,
+    updated_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (meeting_key, member_slug)
+);
+CREATE INDEX IF NOT EXISTS idx_reading_statuses_meeting ON reading_statuses(meeting_key, updated_at);
+
+CREATE TABLE IF NOT EXISTS activity_events (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind        TEXT NOT NULL,
+    title       TEXT NOT NULL,
+    body        TEXT,
+    status      TEXT NOT NULL DEFAULT 'pending', -- pending | posted | dead
+    attempts    INTEGER NOT NULL DEFAULT 0,
+    last_error  TEXT,
+    next_attempt_at TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    posted_at   TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_activity_events_status ON activity_events(status, id);
+
+CREATE TABLE IF NOT EXISTS member_contacts (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    meeting_key TEXT NOT NULL,
+    member_slug TEXT NOT NULL,
+    kind        TEXT NOT NULL, -- roll_call | reading_checkin | email_reply
+    surface     TEXT NOT NULL, -- discord | email
+    direction   TEXT NOT NULL, -- inbound | outbound
+    status      TEXT NOT NULL, -- sent | received | skipped | failed
+    subject     TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_member_contacts_meeting ON member_contacts(meeting_key, member_slug, created_at);
+
+CREATE TABLE IF NOT EXISTS email_tracking (
+    token       TEXT PRIMARY KEY,
+    contact_id  INTEGER,
+    meeting_key TEXT,
+    member_slug TEXT,
+    kind        TEXT,
+    subject     TEXT,
+    email_id    TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY(contact_id) REFERENCES member_contacts(id)
+);
+CREATE INDEX IF NOT EXISTS idx_email_tracking_meeting ON email_tracking(meeting_key, member_slug);
+
+CREATE TABLE IF NOT EXISTS email_opens (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    token       TEXT NOT NULL,
+    opened_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    remote_addr TEXT,
+    user_agent  TEXT,
+    FOREIGN KEY(token) REFERENCES email_tracking(token)
+);
+CREATE INDEX IF NOT EXISTS idx_email_opens_token ON email_opens(token, opened_at);
 """
 
 
@@ -191,6 +277,16 @@ def _migrate(conn: sqlite3.Connection) -> None:
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_roll_calls_status ON roll_calls(status, opened_at)"
     )
+
+    activity_cols = _columns(conn, "activity_events")
+    activity_additions = {
+        "attempts": "INTEGER NOT NULL DEFAULT 0",
+        "last_error": "TEXT",
+        "next_attempt_at": "TEXT",
+    }
+    for col, spec in activity_additions.items():
+        if col not in activity_cols:
+            conn.execute(f"ALTER TABLE activity_events ADD COLUMN {col} {spec}")
 
 
 def _ensure_schema() -> None:
@@ -295,6 +391,54 @@ def list_member_identities() -> list[dict]:
         rows = conn.execute(
             "SELECT discord_user_id, member_slug, linked_by, created_at, updated_at "
             "FROM member_identities ORDER BY member_slug"
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def _normalize_email(email: str) -> str:
+    return email.strip().lower()
+
+
+def link_member_email(email: str, member_slug: str, *, linked_by: str | None = None) -> None:
+    email = _normalize_email(email)
+    if not email or "@" not in email:
+        raise ValueError("email must look like an email address")
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO member_emails (email, member_slug, linked_by, updated_at) "
+            "VALUES (?, ?, ?, ?) ON CONFLICT(email) DO UPDATE SET "
+            "member_slug=excluded.member_slug, linked_by=excluded.linked_by, "
+            "updated_at=excluded.updated_at",
+            (email, member_slug, linked_by, _now()),
+        )
+
+
+def member_slug_for_email(email: str | None) -> str | None:
+    if not email:
+        return None
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT member_slug FROM member_emails WHERE email = ?",
+            (_normalize_email(email),),
+        ).fetchone()
+    return row["member_slug"] if row else None
+
+
+def email_for_member(member_slug: str) -> dict | None:
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT email, member_slug, linked_by, created_at, updated_at "
+            "FROM member_emails WHERE member_slug = ? ORDER BY updated_at DESC LIMIT 1",
+            (member_slug,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def list_member_emails() -> list[dict]:
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT email, member_slug, linked_by, created_at, updated_at "
+            "FROM member_emails ORDER BY member_slug, email"
         ).fetchall()
     return [dict(r) for r in rows]
 
@@ -572,3 +716,249 @@ def resolve_proposal(proposal_id: int, status: str, *, resolved_by: str | None =
             (status, resolved_by, _now(), proposal_id),
         )
         return cur.rowcount > 0
+
+
+# ── Inbound email dedupe ─────────────────────────────────────────────────────
+def email_processed(email_id: str) -> bool:
+    with connect() as conn:
+        return conn.execute(
+            "SELECT 1 FROM inbound_emails WHERE email_id = ? AND status IN ('processed', 'ignored')",
+            (email_id,),
+        ).fetchone() is not None
+
+
+def mark_email_processing(*, email_id: str, thread_id: str | None = None,
+                          from_email: str | None = None, subject: str | None = None,
+                          received_at: str | None = None,
+                          stale_after_seconds: int = 1800) -> bool:
+    """Claim an inbound email for processing. Failed emails may be retried."""
+    now = _now()
+    cutoff = (datetime.now(timezone.utc) - timedelta(seconds=stale_after_seconds)).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+    with connect() as conn:
+        cur = conn.execute(
+            "INSERT OR IGNORE INTO inbound_emails "
+            "(email_id, thread_id, from_email, subject, status, received_at, processed_at) "
+            "VALUES (?, ?, ?, ?, 'processing', ?, ?)",
+            (email_id, thread_id, from_email, subject, received_at, now),
+        )
+        if cur.rowcount > 0:
+            return True
+        cur = conn.execute(
+            "UPDATE inbound_emails SET thread_id = COALESCE(?, thread_id), "
+            "from_email = COALESCE(?, from_email), subject = COALESCE(?, subject), "
+            "received_at = COALESCE(?, received_at), status = 'processing', "
+            "error = NULL, processed_at = ? "
+            "WHERE email_id = ? AND (status = 'failed' OR "
+            "(status = 'processing' AND datetime(replace(substr(processed_at, 1, 19), 'T', ' ')) <= datetime(?)))",
+            (thread_id, from_email, subject, received_at, now, email_id, cutoff),
+        )
+        return cur.rowcount > 0
+
+
+def mark_email_processed(email_id: str, *, reply_email_id: str | None = None,
+                         status: str = "processed", error: str | None = None) -> None:
+    if status not in {"processed", "ignored", "failed"}:
+        raise ValueError("email status must be processed, ignored, or failed")
+    with connect() as conn:
+        conn.execute(
+            "UPDATE inbound_emails SET status = ?, reply_email_id = ?, error = ?, "
+            "processed_at = ? WHERE email_id = ?",
+            (status, reply_email_id, error, _now(), email_id),
+        )
+
+
+# ── Reading progress ─────────────────────────────────────────────────────────
+READING_STATUSES = {"not_started", "started", "on_track", "behind", "finished", "paused"}
+
+
+def set_reading_status(*, meeting_key: str, member_slug: str, status: str,
+                       progress: str | None = None, page: int | None = None,
+                       percent: int | None = None, source: str | None = None,
+                       updated_by: str | None = None) -> None:
+    if status not in READING_STATUSES:
+        raise ValueError(f"reading status must be one of {', '.join(sorted(READING_STATUSES))}")
+    if page is not None and page < 0:
+        raise ValueError("page must be non-negative")
+    if percent is not None and not 0 <= percent <= 100:
+        raise ValueError("percent must be between 0 and 100")
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO reading_statuses "
+            "(meeting_key, member_slug, status, progress, page, percent, source, updated_by, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(meeting_key, member_slug) DO UPDATE SET "
+            "status=excluded.status, progress=excluded.progress, page=excluded.page, "
+            "percent=excluded.percent, source=excluded.source, updated_by=excluded.updated_by, "
+            "updated_at=excluded.updated_at",
+            (meeting_key, member_slug, status, progress, page, percent, source, updated_by, _now()),
+        )
+
+
+def reading_status_for_meeting(meeting_key: str) -> list[dict]:
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT * FROM reading_statuses WHERE meeting_key = ? ORDER BY member_slug",
+            (meeting_key,),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def reading_status_for_member(meeting_key: str, member_slug: str) -> dict | None:
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT * FROM reading_statuses WHERE meeting_key = ? AND member_slug = ?",
+            (meeting_key, member_slug),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+# ── Activity log bridge to #oliver-log ───────────────────────────────────────
+def add_activity(kind: str, title: str, body: str | None = None) -> int:
+    with connect() as conn:
+        cur = conn.execute(
+            "INSERT INTO activity_events (kind, title, body) VALUES (?, ?, ?)",
+            (kind, title, body),
+        )
+        return cur.lastrowid
+
+
+def pending_activity(limit: int = 10) -> list[dict]:
+    now = _now()
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT id, kind, title, body, attempts, last_error, created_at FROM activity_events "
+            "WHERE status = 'pending' AND (next_attempt_at IS NULL OR next_attempt_at <= ?) "
+            "ORDER BY id LIMIT ?",
+            (now, limit),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def mark_activity_posted(activity_id: int) -> None:
+    with connect() as conn:
+        conn.execute(
+            "UPDATE activity_events SET status = 'posted', posted_at = ? WHERE id = ?",
+            (_now(), activity_id),
+        )
+
+
+def mark_activity_failed(activity_id: int, error: str, *, max_attempts: int = 5,
+                         retry_delay_seconds: int = 60) -> None:
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT attempts FROM activity_events WHERE id = ?",
+            (activity_id,),
+        ).fetchone()
+        if not row:
+            return
+        attempts = int(row["attempts"] or 0) + 1
+        status = "dead" if attempts >= max_attempts else "pending"
+        next_attempt_at = None
+        if status == "pending":
+            delay = retry_delay_seconds * attempts
+            next_attempt_at = (datetime.now(timezone.utc) + timedelta(seconds=delay)).isoformat()
+        conn.execute(
+            "UPDATE activity_events SET status = ?, attempts = ?, last_error = ?, "
+            "next_attempt_at = ? WHERE id = ?",
+            (status, attempts, error[:500], next_attempt_at, activity_id),
+        )
+
+
+# ── Member contact/campaign state ────────────────────────────────────────────
+def add_member_contact(*, meeting_key: str, member_slug: str, kind: str,
+                       surface: str, direction: str, status: str,
+                       subject: str | None = None) -> int:
+    with connect() as conn:
+        cur = conn.execute(
+            "INSERT INTO member_contacts "
+            "(meeting_key, member_slug, kind, surface, direction, status, subject) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (meeting_key, member_slug, kind, surface, direction, status, subject),
+        )
+        return cur.lastrowid
+
+
+def update_member_contact_status(contact_id: int, status: str) -> None:
+    with connect() as conn:
+        conn.execute(
+            "UPDATE member_contacts SET status = ? WHERE id = ?",
+            (status, contact_id),
+        )
+
+
+def member_contacts_for_meeting(meeting_key: str, *, limit: int = 200) -> list[dict]:
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT * FROM member_contacts WHERE meeting_key = ? "
+            "ORDER BY id DESC LIMIT ?",
+            (meeting_key, limit),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def add_email_tracking(*, token: str, contact_id: int | None = None,
+                       meeting_key: str | None = None, member_slug: str | None = None,
+                       kind: str | None = None, subject: str | None = None,
+                       email_id: str | None = None) -> None:
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO email_tracking "
+            "(token, contact_id, meeting_key, member_slug, kind, subject, email_id) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (token, contact_id, meeting_key, member_slug, kind, subject, email_id),
+        )
+
+
+def mark_email_tracking_sent(token: str, email_id: str | None) -> None:
+    with connect() as conn:
+        conn.execute(
+            "UPDATE email_tracking SET email_id = ? WHERE token = ?",
+            (email_id, token),
+        )
+
+
+def record_email_open(token: str, *, remote_addr: str | None = None,
+                      user_agent: str | None = None) -> dict | None:
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT * FROM email_tracking WHERE token = ?",
+            (token,),
+        ).fetchone()
+        if not row:
+            return None
+        conn.execute(
+            "INSERT INTO email_opens (token, remote_addr, user_agent) VALUES (?, ?, ?)",
+            (token, remote_addr, user_agent),
+        )
+        if row["contact_id"]:
+            conn.execute(
+                "UPDATE member_contacts SET status = 'opened' WHERE id = ?",
+                (row["contact_id"],),
+            )
+        return dict(row)
+
+
+def email_open_summary(meeting_key: str) -> dict[str, dict]:
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT et.member_slug, MAX(eo.opened_at) AS opened_at, COUNT(eo.id) AS open_count "
+            "FROM email_tracking et JOIN email_opens eo ON eo.token = et.token "
+            "WHERE et.meeting_key = ? AND et.member_slug IS NOT NULL "
+            "GROUP BY et.member_slug",
+            (meeting_key,),
+        ).fetchall()
+    return {r["member_slug"]: dict(r) for r in rows}
+
+
+def tracked_emails_without_open(*, limit: int = 200) -> list[dict]:
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT et.* FROM email_tracking et "
+            "LEFT JOIN email_opens eo ON eo.token = et.token "
+            "WHERE eo.id IS NULL "
+            "ORDER BY et.created_at DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+    return [dict(r) for r in rows]
