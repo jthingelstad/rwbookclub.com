@@ -1,4 +1,4 @@
 # Test-only dependencies. Install with:
 #   pip install -r tests/requirements.txt
 
-pytest>=8
+pytest>=9.1.0
