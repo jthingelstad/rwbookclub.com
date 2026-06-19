@@ -3,4 +3,4 @@
 -r ../corpus/requirements.txt
 
 discord.py>=2.7.1
-anthropic>=0.40
+anthropic>=0.111.0
