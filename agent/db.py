@@ -892,7 +892,7 @@ def member_contacts_for_meeting(meeting_key: str, *, limit: int = 200) -> list[d
     with connect() as conn:
         rows = conn.execute(
             "SELECT * FROM member_contacts WHERE meeting_key = ? "
-            "ORDER BY id DESC LIMIT ?",
+            "ORDER BY datetime(created_at) DESC, id DESC LIMIT ?",
             (meeting_key, limit),
         ).fetchall()
     return [dict(r) for r in rows]

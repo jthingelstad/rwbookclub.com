@@ -322,3 +322,29 @@ class TestMemberContacts:
         assert contacts[0]["status"] == "opened"
         summary = db.email_open_summary("a-world-appears")
         assert summary["jamie"]["open_count"] == 1
+
+    def test_contacts_sort_by_created_at_not_insert_order(self, fresh_db):
+        db = fresh_db
+        db.add_member_contact(
+            meeting_key="a-world-appears",
+            member_slug="jamie",
+            kind="email_reply",
+            surface="email",
+            direction="inbound",
+            status="received",
+            subject="latest",
+        )
+        with db.connect() as conn:
+            conn.execute(
+                "UPDATE member_contacts SET created_at = '2026-06-16 12:00:00' "
+                "WHERE subject = 'latest'"
+            )
+            conn.execute(
+                "INSERT INTO member_contacts "
+                "(meeting_key, member_slug, kind, surface, direction, status, subject, created_at) "
+                "VALUES ('a-world-appears', 'jamie', 'email_reply', 'email', "
+                "'inbound', 'received', 'recovered older', '2026-06-09 16:00:00')"
+            )
+
+        contacts = db.member_contacts_for_meeting("a-world-appears")
+        assert [c["subject"] for c in contacts] == ["latest", "recovered older"]
