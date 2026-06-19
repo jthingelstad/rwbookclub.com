@@ -35,6 +35,11 @@ log = logging.getLogger("oliver")
 # Oliver answers everything in #ask-oliver, but in the main channel he speaks only
 # when addressed — @mentioned, called by name, or replied to.
 NAME_RE = re.compile(r"\boliver\b", re.IGNORECASE)
+ROLL_CALL_SUBJECT_RE = re.compile(r"\broll[- ]?call\b", re.IGNORECASE)
+EMAIL_QUOTE_RE = re.compile(r"^(>|on .+wrote:|from:|sent:|to:|subject:|--\s*$)", re.IGNORECASE)
+YES_RE = re.compile(r"\b(yes|yep|yeah|sure|attending|i'?ll be there|i can make it|can make it)\b", re.IGNORECASE)
+NO_RE = re.compile(r"\b(no|nope|cannot make it|can'?t make it|won'?t make it|not attending|unavailable)\b", re.IGNORECASE)
+UNSURE_RE = re.compile(r"\b(unsure|not sure|maybe|tentative|unknown)\b", re.IGNORECASE)
 
 
 def _is_addressed(is_mention: bool, has_name: bool, is_reply_to_bot: bool) -> bool:
@@ -60,6 +65,39 @@ def _channel_mode(cid: int, ask_id: int, monitored_ids: set[int]) -> str:
 def _strip_address(content: str, bot_id: int) -> str:
     """Drop @Oliver mentions so the model sees a clean question. Pure (testable)."""
     return re.sub(rf"<@!?{bot_id}>", "", content).strip()
+
+
+def _first_reply_text(text: str) -> str:
+    """Return the member-authored top of an email, excluding quoted history."""
+    lines: list[str] = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line:
+            if lines:
+                break
+            continue
+        if EMAIL_QUOTE_RE.match(line):
+            break
+        lines.append(line)
+        if len(lines) >= 3:
+            break
+    return " ".join(lines)
+
+
+def _roll_call_status_from_email(subject: str, text: str) -> str | None:
+    """Parse explicit roll-call replies before the model sees the email."""
+    if not ROLL_CALL_SUBJECT_RE.search(subject or ""):
+        return None
+    reply = _first_reply_text(text).replace("’", "'")
+    if not reply:
+        return None
+    if UNSURE_RE.search(reply):
+        return "unsure"
+    if NO_RE.search(reply):
+        return "no"
+    if YES_RE.search(reply):
+        return "yes"
+    return None
 
 
 class OliverClient(discord.Client):
@@ -306,6 +344,7 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
         f"From: {msg.speaker} <{msg.from_email}>\nSubject: {msg.subject or '(no subject)'}",
     )
     member_slug = db.member_slug_for_email(msg.from_email)
+    recorded_availability: str | None = None
     if member_slug:
         meeting = meeting_rules.next_meeting()
         db.add_member_contact(
@@ -317,8 +356,35 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
             status="received",
             subject=msg.subject or None,
         )
+        recorded_availability = _roll_call_status_from_email(msg.subject, msg.text)
+        if recorded_availability:
+            db.upsert_roll_call(
+                meeting_key=meeting["meetingKey"],
+                channel_id=f"email:{msg.thread_id or msg.from_email.lower()}",
+                opened_by="email-reply",
+            )
+            db.set_attendance(
+                meeting_key=meeting["meetingKey"],
+                member_slug=member_slug,
+                status=recorded_availability,
+                updated_by_user_id=f"email:{msg.from_email.lower()}",
+                source="email",
+            )
+            db.add_activity(
+                "roll_call_update",
+                "Roll-call response recorded",
+                f"Member: {member_slug}\nStatus: {recorded_availability}\n"
+                f"Source: email reply\nMeeting: {meeting['meetingKey']}",
+            )
     channel_id = f"email:{msg.thread_id or msg.from_email.lower()}"
-    prompt = (
+    runtime_note = ""
+    if recorded_availability:
+        runtime_note = (
+            "[Oliver runtime note: this explicit roll-call reply has already "
+            f"been recorded as {recorded_availability} for {member_slug}. "
+            "Acknowledge the saved status; do not call record_availability again.]\n\n"
+        )
+    prompt = runtime_note + (
         f"[Email from {msg.speaker} <{msg.from_email}>]\n"
         f"Subject: {msg.subject or '(no subject)'}\n\n{msg.text}"
     )

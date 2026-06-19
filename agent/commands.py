@@ -260,6 +260,15 @@ async def _send_reading_checkin_email_to_member(member: dict, meeting: dict,
         raise
 
 
+def _should_start_scheduled_roll_call(status: dict, roll_call: dict | None) -> bool:
+    """Whether the scheduler should post a fresh Discord roll call."""
+    if status.get("recommendation") == "ready":
+        return False
+    if roll_call and roll_call.get("status") == "open" and roll_call.get("message_id"):
+        return False
+    return True
+
+
 async def _email_roll_call(interaction: discord.Interaction) -> None:
     if not email_jmap.enabled():
         await interaction.response.send_message("Email is not configured.", ephemeral=True)
@@ -854,7 +863,12 @@ async def run_scheduler() -> int:
         if meeting_date:
             days = (meeting_date.date() - now.date()).days
             roll_key = f"roll-call-{meeting['meetingKey']}"
-            if 0 <= days <= meeting_campaign.ROLL_CALL_START_DAYS and roll_key not in db.sent_keys():
+            roll_call = await asyncio.to_thread(db.get_roll_call, meeting["meetingKey"])
+            if (
+                0 <= days <= meeting_campaign.ROLL_CALL_START_DAYS
+                and roll_key not in db.sent_keys()
+                and _should_start_scheduled_roll_call(status, roll_call)
+            ):
                 sent = await main.send(_roll_call_message(), view=AttendanceView())
                 db.upsert_roll_call(
                     meeting_key=meeting["meetingKey"],
