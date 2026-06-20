@@ -246,7 +246,11 @@ def start_activity_logger() -> None:
 
 @tasks.loop(seconds=10)
 async def post_activity() -> None:
-    events = await asyncio.to_thread(db.pending_activity, limit=10)
+    try:
+        events = await asyncio.to_thread(db.pending_activity, limit=10)
+    except Exception:
+        log.exception("Failed to read pending activity events")
+        return
     if not events:
         return
     for event in events:
