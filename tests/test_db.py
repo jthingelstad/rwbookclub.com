@@ -2,7 +2,19 @@
 
 from __future__ import annotations
 
+import sqlite3
+
 import pytest
+
+
+class TestConnectionLifecycle:
+    def test_connect_closes_after_context(self, fresh_db):
+        db = fresh_db
+        with db.connect() as conn:
+            conn.execute("SELECT 1").fetchone()
+
+        with pytest.raises(sqlite3.ProgrammingError):
+            conn.execute("SELECT 1").fetchone()
 
 
 class TestMemories:
