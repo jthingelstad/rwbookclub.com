@@ -12,6 +12,7 @@ than the SDK tool runner so write tools can be gated behind confirmation.
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
 
 import anthropic
@@ -20,6 +21,7 @@ from dotenv import load_dotenv
 from agent import context as kb
 from agent import corpus_read as cr
 from agent import db
+from agent import email_policy
 from agent.tools import TOOLS, dispatch
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
@@ -37,6 +39,14 @@ MAX_TOKENS = 2048
 MAX_TOOL_ROUNDS = 8
 SUMMARIZE_THRESHOLD = 24   # un-summarized turns before folding into the rolling summary
 KEEP_RECENT = 8           # turns left out of the summary (still shown verbatim)
+NO_REPLY_PREFIX = "[[NO_REPLY:"
+
+
+@dataclass(frozen=True)
+class MailingListEmailResult:
+    reply: bool
+    body: str
+    reason: str | None = None
 
 SYSTEM_PROMPT = (
     "You are Oliver, the resident librarian and de facto sixth member of the R/W Book Club — a "
@@ -244,6 +254,40 @@ def _question_block(question: str, speaker: str | None, member_slug: str | None,
 
 def _text_of(content) -> str:
     return "\n".join(b.text for b in content if getattr(b, "type", None) == "text").strip()
+
+
+def answer_mailing_list_email(msg, *, channel_id: str, speaker: str | None = None,
+                              speaker_user_id: str | None = None,
+                              source_message_id: str | None = None) -> MailingListEmailResult:
+    """One Oliver turn: either return a public mailing-list reply or a no-reply decision."""
+    current_text = email_policy.current_message_text(getattr(msg, "text", ""))
+    prompt = (
+        "[Mailing-list email]\n"
+        "Decide whether Oliver should reply publicly to this R/W Book Club mailing-list email, "
+        "and produce the reply in this same turn if one is warranted.\n\n"
+        f"If the current unquoted email is not asking Oliver to answer, decide, check, remember, "
+        f"summarize, or otherwise do something, reply exactly `{NO_REPLY_PREFIX} short_reason]]` "
+        "and nothing else. Use this for a bare mention of Oliver, a status update about Oliver, "
+        "a question directed to the humans/group rather than Oliver, quoted history, or anything "
+        "where silence would be socially appropriate. Err on silence.\n\n"
+        "If it is asking Oliver for something, write only the public mailing-list reply. Use your "
+        "normal club tools when the answer needs club facts. Keep it brief and list-appropriate.\n\n"
+        f"From: {getattr(msg, 'speaker', speaker) or speaker or 'unknown'} <{getattr(msg, 'from_email', '')}>\n"
+        f"Subject: {getattr(msg, 'subject', '') or '(no subject)'}\n\n"
+        f"Current unquoted message:\n{current_text or '(empty)'}"
+    )
+    body = answer(
+        prompt,
+        channel_id=channel_id,
+        speaker=speaker,
+        speaker_user_id=speaker_user_id,
+        source_message_id=source_message_id,
+    )
+    stripped = body.strip().strip("`").strip()
+    if stripped.startswith(NO_REPLY_PREFIX):
+        reason = stripped.removeprefix(NO_REPLY_PREFIX).removesuffix("]]").strip()
+        return MailingListEmailResult(False, "", reason or "model_chose_silence")
+    return MailingListEmailResult(True, body)
 
 
 def answer(question: str, channel_id: str = "default", speaker: str | None = None,

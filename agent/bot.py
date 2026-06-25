@@ -404,6 +404,27 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
         channel_id = f"email:list:{msg.thread_id or config.BOOK_CLUB_MAILING_LIST_ADDRESS.lower()}"
     else:
         channel_id = f"email:{msg.thread_id or msg.from_email.lower()}"
+    mailing_list_result: oliver.MailingListEmailResult | None = None
+    if decision.is_mailing_list:
+        try:
+            mailing_list_result = await asyncio.to_thread(
+                oliver.answer_mailing_list_email,
+                msg,
+                channel_id=channel_id,
+                speaker=msg.speaker,
+                speaker_user_id=f"email:{msg.from_email.lower()}",
+                source_message_id=msg.id,
+            )
+        except Exception as e:
+            db.mark_email_processed(msg.id, status="failed", error=f"{type(e).__name__}: {e}")
+            log.exception("Failed to decide whether to reply to mailing-list email %s", msg.id)
+            return
+        if not mailing_list_result.reply:
+            await asyncio.to_thread(email_jmap.mark_seen, msg.id)
+            reason = f"mailing_list_model_no_reply:{mailing_list_result.reason or 'no_reason'}"
+            db.mark_email_processed(msg.id, status="ignored", error=reason)
+            _record_ignored_email(msg, reason)
+            return
     runtime_note = ""
     if recorded_availability:
         runtime_note = (
@@ -416,9 +437,12 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
         f"Subject: {msg.subject or '(no subject)'}\n\n{msg.text}"
     )
     try:
-        reply = await asyncio.to_thread(
-            oliver.answer, prompt, channel_id, msg.speaker, f"email:{msg.from_email.lower()}", msg.id,
-        )
+        if mailing_list_result is not None:
+            reply = mailing_list_result.body
+        else:
+            reply = await asyncio.to_thread(
+                oliver.answer, prompt, channel_id, msg.speaker, f"email:{msg.from_email.lower()}", msg.id,
+            )
         sent = await asyncio.to_thread(
             email_jmap.send_email,
             to=decision.reply_to or [msg.from_email],

@@ -10,22 +10,6 @@ from email.utils import getaddresses
 from agent import config, db
 
 EMAIL_QUOTE_RE = re.compile(r"^(>|on .+wrote:|from:|sent:|to:|subject:|--\s*$)", re.IGNORECASE)
-OLIVER_REFERENCE_RE = re.compile(r"\boliver\b|oliver@rwbookclub\.com", re.IGNORECASE)
-DIRECT_OLIVER_REQUEST_RE = re.compile(
-    r"\boliver\b\s*[:,?]\s*(?:please\s+)?"
-    r"(?:can|could|would|will|should|do|does|did|is|are|"
-    r"what|when|where|who|why|how|"
-    r"tell|remind|summarize|explain|find|look up|compare|list|help|answer|reply|weigh in|check)\b"
-    r"|"
-    r"\boliver\b\s+(?:please\s+)?"
-    r"(?:can|could|would|will|should|do|does|did|"
-    r"what|when|where|who|why|how|"
-    r"tell|remind|summarize|explain|find|look up|compare|list|help|answer|reply|weigh in|check)\b"
-    r"|"
-    r"\b(?:can|could|would|will|should)\s+oliver\s+(?:please\s+)?"
-    r"(?:tell|remind|summarize|explain|find|look up|compare|list|help|answer|reply|weigh in|check)\b",
-    re.IGNORECASE,
-)
 
 
 @dataclass(frozen=True)
@@ -88,7 +72,7 @@ def _plain_visible_text(text: str) -> str:
     return unescape(text)
 
 
-def _unquoted_text(text: str) -> str:
+def current_message_text(text: str) -> str:
     lines: list[str] = []
     for line in _plain_visible_text(text).splitlines():
         if EMAIL_QUOTE_RE.match(line.strip()):
@@ -97,27 +81,13 @@ def _unquoted_text(text: str) -> str:
     return "\n".join(lines).strip()
 
 
-def mailing_list_message_warrants_reply(subject: str, body: str) -> bool:
-    visible = f"{subject or ''}\n{_unquoted_text(body)}"
-    if not OLIVER_REFERENCE_RE.search(visible):
-        return False
-    return bool(DIRECT_OLIVER_REQUEST_RE.search(visible))
-
-
 def inbound_decision(msg) -> InboundDecision:
     member_slug = known_member_slug_for_email(getattr(msg, "from_email", None))
     list_message = is_mailing_list_message(msg)
     if list_message:
-        if not mailing_list_message_warrants_reply(getattr(msg, "subject", ""), getattr(msg, "text", "")):
-            return InboundDecision(
-                allowed=False,
-                reason="mailing_list_not_addressed",
-                member_slug=member_slug,
-                is_mailing_list=True,
-            )
         return InboundDecision(
             allowed=True,
-            reason="mailing_list_addressed",
+            reason="mailing_list_candidate",
             member_slug=member_slug,
             reply_to=[configured_mailing_list_address()],
             is_mailing_list=True,
