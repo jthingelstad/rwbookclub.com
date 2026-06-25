@@ -61,7 +61,7 @@ class TestInboundEmailPolicy:
         assert decision.reason == "mailing_list_not_addressed"
         assert decision.member_slug == "jamie"
 
-    def test_mailing_list_question_replies_to_list(self, fresh_db):
+    def test_generic_mailing_list_question_is_ignored(self, fresh_db):
         fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
         decision = email_policy.inbound_decision(
             msg(
@@ -69,6 +69,19 @@ class TestInboundEmailPolicy:
                 to=[config.BOOK_CLUB_MAILING_LIST_ADDRESS],
                 subject="Past pick",
                 text="What did we read about North Korea?",
+            )
+        )
+        assert decision.allowed is False
+        assert decision.reason == "mailing_list_not_addressed"
+
+    def test_direct_oliver_question_replies_to_list(self, fresh_db):
+        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        decision = email_policy.inbound_decision(
+            msg(
+                from_email="jamie@thingelstad.com",
+                to=[config.BOOK_CLUB_MAILING_LIST_ADDRESS],
+                subject="Past pick",
+                text="Oliver, what did we read about North Korea?",
             )
         )
         assert decision.allowed is True
@@ -87,6 +100,54 @@ class TestInboundEmailPolicy:
         )
         assert decision.allowed is True
         assert decision.reply_to == [config.BOOK_CLUB_MAILING_LIST_ADDRESS]
+
+    def test_mere_oliver_mention_on_mailing_list_is_ignored(self, fresh_db):
+        fresh_db.link_member_email("tom@tomeri.org", "tom")
+        decision = email_policy.inbound_decision(
+            msg(
+                from_email="tom@tomeri.org",
+                to=[config.BOOK_CLUB_MAILING_LIST_ADDRESS],
+                cc=[config.BOOK_CLUB_MAILING_LIST_ADDRESS],
+                reply_to=[config.BOOK_CLUB_MAILING_LIST_ADDRESS],
+                subject="Re: [rwbookclub] Meeting in 5 days!",
+                text=(
+                    "Not sure I've seen anything from Oliver recently. "
+                    "But (as I told Oliver) I will miss it. I'll be hiking in the Sierra."
+                ),
+            )
+        )
+        assert decision.allowed is False
+        assert decision.reason == "mailing_list_not_addressed"
+        assert decision.member_slug == "tom"
+
+    def test_html_blockquote_mention_does_not_trigger_list_reply(self, fresh_db):
+        fresh_db.link_member_email("tom@tomeri.org", "tom")
+        decision = email_policy.inbound_decision(
+            msg(
+                from_email="tom@tomeri.org",
+                to=[config.BOOK_CLUB_MAILING_LIST_ADDRESS],
+                subject="Re: [rwbookclub] Meeting in 5 days!",
+                text=(
+                    '<html><body><p>I will miss it.</p><blockquote type="cite">'
+                    "On Jun 25, Oliver wrote:<br>Anything I should answer?"
+                    "</blockquote></body></html>"
+                ),
+            )
+        )
+        assert decision.allowed is False
+        assert decision.reason == "mailing_list_not_addressed"
+
+    def test_question_about_oliver_is_ignored_unless_addressed_to_him(self):
+        decision = email_policy.inbound_decision(
+            msg(
+                from_email="member@example.test",
+                to=[config.BOOK_CLUB_MAILING_LIST_ADDRESS],
+                subject="Check-in",
+                text="Does anyone know whether Oliver emailed Nick?",
+            )
+        )
+        assert decision.allowed is False
+        assert decision.reason == "mailing_list_not_addressed"
 
     def test_quoted_question_does_not_trigger_list_reply(self):
         decision = email_policy.inbound_decision(

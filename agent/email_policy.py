@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from html import unescape
 from dataclasses import dataclass
 from email.utils import getaddresses
 
@@ -10,6 +11,21 @@ from agent import config, db
 
 EMAIL_QUOTE_RE = re.compile(r"^(>|on .+wrote:|from:|sent:|to:|subject:|--\s*$)", re.IGNORECASE)
 OLIVER_REFERENCE_RE = re.compile(r"\boliver\b|oliver@rwbookclub\.com", re.IGNORECASE)
+DIRECT_OLIVER_REQUEST_RE = re.compile(
+    r"\boliver\b\s*[:,?]\s*(?:please\s+)?"
+    r"(?:can|could|would|will|should|do|does|did|is|are|"
+    r"what|when|where|who|why|how|"
+    r"tell|remind|summarize|explain|find|look up|compare|list|help|answer|reply|weigh in|check)\b"
+    r"|"
+    r"\boliver\b\s+(?:please\s+)?"
+    r"(?:can|could|would|will|should|do|does|did|"
+    r"what|when|where|who|why|how|"
+    r"tell|remind|summarize|explain|find|look up|compare|list|help|answer|reply|weigh in|check)\b"
+    r"|"
+    r"\b(?:can|could|would|will|should)\s+oliver\s+(?:please\s+)?"
+    r"(?:tell|remind|summarize|explain|find|look up|compare|list|help|answer|reply|weigh in|check)\b",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -64,9 +80,17 @@ def is_mailing_list_message(msg) -> bool:
     return any(is_mailing_list_address(address) for address in addresses)
 
 
+def _plain_visible_text(text: str) -> str:
+    text = re.sub(r"(?is)<blockquote\b.*?</blockquote>", "\n", text or "")
+    text = re.sub(r"(?i)<br\s*/?>", "\n", text)
+    text = re.sub(r"(?i)</(?:p|div|li|tr|h[1-6])>", "\n", text)
+    text = re.sub(r"(?is)<[^>]+>", " ", text)
+    return unescape(text)
+
+
 def _unquoted_text(text: str) -> str:
     lines: list[str] = []
-    for line in (text or "").splitlines():
+    for line in _plain_visible_text(text).splitlines():
         if EMAIL_QUOTE_RE.match(line.strip()):
             break
         lines.append(line)
@@ -75,7 +99,9 @@ def _unquoted_text(text: str) -> str:
 
 def mailing_list_message_warrants_reply(subject: str, body: str) -> bool:
     visible = f"{subject or ''}\n{_unquoted_text(body)}"
-    return bool(OLIVER_REFERENCE_RE.search(visible) or "?" in visible)
+    if not OLIVER_REFERENCE_RE.search(visible):
+        return False
+    return bool(DIRECT_OLIVER_REQUEST_RE.search(visible))
 
 
 def inbound_decision(msg) -> InboundDecision:
