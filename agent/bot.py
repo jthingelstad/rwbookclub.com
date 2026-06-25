@@ -67,6 +67,15 @@ def _strip_address(content: str, bot_id: int) -> str:
     return re.sub(rf"<@!?{bot_id}>", "", content).strip()
 
 
+def _record_ignored_email(msg: email_jmap.InboundEmail, reason: str) -> None:
+    body = (
+        f"From: {msg.speaker} <{msg.from_email}>\n"
+        f"Subject: {msg.subject or '(no subject)'}\nReason: {reason}"
+    )
+    db.add_activity("email_ignored", "Email ignored", body)
+    log.info("Ignored email %s from %s: %s", msg.id, msg.from_email, reason)
+
+
 def _first_reply_text(text: str) -> str:
     """Return the member-authored top of an email, excluding quoted history."""
     lines: list[str] = []
@@ -335,6 +344,7 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
             subject=msg.subject, received_at=msg.received_at,
         )
         db.mark_email_processed(msg.id, status="ignored")
+        _record_ignored_email(msg, "from_oliver")
         return
     decision = email_policy.inbound_decision(msg)
     if not decision.allowed:
@@ -344,12 +354,7 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
             subject=msg.subject, received_at=msg.received_at,
         )
         db.mark_email_processed(msg.id, status="ignored", error=decision.reason)
-        db.add_activity(
-            "email_ignored",
-            "Email ignored",
-            f"From: {msg.speaker} <{msg.from_email}>\n"
-            f"Subject: {msg.subject or '(no subject)'}\nReason: {decision.reason}",
-        )
+        _record_ignored_email(msg, decision.reason)
         return
     claimed = db.mark_email_processing(
         email_id=msg.id, thread_id=msg.thread_id, from_email=msg.from_email,

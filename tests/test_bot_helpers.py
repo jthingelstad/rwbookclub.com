@@ -2,9 +2,18 @@
 
 from __future__ import annotations
 
+import logging
+
 import pytest
 
-from agent.bot import _channel_mode, _is_addressed, _roll_call_status_from_email, _strip_address
+from agent.bot import (
+    _channel_mode,
+    _is_addressed,
+    _record_ignored_email,
+    _roll_call_status_from_email,
+    _strip_address,
+)
+from agent.email_jmap import InboundEmail
 
 
 class TestIsAddressed:
@@ -57,6 +66,35 @@ class TestChannelMode:
     def test_no_ask_channel_is_dev_fallback(self):
         # With no ask channel configured, Oliver answers everywhere (dev mode).
         assert _channel_mode(99, ask_id=0, monitored_ids=set()) == "answer"
+
+
+class TestIgnoredEmailLogging:
+    def test_records_activity_and_process_log(self, fresh_db, caplog):
+        msg = InboundEmail(
+            id="m1",
+            thread_id="t1",
+            message_id="msg1@example.test",
+            from_name="Google Groups",
+            from_email="noreply@groups.google.com",
+            to=["oliver@rwbookclub.com"],
+            cc=[],
+            reply_to=[],
+            subject="Invitation to join rwbookclub",
+            text="Invite text",
+            received_at="2026-06-25T13:00:00Z",
+            references=[],
+        )
+        with caplog.at_level(logging.INFO, logger="oliver"):
+            _record_ignored_email(msg, "sender_not_allowed")
+
+        rows = fresh_db.pending_activity()
+        assert len(rows) == 1
+        assert rows[0]["kind"] == "email_ignored"
+        assert rows[0]["title"] == "Email ignored"
+        assert "From: Google Groups <noreply@groups.google.com>" in rows[0]["body"]
+        assert "Subject: Invitation to join rwbookclub" in rows[0]["body"]
+        assert "Reason: sender_not_allowed" in rows[0]["body"]
+        assert "Ignored email m1 from noreply@groups.google.com: sender_not_allowed" in caplog.text
 
 
 class TestRollCallEmailParsing:
