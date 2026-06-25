@@ -189,6 +189,56 @@ class TestDispatchHappyPaths:
             "error": "inbound email replies are sent automatically; write response text instead"
         }
 
+    def test_send_email_allows_linked_member_recipient(self, monkeypatch, fresh_db):
+        from agent import email_jmap
+        from agent.tools import dispatch
+
+        sent = []
+        monkeypatch.setattr(email_jmap, "enabled", lambda: True)
+        monkeypatch.setattr(email_jmap, "send_email", lambda **kwargs: sent.append(kwargs) or {
+            "emailId": "e1",
+            "to": kwargs["to"],
+            "subject": kwargs["subject"],
+        })
+        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        result = json.loads(dispatch("send_email", {
+            "to": ["jamie@thingelstad.com"],
+            "subject": "test",
+            "body": "test",
+        }, {"channel_id": "ch1"}))
+        assert result["sent"] is True
+        assert sent[0]["to"] == ["jamie@thingelstad.com"]
+
+    def test_send_email_blocks_unknown_recipient(self, monkeypatch, fresh_db):
+        from agent import email_jmap
+        from agent.tools import dispatch
+
+        monkeypatch.setattr(email_jmap, "enabled", lambda: True)
+        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        result = json.loads(dispatch("send_email", {
+            "to": ["outsider@example.test"],
+            "subject": "test",
+            "body": "test",
+        }, {"channel_id": "ch1"}))
+        assert result == {"error": "Oliver can only email linked book club member addresses from this tool"}
+
+    def test_send_email_blocks_mailing_list_recipient(self, monkeypatch):
+        from agent import config, email_jmap
+        from agent.tools import dispatch
+
+        monkeypatch.setattr(email_jmap, "enabled", lambda: True)
+        result = json.loads(dispatch("send_email", {
+            "to": [config.BOOK_CLUB_MAILING_LIST_ADDRESS],
+            "subject": "test",
+            "body": "test",
+        }, {"channel_id": "ch1"}))
+        assert result == {
+            "error": (
+                "the book club mailing list can only be emailed by approved meeting-cadence paths, "
+                "not the general send_email tool"
+            )
+        }
+
     def test_request_reading_update_blocked_inside_inbound_email_channel(self, monkeypatch, fresh_db):
         from agent import email_jmap
         from agent.tools import dispatch

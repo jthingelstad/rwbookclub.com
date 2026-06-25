@@ -47,6 +47,9 @@ FASTMAIL_JMAP_SESSION_URL = os.environ.get(
     "FASTMAIL_JMAP_SESSION_URL", "https://api.fastmail.com/jmap/session"
 )
 OLIVER_EMAIL_ADDRESS = os.environ.get("OLIVER_EMAIL_ADDRESS", "oliver@rwbookclub.com")
+BOOK_CLUB_MAILING_LIST_ADDRESS = os.environ.get(
+    "BOOK_CLUB_MAILING_LIST_ADDRESS", "rwbookclub@googlegroups.com"
+)
 OLIVER_EMAIL_INBOX_PARENT = os.environ.get("OLIVER_EMAIL_INBOX_PARENT", "Inbox")
 OLIVER_EMAIL_INBOX_FOLDER = os.environ.get("OLIVER_EMAIL_INBOX_FOLDER", "Oliver")
 OLIVER_EMAIL_SENT_PARENT = os.environ.get("OLIVER_EMAIL_SENT_PARENT", "Sent")

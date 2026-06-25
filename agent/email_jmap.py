@@ -35,6 +35,9 @@ class InboundEmail:
     message_id: str | None
     from_name: str | None
     from_email: str
+    to: list[str]
+    cc: list[str]
+    reply_to: list[str]
     subject: str
     text: str
     received_at: str | None
@@ -219,7 +222,7 @@ class JMAPClient:
                 "#ids": {"resultOf": "query", "name": "Email/query", "path": "/ids"},
                 "properties": [
                     "id", "threadId", "messageId", "from", "subject", "receivedAt",
-                    "textBody", "bodyValues", "references",
+                    "to", "cc", "replyTo", "textBody", "bodyValues", "references",
                 ],
                 "fetchTextBodyValues": True,
                 "maxBodyValueBytes": 20000,
@@ -348,6 +351,9 @@ class JMAPClient:
             message_id=(email_obj.get("messageId") or [None])[0],
             from_name=sender.get("name"),
             from_email=sender.get("email") or "",
+            to=_jmap_addresses(email_obj.get("to")),
+            cc=_jmap_addresses(email_obj.get("cc")),
+            reply_to=_jmap_addresses(email_obj.get("replyTo")),
             subject=email_obj.get("subject") or "",
             text=_text_body(email_obj),
             received_at=email_obj.get("receivedAt"),
@@ -390,6 +396,18 @@ def _addresses(value: list[str] | str | None) -> list[dict[str, str | None]]:
             continue
         seen.add(email)
         out.append({"name": name or None, "email": email})
+    return out
+
+
+def _jmap_addresses(value: list[dict[str, Any]] | None) -> list[str]:
+    out = []
+    seen = set()
+    for address in value or []:
+        email = (address.get("email") or "").strip().lower()
+        if not email or "@" not in email or email in seen:
+            continue
+        seen.add(email)
+        out.append(email)
     return out
 
 

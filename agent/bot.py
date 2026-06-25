@@ -25,7 +25,7 @@ import requests
 from discord.ext import tasks
 
 from agent import (
-    commands, config, context as kb, db, email_jmap, gitwrite, meeting_rules,
+    commands, config, context as kb, db, email_jmap, email_policy, gitwrite, meeting_rules,
     oliver, tinylytics,
 )
 
@@ -336,6 +336,21 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
         )
         db.mark_email_processed(msg.id, status="ignored")
         return
+    decision = email_policy.inbound_decision(msg)
+    if not decision.allowed:
+        await asyncio.to_thread(email_jmap.mark_seen, msg.id)
+        db.mark_email_processing(
+            email_id=msg.id, thread_id=msg.thread_id, from_email=msg.from_email,
+            subject=msg.subject, received_at=msg.received_at,
+        )
+        db.mark_email_processed(msg.id, status="ignored", error=decision.reason)
+        db.add_activity(
+            "email_ignored",
+            "Email ignored",
+            f"From: {msg.speaker} <{msg.from_email}>\n"
+            f"Subject: {msg.subject or '(no subject)'}\nReason: {decision.reason}",
+        )
+        return
     claimed = db.mark_email_processing(
         email_id=msg.id, thread_id=msg.thread_id, from_email=msg.from_email,
         subject=msg.subject, received_at=msg.received_at,
@@ -347,7 +362,7 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
         "Email received",
         f"From: {msg.speaker} <{msg.from_email}>\nSubject: {msg.subject or '(no subject)'}",
     )
-    member_slug = db.member_slug_for_email(msg.from_email)
+    member_slug = decision.member_slug
     recorded_availability: str | None = None
     if member_slug:
         meeting = meeting_rules.next_meeting()
@@ -380,7 +395,10 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
                 f"Member: {member_slug}\nStatus: {recorded_availability}\n"
                 f"Source: email reply\nMeeting: {meeting['meetingKey']}",
             )
-    channel_id = f"email:{msg.thread_id or msg.from_email.lower()}"
+    if decision.is_mailing_list:
+        channel_id = f"email:list:{msg.thread_id or config.BOOK_CLUB_MAILING_LIST_ADDRESS.lower()}"
+    else:
+        channel_id = f"email:{msg.thread_id or msg.from_email.lower()}"
     runtime_note = ""
     if recorded_availability:
         runtime_note = (
@@ -398,7 +416,7 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
         )
         sent = await asyncio.to_thread(
             email_jmap.send_email,
-            to=[msg.from_email],
+            to=decision.reply_to or [msg.from_email],
             subject=msg.reply_subject,
             body=reply,
             in_reply_to=msg.message_id,

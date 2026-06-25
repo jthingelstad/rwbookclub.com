@@ -23,6 +23,7 @@ from agent import config
 from agent import corpus_read as cr
 from agent import db
 from agent import email_jmap
+from agent import email_policy
 from agent import email_tracking
 from agent import meeting_campaign
 from agent import meeting_rules
@@ -528,6 +529,12 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 })
             if not email_jmap.enabled():
                 return _dump({"error": "email is not configured"})
+            recipient_error = email_policy.validate_model_email_recipients(
+                to=tool_input["to"],
+                cc=tool_input.get("cc"),
+            )
+            if recipient_error:
+                return _dump({"error": recipient_error})
             result = email_jmap.send_email(
                 to=tool_input["to"],
                 subject=tool_input["subject"],
