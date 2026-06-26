@@ -24,7 +24,7 @@ import discord
 import requests
 from discord.ext import tasks
 
-from agent import clubdb, commands, config, context as kb, db, gitwrite, oliver
+from agent import clubdb, commands, config, context as kb, db, gitwrite, oliver, publish
 from agent.mail import email_jmap, email_policy, mail_archive, outbound, tinylytics
 from agent.club import meeting_rules
 
@@ -203,6 +203,14 @@ def _missing_permissions(channel: discord.abc.GuildChannel | None) -> list[str]:
 
 @client.event
 async def on_ready() -> None:
+    # The corpus is a private, gitignored artifact — regenerate it from the DB at startup so
+    # on-disk corpus mirrors club_* (nothing else recreates it). Non-fatal: on failure the
+    # existing on-disk corpus is the fallback and the bot still connects.
+    try:
+        written = await asyncio.to_thread(publish.ensure_corpus)
+        log.info("corpus regenerated from DB: %s", written)
+    except Exception:
+        log.exception("startup corpus regen failed (non-fatal); using on-disk corpus")
     log.info("Oliver connected as %s — %d books in the corpus.", client.user, kb.book_count())
     guilds = list(client.guilds)
     log.info("In %d guild(s): %s", len(guilds), ", ".join(g.name for g in guilds) or "(none)")

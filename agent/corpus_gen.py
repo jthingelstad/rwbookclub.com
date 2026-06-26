@@ -29,9 +29,11 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from agent import clubdb, db  # noqa: E402
-from corpus.paths import slugify  # noqa: E402
+from corpus.paths import DATA_DIR, slugify  # noqa: E402
 
-DEFAULT_OUT = REPO_ROOT / "corpus" / "data"
+# The corpus is a private, on-disk artifact; DATA_DIR honors OLIVER_CORPUS_DIR so a test run
+# regenerates into a temp dir instead of the developer's real corpus/data.
+DEFAULT_OUT = DATA_DIR
 ENTITY_DIRS = ["books", "meetings", "members", "authors", "awards", "reviews"]
 
 
@@ -206,6 +208,14 @@ def write_meeting_file(conn, meeting_id: int, out_root: Path = DEFAULT_OUT) -> P
     stem = f"{(m['date'] or 'undated')[:10]}--{m['id']}"
     path = Path(out_root) / "meetings" / f"{stem}.json"
     _write_json(path, _meeting_doc(m))
+    return path
+
+
+def write_review_file(conn, review_id: int, out_root: Path = DEFAULT_OUT) -> Path:
+    r = next(r for r in clubdb.all_reviews(conn) if r["id"] == review_id)
+    path = Path(out_root) / "reviews" / f"{r['book_slug']}--{r['member_slug']}.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(_review_text(r))
     return path
 
 

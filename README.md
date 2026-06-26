@@ -44,9 +44,9 @@ Copy `.env.example` to `.env` and fill in the secrets first.
 
 ## How it's built
 
-The club's data is the **corpus**: per-entity text files in `corpus/data/` (`books/`, `members/`, `meetings/`, `authors/`, `reviews/`, `awards/`) — records as JSON, reviews as Markdown. **Git is the source of truth** (Airtable was the original home, now a cold backup). **Eleventy** (in `website/`) globs and aggregates those files at build time; cover art is committed, with `corpus/images.py` backfilling any missing covers from Open Library.
+The club's data lives in **SQLite** (`agent/oliver.db`, the `club_*` tables — the source of truth). From it, `agent/corpus_gen.py` regenerates the **corpus**: per-entity text files in `corpus/data/` (`books/`, `members/`, `meetings/`, `authors/`, `reviews/`, `awards/`) — JSON records, Markdown reviews. The corpus and the machine-generated cover/portrait images are **gitignored, on-disk-only** (private, so they can hold sensitive context for Oliver). **Eleventy** (in `website/`) globs the corpus at build time.
 
-**`deploy.yml`** deploys the website to **GitHub Pages** (artifact `website/_site`) on every push to `main` — so committing a data or template change ships it. Git history doubles as the club's audit log.
+**Build + deploy are local** (CI has no DB, so it can't build the real site): `python -m agent.publish` (`npm run deploy`) regenerates the corpus, builds, and force-pushes `website/_site` to the **`gh-pages` branch**, which GitHub Pages serves. Oliver runs it automatically after data writes; developers run it after template changes. `main` is pure source — Oliver never commits to it.
 
 **Oliver** (`agent/`) is a separate long-running process — a discord.py bot that answers questions in the club's `#ask-oliver` channel via Claude, using the corpus as context. It runs on its own host, not in GitHub Actions. See [`agent/README.md`](agent/README.md).
 

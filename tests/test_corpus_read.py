@@ -87,14 +87,13 @@ class TestBooksCache:
         assert first is second
 
     def test_cache_invalidates_on_file_touch(self, reset_books_cache, tmp_path):
-        import pathlib
         import time
         from agent import corpus_read as cr
 
         cr.books()  # populate the cache
         first_sig = cr._books_cache_sig
-        # Touch a corpus file to bump mtime.
-        target = next(iter(pathlib.Path("corpus/data/books").glob("*.json")))
+        # Touch a corpus file to bump mtime (cr.DATA_DIR honors OLIVER_CORPUS_DIR in tests).
+        target = next(iter((cr.DATA_DIR / "books").glob("*.json")))
         original_mtime = target.stat().st_mtime
         try:
             time.sleep(0.01)

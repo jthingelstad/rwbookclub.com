@@ -1,6 +1,6 @@
 # CLAUDE.md — rwbookclub.com
 
-Project-specific context for Claude Code. The site is live at rwbookclub.com (deployed from `main` via GitHub Pages). As of May 2026 there are 179 books, 184 meetings, 177 authors, and 12 members (5 current).
+Project-specific context for Claude Code. The site is live at rwbookclub.com (served by GitHub Pages from the **`gh-pages` branch**, built + deployed **locally** by Oliver — not from `main`/CI). As of May 2026 there are 179 books, 184 meetings, 177 authors, and 12 members (5 current).
 
 ## Project
 
@@ -13,18 +13,34 @@ rwbookclub.com is the home of the R/W Book Club, which has been meeting since Ap
 This repo is a flat, polyglot monorepo with three top-level concerns:
 
 - **`website/`** — the Eleventy 3 static site (Node). Consumes the corpus.
-- **`corpus/`** — the **generated** knowledge layer (Python). Per-entity text files in `corpus/data/` (`books/`, `members/`, `meetings/`, `authors/`, `reviews/`, `awards/`) are produced from the `club_*` SQLite tables by `agent/corpus_gen.py`, reproducing the normalized on-disk shape (`corpus/normalize.py`): each fact once, relationships by **slug** (slug = filename stem, an output detail — never identity in the DB), derived fields computed at build/read time. Records are JSON, reviews Markdown+frontmatter. `corpus/validate.py` checks reference integrity. `corpus/images.py` backfills covers from Open Library (reads OL ids from the DB). `fetch.py`/`migrate.py`/`normalize.py` are the legacy Airtable→corpus path (superseded by `agent.script.import_airtable` → DB → `agent.corpus_gen`). **Oliver now owns this**: writes land in the DB, then the corpus is regenerated and committed.
+- **`corpus/`** — the **generated** knowledge layer (Python). Per-entity text files in `corpus/data/` (`books/`, `members/`, `meetings/`, `authors/`, `reviews/`, `awards/`) are produced from the `club_*` SQLite tables by `agent/corpus_gen.py`, reproducing the normalized on-disk shape (`corpus/normalize.py`): each fact once, relationships by **slug** (slug = filename stem, an output detail — never identity in the DB), derived fields computed at build/read time. Records are JSON, reviews Markdown+frontmatter. `corpus/validate.py` checks reference integrity. `corpus/images.py` backfills covers from Open Library (reads OL ids from the DB). `fetch.py`/`migrate.py`/`normalize.py` are the legacy Airtable→corpus path (superseded by `agent.script.import_airtable` → DB → `agent.corpus_gen`). **Oliver now owns this**: writes land in the DB, then the corpus is regenerated on disk (it is **gitignored/private**, never committed) and the site is rebuilt + deployed locally to `gh-pages` (see "Site build + deploy").
 - **External enrichment** lives in **1:1 sidecar tables** (`club_book_enrichment`, `club_author_enrichment`) that the loop `agent/enrich/` owns exclusively — the curated `club_books`/`club_authors` core is never written by enrichment, so it can't be clobbered, and enrichment is regenerable (`DELETE` + re-run). Run it deliberately/online: `python -m agent.enrich [--books] [--authors] [--force] [--limit N] [--slug X]` (sources: Open Library + Wikidata + Wikipedia; Google Books stays blocked). Gap-filling + idempotent (skips rows with `enriched_at` set). `corpus_gen` stays network-free; `all_books`/`all_authors` `COALESCE` the dual-source fields (synopsis/bio/year/pages/isbn/subjects) **core-first**, while net-new fields (ratings/editions/dates/nationality/links/awards/notable works) come straight from the sidecar. Author portraits land in `website/src/assets/images/authors/`. `/oliver add-book` triggers inline enrichment (gated off in tests via `OLIVER_ENRICH_ON_WRITE=0`).
 - **`agent/`** — Oliver, the club's Discord bot (Python). Consumes the corpus; answers questions in `#ask-oliver` via Claude.
 
 A root `package.json` (npm workspace over `website`) provides `npm run build`/`serve`/`covers`. All Python runs from the repo root (`python -m corpus.images`, `python -m agent.bot`). One shared root `.env`.
 
-## Site build
+## Site build + deploy (local — the corpus is private, not in git)
 
-- **Generator:** Eleventy 3, in `website/` (`npm run build`, `npm run serve` from the repo root via the workspace)
-- **Covers:** `npm run covers` (`python -m corpus.images`) backfills any missing book covers from Open Library (OL ids read from the DB) into `website/src/assets/images/covers/`. Idempotent — only fetches what's absent. The enrichment loop (`python -m agent.enrich`) also fetches covers inline and author portraits into `website/src/assets/images/authors/`.
-- **Input:** `website/src/` with Nunjucks templates; global data in `website/src/_data/` — the `*.js` modules glob and aggregate the per-entity files in `corpus/data/` (`books.js`/`members.js` derive cover/photo widths from disk; `reviews.js` parses the Markdown via gray-matter; `meetings.js` is new)
-- **Output:** `website/_site/` — published by GitHub Pages on push to `main` (the Actions artifact path is `website/_site`)
+The corpus (`corpus/data/`) and the machine-generated images (`assets/images/{covers,authors}/`)
+are **gitignored, on-disk-only artifacts regenerated from the DB** — so they can hold sensitive
+context for Oliver, and CI (which has no DB) no longer builds the site. **`main` is pure source**;
+Oliver writes nothing to it. The site is built + deployed **locally** to the **`gh-pages` branch**.
+
+- **Generator:** Eleventy 3, in `website/` (`npm run build`, `npm run serve` from the repo root).
+- **Deploy:** `python -m agent.publish` (or `npm run deploy`) = regen corpus from the DB → `npm run build`
+  → force-push `website/_site` (built HTML + all images + `CNAME` + `.nojekyll`) as a clean orphan to
+  `gh-pages`. Refuses to deploy an empty site (guards on `_site/index.html` + `_site/CNAME`). Oliver
+  runs this in the background after every data write (`commands.schedule_publish`); a developer runs it
+  after a template/code change. A startup `publish.ensure_corpus()` (bot `on_ready`) regenerates the
+  corpus so on-disk mirrors the DB.
+- **Covers:** `npm run covers` (`python -m corpus.images`) backfills missing covers from Open Library
+  (OL ids read from the DB). The enrichment loop (`python -m agent.enrich`) also fetches covers + author
+  portraits. All land in the gitignored `assets/images/{covers,authors}/`.
+- **Input:** `website/src/` Nunjucks templates; `website/src/_data/*.js` glob `corpus/data/`. **Private-data
+  boundary:** the `_data` modules only read `books/ meetings/ members/ authors/ reviews/ awards/`, so any
+  future sensitive corpus fields must live outside those subtrees (and never render into `_site`).
+- **Output:** `website/_site/` → force-pushed to `gh-pages`, served by GitHub Pages.
+  **One-time manual setting:** Settings → Pages → Source → *Deploy from a branch* → `gh-pages` / `(root)`.
 - **Pages:** `/` (home), `/books/<slug>/`, `/members/<slug>/`, `/about/`, `/stats/`, `/feed.xml`, `/llms.txt`, `/llms-full.txt`, `/robots.txt`, `/sitemap.xml`
 
 ### Nunjucks whitespace gotcha

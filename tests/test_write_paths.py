@@ -7,24 +7,49 @@ import json
 import pytest
 
 
-def test_review_sync_failure_does_not_write_file(monkeypatch, tmp_path):
+def test_review_sync_failure_does_not_write_file(monkeypatch):
     from agent.club import reviews
     from agent.gitwrite import GitWriteError
+    from corpus.paths import DATA_DIR
 
-    reviews_dir = tmp_path / "reviews"
-    monkeypatch.setattr(reviews, "REVIEWS_DIR", reviews_dir)
     monkeypatch.setattr(reviews.cr, "find_member", lambda _: {"slug": "jamie", "name": "Jamie"})
     monkeypatch.setattr(reviews.cr, "find_book", lambda _: {"slug": "book", "title": "Book"})
 
     def fail_sync():
         raise GitWriteError("sync failed")
 
+    # sync() runs before the DB upsert / file regen, so a failure must leave nothing behind.
     monkeypatch.setattr(reviews.gitwrite, "sync", fail_sync)
 
     with pytest.raises(GitWriteError):
         reviews.write_review("Book", "Jamie", rating="5")
 
-    assert not (reviews_dir / "book--jamie.md").exists()
+    assert not (DATA_DIR / "reviews" / "book--jamie.md").exists()
+
+
+def test_review_is_db_backed_and_survives_regen(monkeypatch, reset_books_cache):
+    """A review must land in club_reviews (not just a markdown file) so a full corpus
+    regen + prune — which now runs at startup — doesn't silently delete it."""
+    from agent import corpus_gen, db
+    from agent.club import reviews
+    from corpus.paths import DATA_DIR
+
+    monkeypatch.setattr(reviews.gitwrite, "sync", lambda: None)
+    res = reviews.write_review("enshittification", "Brad", rating="4", review="Sharp.")
+    assert res["updated"] is False
+    review_path = DATA_DIR / "reviews" / "enshittification--brad.md"
+    assert review_path.exists()
+
+    with db.connect() as conn:
+        row = conn.execute(
+            "SELECT r.rating FROM club_reviews r JOIN club_books b ON b.id = r.book_id "
+            "JOIN club_members m ON m.id = r.member_id WHERE b.slug = ? AND m.slug = ?",
+            ("enshittification", "brad"),
+        ).fetchone()
+    assert row is not None and row["rating"] == 4
+
+    corpus_gen.generate()  # full regen + prune (what startup does)
+    assert review_path.exists()  # survived because it's DB-backed now
 
 
 def test_add_book_sync_failure_does_not_write_file(monkeypatch, tmp_path):

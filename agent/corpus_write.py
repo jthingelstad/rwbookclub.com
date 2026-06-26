@@ -90,16 +90,15 @@ def write_book(meta: dict) -> dict:
     clubdb.ensure_schema()
     with db.connect() as conn:                          # transaction = commit point
         res = clubdb.upsert_book(conn, meta)
-        bpath = corpus_gen.write_book_file(conn, res["id"], DATA_DIR)
-        apaths = [corpus_gen.write_author_file(conn, aid, DATA_DIR) for aid in res["author_ids"]]
+        corpus_gen.write_book_file(conn, res["id"], DATA_DIR)
+        for aid in res["author_ids"]:
+            corpus_gen.write_author_file(conn, aid, DATA_DIR)
     # Enrich the new book + its authors (separate connection; regenerates the files).
-    portraits = _enrich_new_book(res["id"], res["author_ids"], DATA_DIR)
+    _enrich_new_book(res["id"], res["author_ids"], DATA_DIR)
     _validate_or_raise()
-    covers = _fetch_cover(res["slug"], meta.get("olKey"))
-    gitwrite.commit_paths(
-        [bpath, *apaths, *covers, *portraits],
-        f"{'Update' if res['existed'] else 'Add'} book: {title}",
-    )
+    covers = _fetch_cover(res["slug"], meta.get("olKey"))  # fetched to local (gitignored) dir
+    # Corpus + images are private/local now; the site is rebuilt + deployed by the publish
+    # step (the caller schedules it). Nothing is committed to git here.
     return {"slug": res["slug"], "title": title, "authors": meta.get("authors") or [],
             "hasCover": bool(covers), "updated": res["existed"]}
 
@@ -125,11 +124,9 @@ def schedule_meeting(book_query: str, date_iso: str, picker_query: str) -> dict:
             raise WriteError("Book or member is not in the club database yet.")
         clubdb.set_book_picker(conn, book_id, member_id)
         meeting_id = clubdb.create_meeting(conn, date_iso=iso, book_id=book_id, placeholder=True)
-        bpath = corpus_gen.write_book_file(conn, book_id, DATA_DIR)
-        mpath = corpus_gen.write_meeting_file(conn, meeting_id, DATA_DIR)
+        corpus_gen.write_book_file(conn, book_id, DATA_DIR)
+        corpus_gen.write_meeting_file(conn, meeting_id, DATA_DIR)
     _validate_or_raise()
-    gitwrite.commit_paths(
-        [bpath, mpath],
-        f"Schedule {book['title']} for {day} (picked by {member['name']})",
-    )
+    # Corpus is private/local now; the site is rebuilt + deployed by the publish step
+    # (the caller schedules it). Nothing is committed to git here.
     return {"book": book["title"], "date": day, "picker": member["name"]}

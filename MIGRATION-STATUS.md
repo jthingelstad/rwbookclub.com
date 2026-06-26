@@ -5,6 +5,14 @@ isolated worktree against a consistent snapshot of the live `oliver.db`, so the 
 Oliver and the live site were never touched. **Nothing here is live yet** — the cutover is
 a short supervised step (below).
 
+> **Later (2026-06-26): corpus is now private + site deploys locally.** Building on the
+> SQLite inversion, `corpus/data/` and the machine-generated images are now **gitignored**
+> (regenerated from the DB on disk, never committed). The 11ty site is built + deployed
+> **locally** by `python -m agent.publish` to the **`gh-pages` branch** (GitHub Pages serves
+> it); CI no longer builds the site (`deploy.yml` removed). `main` is pure source — Oliver
+> writes nothing to it. Reviews became DB-backed (`club_reviews`) so the startup corpus regen
+> can't prune them. See `CLAUDE.md` → "Site build + deploy".
+
 ## What's done and verified
 
 | Phase | Status | Evidence |

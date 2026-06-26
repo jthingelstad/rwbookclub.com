@@ -1,25 +1,21 @@
-"""Write a member's book review into the Git corpus.
+"""Write a member's book review into the authoritative club record (SQLite).
 
 The single review writer, called by the /review modal (and any future front-end).
-Validates the form fields, resolves book/member rec ids, writes
-reviews/<book-slug>--<member-slug>.md in the exact Phase-1 format, and commits via
-gitwrite. Updating an existing review preserves its id and createdAt.
+Validates the form fields, resolves book/member ids, upserts ``club_reviews``, then
+regenerates the corpus review file (``reviews/<book>--<member>.md``) from the DB.
+Updating an existing review preserves its id and createdAt. The site is rebuilt +
+deployed separately by the publish step (the corpus is no longer committed to git).
 """
 
 from __future__ import annotations
 
 import re
 import uuid
-from datetime import datetime, timezone
-
-import yaml
 
 from corpus.paths import DATA_DIR
 from corpus.validate import validate_data_dir
+from agent import clubdb, corpus_gen, db, gitwrite
 from agent import corpus_read as cr
-from agent import gitwrite
-
-REVIEWS_DIR = DATA_DIR / "reviews"
 
 
 class ReviewError(Exception):
@@ -54,13 +50,6 @@ def _parse_1to5(value: str | None) -> int | None:
     return int(s)
 
 
-def _existing(path) -> dict:
-    if not path.exists():
-        return {}
-    data, _ = cr.parse_frontmatter(path.read_text())
-    return data or {}
-
-
 def _validate_or_raise() -> None:
     errors = validate_data_dir(DATA_DIR)
     if errors:
@@ -87,40 +76,27 @@ def write_review(book_query: str, member_name: str, *, rating: str | None = None
     if rating_val is None and not dnf and not body:
         raise ReviewError("A review needs at least a rating, a DNF, or some text.")
 
-    path = REVIEWS_DIR / f"{book['slug']}--{member['slug']}.md"
-    previous_text = path.read_text() if path.exists() else None
-    prev = _existing(path)
-    front = {
-        "id": prev.get("id") or f"rev_{uuid.uuid4().hex[:16]}",
-        "book": book["slug"],
-        "member": member["slug"],
-        "rating": rating_val,
-        "dnf": dnf,
-        "discussionQuality": discussion_val,
-        "wouldRecommend": _parse_bool(recommend),
-        "favoriteQuote": quote_val,
-        "createdAt": prev.get("createdAt") or datetime.now(timezone.utc).isoformat(),
-    }
-    fm = yaml.safe_dump(front, sort_keys=False, allow_unicode=True, default_flow_style=False)
-    REVIEWS_DIR.mkdir(parents=True, exist_ok=True)
-    path.write_text(f"---\n{fm}---\n\n{body}\n" if body else f"---\n{fm}---\n")
-
-    verb = "Update" if prev else "Add"
-    try:
-        _validate_or_raise()
-        sha = gitwrite.commit_paths([path], f"{verb} review of {book['title']} by {member['name']}")
-    except Exception:
-        if previous_text is None:
-            path.unlink(missing_ok=True)
-        else:
-            path.write_text(previous_text)
-        raise
+    # DB-backed write (the club record is authoritative); the corpus review file is then
+    # regenerated from the DB. A new review mints a `rev_*` external id (stored as
+    # airtable_id), preserved across edits — mirrors the old markdown id/createdAt behavior.
+    with db.connect() as conn:                          # transaction = commit point
+        book_id = clubdb.book_id_for_slug(conn, book["slug"])
+        member_id = clubdb.member_id_for_slug(conn, member["slug"])
+        if book_id is None or member_id is None:
+            raise ReviewError("That book or member isn't in the club database yet.")
+        res = clubdb.upsert_review(
+            conn, book_id=book_id, member_id=member_id, rating=rating_val, dnf=dnf,
+            discussion_quality=discussion_val, would_recommend=_parse_bool(recommend),
+            favorite_quote=quote_val, body=body or None,
+            airtable_id=f"rev_{uuid.uuid4().hex[:16]}",
+        )
+        path = corpus_gen.write_review_file(conn, res["id"], DATA_DIR)
+    _validate_or_raise()
     return {
         "book": book["title"],
         "member": member["name"],
         "rating": rating_val,
         "dnf": dnf,
-        "updated": bool(prev),
-        "committed": sha,
+        "updated": res["existed"],
         "path": str(path),
     }

@@ -7,6 +7,7 @@ live in `corpus.airtable`; that module imports paths from here.
 
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 
@@ -14,7 +15,10 @@ from unidecode import unidecode
 
 CORPUS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = CORPUS_DIR.parent
-DATA_DIR = CORPUS_DIR / "data"
+# The corpus is a private, on-disk artifact regenerated from the DB (gitignored).
+# OLIVER_CORPUS_DIR lets tests redirect it to a temp dir so a test run never touches
+# the developer's real corpus/data.
+DATA_DIR = Path(os.environ.get("OLIVER_CORPUS_DIR") or CORPUS_DIR / "data")
 RAW_DATA_DIR = DATA_DIR / "raw"
 # Responsive cover/photo variants are website presentation assets, so the
 # image step writes them straight into the website tree.
