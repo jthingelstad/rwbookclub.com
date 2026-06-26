@@ -29,17 +29,36 @@ _client: discord.Client | None = None
 
 
 # ── Publish (rebuild + deploy the site after a data write) ───────────────────
+# Coalescing single-flight publisher. Each data write marks the site dirty; one publisher
+# task drains it and RE-RUNS if more writes land while it builds — so the last write of a
+# burst is always deployed. The task is held in a module global so the event loop can't
+# garbage-collect it (un-referenced tasks are only weakly held → can vanish mid-run).
+_publisher_task: asyncio.Task | None = None
+_publish_dirty = False
+
+
 def schedule_publish() -> None:
-    """Rebuild + deploy the site in the background after a data write, so the Discord ack
-    stays fast. publish_site() regenerates the whole corpus from the DB, so a retry after a
-    busy lock still captures this write. Failures are logged + surfaced as an activity warning."""
-    async def _run() -> None:
-        for _ in range(3):
+    """Mark the site dirty and ensure a background publisher is running (fast Discord ack)."""
+    global _publisher_task, _publish_dirty
+    _publish_dirty = True
+    if _publisher_task is not None and not _publisher_task.done():
+        return  # a publisher is already running; its dirty-recheck will cover this write
+    _publisher_task = asyncio.create_task(_drain_publishes())
+
+
+async def _drain_publishes() -> None:
+    global _publish_dirty
+    while _publish_dirty:
+        _publish_dirty = False
+        # publish_site() regenerates the whole corpus from the DB, so any single successful
+        # run captures every write committed so far. PublishBusy only happens if another
+        # process (a manual `python -m agent.publish`) holds the file lock — retry for that.
+        for _ in range(6):
             try:
                 await asyncio.to_thread(publish.publish_site)
-                return
+                break
             except publish.PublishBusy:
-                await asyncio.sleep(20)  # a publish is running; retry to capture our write
+                await asyncio.sleep(20)
             except Exception:
                 log.exception("background publish failed")
                 db.add_activity(
@@ -47,10 +66,7 @@ def schedule_publish() -> None:
                     "A data write succeeded but rebuilding/deploying the site failed. "
                     "Run `python -m agent.publish` manually, or check the logs.",
                 )
-                return
-        log.warning("publish still busy after retries; the next write will cover it")
-
-    asyncio.create_task(_run())
+                break
 
 
 # ── Admin gate ───────────────────────────────────────────────────────────────

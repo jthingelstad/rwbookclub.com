@@ -24,7 +24,7 @@ import discord
 import requests
 from discord.ext import tasks
 
-from agent import clubdb, commands, config, context as kb, db, gitwrite, oliver, publish
+from agent import clubdb, commands, config, context as kb, db, oliver, publish
 from agent.mail import email_jmap, email_policy, mail_archive, outbound, tinylytics
 from agent.club import meeting_rules
 
@@ -132,30 +132,11 @@ _channel_locks: defaultdict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
 _email_lock = asyncio.Lock()
 
 
-def _check_dirty_tree() -> str | None:
-    """Return a non-empty status string if the working tree is dirty, else None.
-
-    A dirty tree breaks `gitwrite.sync()` (pull --rebase exits 128), which
-    surfaces to the user as a generic "couldn't save that" — the failure we
-    actually shipped to the user once. Logging a loud warning at startup
-    means future operators see it before a /review attempt does.
-    """
-    try:
-        r = subprocess.run(
-            ["git", "status", "--porcelain"],
-            cwd=gitwrite.REPO_ROOT, capture_output=True, text=True,
-            check=False, timeout=5,
-        )
-        return r.stdout.strip() or None
-    except (subprocess.SubprocessError, OSError):
-        return None
-
-
 def _git_commit_short() -> str:
     try:
         r = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
-            cwd=gitwrite.REPO_ROOT, capture_output=True, text=True,
+            cwd=publish.REPO_ROOT, capture_output=True, text=True,
             check=False, timeout=5,
         )
         return r.stdout.strip() or "unknown"
@@ -219,14 +200,6 @@ async def on_ready() -> None:
     monitored = [(cid, client.get_channel(cid)) for cid in sorted(config.MONITORED_CHANNEL_IDS)]
     for cid, ch in monitored:
         log.info("  monitored %s (%s) -> %s", config.CHANNEL_NAMES.get(cid, cid), cid, ch)
-    dirty = _check_dirty_tree()
-    if dirty:
-        log.warning(
-            "⚠️  Working tree is DIRTY — corpus writes (review, add-book, schedule) "
-            "will fail at the gitwrite pull-rebase step. Commit or stash before "
-            "letting members exercise write commands. Dirty paths:\n%s",
-            dirty[:1000],
-        )
 
     commit = _git_commit_short()
     perm_issues: list[str] = []
@@ -243,8 +216,6 @@ async def on_ready() -> None:
     if perm_issues:
         body += "\nPermission gaps:\n" + "\n".join(perm_issues)
     db.add_activity("startup", "Oliver online", body)
-    if dirty:
-        db.add_activity("warning", "Working tree is dirty", dirty[:1500])
 
     commands.start_scheduler()
     start_activity_logger()

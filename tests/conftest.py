@@ -19,9 +19,6 @@ os.environ["OLIVER_DB_PATH"] = str(_TMP_DIR / "test.db")
 # Redirect the corpus to a temp dir so a test run never touches the developer's real
 # (gitignored) corpus/data — the session fixture regenerates it here from the SQL fixture.
 os.environ["OLIVER_CORPUS_DIR"] = str(_TMP_DIR / "corpus")
-# Don't push from tests — if something accidentally exercises gitwrite, fail closed.
-os.environ.setdefault("OLIVER_GIT_PUSH", "0")
-os.environ.setdefault("OLIVER_GIT_DRYRUN", "1")
 # Keep /oliver add-book offline in tests — no inline external enrichment (network).
 os.environ["OLIVER_ENRICH_ON_WRITE"] = "0"
 

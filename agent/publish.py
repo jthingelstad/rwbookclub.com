@@ -21,11 +21,14 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from agent import corpus_gen, gitwrite
+from agent import corpus_gen
 
 log = logging.getLogger(__name__)
 
-REPO_ROOT = gitwrite.REPO_ROOT
+REPO_ROOT = Path(__file__).resolve().parent.parent
+# Git identity for the gh-pages deploy commit (Oliver writes nothing else to git).
+AUTHOR_NAME = os.environ.get("OLIVER_GIT_AUTHOR_NAME", "Oliver (RWBC bot)")
+AUTHOR_EMAIL = os.environ.get("OLIVER_GIT_AUTHOR_EMAIL", "oliver@rwbookclub.com")
 SITE_DIR = REPO_ROOT / "website" / "_site"
 LOCK_PATH = REPO_ROOT / ".publish.lock"  # gitignored
 GH_PAGES_BRANCH = "gh-pages"
@@ -89,7 +92,7 @@ def _deploy_gh_pages(message: str) -> None:
     try:
         g("init", "-q", "-b", GH_PAGES_BRANCH)
         g("add", "-A")
-        g("-c", f"user.name={gitwrite.AUTHOR_NAME}", "-c", f"user.email={gitwrite.AUTHOR_EMAIL}",
+        g("-c", f"user.name={AUTHOR_NAME}", "-c", f"user.email={AUTHOR_EMAIL}",
           "commit", "-q", "-m", message)
         g("push", "-q", "-f", origin, f"HEAD:{GH_PAGES_BRANCH}")
     finally:

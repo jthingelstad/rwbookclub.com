@@ -14,7 +14,7 @@ import uuid
 
 from corpus.paths import DATA_DIR
 from corpus.validate import validate_data_dir
-from agent import clubdb, corpus_gen, db, gitwrite
+from agent import clubdb, corpus_gen, db
 from agent import corpus_read as cr
 
 
@@ -67,7 +67,6 @@ def write_review(book_query: str, member_name: str, *, rating: str | None = None
     book = cr.find_book(book_query)
     if not book:
         raise ReviewError(f"I couldn't find a book matching {book_query!r}.")
-    gitwrite.sync()
 
     rating_val, dnf = _parse_rating(rating)
     discussion_val = _parse_1to5(discussion)
