@@ -1,6 +1,6 @@
 """End-to-end evaluation of Oliver: generate test questions via Sonnet, run them
 through the live agent loop with tool-call tracing, judge the results via Sonnet,
-and append a round to `oliver-test-log.md`.
+and append a round to `agent/logs/oliver-eval-log.md` (gitignored — it's generated output).
 
     python -m tests.eval --round 1 --note "baseline"
 
@@ -34,7 +34,7 @@ from agent import db, oliver as oliver_mod  # noqa: E402
 
 CLIENT = anthropic.Anthropic()
 MODEL = "claude-sonnet-4-6"
-LOG_PATH = pathlib.Path("oliver-test-log.md")
+LOG_PATH = pathlib.Path("agent/logs/oliver-eval-log.md")  # gitignored (agent/logs/)
 FAKE_MEMBER_IDS = {
     "Jamie": "eval-user-jamie",
     "Erik": "eval-user-erik",
@@ -396,6 +396,7 @@ def main() -> None:
         parts.append(fmt_multi(i, c, t, j))
     parts.append(round_summary(singles, multis))
 
+    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     if not LOG_PATH.exists():
         LOG_PATH.write_text(
             "# Oliver test log\n\n"

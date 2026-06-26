@@ -10,17 +10,20 @@ agent/
 ├── bot.py          # Discord client: /oliver group, #ask-oliver listener, scheduler loop
 ├── oliver.py       # the agent loop (tool use, caching, conversation history)
 ├── tools.py        # read/memory/email tool schemas + dispatch
-├── email_jmap.py   # Fastmail JMAP send/receive, scoped to Inbox/Oliver + Sent/Oliver
-├── corpus_read.py  # query/join layer over the (private, generated) corpus
-├── corpus_write.py # write books + meetings (add-book / schedule) → DB + regen
-├── reviews.py      # write reviews → club_reviews (DB-backed) + regen
+├── clubdb.py       # the authoritative club_* tables + read/write helpers
+├── corpus_gen.py   # generate the (private, gitignored) corpus from the DB
+├── corpus_read.py  # query/join layer over the generated corpus
+├── corpus_write.py # /oliver add-book & schedule → DB upsert + corpus regen
 ├── publish.py      # local build + deploy of the site to the gh-pages branch
 ├── scheduler.py    # pure due_notifications (reminders / nudges / milestones)
-├── meeting_rules.py # last-Tuesday roll call, quorum, picker-attendance checks
-├── openlibrary.py  # metadata lookup for add-book
 ├── context.py      # compact club overview for the cached system prompt
-├── db.py           # SQLite memory/state + scheduler dedup (gitignored)
-└── requirements.txt
+├── persona.py      # loads the SOUL/PURPOSE/PROCESS charters from docs/
+├── config.py · db.py   # config; SQLite memory/state (gitignored)
+├── club/           # reviews (→ club_reviews), meeting_rules, openlibrary, campaign/emails
+├── mail/           # Fastmail JMAP send/receive + the mail archive
+├── enrich/         # external enrichment loop (Open Library + Wikidata + Wikipedia)
+├── script/         # one-off ops: import_airtable, dump_club_seed, prune_backups, verify_ops_mapping
+└── docs/ · team/   # charters + roadmap · AI-persona role prompts
 ```
 
 ## How Oliver works
@@ -159,7 +162,7 @@ single write path (any future front-end reuses it).
 
 ```bash
 pip install -r tests/requirements.txt    # one-time
-pytest tests/                             # 112 tests, ~0.6s
+pytest tests/                             # ~290 tests
 ```
 
 Pure helpers (`_is_addressed`, `_strip_address`, rating parsers, `parse_frontmatter`,
