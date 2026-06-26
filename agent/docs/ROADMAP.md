@@ -7,23 +7,29 @@ member**, not a foreign bot.
 
 ## Architecture: split data by class, not by store
 
+> **Update (2026-06-26): the data model was inverted.** SQLite (the `club_*` tables in
+> `agent/oliver.db`) is now **authoritative**; the corpus in `corpus/data/` is **generated**
+> from it and is **private/gitignored**; the site builds + deploys **locally** to the
+> `gh-pages` branch (`main` is pure source — Oliver writes nothing to it). The table below is
+> updated; the phase history further down predates this. See `docs/archive/MIGRATION-PLAN.md`
+> and `docs/archive/MIGRATION-STATUS.md` for the inversion.
+
 | Class | Examples | Home |
 |---|---|---|
-| **A — Canonical club knowledge** | books, authors, meetings, members, finalized reviews, awards | **Git**, as per-entity text files in `corpus/data/` (source of truth) |
-| **B — Oliver's private memory/state** | conversation summaries, member taste notes, Discord identity links, reminders, usage/cost | **SQLite** on Oliver's host (gitignored, backed up) |
-| **C — B→A flow** | a review being submitted | Discord form → validated corpus write → committed to Git |
+| **A — Canonical club knowledge** | books, authors, meetings, members, reviews, awards | **SQLite** `club_*` tables (authoritative); the corpus in `corpus/data/` is generated from them (private/gitignored), read by Oliver + the website build |
+| **B — Oliver's private memory/state** | conversation summaries, member taste notes, Discord identity links, reminders, usage/cost, the mail archive | **SQLite** on Oliver's host (gitignored, backed up) |
+| **C — write flow** | a review, a scheduled meeting | Discord form → DB upsert under FKs → corpus regenerated → local build + deploy to `gh-pages` |
 
-Consequences: git history is the club's operational audit log; the static site
-builds from committed text; member contribution is enabled for free (the
-contributable surface — corpus + code — is already text-in-Git). Oliver is a
-**self-hosted Claude API agentic loop** (`claude-sonnet-4-6`, prompt caching,
-adaptive thinking) with a **manual tool-use loop** so irreversible/outward
-actions are gated. Hosting + ops reuse the Weekly Thing pattern (process
-supervisor, SQLite backup, host `.env`).
+Consequences: the DB is the single source of truth; the static site is built + deployed
+locally from the DB-generated corpus (CI only runs tests). Oliver is a **self-hosted Claude
+API agentic loop** (`claude-sonnet-4-6`, prompt caching, adaptive thinking) with a **manual
+tool-use loop** so irreversible/outward actions are gated. Hosting + ops reuse the Weekly
+Thing pattern (process supervisor, SQLite backup, host `.env`).
 
 ## Phases
 
-**Phase 1 — Git as the source of truth.** ✅ **Done.**
+**Phase 1 — Git as the source of truth.** ✅ Done at the time — **later superseded by the
+SQLite inversion (Phase 6); SQLite is now authoritative and the corpus is generated/gitignored.**
 Migrated the corpus from Airtable fetch-artifact to per-entity text files
 (`corpus/data/{books,members,meetings,authors,reviews,awards}/`), records as JSON
 and reviews as Markdown+frontmatter, each keyed by its Airtable `rec…` id;
@@ -45,12 +51,11 @@ tools (`related_books`, `compare_books`, `review_summary`), proposal-staging too
 (`propose_action`, `open_proposals`), and memory/reminder tools (`remember`, `recall`,
 `set_reminder`, `record_availability`).
 
-**Phase 3 — Reviews (the wedge; exercises B→A).** ✅ **Done.**
+**Phase 3 — Reviews (the wedge; exercises the write flow).** ✅ **Done.**
 Members submit reviews through a Discord modal. Oliver resolves the member through
-the private Discord-user → member identity map, writes
-`reviews/<book>--<member>.md`, validates the corpus, commits, and pushes → site
-shows it. Submitting the modal is the confirmation; validation failures roll back
-the local file before any commit.
+the private Discord-user → member identity map, upserts `club_reviews`
+(`clubdb.upsert_review`), regenerates the corpus review file, and the site is rebuilt +
+deployed by the publish step. Submitting the modal is the confirmation.
 
 **Phase 4 — Meetings & operations.** ✅ **Done.**
 `/oliver add-book` (fetches metadata + cover from Open Library, writes a book file) and
@@ -87,11 +92,25 @@ notes. Milestone/anniversary celebration shipped in Phase 4's scheduler.
 Awards facilitation (a write path + possible voting flow) is **deferred** — the corpus, site
 rendering, and a sample record already exist, so it's a self-contained later slice.
 
+**Phase 6 — SQLite inversion + corpus enrichment.** ✅ **Done** (2026-06-26; see
+`docs/archive/MIGRATION-*`). SQLite became authoritative (`club_*` tables, integer PKs + FKs);
+the corpus is generated from it and made private/gitignored; the site builds + deploys locally
+to `gh-pages`. Enrichment added: external book/author data (Open Library + Wikidata + Wikipedia,
+`python -m agent.enrich`) into 1:1 sidecar tables, and **hosting history** surfaced
+(`member_history`/`club_stats`/`get_book`/`club_context` + member pages). The email/Discord
+archive stays **tool-accessed** (`search_mail_archive`/`get_mail_thread`/`search_discussion`),
+deliberately not folded into the corpus, keeping private message bodies out of it.
+
+**What's next (candidates).** Awards facilitation (above); the "book cloud" capture stream
+(`agent/team/work/2026-06-26-build-book-cloud.md`, slice 1a ready); backfilling the 3
+picker-less / host-less book-meetings (Love Sense, Complexity, Being Mortal) once the names are known.
+
 ## Cross-cutting (from Phase 2 on)
 
-- **Git write path:** Oliver pulls → writes file(s) → validates the corpus → commits with a
-  descriptive message → pushes to `main` (auto-deploys); local edits roll back on validation
-  failure, and push races get a pull/rebase + retry.
+- **Write path:** Oliver upserts the `club_*` DB under FKs → regenerates the affected corpus
+  files → validates → schedules a background publish that rebuilds the site and deploys it to the
+  `gh-pages` branch. (Originally this committed the corpus to `main` and let CI deploy; the corpus
+  is now private/gitignored and the build/deploy is local.)
 - **Guardrails:** promote every irreversible/outward action (commit/push, post, DM)
   to a dedicated, confirmable tool; admin-gate club-wide ops.
 - **Hosting/ops:** Weekly Thing pattern; SQLite backup (litestream or periodic dump).

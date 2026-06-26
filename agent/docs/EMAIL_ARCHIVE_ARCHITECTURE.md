@@ -1,8 +1,14 @@
 # Oliver Email Archive and Unified Conversation Architecture
 
+> **STATUS: implemented (historical design note).** The mail archive is live (~2,446 `mail_messages`,
+> all member-linked) and reachable via the `search_mail_archive` / `get_mail_thread` tools. Since
+> this was written, the ops tables (`meeting_attendance`, `reading_statuses`, etc.) were moved from
+> `(meeting_key, member_slug)` text keys to integer `meeting_id` / `member_id` FKs — read the keying
+> details below as historical.
+
 This document describes the target architecture for giving Oliver durable access to the R/W Book Club mailing-list archive while keeping Discord and email tied to one member identity and one operational meeting state.
 
-It is intentionally a design note for review before implementation.
+It was originally a design note for review before implementation.
 
 ## Goals
 

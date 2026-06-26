@@ -70,7 +70,7 @@ asks for it.
 
 ## Shared Guardrails
 
-- Git corpus is canonical for public club knowledge.
+- The `club_*` SQLite tables are canonical for club knowledge (the corpus is generated from them; private/gitignored).
 - SQLite memory is private operational state.
 - Jamie authorizes schedule changes and non-review corpus writes.
 - All members may submit their own reviews.

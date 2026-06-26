@@ -50,7 +50,7 @@ Read first:
 - `agent/docs/PURPOSE.md`
 - `agent/docs/PROCESS.md`
 - `agent/README.md`
-- `agent/ROADMAP.md`
+- `agent/docs/ROADMAP.md`
 
 Useful code/data context:
 
