@@ -161,16 +161,44 @@ JUDGE_SYSTEM = (
     "You evaluate Oliver, the R/W Book Club's AI agent, on individual interactions. "
     "Be honest and rigorous — do not award points for trying. Flag any hallucination, "
     "wrong tool, missed lookup, or off-tone reply.\n\n"
-    "Oliver's tools: find_books (scored multi-angle relevance search — preferred for vague "
-    "exploratory queries), search_books (precise filter browse), get_book, member_history, "
-    "upcoming_meetings, club_stats, pending_reviews, get_author, club_awards, remember, "
-    "recall, set_reminder, web_search (Anthropic server-side — for off-corpus world facts "
-    "the model would otherwise guess at; use sparingly).\n\n"
-    "Corpus: 179 books, 184 meetings, 5 current members (Jamie, Erik, Tom, Nick, "
-    "Loren) + 7 former, 1 award (2016 Book of the Year: American Nations), ~10 reviews "
-    "(grows over time). Topic distribution skews History & Economics, Politics & Social "
-    "Sciences, Science Fiction & Fiction (the de-facto fiction bucket — ~12% of reads), "
-    "Brain & Psychology, Science and Math, Technology.\n\n"
+    "Oliver's tools (read/memory surface): find_books (scored multi-angle relevance search — "
+    "preferred for vague exploratory queries), search_books (precise filter browse), get_book, "
+    "get_author, member_history, upcoming_meetings, current_meeting_status, club_stats, "
+    "club_awards, pending_reviews, related_books, compare_books, review_summary, "
+    "search_discussion (searches live Discord chat across channels), search_mail_archive + "
+    "get_mail_thread (the club's mailing-list history), reading_status, meeting_readiness, "
+    "identity_status, current_club_state, recent_feedback, recent_channel_context, recall, "
+    "remember, set_reminder, record_availability, record_reading_status, web_search "
+    "(Anthropic server-side — for off-corpus world facts the model would otherwise guess at). "
+    "This list is representative, not exhaustive: Oliver's actually-registered tools are "
+    "authoritative. DO NOT flag a tool call as a hallucinated or non-existent tool merely "
+    "because the name is unfamiliar to you — only flag tool_choice when a clearly better-suited "
+    "tool existed, the inputs were wrong, or a needed lookup was skipped.\n\n"
+    "Corpus: ~178 books read (club_stats is authoritative — do NOT ding Oliver for saying "
+    "178 vs 179, the count drifts as meetings are added), 184 meetings, 5 current members "
+    "(Jamie, Erik, Tom, Nick, Loren) + 7 former, 1 award (2016 Book of the Year: American "
+    "Nations), few reviews and almost none with a numeric rating (so the club CANNOT be ranked "
+    "by quality — 'best/worst/lowest-rated book' has no data-backed answer; honestly saying so "
+    "is the CORRECT response, not a failure). The current upcoming pick is *A World Appears* "
+    "(Michael Pollan, Jamie's pick, late June 2026) — a real forthcoming meeting, so describing "
+    "it as the current/next pick is correct, not a hallucination. Topic distribution skews "
+    "History & Economics, Politics & Social Sciences, Science Fiction & Fiction (the de-facto "
+    "fiction bucket — ~12% of reads), Brain & Psychology, Science and Math, Technology.\n\n"
+    "WHAT YOU CANNOT SEE (do not infer fabrication from its absence): (1) Oliver carries an "
+    "injected, per-speaker memory of that member's saved tastes plus club lore — so a reply "
+    "referencing a member's known preference (e.g. Nick's interest in 'weird infrastructure') "
+    "WITHOUT a visible recall() call may be perfectly grounded in that injected memory; do not "
+    "flag it as invented unless it contradicts the conversation. This injected context ALSO "
+    "carries the club's top-line totals and a per-member picks/meetings-hosted line (e.g. "
+    "\"Tom: 32 picks, 35 hosted\"), so Oliver stating a member's pick or host count, or the "
+    "club total, WITHOUT a visible tool call can be grounded in that cache — don't auto-flag "
+    "those numbers as fabricated. (2) web_search is an Anthropic "
+    "SERVER-SIDE tool whose calls do NOT appear in the tool trace above — so when Oliver leads "
+    "with 'from a quick search…' and states a world fact, assume it MAY have searched; judge "
+    "whether the claim is plausibly TRUE, not whether you see a search call. (3) Your own "
+    "training has a cutoff: do NOT mark a specific recent book (2024–2025 titles), author work, "
+    "or fact as 'fabricated' just because you don't recognize it — if you cannot verify it, call "
+    "it 'unverified' at most, and do not tank accuracy over it.\n\n"
     "Oliver also CARRIES A CACHED SYSTEM CONTEXT he can speak from without a tool call: "
     "the club has met monthly since **April 2003** in the **Minneapolis–Saint Paul** "
     "area, reads ~8 books/year (88% non-fiction), and members rotate picking. The "
@@ -352,6 +380,15 @@ def main() -> None:
 
     print(f"Round {args.round}: generating {args.n_single} single + {args.n_multi} multi…")
     t0 = time.time()
+    # Seed the scratch DB's club_* tables from the public-safe fixture. The SQLite migration
+    # made link_member_identity validate member_slug against club_members, and a fresh scratch
+    # DB has none; clubdb-backed tools also need the club record. (Corpus tools read corpus/data
+    # on disk regardless.) Mirrors tests/conftest.py.
+    from agent import clubdb
+    clubdb.ensure_schema()
+    seed_sql = (pathlib.Path(__file__).parent / "fixtures" / "club_seed.sql").read_text()
+    with db.connect() as conn:
+        conn.executescript(seed_sql)
     for name, user_id in FAKE_MEMBER_IDS.items():
         db.link_member_identity(user_id, name.lower(), linked_by="eval")
     qs = generate_questions(args.round, args.n_single, args.n_multi)
