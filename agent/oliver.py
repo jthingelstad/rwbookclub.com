@@ -35,6 +35,7 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 # negligible against the faithfulness gain. Opus is intentionally not used — the
 # project mandate is cost-conscious.
 MODEL = "claude-sonnet-4-6"          # user-facing agent loop
+OPUS_MODEL = "claude-opus-4-8"       # opt-in for one-off, quality-critical generation (topic email)
 SUMMARY_MODEL = "claude-sonnet-4-6"  # rolling internal summarization
 MAX_TOKENS = 2048
 MAX_TOOL_ROUNDS = 8
@@ -281,7 +282,8 @@ def answer_mailing_list_email(msg, *, channel_id: str, speaker: str | None = Non
 
 def answer(question: str, channel_id: str = "default", speaker: str | None = None,
            speaker_user_id: str | None = None, source_message_id: str | None = None,
-           *, use_history: bool = True, persist: bool = True, max_tokens: int = MAX_TOKENS) -> str:
+           *, use_history: bool = True, persist: bool = True, max_tokens: int = MAX_TOKENS,
+           model: str = MODEL, effort: str = "medium") -> str:
     """Answer one message. Synchronous — call via asyncio.to_thread from the bot.
 
     use_history/persist default True for the conversational path. Set both False for a
@@ -301,12 +303,12 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
     while True:
         rounds += 1
         resp = client.messages.create(
-            model=MODEL,
+            model=model,
             max_tokens=max_tokens,
             system=_system_blocks(),
             tools=TOOLS,
             thinking={"type": "adaptive"},
-            output_config={"effort": "medium"},
+            output_config={"effort": effort},
             messages=messages,
         )
         u = resp.usage
@@ -326,10 +328,10 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
                     "visible text. Use what you've already gathered."})
                 try:
                     resp = client.messages.create(
-                        model=MODEL, max_tokens=max_tokens,
+                        model=model, max_tokens=max_tokens,
                         system=_system_blocks(), tools=TOOLS,
                         thinking={"type": "adaptive"},
-                        output_config={"effort": "medium"},
+                        output_config={"effort": effort},
                         messages=messages,
                     )
                     u = resp.usage
@@ -362,24 +364,27 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
     if persist:
         db.log_message(channel_id, "user", question, speaker=speaker)
         db.log_message(channel_id, "assistant", reply)
-        db.log_usage(channel_id, MODEL, input_tokens=usage["in"], output_tokens=usage["out"],
+        db.log_usage(channel_id, model, input_tokens=usage["in"], output_tokens=usage["out"],
                      cache_read=usage["cr"], cache_creation=usage["cc"], rounds=rounds)
         _maybe_summarize(channel_id, client)
     return reply
 
 
-def generate(prompt: str) -> str:
+def generate(prompt: str, *, model: str = OPUS_MODEL, effort: str = "medium") -> str:
     """One-off, stateless, tool-enabled generation — for proactive content Oliver must
     research (e.g. a meeting topic email mined from the reading history).
 
     Runs the full tool loop (so corpus/history/mail-archive tools are available) but reads
     no channel history and persists nothing: each call is fresh from the corpus and never
-    touches a member-facing conversation. Synchronous; call via asyncio.to_thread.
+    touches a member-facing conversation. Defaults to Opus — these are rare, quality-critical
+    one-offs where the marginal cost is worth it. Synchronous; call via asyncio.to_thread.
     """
-    # Higher token budget than the chat path: these (e.g. the topic email) are long-form,
-    # and adaptive thinking shares the budget, so 2048 can truncate mid-draft.
+    # Generous token budget: these are long-form (full 3-section email) AND adaptive thinking
+    # shares the budget, so a tight cap truncates mid-draft — especially on Opus, which thinks
+    # more. 8192 leaves room for thinking + the whole email. (Higher effort thinks more and
+    # runs slower; medium keeps it complete and under the client timeout.)
     return answer(prompt, channel_id="scheduler:generate", use_history=False, persist=False,
-                  max_tokens=4096)
+                  max_tokens=8192, model=model, effort=effort)
 
 
 def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -> str:
