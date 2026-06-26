@@ -11,6 +11,7 @@ than the SDK tool runner so write tools can be gated behind confirmation.
 
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -41,6 +42,9 @@ MAX_TOOL_ROUNDS = 8
 SUMMARIZE_THRESHOLD = 24   # un-summarized turns before folding into the rolling summary
 KEEP_RECENT = 8           # turns left out of the summary (still shown verbatim)
 NO_REPLY_PREFIX = "[[NO_REPLY:"
+COMPOSE_MAX_TOKENS = 400  # proactive/voiced surfaces are short
+
+log = logging.getLogger("oliver")
 
 
 @dataclass(frozen=True)
@@ -356,6 +360,37 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
                  cache_read=usage["cr"], cache_creation=usage["cc"], rounds=rounds)
     _maybe_summarize(channel_id, client)
     return reply
+
+
+def compose(kind: str, facts: dict, *, fallback: str) -> str:
+    """Voice a proactive or templated surface in Oliver's register from given facts.
+
+    A single tool-less LLM call against the charter-rich system prompt. No channel
+    history is read or written, so these synthetic situations never pollute Oliver's
+    conversational memory or rolling summary. The facts are authoritative — Oliver
+    only voices them, he does not look anything up — which keeps counts and dates
+    correct. Any failure (API error, timeout, empty completion) returns `fallback`,
+    the caller's existing template: a proactive message must still go out, and an LLM
+    hiccup must never drop a roll-call. Synchronous; call via asyncio.to_thread.
+    """
+    facts_lines = "\n".join(f"- {k}: {v}" for k, v in facts.items() if v not in (None, ""))
+    prompt = (
+        f"Compose a {kind} for the club, in your own voice, from these exact facts. Use the "
+        "names, numbers, and dates exactly as given — do not invent, drop, or change any of "
+        "them. No subject line, no markdown headings, no sign-off. Keep it short and in your "
+        f"register.\n\nFacts:\n{facts_lines}"
+    )
+    try:
+        resp = _get_client().messages.create(
+            model=MODEL,
+            max_tokens=COMPOSE_MAX_TOKENS,
+            system=_system_blocks(),
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return _text_of(resp.content).strip() or fallback
+    except Exception:  # noqa: BLE001 — proactive copy must degrade to its template
+        log.warning("compose(%s) failed; using fallback template", kind, exc_info=True)
+        return fallback
 
 
 def _maybe_summarize(channel_id: str, client: anthropic.Anthropic) -> None:
