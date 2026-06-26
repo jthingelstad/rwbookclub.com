@@ -13,7 +13,6 @@ Airtable fetch pipeline are retired (Airtable kept as a cold backup).
 from __future__ import annotations
 
 import json
-from collections import Counter
 
 import yaml
 

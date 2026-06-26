@@ -18,5 +18,7 @@ jobs:
           python-version: "3.14"
           cache: pip
       - run: pip install -r agent/requirements.txt -r tests/requirements.txt
+      - name: Lint (ruff)
+        run: ruff check .
       - name: Tests
         run: pytest tests/ -q

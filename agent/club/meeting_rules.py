@@ -11,7 +11,7 @@ the schedule. The club rule stays explicit here:
 from __future__ import annotations
 
 import calendar
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 from agent import corpus_read, db
 

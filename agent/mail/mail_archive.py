@@ -17,7 +17,6 @@ from datetime import timezone
 from email.header import decode_header, make_header
 from html import unescape
 from pathlib import Path
-from typing import Iterable
 
 from agent import config, db
 from agent.mail import email_policy
@@ -79,8 +78,8 @@ class ImportReport:
 
 
 def seed_archive_aliases() -> None:
-    for email, slug in ARCHIVE_ALIASES.items():
-        db.link_member_email(email, slug, linked_by="mail-archive-import")
+    for addr, slug in ARCHIVE_ALIASES.items():
+        db.link_member_email(addr, slug, linked_by="mail-archive-import")
 
 
 def _decode_header(value: str | None) -> str:

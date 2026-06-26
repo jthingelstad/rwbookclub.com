@@ -47,7 +47,6 @@ def main() -> None:
     )
 
     meetings_by_id = {m["id"]: m for m in meetings_raw}
-    members_by_id = {m["id"]: m for m in members_raw}
     authors_by_id = {a["id"]: a for a in authors_raw}
 
     # Pre-compute member metadata used during book join

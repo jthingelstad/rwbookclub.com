@@ -323,7 +323,6 @@ async def _email_roll_call(interaction: discord.Interaction) -> None:
         return
     status = meeting_rules.meeting_status()
     meeting = status["meeting"]
-    title = (meeting.get("book") or {}).get("title") or "the next meeting"
     current = sorted(
         [m for m in corpus_read.members() if m.get("isCurrent")],
         key=lambda m: m.get("name") or m["slug"],

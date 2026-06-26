@@ -2,3 +2,4 @@
 #   pip install -r tests/requirements.txt
 
 pytest>=9.1.0
+ruff>=0.15

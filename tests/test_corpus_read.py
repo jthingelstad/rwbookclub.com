@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 
 # ── parse_frontmatter ────────────────────────────────────────────────────────
@@ -88,10 +87,11 @@ class TestBooksCache:
         assert first is second
 
     def test_cache_invalidates_on_file_touch(self, reset_books_cache, tmp_path):
-        import pathlib, time
+        import pathlib
+        import time
         from agent import corpus_read as cr
 
-        first = cr.books()
+        cr.books()  # populate the cache
         first_sig = cr._books_cache_sig
         # Touch a corpus file to bump mtime.
         target = next(iter(pathlib.Path("corpus/data/books").glob("*.json")))
