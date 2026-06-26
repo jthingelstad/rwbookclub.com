@@ -74,6 +74,22 @@ def _run(cmd: list[str], timeout: int, cwd: Path = REPO_ROOT) -> None:
         raise PublishError(f"`{' '.join(cmd)}` failed (rc={r.returncode}):\n{tail}")
 
 
+def git_output(args: list[str], *, timeout: int = 15) -> str:
+    """Run a READ-ONLY git command from the repo root and return its stdout.
+
+    Returns "" on any failure (non-zero exit, git missing, timeout) so callers can treat
+    "no output" uniformly. Uses the same launchd-safe `_bin("git")` + `_ENV` resolution as
+    the deploy path, so it works under a minimal cron/launchd PATH. Read-only by contract —
+    do not pass mutating subcommands here.
+    """
+    try:
+        r = subprocess.run([_bin("git"), *args], cwd=REPO_ROOT, capture_output=True,
+                           text=True, timeout=timeout, env=_ENV)
+    except (subprocess.SubprocessError, OSError, PublishError):
+        return ""
+    return r.stdout if r.returncode == 0 else ""
+
+
 def _deploy_gh_pages(message: str) -> None:
     """Force-push the built `_site` to the gh-pages branch as a clean orphan commit.
 
