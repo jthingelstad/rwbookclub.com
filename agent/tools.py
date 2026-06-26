@@ -24,7 +24,7 @@ from agent import corpus_read as cr
 from agent import db
 from agent.mail import email_jmap
 from agent.mail import email_policy
-from agent.mail import email_tracking
+from agent.mail import outbound
 from agent.club import meeting_campaign
 from agent.club import meeting_rules
 
@@ -590,7 +590,7 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             )
             if recipient_error:
                 return _dump({"error": recipient_error})
-            result = email_jmap.send_email(
+            result = outbound.send(
                 to=tool_input["to"],
                 subject=tool_input["subject"],
                 body=tool_input["body"],
@@ -671,27 +671,13 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 "Where are you in the book, and do you feel on track?\n\n"
                 "Reply with something short like \"halfway and on track\", "
                 "\"page 120, behind\", or \"finished\" and I'll update the tracker."
-                f"{extra}\n\nOliver"
+                f"{extra}"
             )
             subject = f"Reading check-in: {title}"
-            contact_id, html_body, tracking_token = email_tracking.prepare_outbound(
-                text=body,
-                meeting_key=meeting["meetingKey"],
-                member_slug=member["slug"],
-                kind="reading_checkin",
-                subject=subject,
+            sent = outbound.send(
+                to=[email["email"]], subject=subject, body=body,
+                track={"meeting_key": meeting["meetingKey"], "member_slug": member["slug"], "kind": "reading_checkin"},
             )
-            try:
-                sent = email_jmap.send_email(
-                    to=[email["email"]],
-                    subject=subject,
-                    body=body,
-                    html_body=html_body,
-                )
-            except Exception:
-                email_tracking.mark_outbound_failed(contact_id)
-                raise
-            email_tracking.mark_outbound_sent(contact_id, tracking_token, sent.get("emailId"))
             db.add_activity(
                 "email_sent",
                 "Reading check-in email sent",
@@ -740,24 +726,10 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                     continue
                 subject = _roll_call_subject(status)
                 body = _roll_call_email_body(member.get("name") or member["slug"], status, note=note)
-                contact_id, html_body, tracking_token = email_tracking.prepare_outbound(
-                    text=body,
-                    meeting_key=meeting["meetingKey"],
-                    member_slug=member["slug"],
-                    kind="roll_call",
-                    subject=subject,
+                sent = outbound.send(
+                    to=[email["email"]], subject=subject, body=body,
+                    track={"meeting_key": meeting["meetingKey"], "member_slug": member["slug"], "kind": "roll_call"},
                 )
-                try:
-                    sent = email_jmap.send_email(
-                        to=[email["email"]],
-                        subject=subject,
-                        body=body,
-                        html_body=html_body,
-                    )
-                except Exception:
-                    email_tracking.mark_outbound_failed(contact_id)
-                    raise
-                email_tracking.mark_outbound_sent(contact_id, tracking_token, sent.get("emailId"))
                 db.add_activity(
                     "email_sent",
                     "Roll-call email sent",
@@ -863,6 +835,5 @@ def _roll_call_email_body(member_name: str, status: dict, *, note: str | None = 
         f"{extra}\n\n"
         f"Current status: {counts['yes']} yes, {counts['no']} no, "
         f"{counts['unsure']} unsure, {counts['pending']} pending. "
-        f"We need {counts['quorumRequired']} yes responses.\n\n"
-        "Oliver"
+        f"We need {counts['quorumRequired']} yes responses."
     )

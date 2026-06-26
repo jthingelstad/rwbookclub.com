@@ -64,6 +64,30 @@ def test_compose_falls_back_on_error(monkeypatch):
     assert out == "TEMPLATE"
 
 
+def test_generate_is_stateless(monkeypatch):
+    class _Usage:
+        input_tokens = output_tokens = 1
+        cache_read_input_tokens = cache_creation_input_tokens = 0
+
+    class _Resp:
+        stop_reason = "end_turn"
+        content = [_Block("DRAFT")]
+        usage = _Usage()
+
+    class _Client:
+        class messages:
+            @staticmethod
+            def create(**kwargs):
+                return _Resp()
+
+    monkeypatch.setattr(oliver, "_get_client", lambda: _Client())
+    logged = []
+    monkeypatch.setattr(oliver.db, "log_message", lambda *a, **k: logged.append(a))
+    out = oliver.generate("write the topic email")
+    assert out == "DRAFT"
+    assert logged == []  # stateless: reads no history, persists nothing
+
+
 def test_compose_falls_back_on_empty_completion(monkeypatch):
     class _Client:
         class messages:

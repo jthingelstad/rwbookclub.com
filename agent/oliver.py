@@ -131,8 +131,8 @@ OPERATIONAL_PROMPT = (
     "explicitly asks you to email a linked club member from Discord. For a message that arrived "
     "BY email, do NOT call send_email — just write the reply text normally; the runtime sends it "
     "by email automatically, and only when the sender/addressing passes the email safety policy. "
-    "Never reply to no-reply, system, invite, bounce, or unknown senders. Keep email brief, "
-    "club-relevant, and clearly from Oliver.\n\n"
+    "Never reply to no-reply, system, invite, bounce, or unknown senders. Keep email brief "
+    "and club-relevant; don't sign off — your signature is added automatically.\n\n"
     "EMAIL ARCHIVE. You have searchable access to the club's Google Groups mailing-list "
     "history from 2016 onward via search_mail_archive and get_mail_thread. Use it when a "
     "member asks what the club said, planned, nominated, voted on, or decided over email. "
@@ -281,12 +281,18 @@ def answer_mailing_list_email(msg, *, channel_id: str, speaker: str | None = Non
 
 
 def answer(question: str, channel_id: str = "default", speaker: str | None = None,
-           speaker_user_id: str | None = None, source_message_id: str | None = None) -> str:
-    """Answer one message. Synchronous — call via asyncio.to_thread from the bot."""
+           speaker_user_id: str | None = None, source_message_id: str | None = None,
+           *, use_history: bool = True, persist: bool = True) -> str:
+    """Answer one message. Synchronous — call via asyncio.to_thread from the bot.
+
+    use_history/persist default True for the conversational path. Set both False for a
+    stateless one-off generation (see generate()) — no prior turns are read and nothing
+    is logged, so the call neither sees nor pollutes any channel's memory.
+    """
     client = _get_client()
     member_slug = _resolve_member(speaker, speaker_user_id)
 
-    prior, summary = _history(channel_id)
+    prior, summary = _history(channel_id) if use_history else ([], None)
     messages = prior + [
         {"role": "user", "content": _question_block(question, speaker, member_slug, summary)}
     ]
@@ -354,12 +360,24 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
         messages.append({"role": "user", "content": results})
 
     # Persist the visible turn, usage, and maybe fold older history into the summary.
-    db.log_message(channel_id, "user", question, speaker=speaker)
-    db.log_message(channel_id, "assistant", reply)
-    db.log_usage(channel_id, MODEL, input_tokens=usage["in"], output_tokens=usage["out"],
-                 cache_read=usage["cr"], cache_creation=usage["cc"], rounds=rounds)
-    _maybe_summarize(channel_id, client)
+    if persist:
+        db.log_message(channel_id, "user", question, speaker=speaker)
+        db.log_message(channel_id, "assistant", reply)
+        db.log_usage(channel_id, MODEL, input_tokens=usage["in"], output_tokens=usage["out"],
+                     cache_read=usage["cr"], cache_creation=usage["cc"], rounds=rounds)
+        _maybe_summarize(channel_id, client)
     return reply
+
+
+def generate(prompt: str) -> str:
+    """One-off, stateless, tool-enabled generation — for proactive content Oliver must
+    research (e.g. a meeting topic email mined from the reading history).
+
+    Runs the full tool loop (so corpus/history/mail-archive tools are available) but reads
+    no channel history and persists nothing: each call is fresh from the corpus and never
+    touches a member-facing conversation. Synchronous; call via asyncio.to_thread.
+    """
+    return answer(prompt, channel_id="scheduler:generate", use_history=False, persist=False)
 
 
 def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -> str:

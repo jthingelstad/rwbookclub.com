@@ -5,8 +5,22 @@ from __future__ import annotations
 import html
 import secrets
 
+import markdown as _markdown
+
 from agent import config, db
 from agent.mail import tinylytics
+
+
+def _render_markdown(text: str) -> str:
+    """Render Oliver's markdown body to email-safe HTML.
+
+    The text is html-escaped first so any literal angle brackets stay literal (and no raw
+    HTML from the model is ever emitted); markdown syntax (*italic*, **bold**, lists) is
+    untouched by escaping and renders normally. `nl2br` keeps single newlines as breaks,
+    matching how Oliver writes email paragraphs.
+    """
+    escaped = html.escape(text or "")
+    return _markdown.markdown(escaped, extensions=["nl2br", "sane_lists"])
 
 
 def enabled() -> bool:
@@ -22,12 +36,7 @@ def new_token() -> str:
 
 
 def text_to_html(text: str, *, tracking_url_value: str | None = None) -> str:
-    paragraphs = []
-    for block in (text or "").strip().split("\n\n"):
-        escaped = html.escape(block.strip()).replace("\n", "<br>")
-        if escaped:
-            paragraphs.append(f"<p>{escaped}</p>")
-    body = "\n".join(paragraphs) or "<p></p>"
+    body = _render_markdown(text) or "<p></p>"
     footer = ""
     pixel = ""
     if tracking_url_value:

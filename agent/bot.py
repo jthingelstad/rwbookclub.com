@@ -25,7 +25,7 @@ import requests
 from discord.ext import tasks
 
 from agent import commands, config, context as kb, db, gitwrite, oliver
-from agent.mail import email_jmap, email_policy, mail_archive, tinylytics
+from agent.mail import email_jmap, email_policy, mail_archive, outbound, tinylytics
 from agent.club import meeting_rules
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -458,7 +458,7 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
                 oliver.answer, prompt, channel_id, msg.speaker, f"email:{msg.from_email.lower()}", msg.id,
             )
         sent = await asyncio.to_thread(
-            email_jmap.send_email,
+            outbound.send,
             to=decision.reply_to or [msg.from_email],
             subject=msg.reply_subject,
             body=reply,

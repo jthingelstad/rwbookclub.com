@@ -19,7 +19,7 @@ from discord.ext import tasks
 
 from agent import (config, context as kb, corpus_read, corpus_write, db, oliver,
                    scheduler)
-from agent.mail import email_jmap, email_tracking, signature
+from agent.mail import email_jmap, outbound
 from agent.club import meeting_campaign, meeting_rules, openlibrary, reviews
 
 log = logging.getLogger("oliver.commands")
@@ -254,34 +254,19 @@ async def _send_roll_call_email_to_member(member: dict, status: dict) -> dict | 
         fallback=_roll_call_email_body(member["name"], status),
         medium="email",
     )
-    body = body.rstrip() + "\n\n" + await asyncio.to_thread(signature.email_signature)
-    contact_id = None
-    try:
-        contact_id, html_body, tracking_token = email_tracking.prepare_outbound(
-            text=body,
-            meeting_key=meeting["meetingKey"],
-            member_slug=member["slug"],
-            kind="roll_call",
-            subject=subject,
-        )
-        sent_email = await asyncio.to_thread(
-            email_jmap.send_email,
-            to=[email["email"]],
-            subject=subject,
-            body=body,
-            html_body=html_body,
-        )
-        email_tracking.mark_outbound_sent(contact_id, tracking_token, sent_email.get("emailId"))
-        db.add_activity(
-            "email_sent",
-            "Roll-call email sent",
-            f"Member: {member['slug']}\nTo: {email['email']}\nSubject: {subject}",
-        )
-        return sent_email
-    except Exception:
-        if contact_id is not None:
-            email_tracking.mark_outbound_failed(contact_id)
-        raise
+    sent_email = await asyncio.to_thread(
+        outbound.send,
+        to=[email["email"]],
+        subject=subject,
+        body=body,
+        track={"meeting_key": meeting["meetingKey"], "member_slug": member["slug"], "kind": "roll_call"},
+    )
+    db.add_activity(
+        "email_sent",
+        "Roll-call email sent",
+        f"Member: {member['slug']}\nTo: {email['email']}\nSubject: {subject}",
+    )
+    return sent_email
 
 
 async def _send_reading_checkin_email_to_member(member: dict, meeting: dict,
@@ -308,34 +293,19 @@ async def _send_reading_checkin_email_to_member(member: dict, meeting: dict,
         fallback=_reading_checkin_body(member["name"], meeting, note=note),
         medium="email",
     )
-    body = body.rstrip() + "\n\n" + await asyncio.to_thread(signature.email_signature)
-    contact_id = None
-    try:
-        contact_id, html_body, tracking_token = email_tracking.prepare_outbound(
-            text=body,
-            meeting_key=meeting["meetingKey"],
-            member_slug=member["slug"],
-            kind="reading_checkin",
-            subject=subject,
-        )
-        sent = await asyncio.to_thread(
-            email_jmap.send_email,
-            to=[email["email"]],
-            subject=subject,
-            body=body,
-            html_body=html_body,
-        )
-        email_tracking.mark_outbound_sent(contact_id, tracking_token, sent.get("emailId"))
-        db.add_activity(
-            "email_sent",
-            "Reading check-in email sent",
-            f"Member: {member['slug']}\nTo: {email['email']}\nSubject: {subject}\nEmail ID: {sent.get('emailId')}",
-        )
-        return sent
-    except Exception:
-        if contact_id is not None:
-            email_tracking.mark_outbound_failed(contact_id)
-        raise
+    sent = await asyncio.to_thread(
+        outbound.send,
+        to=[email["email"]],
+        subject=subject,
+        body=body,
+        track={"meeting_key": meeting["meetingKey"], "member_slug": member["slug"], "kind": "reading_checkin"},
+    )
+    db.add_activity(
+        "email_sent",
+        "Reading check-in email sent",
+        f"Member: {member['slug']}\nTo: {email['email']}\nSubject: {subject}\nEmail ID: {sent.get('emailId')}",
+    )
+    return sent
 
 
 def _should_start_scheduled_roll_call(status: dict, roll_call: dict | None) -> bool:

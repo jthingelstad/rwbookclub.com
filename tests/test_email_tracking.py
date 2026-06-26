@@ -15,6 +15,15 @@ def test_text_to_html_escapes_and_includes_tracking_notice():
     assert "records whether this email was opened" in html
 
 
+def test_text_to_html_renders_markdown():
+    from agent.mail import email_tracking
+
+    html = email_tracking.text_to_html("Read *Stiff* by **Mary Roach**\n\n- one\n- two")
+    assert "<em>Stiff</em>" in html
+    assert "<strong>Mary Roach</strong>" in html
+    assert "<li>one</li>" in html and "<li>two</li>" in html
+
+
 def test_prepare_outbound_creates_contact_and_tracking(monkeypatch, fresh_db):
     from agent import config
     from agent.mail import email_tracking
