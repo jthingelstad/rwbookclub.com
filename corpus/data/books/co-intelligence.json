@@ -19,5 +19,12 @@
     "Science",
     "nyt:combined-print-and-e-book-nonfiction=2024-04-21",
     "New York Times bestseller"
-  ]
+  ],
+  "editionCount": 4,
+  "languages": [
+    "eng"
+  ],
+  "ratingsAverage": 4.0,
+  "ratingsCount": 4,
+  "wikidataId": "Q126021752"
 }

@@ -1,4 +1,16 @@
 {
   "name": "George Gilder",
-  "bio": "George Franklin Gilder is an American investor, author, economist, and co-founder of the Discovery Institute. His 1981 book, Wealth and Poverty, advanced a case for supply-side economics and capitalism during the early months of the Reagan administration. He is the chairman of George Gilder Fund Management, LLC."
+  "bio": "George Franklin Gilder is an American investor, author, economist, and co-founder of the Discovery Institute. His 1981 book, Wealth and Poverty, advanced a case for supply-side economics and capitalism during the early months of the Reagan administration. He is the chairman of George Gilder Fund Management, LLC.",
+  "birthYear": 1939,
+  "nationality": "United States",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/George_Gilder",
+  "notableWorks": [
+    "The party that lost its head",
+    "Wealth and poverty",
+    "Men and Marriage",
+    "The Scandal of Money: Why Wall Street Recovers",
+    "Life after Google",
+    "Life after Capitalism"
+  ],
+  "photoCredit": "Wikimedia Commons"
 }

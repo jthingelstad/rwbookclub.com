@@ -1,4 +1,14 @@
 {
   "name": "Vernor Vinge",
-  "bio": "A retired San Diego State University Professor of Mathematics, computer scientist, and science fiction author."
+  "bio": "A retired San Diego State University Professor of Mathematics, computer scientist, and science fiction author.",
+  "birthYear": 1944,
+  "deathYear": 2024,
+  "nationality": "United States",
+  "website": "http://en.wikipedia.org/wiki/Vernor_Vinge",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Vernor_Vinge",
+  "notableWorks": [
+    "True Names",
+    "A Fire Upon the Deep"
+  ],
+  "photoCredit": "Open Library"
 }

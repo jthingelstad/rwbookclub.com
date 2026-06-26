@@ -74,10 +74,31 @@ eleventyComputed:
     {% if book.fiction %}
       <div class="meta-row"><dt>Form</dt><dd>Fiction</dd></div>
     {% endif %}
+    {% if book.series %}
+      <div class="meta-row"><dt>Series</dt><dd>{{ book.series }}</dd></div>
+    {% endif %}
+    {% if book.ratingsAverage %}
+      <div class="meta-row">
+        <dt>Reader rating</dt>
+        <dd>{{ book.ratingsAverage }} / 5{% if book.ratingsCount %} <span class="meta-sub">({{ book.ratingsCount }} ratings)</span>{% endif %} <span class="meta-sub">· Open Library</span></dd>
+      </div>
+    {% endif %}
+    {% if book.editionCount %}
+      <div class="meta-row"><dt>Editions</dt><dd>{{ book.editionCount }}</dd></div>
+    {% endif %}
+    {% if book.awards and book.awards.length %}
+      <div class="meta-row"><dt>Literary awards</dt><dd>{{ book.awards | join(", ") }}</dd></div>
+    {% endif %}
     {% if book.olKey %}
       <div class="meta-row">
         <dt>Open Library</dt>
         <dd><a href="https://openlibrary.org{{ book.olKey }}" rel="external noopener">View record →</a></dd>
+      </div>
+    {% endif %}
+    {% if book.wikipediaUrl %}
+      <div class="meta-row">
+        <dt>Wikipedia</dt>
+        <dd><a href="{{ book.wikipediaUrl }}" rel="external noopener">View article →</a></dd>
       </div>
     {% endif %}
     {% if book.isbn13 %}

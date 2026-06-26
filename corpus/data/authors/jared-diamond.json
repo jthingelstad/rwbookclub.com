@@ -1,4 +1,17 @@
 {
   "name": "Jared Diamond",
-  "bio": "Jared Mason Diamond is an American scientist and author best known for his popular science books."
+  "bio": "Jared Mason Diamond is an American scientist and author best known for his popular science books.",
+  "birthYear": 1937,
+  "nationality": "United States",
+  "website": "http://en.wikipedia.org/wiki/Jared_Diamond",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Jared_Diamond",
+  "notableWorks": [
+    "The Third Chimpanzee",
+    "Why Is Sex Fun?",
+    "Guns, Germs, and Steel",
+    "Collapse: How Societies Choose to Fail or Succeed",
+    "The World Until Yesterday",
+    "Upheaval: How Nations Cope with Crisis and Change"
+  ],
+  "photoCredit": "Open Library"
 }

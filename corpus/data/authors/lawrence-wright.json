@@ -1,4 +1,12 @@
 {
   "name": "Lawrence Wright",
-  "bio": "Lawrence Wright is an American writer and journalist, a staff writer for The New Yorker magazine, and fellow at the Center for Law and Security at the New York University School of Law."
+  "bio": "Lawrence Wright is an American writer and journalist, a staff writer for The New Yorker magazine, and fellow at the Center for Law and Security at the New York University School of Law.",
+  "birthYear": 1947,
+  "nationality": "United States",
+  "website": "http://www.lawrencewright.com/",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Lawrence_Wright",
+  "notableWorks": [
+    "The Looming Tower"
+  ],
+  "photoCredit": "Open Library"
 }

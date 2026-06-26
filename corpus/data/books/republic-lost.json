@@ -28,5 +28,13 @@
     "USA",
     "Kongress",
     "USA Congress"
-  ]
+  ],
+  "editionCount": 7,
+  "languages": [
+    "eng"
+  ],
+  "ratingsAverage": 5.0,
+  "ratingsCount": 2,
+  "wikidataId": "Q7314374",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Republic%2C_Lost"
 }

@@ -28,5 +28,13 @@
     "Kognition",
     "Philosophie",
     "Visuelle Wahrnehmung"
-  ]
+  ],
+  "editionCount": 3,
+  "languages": [
+    "eng"
+  ],
+  "ratingsAverage": 5.0,
+  "ratingsCount": 1,
+  "wikidataId": "Q60715087",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Unflattening"
 }

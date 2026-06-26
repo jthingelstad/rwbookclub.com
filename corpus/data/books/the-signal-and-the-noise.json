@@ -28,5 +28,19 @@
     "Bayes-Entscheidungstheorie",
     "Prognose",
     "Prévision"
-  ]
+  ],
+  "editionCount": 10,
+  "languages": [
+    "spa",
+    "tur",
+    "eng"
+  ],
+  "ratingsAverage": 3.9,
+  "ratingsCount": 48,
+  "series": "The New York Times Best Seller list",
+  "awards": [
+    "Phi Beta Kappa Award in Science"
+  ],
+  "wikidataId": "Q17154021",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Signal_and_the_Noise"
 }

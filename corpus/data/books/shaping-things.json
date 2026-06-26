@@ -9,7 +9,7 @@
   "fiction": false,
   "publicationYear": 2005,
   "pageCount": 149,
-  "isbn13": null,
+  "isbn13": "9780262195331",
   "olKey": "/works/OL1888034W",
   "synopsis": null,
   "picker": [
@@ -19,5 +19,9 @@
     "Technology assessment",
     "Technological forecasting",
     "Technology, social aspects"
+  ],
+  "editionCount": 2,
+  "languages": [
+    "eng"
   ]
 }

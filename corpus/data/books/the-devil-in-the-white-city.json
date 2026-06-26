@@ -29,5 +29,15 @@
     "World's Columbian Exposition (1893 : Chicago, Ill.) (NOBLE)39295",
     "World's Columbian Exposition (1893 : Chicago, Ill)",
     "Murder, illinois"
-  ]
+  ],
+  "editionCount": 25,
+  "languages": [
+    "chi",
+    "spa",
+    "eng"
+  ],
+  "ratingsAverage": 3.95,
+  "ratingsCount": 61,
+  "wikidataId": "Q283445",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Devil_in_the_White_City"
 }

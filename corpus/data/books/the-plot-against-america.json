@@ -28,5 +28,23 @@
     "Presidentes",
     "Political fiction",
     "Presidents"
-  ]
+  ],
+  "editionCount": 43,
+  "languages": [
+    "heb",
+    "spa",
+    "eng",
+    "fre",
+    "por",
+    "ger",
+    "ita"
+  ],
+  "ratingsAverage": 3.93,
+  "ratingsCount": 43,
+  "awards": [
+    "Society of American Historians Prize for Historical Fiction",
+    "Sidewise Award for Alternate History"
+  ],
+  "wikidataId": "Q1758811",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Plot_Against_America"
 }

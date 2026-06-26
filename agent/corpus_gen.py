@@ -40,6 +40,13 @@ def _write_json(path: Path, obj: dict) -> None:
     path.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n")
 
 
+def _add(doc: dict, key: str, value) -> None:
+    """Append an enrichment key only when it carries a real value — keeps the
+    corpus files clean (and diffs small) for entities that didn't enrich."""
+    if value not in (None, "", [], {}):
+        doc[key] = value
+
+
 def _book_doc(b: dict) -> dict:
     doc = {
         "bookId": b["id"],
@@ -57,6 +64,16 @@ def _book_doc(b: dict) -> dict:
     }
     if b["subjects_json"] is not None:   # omit the key entirely when absent (corpus quirk)
         doc["subjects"] = b["subjects"]
+    # External enrichment (club_book_enrichment) — omitted when empty.
+    _add(doc, "editionCount", b.get("edition_count"))
+    _add(doc, "languages", b.get("languages"))
+    _add(doc, "ratingsAverage", b.get("ratings_average"))
+    _add(doc, "ratingsCount", b.get("ratings_count"))
+    _add(doc, "series", b.get("series"))
+    _add(doc, "awards", b.get("awards"))          # literary awards (≠ club_award_*)
+    _add(doc, "wikidataId", b.get("wikidata_id"))
+    _add(doc, "wikipediaUrl", b.get("wikipedia_url"))
+    _add(doc, "goodreadsId", b.get("goodreads_id"))
     return doc
 
 
@@ -82,6 +99,16 @@ def _author_doc(a: dict) -> dict:
     doc = {"name": a["name"]}
     if a["bio"]:                          # bio omitted (not null) when empty
         doc["bio"] = a["bio"]
+    # External enrichment (club_author_enrichment) — omitted when empty. The portrait
+    # itself stays a filesystem asset (assets/images/authors/); photoCredit carries
+    # its attribution for display.
+    _add(doc, "birthYear", a.get("birth_year"))
+    _add(doc, "deathYear", a.get("death_year"))
+    _add(doc, "nationality", a.get("nationality"))
+    _add(doc, "website", a.get("website"))
+    _add(doc, "wikipediaUrl", a.get("wikipedia_url"))
+    _add(doc, "notableWorks", a.get("notable_works"))
+    _add(doc, "photoCredit", a.get("photo_credit"))
     return doc
 
 

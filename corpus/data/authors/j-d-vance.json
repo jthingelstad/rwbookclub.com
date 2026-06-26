@@ -1,4 +1,13 @@
 {
   "name": "J. D. Vance",
-  "bio": "American venture capitalist, author, and the junior United States senator from Ohio since 2023."
+  "bio": "American venture capitalist, author, and the junior United States senator from Ohio since 2023.",
+  "birthYear": 1984,
+  "nationality": "United States",
+  "website": "https://jdvance.com",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/JD_Vance",
+  "notableWorks": [
+    "Hillbilly Elegy",
+    "Rockbridge Network"
+  ],
+  "photoCredit": "Open Library"
 }

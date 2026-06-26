@@ -13,13 +13,53 @@ eleventyComputed:
   <a class="back" href="/authors/">← All authors</a>
 
   <header class="author-header">
-    <p class="kicker">Author</p>
-    <h1>{{ author.name }}</h1>
+    {% if author.hasPhoto and author.photoWidths %}
+      <div class="portrait">
+        <img
+          src="/assets/images/authors/{{ author.slug }}-{{ author.photoWidths[0] }}.jpg"
+          srcset="{%- for w in author.photoWidths -%}/assets/images/authors/{{ author.slug }}-{{ w }}.jpg {{ w }}w{% if not loop.last %}, {% endif %}{%- endfor -%}"
+          sizes="(max-width: 720px) 40vw, 240px"
+          alt="{{ author.name }}" />
+      </div>
+    {% endif %}
+    <div class="author-header-text">
+      <p class="kicker">Author</p>
+      <h1>{{ author.name }}</h1>
+      {% if author.lifespan or author.nationality %}
+        <p class="author-meta">
+          {%- if author.nationality %}{{ author.nationality }}{% endif -%}
+          {%- if author.lifespan %}{% if author.nationality %} · {% endif %}{{ author.lifespan }}{% endif -%}
+        </p>
+      {% endif %}
+    </div>
   </header>
 
   {% if author.bio %}
     <section class="book-section">
       <p class="author-bio">{{ author.bio }}</p>
+    </section>
+  {% endif %}
+
+  {% if author.notableWorks and author.notableWorks.length %}
+    <section class="book-section">
+      <h2>Notable works</h2>
+      <ul class="author-notable">
+        {% for work in author.notableWorks %}<li>{{ work }}</li>{% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if author.website or author.wikipediaUrl %}
+    <section class="book-section author-links">
+      <ul class="external-links">
+        {% if author.website %}
+          <li><a href="{{ author.website }}" rel="external noopener">{{ author.website | replace("https://", "") | replace("http://", "") | replace("www.", "") }}</a></li>
+        {% endif %}
+        {% if author.wikipediaUrl %}
+          <li><a href="{{ author.wikipediaUrl }}" rel="external noopener">Wikipedia →</a></li>
+        {% endif %}
+      </ul>
+      {% if author.photoCredit %}<p class="photo-credit">Portrait: {{ author.photoCredit }}</p>{% endif %}
     </section>
   {% endif %}
 

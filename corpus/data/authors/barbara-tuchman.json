@@ -1,4 +1,14 @@
 {
   "name": "Barbara Tuchman",
-  "bio": "American historian and author."
+  "bio": "American historian and author.",
+  "birthYear": 1912,
+  "deathYear": 1989,
+  "nationality": "United States",
+  "website": "https://en.wikipedia.org/wiki/Barbara_W._Tuchman",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Barbara_W._Tuchman",
+  "notableWorks": [
+    "Stilwell and the American Experience in China, 1911-45",
+    "The Guns of August"
+  ],
+  "photoCredit": "Open Library"
 }

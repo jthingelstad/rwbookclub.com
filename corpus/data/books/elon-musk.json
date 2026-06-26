@@ -28,5 +28,14 @@
     "Inventors",
     "nyt:combined-print-and-e-book-nonfiction=2015-06-07",
     "New York Times bestseller"
-  ]
+  ],
+  "editionCount": 34,
+  "languages": [
+    "heb",
+    "spa",
+    "eng",
+    "pol"
+  ],
+  "ratingsAverage": 4.07,
+  "ratingsCount": 167
 }

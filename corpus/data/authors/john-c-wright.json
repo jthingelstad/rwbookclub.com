@@ -1,4 +1,9 @@
 {
   "name": "John C. Wright",
-  "bio": "John C. Wright (John Charles Justin Wright, born 1961) is an American author of science fiction and fantasy novels."
+  "bio": "John C. Wright (John Charles Justin Wright, born 1961) is an American author of science fiction and fantasy novels.",
+  "birthYear": 1961,
+  "nationality": "United States",
+  "website": "https://scifiwright.com/",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/John_C._Wright_%28author%29",
+  "photoCredit": "Open Library"
 }

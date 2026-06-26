@@ -1,4 +1,17 @@
 {
   "name": "Alan Moore",
-  "bio": "British comic book writer."
+  "bio": "British comic book writer.",
+  "birthYear": 1953,
+  "nationality": "United Kingdom",
+  "website": "https://en.wikipedia.org/wiki/Alan_Moore",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Alan_Moore",
+  "notableWorks": [
+    "Batman: The Killing Joke",
+    "The League of Extraordinary Gentlemen",
+    "Lost Girls",
+    "V for Vendetta",
+    "Voice of the Fire",
+    "Watchmen"
+  ],
+  "photoCredit": "Open Library"
 }

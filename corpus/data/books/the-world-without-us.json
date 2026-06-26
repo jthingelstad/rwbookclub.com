@@ -28,5 +28,17 @@
     "Mensheid",
     "Cultura material",
     "Het fictieve"
-  ]
+  ],
+  "editionCount": 22,
+  "languages": [
+    "aze",
+    "spa",
+    "eng",
+    "ger",
+    "chi"
+  ],
+  "ratingsAverage": 4.38,
+  "ratingsCount": 8,
+  "wikidataId": "Q611356",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_World_Without_Us"
 }

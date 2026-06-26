@@ -19,5 +19,13 @@
     "nyt:paperback-nonfiction=2018-05-27",
     "New York Times bestseller",
     "Buddhism"
-  ]
+  ],
+  "editionCount": 2,
+  "languages": [
+    "eng"
+  ],
+  "ratingsAverage": 5.0,
+  "ratingsCount": 2,
+  "wikidataId": "Q48726642",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Why_Buddhism_Is_True"
 }

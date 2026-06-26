@@ -28,5 +28,15 @@
     "American Civil War",
     "Lincoln-Douglas debates",
     "Democratic Party"
-  ]
+  ],
+  "editionCount": 14,
+  "languages": [
+    "eng",
+    "chi",
+    "kor"
+  ],
+  "ratingsAverage": 3.8,
+  "ratingsCount": 10,
+  "wikidataId": "Q7691655",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Team_of_Rivals"
 }

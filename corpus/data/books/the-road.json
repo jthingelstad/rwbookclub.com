@@ -28,5 +28,30 @@
     "Robinsonades",
     "Apocalyptic fiction",
     "Novels"
-  ]
+  ],
+  "editionCount": 69,
+  "languages": [
+    "por",
+    "eng",
+    "spa",
+    "pol",
+    "fre",
+    "heb",
+    "chi",
+    "cat",
+    "ita"
+  ],
+  "ratingsAverage": 3.88,
+  "ratingsCount": 170,
+  "awards": [
+    "Ignotus Award for Best Foreign Novel",
+    "NPR Top 100 Science Fiction and Fantasy Books",
+    "Pulitzer Prize for Fiction",
+    "James Tait Black Memorial Prize",
+    "Believer Book Award",
+    "Oprah's Book Club",
+    "Tähtivaeltaja Award"
+  ],
+  "wikidataId": "Q1140295",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Road"
 }

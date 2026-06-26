@@ -21,7 +21,7 @@ from corpus.paths import DATA_DIR
 BOOK_KEEP = [
     "bookId", "title", "subtitle", "authors", "topic", "fiction",
     "publicationYear", "pageCount", "isbn13", "olKey", "synopsis",
-    "subjects",  # OL subject tags backfilled via corpus.openlibrary_subjects
+    "subjects",  # OL subject tags filled by the enrichment loop (agent.enrich)
 ]
 MEMBER_KEEP = ["name", "isCurrent", "website"]
 

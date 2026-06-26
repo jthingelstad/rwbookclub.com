@@ -28,5 +28,13 @@
     "nyt:business-books=2013-11-10",
     "New York Times bestseller",
     "New York Times reviewed"
-  ]
+  ],
+  "editionCount": 15,
+  "languages": [
+    "eng"
+  ],
+  "ratingsAverage": 4.19,
+  "ratingsCount": 27,
+  "wikidataId": "Q22908276",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Everything_Store"
 }

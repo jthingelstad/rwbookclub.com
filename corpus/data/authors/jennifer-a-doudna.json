@@ -1,4 +1,12 @@
 {
   "name": "Jennifer A. Doudna",
-  "bio": "JENNIFER A. DOUDNA, Ph.D. is a professor in the Chemistry and the Molecular and Cell Biology Departments at the University of California, Berkeley, investigator with the Howard Hughes Medical Institute, and researcher in the Molecular Biophysics and Integrated Bioimaging Division at the Lawrence Berkeley National Laboratory. She is internationally recognized as a leading expert on RNA-protein biochemistry, CRISPR biology, and genome engineering. She lives in the Bay Area."
+  "bio": "JENNIFER A. DOUDNA, Ph.D. is a professor in the Chemistry and the Molecular and Cell Biology Departments at the University of California, Berkeley, investigator with the Howard Hughes Medical Institute, and researcher in the Molecular Biophysics and Integrated Bioimaging Division at the Lawrence Berkeley National Laboratory. She is internationally recognized as a leading expert on RNA-protein biochemistry, CRISPR biology, and genome engineering. She lives in the Bay Area.",
+  "birthYear": 1964,
+  "nationality": "United States",
+  "website": "https://en.wikipedia.org/wiki/Jennifer_Doudna",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Jennifer_Doudna",
+  "notableWorks": [
+    "Jennifer Doudna: We can now edit our DNA. But let's do it wisely"
+  ],
+  "photoCredit": "Open Library"
 }

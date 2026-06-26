@@ -28,5 +28,21 @@
     "Good and evil",
     "Bandes dessinées",
     "Comicroman"
-  ]
+  ],
+  "editionCount": 34,
+  "languages": [
+    "por",
+    "ger",
+    "eng",
+    "fre",
+    "spa"
+  ],
+  "ratingsAverage": 4.48,
+  "ratingsCount": 233,
+  "awards": [
+    "NPR Top 100 Science Fiction and Fantasy Books",
+    "Eisner Award for Best Limited Series"
+  ],
+  "wikidataId": "Q128444",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Watchmen"
 }

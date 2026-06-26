@@ -28,5 +28,21 @@
     "Sociobiologie",
     "Évolution (biologie)",
     "Memen"
-  ]
+  ],
+  "editionCount": 41,
+  "languages": [
+    "eng",
+    "ger",
+    "ara",
+    "spa",
+    "dut",
+    "tur",
+    "kor",
+    "fre",
+    "pol"
+  ],
+  "ratingsAverage": 4.37,
+  "ratingsCount": 73,
+  "wikidataId": "Q212789",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Selfish_Gene"
 }

@@ -28,5 +28,14 @@
     "New York Times bestseller",
     "Medical care",
     "Intensive Care Units"
-  ]
+  ],
+  "editionCount": 10,
+  "languages": [
+    "eng",
+    "chi"
+  ],
+  "ratingsAverage": 3.89,
+  "ratingsCount": 35,
+  "wikidataId": "Q16829327",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Checklist_Manifesto"
 }

@@ -28,5 +28,16 @@
     "Dreams",
     "nyt:science=2017-11-12",
     "New York Times bestseller"
-  ]
+  ],
+  "editionCount": 11,
+  "languages": [
+    "tur",
+    "spa",
+    "eng",
+    "por"
+  ],
+  "ratingsAverage": 4.52,
+  "ratingsCount": 31,
+  "wikidataId": "Q42530022",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Why_We_Sleep"
 }

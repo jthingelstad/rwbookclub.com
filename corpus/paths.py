@@ -20,6 +20,7 @@ RAW_DATA_DIR = DATA_DIR / "raw"
 # image step writes them straight into the website tree.
 COVERS_DIR = REPO_ROOT / "website" / "src" / "assets" / "images" / "covers"
 MEMBERS_IMG_DIR = REPO_ROOT / "website" / "src" / "assets" / "images" / "members"
+AUTHORS_IMG_DIR = REPO_ROOT / "website" / "src" / "assets" / "images" / "authors"
 
 
 _slug_re = re.compile(r"[^a-z0-9]+")

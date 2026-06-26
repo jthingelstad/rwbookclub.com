@@ -1,4 +1,18 @@
 {
   "name": "David Graeber",
-  "bio": "**David Rolfe Graeber** (/ˈɡreɪbər/; February 12, 1961 – September 2, 2020) was an American anthropologist, anarchist activist and author known for his books *Debt: The First 5000 Years* (2011), *The Utopia of Rules* (2015) and *Bullshit Jobs: A Theory* (2018). He was a professor of anthropology at the London School of Economics. As an assistant professor and associate professor of anthropology at Yale from 1998–2007 he specialised in theories of value and social theory. The university's decision not to rehire him when he would otherwise have become eligible for tenure sparked an academic controversy, and a petition with more than 4,500 signatures. He went on to become, from 2007–13, Reader in Social Anthropology at Goldsmiths, University of London."
+  "bio": "**David Rolfe Graeber** (/ˈɡreɪbər/; February 12, 1961 – September 2, 2020) was an American anthropologist, anarchist activist and author known for his books *Debt: The First 5000 Years* (2011), *The Utopia of Rules* (2015) and *Bullshit Jobs: A Theory* (2018). He was a professor of anthropology at the London School of Economics. As an assistant professor and associate professor of anthropology at Yale from 1998–2007 he specialised in theories of value and social theory. The university's decision not to rehire him when he would otherwise have become eligible for tenure sparked an academic controversy, and a petition with more than 4,500 signatures. He went on to become, from 2007–13, Reader in Social Anthropology at Goldsmiths, University of London.",
+  "birthYear": 1961,
+  "deathYear": 2020,
+  "nationality": "United States",
+  "website": "http://www.reddit.com/r/IAmA/comments/17fi6l/i_am_david_graeber_an_anthropologist_activist/",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/David_Graeber",
+  "notableWorks": [
+    "Fragments of an Anarchist Anthropology",
+    "Debt",
+    "Toward an Anthropological Theory of Value",
+    "The Utopia of Rules",
+    "Direct Action",
+    "The Democracy Project"
+  ],
+  "photoCredit": "Open Library"
 }

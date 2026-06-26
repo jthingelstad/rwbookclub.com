@@ -1,4 +1,17 @@
 {
   "name": "Neil Gaiman",
-  "bio": "Neil Richard MacKinnon Gaiman born Neil Richard Gaiman, 10 November 1960) is an English author of short fiction, novels, comic books, graphic novels, audio theatre, and films. His notable works include the comic book series The Sandman and novels Stardust, American Gods, Coraline, and The Graveyard Book. He has won numerous awards, including the Hugo, Nebula, and Bram Stoker awards, as well as the Newbery and Carnegie medals. He is the first author to win both the Newbery and the Carnegie medals for the same work, The Graveyard Book (2008). In 2013, The Ocean at the End of the Lane was voted Book of the Year in the British National Book Awards."
+  "bio": "Neil Richard MacKinnon Gaiman born Neil Richard Gaiman, 10 November 1960) is an English author of short fiction, novels, comic books, graphic novels, audio theatre, and films. His notable works include the comic book series The Sandman and novels Stardust, American Gods, Coraline, and The Graveyard Book. He has won numerous awards, including the Hugo, Nebula, and Bram Stoker awards, as well as the Newbery and Carnegie medals. He is the first author to win both the Newbery and the Carnegie medals for the same work, The Graveyard Book (2008). In 2013, The Ocean at the End of the Lane was voted Book of the Year in the British National Book Awards.",
+  "birthYear": 1960,
+  "nationality": "United Kingdom",
+  "website": "https://neilgaiman.com",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Neil_Gaiman",
+  "notableWorks": [
+    "The Sandman",
+    "American Gods",
+    "Stardust",
+    "Coraline",
+    "The Graveyard Book",
+    "Good Omens"
+  ],
+  "photoCredit": "Open Library"
 }

@@ -28,5 +28,16 @@
     "New York Times reviewed",
     "Science des matériaux",
     "Ouvrages de vulgarisation"
-  ]
+  ],
+  "editionCount": 9,
+  "languages": [
+    "eng"
+  ],
+  "ratingsAverage": 4.15,
+  "ratingsCount": 13,
+  "awards": [
+    "Physics World Book of the Year Award"
+  ],
+  "wikidataId": "Q30893129",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Stuff_Matters"
 }

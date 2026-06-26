@@ -19,6 +19,8 @@ os.environ["OLIVER_DB_PATH"] = str(_TMP_DIR / "test.db")
 # Don't push from tests — if something accidentally exercises gitwrite, fail closed.
 os.environ.setdefault("OLIVER_GIT_PUSH", "0")
 os.environ.setdefault("OLIVER_GIT_DRYRUN", "1")
+# Keep /oliver add-book offline in tests — no inline external enrichment (network).
+os.environ["OLIVER_ENRICH_ON_WRITE"] = "0"
 # Keep email tests and dispatch tests offline even when the host .env has a live token.
 os.environ["FASTMAIL_JMAP_TOKEN"] = ""
 os.environ["TINYLYTICS_SITE_ID"] = ""

@@ -28,5 +28,16 @@
     "open_syllabus_project",
     "Médias",
     "Television"
-  ]
+  ],
+  "editionCount": 18,
+  "languages": [
+    "eng",
+    "chi",
+    "fre",
+    "ger"
+  ],
+  "ratingsAverage": 4.16,
+  "ratingsCount": 25,
+  "wikidataId": "Q2916374",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Amusing_Ourselves_to_Death"
 }

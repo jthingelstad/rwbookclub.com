@@ -19,5 +19,12 @@
     "Poetry (poetic works by one author)",
     "New York Times reviewed",
     "Poetry"
-  ]
+  ],
+  "editionCount": 6,
+  "languages": [
+    "eng"
+  ],
+  "ratingsAverage": 4.0,
+  "ratingsCount": 3,
+  "wikidataId": "Q138561847"
 }

@@ -1,4 +1,13 @@
 {
   "name": "Barbara Kingsolver",
-  "bio": "Barbara Kingsolver is an American novelist, essayist and poet."
+  "bio": "Barbara Kingsolver is an American novelist, essayist and poet.",
+  "birthYear": 1955,
+  "nationality": "United States",
+  "website": "http://kingsolver.com/",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Barbara_Kingsolver",
+  "notableWorks": [
+    "The Poisonwood Bible",
+    "Animal, Vegetable, Miracle"
+  ],
+  "photoCredit": "Open Library"
 }

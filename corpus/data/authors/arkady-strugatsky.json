@@ -1,4 +1,10 @@
 {
   "name": "Arkady Strugatsky",
-  "bio": "The brothers Arkady Strugatsky and Boris Strugatsky were Soviet and Russian science-fiction authors who collaborated through most of their careers."
+  "bio": "The brothers Arkady Strugatsky and Boris Strugatsky were Soviet and Russian science-fiction authors who collaborated through most of their careers.",
+  "birthYear": 1925,
+  "deathYear": 1991,
+  "nationality": "Soviet Union",
+  "website": "https://rusf.ru/abs/",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Arkady_Strugatsky",
+  "photoCredit": "Open Library"
 }

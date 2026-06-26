@@ -28,5 +28,28 @@
     "Novela",
     "Astronautas",
     "Reading Level-Grade 7"
-  ]
+  ],
+  "editionCount": 74,
+  "languages": [
+    "pol",
+    "heb",
+    "bel",
+    "eng",
+    "ita",
+    "fre",
+    "chi",
+    "spa",
+    "kor",
+    "ara",
+    "por",
+    "dan"
+  ],
+  "ratingsAverage": 4.4,
+  "ratingsCount": 331,
+  "awards": [
+    "Ignotus Award for Best Foreign Novel",
+    "Seiun Award for Best Translated Long Work"
+  ],
+  "wikidataId": "Q17111624",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Martian_%28Weir_novel%29"
 }

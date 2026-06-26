@@ -1,4 +1,9 @@
 {
   "name": "Steven Strogatz",
-  "bio": "Steven Henry Strogatz is an American mathematician and the Jacob Gould Schurman Professor of Applied Mathematics at Cornell University. He is known for his work on nonlinear systems, including contributions to the study of synchronization in dynamical systems, for his research in a variety of areas of applied mathematics, including mathematical biology and complex network theory, and for his outreach work in the public communication of mathematics."
+  "bio": "Steven Henry Strogatz is an American mathematician and the Jacob Gould Schurman Professor of Applied Mathematics at Cornell University. He is known for his work on nonlinear systems, including contributions to the study of synchronization in dynamical systems, for his research in a variety of areas of applied mathematics, including mathematical biology and complex network theory, and for his outreach work in the public communication of mathematics.",
+  "birthYear": 1959,
+  "nationality": "United States",
+  "website": "http://www.stevenstrogatz.com/",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Steven_Strogatz",
+  "photoCredit": "Open Library"
 }

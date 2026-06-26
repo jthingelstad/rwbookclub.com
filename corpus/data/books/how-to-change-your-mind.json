@@ -28,5 +28,14 @@
     "New York Times bestseller",
     "New York Times reviewed",
     "Mental illness"
-  ]
+  ],
+  "editionCount": 12,
+  "languages": [
+    "spa",
+    "eng"
+  ],
+  "ratingsAverage": 3.0,
+  "ratingsCount": 7,
+  "wikidataId": "Q86663208",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/How_to_Change_Your_Mind"
 }

@@ -24,5 +24,13 @@
     "Language and color",
     "New York Times reviewed",
     "Sprachliches Weltbild"
-  ]
+  ],
+  "editionCount": 9,
+  "languages": [
+    "tur",
+    "eng"
+  ],
+  "ratingsAverage": 3.88,
+  "ratingsCount": 8,
+  "wikidataId": "Q109704889"
 }

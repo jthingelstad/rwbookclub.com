@@ -1,3 +1,9 @@
 {
-  "name": "David Gibbons"
+  "name": "David Gibbons",
+  "bio": "Scott McCloud (born Scott McLeod on June 10, 1960)  is an American cartoonist and theorist on comics as a distinct literary and artistic non-linear medium. He is best known for his non-fiction books about comics: *Understanding Comics* (1993), *Reinventing Comics* (2000), and *Making Comics* (2006), all of which also use the medium of comics.\r\n\r\nSee [TED talk](http://www.ted.com/talks/scott_mccloud_on_comics.html) from McCloud.\r\n\r\n**Source**: [Scott McCloud](https://en.wikipedia.org/wiki/Scott_McCloud) on Wikipedia",
+  "birthYear": 1960,
+  "nationality": "United States",
+  "website": "http://www.scottmccloud.com",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Scott_McCloud",
+  "photoCredit": "Open Library"
 }

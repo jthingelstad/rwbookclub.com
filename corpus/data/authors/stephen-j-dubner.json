@@ -1,4 +1,9 @@
 {
   "name": "Stephen J. Dubner",
-  "bio": "Stephen Joseph Dubner is an American author, journalist, and podcast and radio host. He is co-author of the popular Freakonomics book series: Freakonomics, SuperFreakonomics, Think Like a Freak and When to Rob a Bank. He is the host of Freakonomics Radio."
+  "bio": "Stephen Joseph Dubner is an American author, journalist, and podcast and radio host. He is co-author of the popular Freakonomics book series: Freakonomics, SuperFreakonomics, Think Like a Freak and When to Rob a Bank. He is the host of Freakonomics Radio.",
+  "birthYear": 1963,
+  "nationality": "United States",
+  "website": "http://www.stephenjdubner.com/",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Stephen_J._Dubner",
+  "photoCredit": "Open Library"
 }

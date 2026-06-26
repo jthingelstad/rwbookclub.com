@@ -1191,6 +1191,13 @@ body.stats-page .page {
   border-bottom: 1px solid var(--rule);
   margin-bottom: var(--gap-lg);
 }
+/* With a portrait, lay the header out like the member header (portrait + text). */
+.author-header:has(.portrait) {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: var(--gap-md);
+  align-items: start;
+}
 .author-header h1 {
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 400;
@@ -1198,11 +1205,41 @@ body.stats-page .page {
   margin: 0.3rem 0 0;
   letter-spacing: -0.02em;
 }
+.author-meta {
+  color: var(--ink-soft);
+  margin: 0.5rem 0 0;
+  font-size: var(--type-sm, 0.9rem);
+}
 .author-bio {
   color: var(--ink-soft);
   max-width: 36em;
   line-height: var(--leading);
   margin: 0;
+}
+.author-notable {
+  color: var(--ink-soft);
+  margin: 0;
+  padding-left: 1.2em;
+  line-height: var(--leading);
+}
+.external-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.2rem;
+}
+.external-links a { color: var(--ink-soft); }
+.photo-credit {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  margin: 0.6rem 0 0;
+  opacity: 0.8;
+}
+.meta-sub { color: var(--ink-soft); font-size: 0.85em; }
+@media (max-width: 560px) {
+  .author-header:has(.portrait) { grid-template-columns: 120px 1fr; gap: var(--gap-sm); }
 }
 .author-books h2 {
   font-size: var(--type-h2);

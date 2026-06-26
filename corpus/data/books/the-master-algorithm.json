@@ -29,5 +29,15 @@
     "Information society",
     "SCIENCE",
     "System Theory"
-  ]
+  ],
+  "editionCount": 9,
+  "languages": [
+    "rus",
+    "eng",
+    "ita"
+  ],
+  "ratingsAverage": 3.25,
+  "ratingsCount": 8,
+  "wikidataId": "Q21428158",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Master_Algorithm"
 }

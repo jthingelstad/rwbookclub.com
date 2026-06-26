@@ -9,7 +9,7 @@
   "fiction": false,
   "publicationYear": 2016,
   "pageCount": 762,
-  "isbn13": null,
+  "isbn13": "9780691147727",
   "olKey": "/works/OL17343962W",
   "synopsis": "The trajectory and impetus of American growth from the end of the Civil War until now.",
   "picker": [
@@ -25,5 +25,13 @@
     "Lebensstandard",
     "Wohlstand",
     "Wohlfahrtsmessung"
-  ]
+  ],
+  "editionCount": 1,
+  "languages": [
+    "eng"
+  ],
+  "ratingsAverage": 4.0,
+  "ratingsCount": 2,
+  "wikidataId": "Q97627911",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Rise_and_Fall_of_American_Growth"
 }

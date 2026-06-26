@@ -1,4 +1,9 @@
 {
   "name": "Doris Kearns Goodwin",
-  "bio": "Doris Kearns Goodwin is an American biographer, historian, and political commentator. She has authored biographies of several U.S. presidents. - Wikipedia."
+  "bio": "Doris Kearns Goodwin is an American biographer, historian, and political commentator. She has authored biographies of several U.S. presidents. - Wikipedia.",
+  "birthYear": 1943,
+  "nationality": "United States",
+  "website": "https://doriskearnsgoodwin.com/",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Doris_Kearns_Goodwin",
+  "photoCredit": "Open Library"
 }

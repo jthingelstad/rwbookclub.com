@@ -28,5 +28,18 @@
     "Biography",
     "Women",
     "Ancedotes"
-  ]
+  ],
+  "editionCount": 35,
+  "languages": [
+    "spa",
+    "eng",
+    "ita",
+    "tha",
+    "chi",
+    "por"
+  ],
+  "ratingsAverage": 4.53,
+  "ratingsCount": 19,
+  "wikidataId": "Q61064573",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Educated_%28memoir%29"
 }

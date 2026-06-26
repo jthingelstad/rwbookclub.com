@@ -28,5 +28,17 @@
     "Technische vernieuwing",
     "Auteursrecht",
     "Kultur"
-  ]
+  ],
+  "editionCount": 37,
+  "languages": [
+    "eng",
+    "nor",
+    "hun",
+    "pol",
+    "spa"
+  ],
+  "ratingsAverage": 4.4,
+  "ratingsCount": 5,
+  "wikidataId": "Q830526",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Free_Culture_%28book%29"
 }

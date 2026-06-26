@@ -28,5 +28,17 @@
     "award:nebula_award=novel",
     "Fiction, general",
     "Fiction, science fiction, general"
-  ]
+  ],
+  "editionCount": 17,
+  "languages": [
+    "eng",
+    "ger"
+  ],
+  "ratingsAverage": 3.6,
+  "ratingsCount": 10,
+  "awards": [
+    "Nebula Award for Best Novel"
+  ],
+  "wikidataId": "Q2246747",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Darwin%27s_Radio"
 }

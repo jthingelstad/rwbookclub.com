@@ -9,7 +9,7 @@
   "fiction": false,
   "publicationYear": 1991,
   "pageCount": 205,
-  "isbn13": null,
+  "isbn13": "9780349104423",
   "olKey": "/works/OL4128080W",
   "synopsis": null,
   "picker": [
@@ -22,5 +22,9 @@
     "Human behavior",
     "New York Times reviewed",
     "Psychology, comparative"
+  ],
+  "editionCount": 3,
+  "languages": [
+    "eng"
   ]
 }

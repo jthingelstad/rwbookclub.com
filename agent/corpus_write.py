@@ -13,10 +13,15 @@ if regeneration or git fails afterwards the DB stays ahead and self-heals on the
 
 from __future__ import annotations
 
+import logging
+import os
+
 from corpus.paths import DATA_DIR
 from corpus.validate import validate_data_dir
 from agent import clubdb, corpus_gen, db, gitwrite
 from agent import corpus_read as cr
+
+log = logging.getLogger(__name__)
 
 
 class WriteError(Exception):
@@ -29,6 +34,38 @@ def _validate_or_raise() -> None:
         preview = "; ".join(errors[:3])
         more = f" (+{len(errors) - 3} more)" if len(errors) > 3 else ""
         raise WriteError(f"Corpus validation failed: {preview}{more}")
+
+
+def _enrich_new_book(book_id: int, author_ids: list[int], out_dir) -> list:
+    """Inline external enrichment for a freshly added book + its authors, so a new
+    book lands rich (ratings, editions, links, author bios/portraits) instead of
+    waiting for the next `python -m agent.enrich` pass. Best-effort and isolated in
+    its own connection — network I/O never holds the main write transaction, and any
+    failure is non-fatal (the batch loop fills the gap later). Returns author
+    portrait paths to include in the git commit."""
+    # Off in tests (and any offline context) so writes stay deterministic + network-free.
+    if os.environ.get("OLIVER_ENRICH_ON_WRITE", "1") != "1":
+        return []
+    imgs: list = []
+    try:
+        from agent.enrich.loop import enrich_author, enrich_book
+        from corpus.paths import AUTHORS_IMG_DIR
+        with db.connect() as conn:
+            book = next(b for b in clubdb.all_books(conn) if b["id"] == book_id)
+            enrich_book(conn, book, fetch_images=False)  # cover via _fetch_cover
+            conn.commit()
+            for a in clubdb.all_authors(conn):
+                if a["id"] in author_ids:
+                    enrich_author(conn, a, fetch_images=True)
+                    conn.commit()
+                    imgs += sorted(AUTHORS_IMG_DIR.glob(f"{a['slug']}-*.jpg"))
+            # Regenerate the affected files now that the sidecars are populated.
+            corpus_gen.write_book_file(conn, book_id, out_dir)
+            for aid in author_ids:
+                corpus_gen.write_author_file(conn, aid, out_dir)
+    except Exception:  # noqa: BLE001 - enrichment is best-effort
+        log.exception("inline enrichment failed (non-fatal)")
+    return imgs
 
 
 def _fetch_cover(slug: str, ol_key: str | None) -> list:
@@ -55,10 +92,12 @@ def write_book(meta: dict) -> dict:
         res = clubdb.upsert_book(conn, meta)
         bpath = corpus_gen.write_book_file(conn, res["id"], DATA_DIR)
         apaths = [corpus_gen.write_author_file(conn, aid, DATA_DIR) for aid in res["author_ids"]]
+    # Enrich the new book + its authors (separate connection; regenerates the files).
+    portraits = _enrich_new_book(res["id"], res["author_ids"], DATA_DIR)
     _validate_or_raise()
     covers = _fetch_cover(res["slug"], meta.get("olKey"))
     gitwrite.commit_paths(
-        [bpath, *apaths, *covers],
+        [bpath, *apaths, *covers, *portraits],
         f"{'Update' if res['existed'] else 'Add'} book: {title}",
     )
     return {"slug": res["slug"], "title": title, "authors": meta.get("authors") or [],

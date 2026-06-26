@@ -24,5 +24,16 @@
     "nyt:combined-print-and-e-book-fiction=2017-02-26",
     "New York Times bestseller",
     "New York Times reviewed"
-  ]
+  ],
+  "editionCount": 25,
+  "languages": [
+    "srp",
+    "eng",
+    "por",
+    "pol"
+  ],
+  "ratingsAverage": 4.4,
+  "ratingsCount": 35,
+  "wikidataId": "Q53017202",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Norse_Mythology_%28book%29"
 }

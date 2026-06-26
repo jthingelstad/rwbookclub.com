@@ -28,5 +28,22 @@
     "POLITICAL SCIENCE",
     "Essays",
     "Government"
-  ]
+  ],
+  "editionCount": 64,
+  "languages": [
+    "dut",
+    "eng",
+    "srp",
+    "fre",
+    "ger",
+    "spa",
+    "ara"
+  ],
+  "ratingsAverage": 4.57,
+  "ratingsCount": 7,
+  "awards": [
+    "Le Monde's 100 Books of the Century"
+  ],
+  "wikidataId": "Q1327843",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Origins_of_Totalitarianism"
 }

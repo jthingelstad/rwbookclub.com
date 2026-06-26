@@ -29,5 +29,13 @@
     "Etiology",
     "Preventive Medicine",
     "Adverse effects"
-  ]
+  ],
+  "editionCount": 4,
+  "languages": [
+    "eng"
+  ],
+  "ratingsAverage": 4.43,
+  "ratingsCount": 7,
+  "wikidataId": "Q1820616",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_China_Study"
 }
