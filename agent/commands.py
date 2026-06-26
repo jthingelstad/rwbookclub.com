@@ -20,7 +20,7 @@ from discord.ext import tasks
 from agent import (config, context as kb, corpus_read, corpus_write, db, oliver,
                    scheduler)
 from agent.mail import email_jmap, outbound
-from agent.club import meeting_campaign, meeting_rules, openlibrary, reviews
+from agent.club import meeting_campaign, meeting_emails, meeting_rules, openlibrary, reviews
 
 log = logging.getLogger("oliver.commands")
 
@@ -898,6 +898,41 @@ async def oliver_tick(interaction: discord.Interaction) -> None:
 
 
 # ── Scheduler ────────────────────────────────────────────────────────────────
+def _chunk(text: str, limit: int) -> list[str]:
+    """Split text into <=limit pieces, breaking at newlines where possible."""
+    out, remaining = [], text
+    while len(remaining) > limit:
+        cut = remaining.rfind("\n", 0, limit)
+        if cut <= 0:
+            cut = limit
+        out.append(remaining[:cut])
+        remaining = remaining[cut:].lstrip("\n")
+    if remaining:
+        out.append(remaining)
+    return out
+
+
+async def _send_club_email(subject: str, body: str) -> None:
+    """Send a club-wide cadence email to the mailing list and mirror it to Discord.
+
+    This is the charter's "approved cadence path" — a direct send to the whole list,
+    distinct from the gated send_email tool. The signature is finalized once so the
+    emailed and Discord-mirrored copies match.
+    """
+    final = outbound.finalize(body)
+    await asyncio.to_thread(
+        outbound.send,
+        to=[config.BOOK_CLUB_MAILING_LIST_ADDRESS],
+        subject=subject,
+        body=final,
+        sign=False,  # already finalized above
+    )
+    main = _client.get_channel(config.MAIN_CHANNEL_ID) if config.MAIN_CHANNEL_ID else None
+    if main is not None:
+        for chunk in _chunk(final, config.MAX_DISCORD_LEN):
+            await main.send(chunk)
+
+
 async def run_scheduler() -> int:
     """Post anything due to its target channel; returns the count posted.
 
@@ -1031,6 +1066,26 @@ async def run_scheduler() -> int:
                             f"Member: {slug}\nMeeting: {meeting['meetingKey']}\nCheck-in: {candidate['checkinNumber']} of {candidate['maxCheckins']}",
                         )
                         posted += 1
+
+            # Club-wide cadence emails (OFF unless CLUB_EMAIL_CADENCE_ENABLED): the
+            # 1-week reminder and the 2-day discussion-topics email, each once per meeting.
+            if config.CLUB_EMAIL_CADENCE_ENABLED and email_jmap.enabled():
+                week_key = f"week-reminder-{meeting['meetingKey']}"
+                if 0 <= days <= 7 and week_key not in db.sent_keys():
+                    email = await asyncio.to_thread(meeting_emails.week_reminder, meeting, status)
+                    await _send_club_email(email["subject"], email["body"])
+                    db.mark_sent(week_key)
+                    db.add_activity("club_email_sent", "1-week reminder sent to the mailing list",
+                                    f"Meeting: {meeting['meetingKey']}")
+                    posted += 1
+                topic_key = f"topic-email-{meeting['meetingKey']}"
+                if 0 <= days <= 2 and topic_key not in db.sent_keys():
+                    email = await asyncio.to_thread(meeting_emails.topic_email, meeting)
+                    await _send_club_email(email["subject"], email["body"])
+                    db.mark_sent(topic_key)
+                    db.add_activity("club_email_sent", "2-day topic email sent to the mailing list",
+                                    f"Meeting: {meeting['meetingKey']}")
+                    posted += 1
 
     # 2. User-set reminders → their original channel (or main as fallback).
     reminders = await asyncio.to_thread(db.due_reminders)

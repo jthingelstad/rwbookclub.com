@@ -50,6 +50,10 @@ OLIVER_EMAIL_ADDRESS = os.environ.get("OLIVER_EMAIL_ADDRESS", "oliver@rwbookclub
 BOOK_CLUB_MAILING_LIST_ADDRESS = os.environ.get(
     "BOOK_CLUB_MAILING_LIST_ADDRESS", "rwbookclub@googlegroups.com"
 )
+# Auto-send the 1-week reminder + 2-day topic email to the whole mailing list at their
+# cadence windows. OFF by default — a club-wide blast is consequential, so it must be
+# explicitly enabled (CLUB_EMAIL_CADENCE_ENABLED=1) once the drafts are trusted.
+CLUB_EMAIL_CADENCE_ENABLED = os.environ.get("CLUB_EMAIL_CADENCE_ENABLED", "0") in {"1", "true", "True"}
 OLIVER_EMAIL_INBOX_PARENT = os.environ.get("OLIVER_EMAIL_INBOX_PARENT", "Inbox")
 OLIVER_EMAIL_INBOX_FOLDER = os.environ.get("OLIVER_EMAIL_INBOX_FOLDER", "Oliver")
 OLIVER_EMAIL_SENT_PARENT = os.environ.get("OLIVER_EMAIL_SENT_PARENT", "Sent")
