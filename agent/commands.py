@@ -169,6 +169,29 @@ async def _roll_call_announcement(status: dict) -> str:
     )
 
 
+async def _roll_call_reminder(status: dict) -> str:
+    """Oliver's voiced reminder nudging pending members; degrades to the status template."""
+    meeting = status["meeting"]
+    title = (meeting.get("book") or {}).get("title") or "the next meeting"
+    counts = status["counts"]
+    facts = {
+        "what": "a reminder nudging members who haven't answered to confirm attendance; "
+                "you are re-posting the roll call",
+        "book": title,
+        "meeting date": meeting["date"],
+        "responses so far": (
+            f"{counts['yes']} yes, {counts['no']} no, {counts['unsure']} unsure, "
+            f"{counts['pending']} pending"
+        ),
+        "yes responses needed": counts["quorumRequired"],
+        "how to respond": "members tap the attendance buttons directly below your message",
+    }
+    return await asyncio.to_thread(
+        oliver.compose, "roll-call reminder for the club channel",
+        facts, fallback="🔔 Roll call reminder.\n\n" + meeting_rules.format_status(status),
+    )
+
+
 def _roll_call_email_body(member_name: str, status: dict) -> str:
     meeting = status["meeting"]
     title = (meeting.get("book") or {}).get("title") or "the next meeting"
@@ -475,10 +498,18 @@ class ReviewModal(discord.ui.Modal):
             return
         verb = "Updated" if res["updated"] else "Logged"
         score = "DNF" if res["dnf"] else (f"{res['rating']}/5" if res["rating"] else "your notes")
-        await interaction.followup.send(
-            f"📚 {verb} your review of *{res['book']}* ({score}) — it'll be live on the site shortly.",
-            ephemeral=True,
+        ack = await asyncio.to_thread(
+            oliver.compose,
+            "brief acknowledgement that a member just logged their book review",
+            {
+                "action": verb.lower(),
+                "book": res["book"],
+                "rating": score,
+                "note": "the review will appear on the club website shortly",
+            },
+            fallback=f"📚 {verb} your review of *{res['book']}* ({score}) — it'll be live on the site shortly.",
         )
+        await interaction.followup.send(ack, ephemeral=True)
 
 
 # ── Subcommands ──────────────────────────────────────────────────────────────
@@ -698,9 +729,16 @@ async def oliver_add_book(interaction: discord.Interaction, title: str, isbn: st
         return
     authors = ", ".join(res["authors"]) or "unknown author"
     cover = "with cover" if res["hasCover"] else "no cover found"
+    verb = "Updated" if res["updated"] else "Added"
+    ack = await asyncio.to_thread(
+        oliver.compose,
+        "brief acknowledgement that an admin just added a book to the club corpus",
+        {"action": verb.lower(), "book": res["title"], "authors": authors, "cover": cover},
+        fallback=f"📗 {verb} **{res['title']}** by {authors} ({cover}).",
+    )
+    # Keep the exact file path + next step deterministic (don't let the LLM mangle it).
     await interaction.followup.send(
-        f"📗 {'Updated' if res['updated'] else 'Added'} **{res['title']}** by {authors} ({cover}). "
-        f"Edit `corpus/data/books/{res['slug']}.json` if anything's off, then `/oliver schedule` it.",
+        f"{ack}\n\nEdit `corpus/data/books/{res['slug']}.json` if anything's off, then `/oliver schedule` it.",
         ephemeral=True,
     )
 
@@ -720,8 +758,13 @@ async def oliver_schedule(interaction: discord.Interaction, book: str, date: str
         log.exception("schedule failed")
         await interaction.followup.send("Something went wrong scheduling that.", ephemeral=True)
         return
-    await interaction.followup.send(
-        f"🗓️ Scheduled **{res['book']}** for {res['date']}, picked by {res['picker']}.", ephemeral=True)
+    ack = await asyncio.to_thread(
+        oliver.compose,
+        "brief acknowledgement that an admin just scheduled the next club read",
+        {"book": res["book"], "meeting date": res["date"], "picker": res["picker"]},
+        fallback=f"🗓️ Scheduled **{res['book']}** for {res['date']}, picked by {res['picker']}.",
+    )
+    await interaction.followup.send(ack, ephemeral=True)
 
 
 @oliver_cmds.command(name="feedback", description="Recent 👍/👎 feedback on Oliver's replies (admin).")
@@ -783,19 +826,13 @@ async def roll_call_cmd(interaction: discord.Interaction,
         await _email_roll_call(interaction)
         return
 
-    if act == "start":
-        # Oliver voices the announcement — defer past the 3s ack window first.
-        status = meeting_rules.meeting_status(meeting["meetingKey"])
-        await interaction.response.defer()
-        text = await _roll_call_announcement(status)
-        sent = await interaction.followup.send(text, view=AttendanceView())
-    else:  # remind — fast operational status, stays templated
-        text = (
-            "🔔 Roll call reminder.\n\n"
-            + meeting_rules.format_status(meeting_rules.meeting_status(meeting["meetingKey"]))
-        )
-        await interaction.response.send_message(text, view=AttendanceView())
-        sent = await interaction.original_response()
+    # Both start and remind post the roll call with attendance buttons, in Oliver's
+    # voice — defer past the 3s ack window before composing.
+    status = meeting_rules.meeting_status(meeting["meetingKey"])
+    await interaction.response.defer()
+    text = await (_roll_call_announcement(status) if act == "start"
+                  else _roll_call_reminder(status))
+    sent = await interaction.followup.send(text, view=AttendanceView())
     try:
         db.upsert_roll_call(
             meeting_key=meeting["meetingKey"],
