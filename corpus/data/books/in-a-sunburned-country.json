@@ -28,5 +28,17 @@
     "Large type books",
     "Australia, social life and customs",
     "Australia, description and travel"
-  ]
+  ],
+  "editionCount": 34,
+  "languages": [
+    "ger",
+    "eng",
+    "spa",
+    "fre",
+    "rum"
+  ],
+  "ratingsAverage": 3.79,
+  "ratingsCount": 14,
+  "wikidataId": "Q5302883",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Down_Under_%28book%29"
 }

@@ -1,4 +1,14 @@
 {
   "name": "Henry David Thoreau",
-  "bio": "Henry David Thoreau (born David Henry Thoreau) was an American author, poet, naturalist, tax resister, development critic, surveyor, historian, philosopher, and leading transcendentalist. He is best known for his book Walden, a reflection upon simple living in natural surroundings, and his essay, Civil Disobedience, an argument for individual resistance to civil government in moral opposition to an unjust state. Thoreau's books, articles, essays, journals, and poetry total over 20 volumes. Among his lasting contributions were his writings on natural history and philosophy, where he anticipated the methods and findings of ecology and environmental history, two sources of modern day environmentalism. His literary style interweaves close natural observation, personal experience, pointed rhetoric, symbolic meanings, and historical lore; while displaying a poetic sensibility, philosophical austerity, and \"Yankee\" love of practical detail. He was also deeply interested in the idea of survival in the face of hostile elements, historical change, and natural decay; at the same time imploring one to abandon waste and illusion in order to discover life's true essential needs."
+  "bio": "Henry David Thoreau (born David Henry Thoreau) was an American author, poet, naturalist, tax resister, development critic, surveyor, historian, philosopher, and leading transcendentalist. He is best known for his book Walden, a reflection upon simple living in natural surroundings, and his essay, Civil Disobedience, an argument for individual resistance to civil government in moral opposition to an unjust state. Thoreau's books, articles, essays, journals, and poetry total over 20 volumes. Among his lasting contributions were his writings on natural history and philosophy, where he anticipated the methods and findings of ecology and environmental history, two sources of modern day environmentalism. His literary style interweaves close natural observation, personal experience, pointed rhetoric, symbolic meanings, and historical lore; while displaying a poetic sensibility, philosophical austerity, and \"Yankee\" love of practical detail. He was also deeply interested in the idea of survival in the face of hostile elements, historical change, and natural decay; at the same time imploring one to abandon waste and illusion in order to discover life's true essential needs.",
+  "birthYear": 1817,
+  "deathYear": 1862,
+  "nationality": "United States",
+  "website": "http://thoreau.library.ucsb.edu/",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Henry_David_Thoreau",
+  "notableWorks": [
+    "Walden",
+    "Civil Disobedience"
+  ],
+  "photoCredit": "Open Library"
 }

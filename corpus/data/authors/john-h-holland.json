@@ -1,4 +1,9 @@
 {
   "name": "John H. Holland",
-  "bio": "John Henry Holland was an American scientist and professor of electrical engineering and computer science at the University of Michigan. He was a pioneer in what became known as genetic algorithms."
+  "bio": "John Henry Holland was an American scientist and professor of electrical engineering and computer science at the University of Michigan. He was a pioneer in what became known as genetic algorithms.",
+  "birthYear": 1929,
+  "deathYear": 2015,
+  "nationality": "United States",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/John_Henry_Holland",
+  "photoCredit": "Wikipedia"
 }

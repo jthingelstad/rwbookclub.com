@@ -1,4 +1,13 @@
 {
   "name": "Sarah Bakewell",
-  "bio": "Sarah Bakewell is a British author and professor. She lives in London. She received the Windham–Campbell Literature Prize in Non-Fiction."
+  "bio": "Sarah Bakewell is a British author and professor. She lives in London. She received the Windham–Campbell Literature Prize in Non-Fiction.",
+  "birthYear": 1963,
+  "nationality": "United Kingdom",
+  "website": "https://sarahbakewell.com",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Sarah_Bakewell",
+  "notableWorks": [
+    "How to Live",
+    "At the Existentialist Cafe"
+  ],
+  "photoCredit": "Wikimedia Commons"
 }

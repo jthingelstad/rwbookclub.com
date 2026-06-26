@@ -28,5 +28,16 @@
     "nyt:hardcover-fiction=2018-05-06",
     "New York Times bestseller",
     "New York Times reviewed"
-  ]
+  ],
+  "editionCount": 19,
+  "languages": [
+    "eng"
+  ],
+  "ratingsAverage": 4.19,
+  "ratingsCount": 27,
+  "awards": [
+    "Pulitzer Prize for Fiction"
+  ],
+  "wikidataId": "Q56277009",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Overstory"
 }

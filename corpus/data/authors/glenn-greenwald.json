@@ -1,4 +1,14 @@
 {
   "name": "Glenn Greenwald",
-  "bio": "Glenn Edward Greenwald is an American journalist, author, and former lawyer."
+  "bio": "Glenn Edward Greenwald is an American journalist, author, and former lawyer.",
+  "birthYear": 1967,
+  "nationality": "United States",
+  "website": "http://glenngreenwald.net/",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Glenn_Greenwald",
+  "notableWorks": [
+    "How Would a Patriot Act?",
+    "A Tragic Legacy",
+    "No Place to Hide"
+  ],
+  "photoCredit": "Open Library"
 }

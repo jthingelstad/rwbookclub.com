@@ -28,5 +28,18 @@
     "Biography",
     "Biography & Memoir",
     "Business"
-  ]
+  ],
+  "editionCount": 12,
+  "languages": [
+    "spa",
+    "eng"
+  ],
+  "ratingsAverage": 4.4,
+  "ratingsCount": 10,
+  "awards": [
+    "Baillie Gifford Prize",
+    "Goodreads Choice Award for Best History & Biography"
+  ],
+  "wikidataId": "Q106808347",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Empire_of_Pain"
 }

@@ -1,4 +1,8 @@
 {
   "name": "Anders Ericsson",
-  "bio": "K. Anders Ericsson was a Swedish psychologist and Conradi Eminent Scholar and Professor of Psychology at Florida State University who was internationally recognized as a researcher in the psychological nature of expertise and human performance."
+  "bio": "K. Anders Ericsson was a Swedish psychologist and Conradi Eminent Scholar and Professor of Psychology at Florida State University who was internationally recognized as a researcher in the psychological nature of expertise and human performance.",
+  "birthYear": 1947,
+  "deathYear": 2020,
+  "nationality": "Sweden",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/K._Anders_Ericsson"
 }

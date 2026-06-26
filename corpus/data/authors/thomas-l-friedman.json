@@ -1,4 +1,13 @@
 {
   "name": "Thomas L. Friedman",
-  "bio": "Thomas Loren Friedman is an American journalist and author. Friedman has won the Pulitzer Prize three times, and writes a weekly column for *The New York Times.*."
+  "bio": "Thomas Loren Friedman is an American journalist and author. Friedman has won the Pulitzer Prize three times, and writes a weekly column for *The New York Times.*.",
+  "birthYear": 1953,
+  "nationality": "United States",
+  "website": "http://www.thomaslfriedman.com",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Thomas_L._Friedman",
+  "notableWorks": [
+    "The World Is brow",
+    "Friedman Unit"
+  ],
+  "photoCredit": "Open Library"
 }

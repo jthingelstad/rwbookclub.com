@@ -23,5 +23,17 @@
     "anomalies",
     "Russian fiction",
     "Fiction, science fiction, general"
-  ]
+  ],
+  "editionCount": 25,
+  "languages": [
+    "rus",
+    "por",
+    "eng",
+    "spa",
+    "fre"
+  ],
+  "ratingsAverage": 4.31,
+  "ratingsCount": 71,
+  "wikidataId": "Q848517",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Roadside_Picnic"
 }

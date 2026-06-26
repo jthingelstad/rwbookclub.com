@@ -1,4 +1,15 @@
 {
   "name": "Richard Powers",
-  "bio": "Richard Powers is an American novelist whose works explore the effects of modern science and technology. His novel The Echo Maker won the 2006 National Book Award for Fiction. He has also won many other awards over the course of his career, including a MacArthur Fellowship. As of 2024, Powers has published fourteen novels and has taught at the University of Illinois and Stanford University. He won the 2019 Pulitzer Prize for Fiction for The Overstory."
+  "bio": "Richard Powers is an American novelist whose works explore the effects of modern science and technology. His novel The Echo Maker won the 2006 National Book Award for Fiction. He has also won many other awards over the course of his career, including a MacArthur Fellowship. As of 2024, Powers has published fourteen novels and has taught at the University of Illinois and Stanford University. He won the 2019 Pulitzer Prize for Fiction for The Overstory.",
+  "birthYear": 1957,
+  "nationality": "United States",
+  "website": "http://www.richardpowers.net",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Richard_Powers",
+  "notableWorks": [
+    "Three Farmers on Their Way to a Dance",
+    "The Echo Maker",
+    "Galatea 2.2",
+    "Operation Wandering Soul"
+  ],
+  "photoCredit": "Open Library"
 }

@@ -23,5 +23,13 @@
     "nyt:combined-print-and-e-book-nonfiction=2014-10-12",
     "New York Times bestseller",
     "Long Now Manual for Civilization"
-  ]
+  ],
+  "editionCount": 6,
+  "languages": [
+    "eng"
+  ],
+  "ratingsAverage": 4.0,
+  "ratingsCount": 11,
+  "wikidataId": "Q5533147",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Genghis_Khan_and_the_Making_of_the_Modern_World"
 }

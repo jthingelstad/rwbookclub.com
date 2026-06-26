@@ -28,5 +28,20 @@
     "POLITICAL SCIENCE / Terrorism",
     "New York Times reviewed",
     "Intelligence service, united states"
-  ]
+  ],
+  "editionCount": 24,
+  "languages": [
+    "heb",
+    "ger",
+    "dut",
+    "eng",
+    "spa"
+  ],
+  "ratingsAverage": 4.22,
+  "ratingsCount": 18,
+  "awards": [
+    "Pulitzer Prize for General Nonfiction"
+  ],
+  "wikidataId": "Q7748388",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Looming_Tower"
 }

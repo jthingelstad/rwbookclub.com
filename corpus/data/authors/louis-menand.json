@@ -1,4 +1,12 @@
 {
   "name": "Louis Menand",
-  "bio": "Louis Menand is an American critic, essayist, and professor who wrote the Pulitzer-winning book The Metaphysical Club (2001), an intellectual and cultural history of late 19th- and early 20th-century America."
+  "bio": "Louis Menand is an American critic, essayist, and professor who wrote the Pulitzer-winning book The Metaphysical Club (2001), an intellectual and cultural history of late 19th- and early 20th-century America.",
+  "birthYear": 1952,
+  "deathYear": 1900,
+  "nationality": "United States",
+  "website": "https://louismenand.com/",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Louis_Menand",
+  "notableWorks": [
+    "Discovering Modernism : T. S. Eliot and his context"
+  ]
 }

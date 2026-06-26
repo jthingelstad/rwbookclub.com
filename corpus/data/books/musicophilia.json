@@ -28,5 +28,24 @@
     "medical",
     "neurology",
     "psychiatry"
-  ]
+  ],
+  "editionCount": 43,
+  "languages": [
+    "chi",
+    "ita",
+    "eng",
+    "fre",
+    "heb",
+    "por",
+    "tur",
+    "spa",
+    "ger",
+    "jpn",
+    "srp",
+    "ara"
+  ],
+  "ratingsAverage": 3.74,
+  "ratingsCount": 23,
+  "wikidataId": "Q1954977",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Musicophilia"
 }

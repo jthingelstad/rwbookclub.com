@@ -1,4 +1,17 @@
 {
   "name": "Ralph Waldo Emerson",
-  "bio": "Ralph Waldo Emerson was an American philosopher, essayist, and poet, best remembered for leading the Transcendentalist movement of the mid-19th century. His teachings directly influenced the growing New Thought movement of the mid-1800s. He was seen as a champion of individualism and a prescient critic of the countervailing pressures of society. Emerson gradually moved away from the religious and social beliefs of his contemporaries, formulating and expressing the philosophy of Transcendentalism in his 1836 essay, Nature. As a result of this ground-breaking work he gave a speech entitled The American Scholar in 1837, which Oliver Wendell Holmes, Sr. considered to be America's \"Intellectual Declaration of Independence\". Considered one of the great orators of the time, Emerson's enthusiasm and respect for his audience enraptured crowds. His support for abolitionism late in life created controversy, and at times he was subject to abuse from crowds while speaking on the topic. When asked to sum up his work, he said his central doctrine was \"the infinitude of the private man.\"."
+  "bio": "Ralph Waldo Emerson was an American philosopher, essayist, and poet, best remembered for leading the Transcendentalist movement of the mid-19th century. His teachings directly influenced the growing New Thought movement of the mid-1800s. He was seen as a champion of individualism and a prescient critic of the countervailing pressures of society. Emerson gradually moved away from the religious and social beliefs of his contemporaries, formulating and expressing the philosophy of Transcendentalism in his 1836 essay, Nature. As a result of this ground-breaking work he gave a speech entitled The American Scholar in 1837, which Oliver Wendell Holmes, Sr. considered to be America's \"Intellectual Declaration of Independence\". Considered one of the great orators of the time, Emerson's enthusiasm and respect for his audience enraptured crowds. His support for abolitionism late in life created controversy, and at times he was subject to abuse from crowds while speaking on the topic. When asked to sum up his work, he said his central doctrine was \"the infinitude of the private man.\".",
+  "birthYear": 1803,
+  "deathYear": 1882,
+  "nationality": "United States",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Ralph_Waldo_Emerson",
+  "notableWorks": [
+    "Concord Hymn",
+    "The Humble-Bee",
+    "Music",
+    "Thine Eyes still shined",
+    "Waldeinsamkeit",
+    "Woodnotes I"
+  ],
+  "photoCredit": "Open Library"
 }

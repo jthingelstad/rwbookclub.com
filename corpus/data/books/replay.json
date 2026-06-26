@@ -23,5 +23,18 @@
     "Fiction, science fiction, action & adventure",
     "Fiction, action & adventure",
     "Fiction, romance, fantasy"
-  ]
+  ],
+  "editionCount": 16,
+  "languages": [
+    "eng",
+    "ger",
+    "fre"
+  ],
+  "ratingsAverage": 4.35,
+  "ratingsCount": 26,
+  "awards": [
+    "World Fantasy Award for Best Novel"
+  ],
+  "wikidataId": "Q1590481",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Replay_%28Grimwood_novel%29"
 }

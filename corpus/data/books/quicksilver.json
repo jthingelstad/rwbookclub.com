@@ -28,5 +28,18 @@
     "Scientists, fiction",
     "Fiction, historical, general",
     "Fiction, technological"
-  ]
+  ],
+  "editionCount": 18,
+  "languages": [
+    "eng",
+    "ger"
+  ],
+  "ratingsAverage": 4.0,
+  "ratingsCount": 31,
+  "series": "The Baroque Cycle",
+  "awards": [
+    "Arthur C. Clarke Award"
+  ],
+  "wikidataId": "Q4398917",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Quicksilver_%28Stephenson_novel%29"
 }

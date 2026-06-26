@@ -1,4 +1,12 @@
 {
   "name": "Ken Grimwood",
-  "bio": "Kenneth Milton Grimwood was an American author, who also published work under the name of Alan Cochran. In his fantasy fiction, Grimwood combined themes of life-affirmation and hope with metaphysical concepts, themes found in his best-known novel, Replay (1986). It won the 1988 World Fantasy Award for Best Novel."
+  "bio": "Kenneth Milton Grimwood was an American author, who also published work under the name of Alan Cochran. In his fantasy fiction, Grimwood combined themes of life-affirmation and hope with metaphysical concepts, themes found in his best-known novel, Replay (1986). It won the 1988 World Fantasy Award for Best Novel.",
+  "birthYear": 1944,
+  "deathYear": 2003,
+  "nationality": "United States",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Ken_Grimwood",
+  "notableWorks": [
+    "Replay"
+  ],
+  "photoCredit": "Wikipedia"
 }

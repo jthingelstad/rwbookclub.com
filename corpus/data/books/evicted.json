@@ -28,5 +28,22 @@
     "poverty and homelessness",
     "extreme poverty",
     "affordable housing"
-  ]
+  ],
+  "editionCount": 19,
+  "languages": [
+    "eng",
+    "chi",
+    "ger"
+  ],
+  "ratingsAverage": 4.32,
+  "ratingsCount": 19,
+  "awards": [
+    "The Stowe Prize for Writing to Advance Social Justice",
+    "Pulitzer Prize for General Nonfiction",
+    "PEN/John Kenneth Galbraith Award",
+    "National Book Critics Circle Award in Nonfiction",
+    "Andrew Carnegie Medal for Excellence in Nonfiction"
+  ],
+  "wikidataId": "Q30078322",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Evicted%3A_Poverty_and_Profit_in_the_American_City"
 }

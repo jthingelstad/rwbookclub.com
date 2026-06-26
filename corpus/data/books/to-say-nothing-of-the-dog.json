@@ -28,5 +28,22 @@
     "Fiction, historical",
     "Large type books",
     "American Fantasy fiction"
-  ]
+  ],
+  "editionCount": 22,
+  "languages": [
+    "eng",
+    "fre",
+    "kor"
+  ],
+  "ratingsAverage": 3.71,
+  "ratingsCount": 17,
+  "series": "Oxford time-traveling historians",
+  "awards": [
+    "Hugo Award for Best Novel",
+    "Locus Award for Best Science Fiction Novel",
+    "Kurd Lasswitz Award for Best Foreign Work",
+    "Bob Morane award for best foreign novel"
+  ],
+  "wikidataId": "Q2719299",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/To_Say_Nothing_of_the_Dog"
 }

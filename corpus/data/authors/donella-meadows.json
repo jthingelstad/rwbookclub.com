@@ -1,4 +1,13 @@
 {
   "name": "Donella Meadows",
-  "bio": "American environmental scientist, teacher, and writer."
+  "bio": "American environmental scientist, teacher, and writer.",
+  "birthYear": 1941,
+  "deathYear": 2001,
+  "nationality": "United States",
+  "website": "https://en.wikipedia.org/wiki/Donella_Meadows",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Donella_Meadows",
+  "notableWorks": [
+    "The Limits to Growth"
+  ],
+  "photoCredit": "Open Library"
 }

@@ -29,5 +29,15 @@
     "social science",
     "economics theory",
     "psychology"
-  ]
+  ],
+  "editionCount": 63,
+  "languages": [
+    "eng",
+    "spa",
+    "por"
+  ],
+  "ratingsAverage": 3.88,
+  "ratingsCount": 184,
+  "wikidataId": "Q1211497",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Freakonomics"
 }

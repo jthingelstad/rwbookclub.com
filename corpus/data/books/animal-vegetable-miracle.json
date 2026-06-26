@@ -28,5 +28,14 @@
     "Sud",
     "Document",
     "Farm life, united states"
-  ]
+  ],
+  "editionCount": 23,
+  "languages": [
+    "eng",
+    "chi"
+  ],
+  "ratingsAverage": 4.11,
+  "ratingsCount": 9,
+  "wikidataId": "Q4764731",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Animal%2C_Vegetable%2C_Miracle"
 }

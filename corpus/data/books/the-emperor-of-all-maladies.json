@@ -28,5 +28,20 @@
     "Leukemia",
     "Antineoplastic Agents",
     "drug therapy"
-  ]
+  ],
+  "editionCount": 29,
+  "languages": [
+    "eng",
+    "spa",
+    "por",
+    "ger",
+    "jpn",
+    "fre",
+    "pol",
+    "chi"
+  ],
+  "ratingsAverage": 4.08,
+  "ratingsCount": 12,
+  "wikidataId": "Q4202130",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Emperor_of_All_Maladies"
 }

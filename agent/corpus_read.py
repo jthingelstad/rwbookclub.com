@@ -314,10 +314,22 @@ def get_author(name_or_slug: str) -> dict | None:
         if name and name in (b.get("authors") or [])
     ]
     read.sort(key=lambda x: x.get("year") or 0, reverse=True)
+    lifespan = None
+    if a.get("birthYear"):
+        lifespan = f"{a['birthYear']}–{a['deathYear']}" if a.get("deathYear") else f"b. {a['birthYear']}"
     return {
         "name": name,
         "slug": a.get("slug"),
         "bio": a.get("bio"),
+        # Enrichment (Open Library / Wikidata / Wikipedia) — lets Oliver actually
+        # talk about the author, not just list their books.
+        "birthYear": a.get("birthYear"),
+        "deathYear": a.get("deathYear"),
+        "lifespan": lifespan,
+        "nationality": a.get("nationality"),
+        "notableWorks": a.get("notableWorks"),
+        "website": a.get("website"),
+        "wikipediaUrl": a.get("wikipediaUrl"),
         "books": read,
         "bookCount": len(read),
     }
@@ -364,7 +376,17 @@ def get_book(slug_or_title: str) -> dict | None:
     brief["meetingDate"] = b.get("meetingDate")
     brief["meetingNotes"] = b.get("meetingNotes")
     brief["reviews"] = _reviews_for(book_slug=b.get("slug"))
-    brief["awards"] = awards_for_book(b.get("slug"))
+    brief["awards"] = awards_for_book(b.get("slug"))  # the club's own awards
+    # External enrichment (Open Library / Wikidata) — editions, reader ratings,
+    # series, literary awards, and external links.
+    brief["ratingsAverage"] = b.get("ratingsAverage")
+    brief["ratingsCount"] = b.get("ratingsCount")
+    brief["editionCount"] = b.get("editionCount")
+    brief["series"] = b.get("series")
+    brief["literaryAwards"] = b.get("awards")  # awards the book itself won (≠ club awards)
+    brief["wikipediaUrl"] = b.get("wikipediaUrl")
+    brief["goodreadsId"] = b.get("goodreadsId")
+    brief["openLibraryKey"] = b.get("olKey")
     return brief
 
 

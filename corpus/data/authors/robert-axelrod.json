@@ -1,3 +1,14 @@
 {
-  "name": "Robert Axelrod"
+  "name": "Robert Axelrod",
+  "bio": "Robert Marshall Axelrod is an American political scientist. He is Professor of Political Science and Public Policy at the University of Michigan where he has been since 1974. He is best known for his interdisciplinary work on the evolution of cooperation. His current research interests include complexity theory, international security, and cyber security. His research includes innovative approaches to explaining conflict of interest, the emergence of norms, how game theory is used to study cooperation, and cross-disciplinary studies on evolutionary processes.",
+  "birthYear": 1943,
+  "nationality": "United States",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Robert_Axelrod_%28political_scientist%29",
+  "notableWorks": [
+    "The Evolution of Cooperation",
+    "Conflict of Interest: A Theory of Divergent Goals with Applications to Politics",
+    "The Complexity of Cooperation",
+    "Harnessing Complexity: Organizational Implications of a Scientific Frontier"
+  ],
+  "photoCredit": "Wikimedia Commons"
 }

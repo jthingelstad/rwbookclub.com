@@ -25,5 +25,24 @@
     "Cyberspace",
     "Matrix (Imaginary place)",
     "genre:cyberpunk"
-  ]
+  ],
+  "editionCount": 30,
+  "languages": [
+    "eng",
+    "ger",
+    "spa",
+    "por",
+    "fre",
+    "dut",
+    "ita",
+    "dan"
+  ],
+  "ratingsAverage": 3.96,
+  "ratingsCount": 55,
+  "series": "Sprawl trilogy",
+  "awards": [
+    "20th Century's Greatest Hits: 100 English-Language Books of Fiction"
+  ],
+  "wikidataId": "Q2384854",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Count_Zero"
 }

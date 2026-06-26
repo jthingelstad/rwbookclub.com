@@ -28,5 +28,24 @@
     "Fiction, science fiction, general",
     "England, fiction",
     "Large type books"
-  ]
+  ],
+  "editionCount": 47,
+  "languages": [
+    "eng",
+    "tur",
+    "ita",
+    "fre",
+    "jpn",
+    "und",
+    "chi",
+    "rus",
+    "spa"
+  ],
+  "ratingsAverage": 3.85,
+  "ratingsCount": 71,
+  "awards": [
+    "Corine Literature Prize"
+  ],
+  "wikidataId": "Q951587",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Never_Let_Me_Go_%28novel%29"
 }

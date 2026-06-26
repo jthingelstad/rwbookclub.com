@@ -28,5 +28,17 @@
     "Classic Literature",
     "Travel",
     "Discovery and exploration"
-  ]
+  ],
+  "editionCount": 553,
+  "languages": [
+    "eng",
+    "spa"
+  ],
+  "ratingsAverage": 3.58,
+  "ratingsCount": 134,
+  "awards": [
+    "20th Century's Greatest Hits: 100 English-Language Books of Fiction"
+  ],
+  "wikidataId": "Q129778",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Heart_of_Darkness"
 }

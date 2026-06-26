@@ -143,6 +143,52 @@ CREATE TABLE IF NOT EXISTS club_award_voters (
     member_id INTEGER NOT NULL REFERENCES club_members(id) ON DELETE CASCADE,
     PRIMARY KEY (award_id, member_id)
 );
+
+-- ── External enrichment (the clarity line) ───────────────────────────────────
+-- 1:1 sidecars owned exclusively by the enrichment loop (agent.enrich). The core
+-- club_* tables above are the club's curated, member-facing record; everything
+-- derived from Open Library / Wikidata / Wikipedia lives here, so the loop never
+-- writes core and can't clobber curated data. Regenerable: DELETE + re-run.
+-- The read layer (all_books/all_authors) COALESCEs the dual-source mirror columns
+-- (synopsis/publication_year/page_count/isbn13/subjects_json/bio) core-first.
+CREATE TABLE IF NOT EXISTS club_book_enrichment (
+    book_id          INTEGER PRIMARY KEY REFERENCES club_books(id) ON DELETE CASCADE,
+    ol_cover_id      INTEGER,               -- OL cover id → covers.openlibrary.org
+    edition_count    INTEGER,
+    languages_json   TEXT,                  -- JSON array of edition languages
+    ratings_average  REAL,
+    ratings_count    INTEGER,
+    wikidata_id      TEXT,                  -- Q-id
+    wikipedia_url    TEXT,
+    goodreads_id     TEXT,
+    series           TEXT,
+    awards_json      TEXT,                  -- JSON array of literary awards (Wikidata P166)
+    -- gap-fill mirrors of dual-source OL fields (curated core wins on read):
+    ol_key           TEXT,
+    synopsis         TEXT,
+    publication_year INTEGER,
+    page_count       INTEGER,
+    isbn13           TEXT,
+    subjects_json    TEXT,
+    enriched_at      TEXT,                  -- ISO timestamp of last enrichment pass
+    enrichment_json  TEXT                   -- raw payloads + which source filled what
+);
+
+CREATE TABLE IF NOT EXISTS club_author_enrichment (
+    author_id          INTEGER PRIMARY KEY REFERENCES club_authors(id) ON DELETE CASCADE,
+    bio                TEXT,                -- gap-fill mirror of club_authors.bio
+    birth_year         INTEGER,
+    death_year         INTEGER,
+    nationality        TEXT,
+    ol_author_key      TEXT,                -- /authors/OL..A
+    wikidata_id        TEXT,                -- Q-id
+    wikipedia_url      TEXT,
+    website            TEXT,
+    notable_works_json TEXT,                -- JSON array of notable work titles
+    photo_credit       TEXT,               -- image source / attribution
+    enriched_at        TEXT,
+    enrichment_json    TEXT
+);
 """
 
 # All club tables, for count/validation helpers and teardown in tests.
@@ -150,6 +196,8 @@ CLUB_TABLES = [
     "club_members", "club_authors", "club_books", "club_book_authors",
     "club_meetings", "club_meeting_books", "club_book_pickers", "club_meeting_hosts",
     "club_reviews", "club_awards", "club_award_books", "club_award_voters",
+    # Enrichment sidecars last → reversed() deletes them before their parent tables.
+    "club_book_enrichment", "club_author_enrichment",
 ]
 
 
@@ -211,9 +259,28 @@ def _rows(conn: sqlite3.Connection, sql: str, args: tuple = ()) -> list[dict]:
 
 def all_books(conn: sqlite3.Connection) -> list[dict]:
     """Every book with its joined authors (names, ordered), picker member slugs
-    (ordered, de-duplicated by PK), and subjects — the shape the corpus generator
-    needs. One pass, no N+1."""
-    books = _rows(conn, "SELECT * FROM club_books ORDER BY id")
+    (ordered, de-duplicated by PK), subjects, and external enrichment — the shape
+    the corpus generator needs. One pass, no N+1.
+
+    The enrichment sidecar (club_book_enrichment) is LEFT JOINed: curated core
+    columns win for the dual-source fields (synopsis/publication_year/page_count/
+    isbn13/subjects_json) via COALESCE; net-new fields (ratings/editions/links/…)
+    come straight from the sidecar."""
+    books = _rows(
+        conn,
+        "SELECT b.id, b.slug, b.title, b.subtitle, b.topic, b.fiction, "
+        "COALESCE(b.ol_key, e.ol_key)                     AS ol_key, "
+        "COALESCE(b.publication_year, e.publication_year) AS publication_year, "
+        "COALESCE(b.page_count, e.page_count)             AS page_count, "
+        "COALESCE(b.isbn13, e.isbn13)                     AS isbn13, "
+        "COALESCE(b.synopsis, e.synopsis)                 AS synopsis, "
+        "COALESCE(b.subjects_json, e.subjects_json)       AS subjects_json, "
+        "e.ol_cover_id, e.edition_count, e.languages_json, e.ratings_average, "
+        "e.ratings_count, e.wikidata_id, e.wikipedia_url, e.goodreads_id, e.series, "
+        "e.awards_json, e.enriched_at "
+        "FROM club_books b LEFT JOIN club_book_enrichment e ON e.book_id = b.id "
+        "ORDER BY b.id",
+    )
     authors_by_book: dict[int, list[str]] = {}
     for r in conn.execute(
         "SELECT ba.book_id, a.name FROM club_book_authors ba "
@@ -230,6 +297,8 @@ def all_books(conn: sqlite3.Connection) -> list[dict]:
         b["author_names"] = authors_by_book.get(b["id"], [])
         b["picker_slugs"] = pickers_by_book.get(b["id"], [])
         b["subjects"] = json.loads(b["subjects_json"]) if b["subjects_json"] else []
+        b["languages"] = json.loads(b["languages_json"]) if b["languages_json"] else []
+        b["awards"] = json.loads(b["awards_json"]) if b["awards_json"] else []
     return books
 
 
@@ -259,7 +328,24 @@ def all_members(conn: sqlite3.Connection) -> list[dict]:
 
 
 def all_authors(conn: sqlite3.Connection) -> list[dict]:
-    return _rows(conn, "SELECT * FROM club_authors ORDER BY id")
+    """Every author with external enrichment LEFT JOINed in. Curated `bio` wins
+    via COALESCE; net-new fields (dates/nationality/links/notable works) come from
+    the sidecar. `notable_works` is decoded from its JSON column."""
+    authors = _rows(
+        conn,
+        "SELECT a.id, a.slug, a.name, "
+        "COALESCE(a.bio, e.bio) AS bio, "
+        "e.birth_year, e.death_year, e.nationality, e.ol_author_key, "
+        "e.wikidata_id, e.wikipedia_url, e.website, e.notable_works_json, "
+        "e.photo_credit, e.enriched_at "
+        "FROM club_authors a LEFT JOIN club_author_enrichment e ON e.author_id = a.id "
+        "ORDER BY a.id",
+    )
+    for a in authors:
+        a["notable_works"] = (
+            json.loads(a["notable_works_json"]) if a["notable_works_json"] else []
+        )
+    return authors
 
 
 def all_reviews(conn: sqlite3.Connection) -> list[dict]:
@@ -341,6 +427,63 @@ def upsert_book(conn: sqlite3.Connection, meta: dict) -> dict:
         [(book_id, aid, i) for i, aid in enumerate(author_ids)],
     )
     return {"id": book_id, "slug": slug, "existed": bool(existing), "author_ids": author_ids}
+
+
+# ── Enrichment writers — the loop's ONLY DB write path (sidecars only) ────────
+# Whitelisted columns; the loop passes a dict of {column: value} and we upsert by
+# the 1:1 key. Core club_books/club_authors are never touched here.
+_BOOK_ENRICH_COLS = (
+    "ol_cover_id", "edition_count", "languages_json", "ratings_average",
+    "ratings_count", "wikidata_id", "wikipedia_url", "goodreads_id", "series",
+    "awards_json", "ol_key", "synopsis", "publication_year", "page_count",
+    "isbn13", "subjects_json", "enriched_at", "enrichment_json",
+)
+_AUTHOR_ENRICH_COLS = (
+    "bio", "birth_year", "death_year", "nationality", "ol_author_key",
+    "wikidata_id", "wikipedia_url", "website", "notable_works_json",
+    "photo_credit", "enriched_at", "enrichment_json",
+)
+
+
+def _upsert_enrichment(conn: sqlite3.Connection, table: str, key_col: str,
+                       key_val: int, allowed: tuple[str, ...], fields: dict) -> None:
+    cols = [c for c in allowed if c in fields]
+    if not cols:
+        return
+    placeholders = ", ".join(["?"] * (len(cols) + 1))
+    col_list = ", ".join([key_col, *cols])
+    updates = ", ".join(f"{c}=excluded.{c}" for c in cols)
+    conn.execute(
+        f"INSERT INTO {table}({col_list}) VALUES ({placeholders}) "
+        f"ON CONFLICT({key_col}) DO UPDATE SET {updates}",
+        (key_val, *(fields[c] for c in cols)),
+    )
+
+
+def upsert_book_enrichment(conn: sqlite3.Connection, book_id: int, fields: dict) -> None:
+    """Upsert external enrichment for a book into club_book_enrichment (sidecar only)."""
+    _upsert_enrichment(conn, "club_book_enrichment", "book_id", book_id,
+                       _BOOK_ENRICH_COLS, fields)
+
+
+def upsert_author_enrichment(conn: sqlite3.Connection, author_id: int, fields: dict) -> None:
+    """Upsert external enrichment for an author into club_author_enrichment (sidecar only)."""
+    _upsert_enrichment(conn, "club_author_enrichment", "author_id", author_id,
+                       _AUTHOR_ENRICH_COLS, fields)
+
+
+def book_enrichment(conn: sqlite3.Connection, book_id: int) -> dict | None:
+    row = conn.execute(
+        "SELECT * FROM club_book_enrichment WHERE book_id = ?", (book_id,)
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def author_enrichment(conn: sqlite3.Connection, author_id: int) -> dict | None:
+    row = conn.execute(
+        "SELECT * FROM club_author_enrichment WHERE author_id = ?", (author_id,)
+    ).fetchone()
+    return dict(row) if row else None
 
 
 def set_book_picker(conn: sqlite3.Connection, book_id: int, member_id: int) -> None:

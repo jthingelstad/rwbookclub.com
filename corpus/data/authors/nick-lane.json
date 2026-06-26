@@ -1,4 +1,12 @@
 {
   "name": "Nick Lane",
-  "bio": "Nick Lane is a British biochemist and writer. He is a professor in evolutionary biochemistry at University College London. His books have won several awards."
+  "bio": "Nick Lane is a British biochemist and writer. He is a professor in evolutionary biochemistry at University College London. His books have won several awards.",
+  "birthYear": 1967,
+  "nationality": "United Kingdom",
+  "website": "http://www.nick-lane.net/",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Nick_Lane",
+  "notableWorks": [
+    "Life Ascending: The Ten Great Inventions of Evolution"
+  ],
+  "photoCredit": "Wikimedia Commons"
 }

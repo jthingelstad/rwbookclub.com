@@ -28,5 +28,14 @@
     "New York Times bestseller",
     "Papua new guinea, social life and customs",
     "nyt:paperback-nonfiction=2013-11-17"
-  ]
+  ],
+  "editionCount": 14,
+  "languages": [
+    "eng",
+    "kor"
+  ],
+  "ratingsAverage": 3.57,
+  "ratingsCount": 7,
+  "wikidataId": "Q7776075",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_World_Until_Yesterday"
 }

@@ -1,4 +1,12 @@
 {
   "name": "David Wengrow",
-  "bio": "British archaeologist."
+  "bio": "British archaeologist.",
+  "birthYear": 1972,
+  "nationality": "United Kingdom",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/David_Wengrow",
+  "notableWorks": [
+    "The Archaeology of Early Egypt: Social Transformations in North-East Africa, 10000 to 2650 B.C.",
+    "The Dawn of Everything"
+  ],
+  "photoCredit": "Open Library"
 }

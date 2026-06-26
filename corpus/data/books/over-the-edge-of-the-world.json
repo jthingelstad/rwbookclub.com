@@ -28,5 +28,14 @@
     "Biography",
     "1510-1519",
     "New York Times reviewed"
-  ]
+  ],
+  "editionCount": 20,
+  "languages": [
+    "eng",
+    "spa"
+  ],
+  "ratingsAverage": 3.67,
+  "ratingsCount": 3,
+  "wikidataId": "Q23306083",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Over_the_Edge_of_the_World"
 }

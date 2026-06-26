@@ -1,4 +1,8 @@
 {
   "name": "Pedro Domingos",
-  "bio": "Pedro Domingos is a Professor Emeritus of computer science and engineering at the University of Washington. He is a researcher in machine learning known for Markov logic network enabling uncertain inference."
+  "bio": "Pedro Domingos is a Professor Emeritus of computer science and engineering at the University of Washington. He is a researcher in machine learning known for Markov logic network enabling uncertain inference.",
+  "birthYear": 2000,
+  "nationality": "Portugal",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Pedro_Domingos",
+  "photoCredit": "Wikimedia Commons"
 }

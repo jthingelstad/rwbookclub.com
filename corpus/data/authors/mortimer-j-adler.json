@@ -1,4 +1,9 @@
 {
   "name": "Mortimer J. Adler",
-  "bio": "Mortimer Jerome Adler was an American philosopher, educator, and popular author."
+  "bio": "Mortimer Jerome Adler was an American philosopher, educator, and popular author.",
+  "birthYear": 1902,
+  "deathYear": 2001,
+  "nationality": "United States",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Mortimer_J._Adler",
+  "photoCredit": "Open Library"
 }

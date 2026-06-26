@@ -28,5 +28,17 @@
     "New York Times reviewed",
     "Reason",
     "Cognition"
-  ]
+  ],
+  "editionCount": 35,
+  "languages": [
+    "eng",
+    "dut",
+    "ger",
+    "kor",
+    "chi",
+    "pol",
+    "tur"
+  ],
+  "ratingsAverage": 4.1,
+  "ratingsCount": 231
 }

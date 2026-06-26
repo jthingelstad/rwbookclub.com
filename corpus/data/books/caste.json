@@ -28,5 +28,13 @@
     "psychology",
     "nyt:combined-print-and-e-book-nonfiction=2020-08-23",
     "New York Times bestseller"
-  ]
+  ],
+  "editionCount": 17,
+  "languages": [
+    "eng",
+    "tur",
+    "spa"
+  ],
+  "ratingsAverage": 4.56,
+  "ratingsCount": 16
 }

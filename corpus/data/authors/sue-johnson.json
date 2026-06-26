@@ -1,4 +1,9 @@
 {
   "name": "Sue Johnson",
-  "bio": "British clinical psychologist, couples therapist and author living and working in Canada."
+  "bio": "British clinical psychologist, couples therapist and author living and working in Canada.",
+  "birthYear": 1947,
+  "deathYear": 2024,
+  "nationality": "Canada",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Sue_Johnson",
+  "photoCredit": "Wikipedia"
 }

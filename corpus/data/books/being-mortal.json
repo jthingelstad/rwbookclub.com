@@ -26,5 +26,18 @@
     "Attitude (Psychology)",
     "SOCIAL SCIENCE",
     "Elderly"
-  ]
+  ],
+  "editionCount": 31,
+  "languages": [
+    "chi",
+    "eng",
+    "dan",
+    "por",
+    "spa",
+    "dut",
+    "fre"
+  ],
+  "ratingsAverage": 4.45,
+  "ratingsCount": 40,
+  "wikidataId": "Q109499729"
 }

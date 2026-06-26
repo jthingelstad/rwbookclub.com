@@ -1,4 +1,11 @@
 {
   "name": "Steven D. Levitt",
-  "bio": "\"Steven David \"Steve\" Levitt is a prominent American economist best known for his work on crime, in particular on the link between legalized abortion and crime rates. Winner of the 2003 John Bates Clark Medal, he is currently the Alvin H. Baum Professor of Economics at the University of Chicago, director of the Becker Center on Chicago Price Theory at the University of Chicago Graduate School of Business, and co-editor of the Journal of Political Economy published by the University of Chicago Press.\" - Wikipedia."
+  "bio": "\"Steven David \"Steve\" Levitt is a prominent American economist best known for his work on crime, in particular on the link between legalized abortion and crime rates. Winner of the 2003 John Bates Clark Medal, he is currently the Alvin H. Baum Professor of Economics at the University of Chicago, director of the Becker Center on Chicago Price Theory at the University of Chicago Graduate School of Business, and co-editor of the Journal of Political Economy published by the University of Chicago Press.\" - Wikipedia.",
+  "birthYear": 1967,
+  "nationality": "United States",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Steven_Levitt",
+  "notableWorks": [
+    "Freakonomics"
+  ],
+  "photoCredit": "Open Library"
 }

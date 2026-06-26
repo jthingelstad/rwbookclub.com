@@ -24,5 +24,16 @@
     "Reading",
     "Long Now Manual for Civilization",
     "Reading (Adult education)"
-  ]
+  ],
+  "editionCount": 23,
+  "languages": [
+    "por",
+    "eng",
+    "spa",
+    "chi"
+  ],
+  "ratingsAverage": 4.39,
+  "ratingsCount": 18,
+  "wikidataId": "Q1091079",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/How_to_Read_a_Book"
 }

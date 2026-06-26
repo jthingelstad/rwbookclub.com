@@ -1,4 +1,12 @@
 {
   "name": "T. Colin Campbell",
-  "bio": "Thomas Colin Campbell is an American biochemist who specializes in the effect of nutrition on long-term health. He is the Jacob Gould Schurman Professor Emeritus of Nutritional Biochemistry at Cornell University."
+  "bio": "Thomas Colin Campbell is an American biochemist who specializes in the effect of nutrition on long-term health. He is the Jacob Gould Schurman Professor Emeritus of Nutritional Biochemistry at Cornell University.",
+  "birthYear": 1859,
+  "deathYear": 1928,
+  "nationality": "United States",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Colin_Campbell_%28director%29",
+  "notableWorks": [
+    "Shotgun Jones"
+  ],
+  "photoCredit": "Wikimedia Commons"
 }

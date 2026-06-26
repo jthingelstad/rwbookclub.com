@@ -28,5 +28,20 @@
     "Prognose",
     "Incertitude (Théorie de l'information)",
     "Aspect social"
-  ]
+  ],
+  "editionCount": 27,
+  "languages": [
+    "kor",
+    "heb",
+    "por",
+    "jpn",
+    "eng",
+    "fre",
+    "spa",
+    "ger"
+  ],
+  "ratingsAverage": 3.76,
+  "ratingsCount": 33,
+  "wikidataId": "Q2397469",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Black_Swan%3A_The_Impact_of_the_Highly_Improbable"
 }

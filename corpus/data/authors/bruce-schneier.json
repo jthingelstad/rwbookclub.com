@@ -1,4 +1,14 @@
 {
   "name": "Bruce Schneier",
-  "bio": "American cryptographer, and security specialist."
+  "bio": "American cryptographer, and security specialist.",
+  "birthYear": 1963,
+  "nationality": "United States",
+  "website": "https://www.schneier.com/",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Bruce_Schneier",
+  "notableWorks": [
+    "Liars and Outliers",
+    "Click Here to Kill Everybody",
+    "Beyond Fear: Thinking Sensibly About Security in an Uncertain World"
+  ],
+  "photoCredit": "Open Library"
 }

@@ -28,5 +28,17 @@
     "Marktforschung",
     "Telemarketing",
     "Market segmentation"
-  ]
+  ],
+  "editionCount": 22,
+  "languages": [
+    "eng",
+    "chi",
+    "fre",
+    "dut",
+    "spa"
+  ],
+  "ratingsAverage": 4.0,
+  "ratingsCount": 10,
+  "wikidataId": "Q16962717",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Long_Tail_%28book%29"
 }

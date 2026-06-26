@@ -28,5 +28,16 @@
     "Romance fiction",
     "Friendship",
     "Love"
-  ]
+  ],
+  "editionCount": 27,
+  "languages": [
+    "fre",
+    "eng",
+    "por",
+    "tur"
+  ],
+  "ratingsAverage": 3.75,
+  "ratingsCount": 44,
+  "wikidataId": "Q105704813",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Klara_and_the_Sun"
 }

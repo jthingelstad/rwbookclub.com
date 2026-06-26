@@ -18,5 +18,10 @@
   "subjects": [
     "genre:non-fiction",
     "Bitcoin"
-  ]
+  ],
+  "editionCount": 3,
+  "languages": [
+    "eng"
+  ],
+  "wikidataId": "Q137442018"
 }

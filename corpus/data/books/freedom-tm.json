@@ -24,5 +24,14 @@
     "Fiction, suspense",
     "Fiction, science fiction, general",
     "Fiction, thrillers, suspense"
-  ]
+  ],
+  "editionCount": 5,
+  "languages": [
+    "fre",
+    "eng"
+  ],
+  "ratingsAverage": 4.16,
+  "ratingsCount": 31,
+  "wikidataId": "Q16834408",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Freedom%E2%84%A2"
 }

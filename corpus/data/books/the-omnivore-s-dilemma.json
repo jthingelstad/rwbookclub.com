@@ -8,7 +8,7 @@
   "topic": "Travel & Memoir",
   "fiction": false,
   "publicationYear": 2006,
-  "pageCount": null,
+  "pageCount": 450,
   "isbn13": "9781504044844",
   "olKey": "/works/OL28339036W",
   "synopsis": null,
@@ -28,5 +28,13 @@
     "cherries",
     "Whole Foods Market",
     "omnivores"
-  ]
+  ],
+  "editionCount": 1,
+  "languages": [
+    "eng"
+  ],
+  "ratingsAverage": 4.18,
+  "ratingsCount": 45,
+  "wikidataId": "Q3222320",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Omnivore%27s_Dilemma"
 }

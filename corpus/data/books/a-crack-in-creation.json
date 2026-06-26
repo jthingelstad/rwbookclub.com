@@ -29,5 +29,12 @@
     "MEDICAL",
     "SCIENCE",
     "Life Sciences"
-  ]
+  ],
+  "editionCount": 11,
+  "languages": [
+    "eng",
+    "ger"
+  ],
+  "ratingsAverage": 5.0,
+  "ratingsCount": 1
 }

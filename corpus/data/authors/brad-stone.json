@@ -1,3 +1,13 @@
 {
-  "name": "Brad Stone"
+  "name": "Brad Stone",
+  "bio": "Brad Stone is an American journalist and author. He is the editor of Bloomberg Businessweek since January 2024. He is the author of the books The Everything Store: Jeff Bezos and the Age of Amazon (2013), Amazon Unbound: Jeff Bezos and the Invention of a Global Empire (2021), The Upstarts: How Uber, Airbnb, and the Killer Companies of the New Silicon Valley are Changing the World, and Gearheads: the Turbulent Rise of Robotic Sports.",
+  "birthYear": 1966,
+  "nationality": "United States",
+  "website": "http://brad-stone.com",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Brad_Stone_%28journalist%29",
+  "notableWorks": [
+    "The Upstarts",
+    "The Everything Store: Jeff Bezos and the Age of Amazon"
+  ],
+  "photoCredit": "Wikimedia Commons"
 }

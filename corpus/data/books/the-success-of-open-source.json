@@ -9,7 +9,7 @@
   "fiction": false,
   "publicationYear": 2004,
   "pageCount": 312,
-  "isbn13": null,
+  "isbn13": "9780674012929",
   "olKey": "/works/OL15840214W",
   "synopsis": null,
   "picker": [
@@ -28,5 +28,10 @@
     "Economische aspecten",
     "Politieke aspecten",
     "Internet (impactos sociais)"
-  ]
+  ],
+  "editionCount": 1,
+  "languages": [
+    "eng"
+  ],
+  "wikidataId": "Q54641592"
 }

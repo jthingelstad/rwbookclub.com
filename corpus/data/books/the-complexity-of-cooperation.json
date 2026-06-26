@@ -9,7 +9,7 @@
   "fiction": false,
   "publicationYear": 1997,
   "pageCount": 232,
-  "isbn13": null,
+  "isbn13": "9780691015675",
   "olKey": "/works/OL2620281W",
   "synopsis": null,
   "picker": [
@@ -24,5 +24,11 @@
     "Adjustment (Psychology)",
     "Computer simulation",
     "Cooperativeness"
-  ]
+  ],
+  "editionCount": 1,
+  "languages": [
+    "eng"
+  ],
+  "wikidataId": "Q7727217",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/The_Complexity_of_Cooperation"
 }

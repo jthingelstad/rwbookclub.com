@@ -28,5 +28,17 @@
     "Popular culture",
     "Psychology",
     "Self"
-  ]
+  ],
+  "editionCount": 78,
+  "languages": [
+    "eng",
+    "spa",
+    "ger",
+    "fre",
+    "dan"
+  ],
+  "ratingsAverage": 3.83,
+  "ratingsCount": 126,
+  "wikidataId": "Q189446",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Zen_and_the_Art_of_Motorcycle_Maintenance"
 }

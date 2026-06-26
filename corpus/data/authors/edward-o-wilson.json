@@ -1,4 +1,14 @@
 {
   "name": "Edward O. Wilson",
-  "bio": "American biologist and author."
+  "bio": "American biologist and author.",
+  "birthYear": 1929,
+  "deathYear": 2021,
+  "nationality": "United States",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/E._O._Wilson",
+  "notableWorks": [
+    "Journey to the Ants",
+    "The Ants",
+    "Sociobiology: The New Synthesis"
+  ],
+  "photoCredit": "Open Library"
 }

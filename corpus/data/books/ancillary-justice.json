@@ -28,5 +28,24 @@
     "Artificial intelligence",
     "Large type books",
     "Hugo Award Winner"
-  ]
+  ],
+  "editionCount": 17,
+  "languages": [
+    "eng",
+    "fre"
+  ],
+  "ratingsAverage": 3.92,
+  "ratingsCount": 71,
+  "series": "Imperial Radch",
+  "awards": [
+    "Hugo Award for Best Novel",
+    "Locus Award for Best First Novel",
+    "Arthur C. Clarke Award",
+    "BSFA Award for Best Novel",
+    "Seiun Award for Best Translated Long Work",
+    "Nebula Award for Best Novel",
+    "Bob Morane award for best foreign novel"
+  ],
+  "wikidataId": "Q17001721",
+  "wikipediaUrl": "https://en.wikipedia.org/wiki/Ancillary_Justice"
 }
