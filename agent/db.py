@@ -12,6 +12,8 @@ module is safe to call from the bot's worker threads.
 from __future__ import annotations
 
 import os
+import json
+import re
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
@@ -235,6 +237,110 @@ CREATE TABLE IF NOT EXISTS email_opens (
     FOREIGN KEY(token) REFERENCES email_tracking(token)
 );
 CREATE INDEX IF NOT EXISTS idx_email_opens_token ON email_opens(token, opened_at);
+
+CREATE TABLE IF NOT EXISTS mail_participants (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    display_name      TEXT,
+    member_slug       TEXT,
+    participant_type  TEXT NOT NULL DEFAULT 'person', -- person | list | system | unknown
+    membership_status TEXT,
+    notes             TEXT,
+    created_at        TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at        TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_mail_participants_slug ON mail_participants(member_slug);
+
+CREATE TABLE IF NOT EXISTS mail_participant_addresses (
+    email          TEXT PRIMARY KEY,
+    participant_id INTEGER NOT NULL,
+    member_slug    TEXT,
+    display_name   TEXT,
+    source         TEXT NOT NULL,
+    confidence     REAL NOT NULL DEFAULT 1.0,
+    created_at     TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at     TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY(participant_id) REFERENCES mail_participants(id)
+);
+CREATE INDEX IF NOT EXISTS idx_mail_participant_addresses_participant
+    ON mail_participant_addresses(participant_id);
+CREATE INDEX IF NOT EXISTS idx_mail_participant_addresses_slug
+    ON mail_participant_addresses(member_slug);
+
+CREATE TABLE IF NOT EXISTS identity_claims (
+    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+    surface               TEXT NOT NULL,
+    identifier            TEXT NOT NULL,
+    display_name          TEXT,
+    candidate_member_slug TEXT,
+    confidence            REAL,
+    status                TEXT NOT NULL DEFAULT 'pending',
+    evidence_json         TEXT,
+    created_at            TEXT NOT NULL DEFAULT (datetime('now')),
+    resolved_at           TEXT,
+    resolved_by           TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_identity_claims_status ON identity_claims(status, created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_identity_claims_unique_pending
+    ON identity_claims(surface, identifier)
+    WHERE status = 'pending';
+
+CREATE TABLE IF NOT EXISTS mail_threads (
+    thread_id          TEXT PRIMARY KEY,
+    list_id            TEXT,
+    subject_normalized TEXT,
+    first_sent_at      TEXT,
+    last_sent_at       TEXT,
+    message_count      INTEGER NOT NULL DEFAULT 0,
+    participants_json  TEXT,
+    summary            TEXT,
+    summary_model      TEXT,
+    summary_updated_at TEXT,
+    created_at         TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at         TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_mail_threads_last_sent ON mail_threads(last_sent_at);
+
+CREATE TABLE IF NOT EXISTS mail_messages (
+    message_id                 TEXT PRIMARY KEY,
+    thread_id                  TEXT NOT NULL,
+    parent_message_id          TEXT,
+    source                     TEXT NOT NULL,
+    source_ref                 TEXT,
+    list_id                    TEXT,
+    sender_participant_id      INTEGER,
+    from_email                 TEXT,
+    from_name                  TEXT,
+    member_slug                TEXT,
+    to_json                    TEXT,
+    cc_json                    TEXT,
+    reply_to_json              TEXT,
+    subject                    TEXT,
+    sent_at                    TEXT,
+    received_at                TEXT,
+    body_text                  TEXT,
+    body_clean                 TEXT,
+    body_html                  TEXT,
+    attachments_json           TEXT,
+    headers_json               TEXT,
+    imported_at                TEXT NOT NULL DEFAULT (datetime('now')),
+    processed_inbound_email_id TEXT,
+    FOREIGN KEY(sender_participant_id) REFERENCES mail_participants(id),
+    FOREIGN KEY(thread_id) REFERENCES mail_threads(thread_id)
+);
+CREATE INDEX IF NOT EXISTS idx_mail_messages_thread_sent ON mail_messages(thread_id, sent_at);
+CREATE INDEX IF NOT EXISTS idx_mail_messages_member_sent ON mail_messages(member_slug, sent_at);
+CREATE INDEX IF NOT EXISTS idx_mail_messages_from_email ON mail_messages(from_email);
+CREATE INDEX IF NOT EXISTS idx_mail_messages_sent_at ON mail_messages(sent_at);
+CREATE INDEX IF NOT EXISTS idx_mail_messages_inbound_email
+    ON mail_messages(processed_inbound_email_id);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS mail_message_fts USING fts5(
+    message_id UNINDEXED,
+    subject,
+    from_name,
+    from_email,
+    body_clean
+);
 """
 
 
@@ -451,6 +557,295 @@ def list_member_emails() -> list[dict]:
             "FROM member_emails ORDER BY member_slug, email"
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+# ── Mail archive ─────────────────────────────────────────────────────────────
+def _json_or_none(value) -> str | None:
+    if value is None:
+        return None
+    return json.dumps(value, ensure_ascii=False, default=str)
+
+
+def _upsert_mail_participant(conn: sqlite3.Connection, *, email: str | None,
+                             display_name: str | None = None,
+                             member_slug: str | None = None,
+                             source: str = "historical_import",
+                             participant_type: str = "person",
+                             membership_status: str | None = None,
+                             confidence: float = 1.0) -> int | None:
+    normalized_email = _normalize_email(email) if email else None
+    participant_id: int | None = None
+    if normalized_email:
+        row = conn.execute(
+            "SELECT participant_id FROM mail_participant_addresses WHERE email = ?",
+            (normalized_email,),
+        ).fetchone()
+        if row:
+            participant_id = int(row["participant_id"])
+    if participant_id is None and member_slug:
+        row = conn.execute(
+            "SELECT id FROM mail_participants WHERE member_slug = ? "
+            "ORDER BY updated_at DESC LIMIT 1",
+            (member_slug,),
+        ).fetchone()
+        if row:
+            participant_id = int(row["id"])
+    now = _now()
+    if participant_id is None:
+        status = membership_status or ("current" if member_slug else "historical")
+        cur = conn.execute(
+            "INSERT INTO mail_participants "
+            "(display_name, member_slug, participant_type, membership_status, updated_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (display_name, member_slug, participant_type, status, now),
+        )
+        participant_id = int(cur.lastrowid)
+    else:
+        conn.execute(
+            "UPDATE mail_participants SET "
+            "display_name = COALESCE(?, display_name), "
+            "member_slug = COALESCE(?, member_slug), "
+            "participant_type = COALESCE(?, participant_type), "
+            "membership_status = COALESCE(?, membership_status), "
+            "updated_at = ? WHERE id = ?",
+            (display_name, member_slug, participant_type, membership_status, now, participant_id),
+        )
+    if normalized_email:
+        conn.execute(
+            "INSERT INTO mail_participant_addresses "
+            "(email, participant_id, member_slug, display_name, source, confidence, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(email) DO UPDATE SET "
+            "participant_id=excluded.participant_id, "
+            "member_slug=COALESCE(excluded.member_slug, mail_participant_addresses.member_slug), "
+            "display_name=COALESCE(excluded.display_name, mail_participant_addresses.display_name), "
+            "source=excluded.source, confidence=excluded.confidence, updated_at=excluded.updated_at",
+            (normalized_email, participant_id, member_slug, display_name, source, confidence, now),
+        )
+    return participant_id
+
+
+def mail_participant_for_address(email: str | None) -> dict | None:
+    if not email:
+        return None
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT a.email, a.participant_id, a.member_slug, a.display_name, "
+            "a.source, a.confidence, p.participant_type, p.membership_status "
+            "FROM mail_participant_addresses a "
+            "JOIN mail_participants p ON p.id = a.participant_id "
+            "WHERE a.email = ?",
+            (_normalize_email(email),),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def add_identity_claim(*, surface: str, identifier: str,
+                       display_name: str | None = None,
+                       candidate_member_slug: str | None = None,
+                       confidence: float | None = None,
+                       evidence: dict | None = None) -> int:
+    with connect() as conn:
+        cur = conn.execute(
+            "INSERT OR IGNORE INTO identity_claims "
+            "(surface, identifier, display_name, candidate_member_slug, confidence, evidence_json) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                surface, identifier, display_name, candidate_member_slug,
+                confidence, _json_or_none(evidence),
+            ),
+        )
+        if cur.lastrowid:
+            return int(cur.lastrowid)
+        row = conn.execute(
+            "SELECT id FROM identity_claims WHERE surface = ? AND identifier = ? "
+            "AND status = 'pending'",
+            (surface, identifier),
+        ).fetchone()
+        return int(row["id"]) if row else 0
+
+
+def upsert_mail_message(message: dict) -> bool:
+    """Insert or update one normalized archive message.
+
+    Returns True when the message_id was new, False when it replaced an
+    existing archive row.
+    """
+    message_id = str(message["message_id"])
+    thread_id = str(message["thread_id"])
+    from_email = _normalize_email(message.get("from_email") or "") or None
+    member_slug = message.get("member_slug")
+    with connect() as conn:
+        existed = conn.execute(
+            "SELECT 1 FROM mail_messages WHERE message_id = ?",
+            (message_id,),
+        ).fetchone() is not None
+        participant_id = _upsert_mail_participant(
+            conn,
+            email=from_email,
+            display_name=message.get("from_name"),
+            member_slug=member_slug,
+            source=message.get("source") or "historical_import",
+        )
+        conn.execute(
+            "INSERT INTO mail_threads "
+            "(thread_id, list_id, subject_normalized, first_sent_at, last_sent_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(thread_id) DO UPDATE SET "
+            "list_id=COALESCE(excluded.list_id, mail_threads.list_id), "
+            "subject_normalized=COALESCE(mail_threads.subject_normalized, excluded.subject_normalized), "
+            "updated_at=excluded.updated_at",
+            (
+                thread_id, message.get("list_id"), message.get("subject_normalized"),
+                message.get("sent_at"), message.get("sent_at"), _now(),
+            ),
+        )
+        cols = [
+            "message_id", "thread_id", "parent_message_id", "source", "source_ref",
+            "list_id", "sender_participant_id", "from_email", "from_name",
+            "member_slug", "to_json", "cc_json", "reply_to_json", "subject",
+            "sent_at", "received_at", "body_text", "body_clean", "body_html",
+            "attachments_json", "headers_json", "processed_inbound_email_id",
+        ]
+        row = {
+            "message_id": message_id,
+            "thread_id": thread_id,
+            "parent_message_id": message.get("parent_message_id"),
+            "source": message.get("source") or "historical_import",
+            "source_ref": message.get("source_ref"),
+            "list_id": message.get("list_id"),
+            "sender_participant_id": participant_id,
+            "from_email": from_email,
+            "from_name": message.get("from_name"),
+            "member_slug": member_slug,
+            "to_json": _json_or_none(message.get("to")),
+            "cc_json": _json_or_none(message.get("cc")),
+            "reply_to_json": _json_or_none(message.get("reply_to")),
+            "subject": message.get("subject"),
+            "sent_at": message.get("sent_at"),
+            "received_at": message.get("received_at"),
+            "body_text": message.get("body_text"),
+            "body_clean": message.get("body_clean"),
+            "body_html": message.get("body_html"),
+            "attachments_json": _json_or_none(message.get("attachments")),
+            "headers_json": _json_or_none(message.get("headers")),
+            "processed_inbound_email_id": message.get("processed_inbound_email_id"),
+        }
+        placeholders = ", ".join("?" for _ in cols)
+        updates = ", ".join(
+            f"{c}=excluded.{c}" for c in cols
+            if c not in {"message_id", "imported_at"}
+        )
+        conn.execute(
+            f"INSERT INTO mail_messages ({', '.join(cols)}) VALUES ({placeholders}) "
+            f"ON CONFLICT(message_id) DO UPDATE SET {updates}",
+            [row[c] for c in cols],
+        )
+        conn.execute("DELETE FROM mail_message_fts WHERE message_id = ?", (message_id,))
+        conn.execute(
+            "INSERT INTO mail_message_fts "
+            "(message_id, subject, from_name, from_email, body_clean) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (
+                message_id, row["subject"] or "", row["from_name"] or "",
+                row["from_email"] or "", row["body_clean"] or "",
+            ),
+        )
+        return not existed
+
+
+def rebuild_mail_thread_stats() -> None:
+    with connect() as conn:
+        thread_ids = [
+            r["thread_id"] for r in conn.execute(
+                "SELECT DISTINCT thread_id FROM mail_messages ORDER BY thread_id"
+            )
+        ]
+        for thread_id in thread_ids:
+            stats = conn.execute(
+                "SELECT COUNT(*) AS c, MIN(sent_at) AS first_sent_at, MAX(sent_at) AS last_sent_at "
+                "FROM mail_messages WHERE thread_id = ?",
+                (thread_id,),
+            ).fetchone()
+            participants = [
+                dict(r) for r in conn.execute(
+                    "SELECT member_slug, from_email, from_name, COUNT(*) AS message_count "
+                    "FROM mail_messages WHERE thread_id = ? "
+                    "GROUP BY member_slug, from_email, from_name "
+                    "ORDER BY message_count DESC, from_email",
+                    (thread_id,),
+                )
+            ]
+            conn.execute(
+                "UPDATE mail_threads SET first_sent_at = ?, last_sent_at = ?, "
+                "message_count = ?, participants_json = ?, updated_at = ? "
+                "WHERE thread_id = ?",
+                (
+                    stats["first_sent_at"], stats["last_sent_at"], stats["c"],
+                    _json_or_none(participants), _now(), thread_id,
+                ),
+            )
+
+
+def mail_archive_counts() -> dict:
+    with connect() as conn:
+        return {
+            "messages": conn.execute("SELECT COUNT(*) c FROM mail_messages").fetchone()["c"],
+            "threads": conn.execute("SELECT COUNT(*) c FROM mail_threads").fetchone()["c"],
+            "participants": conn.execute("SELECT COUNT(*) c FROM mail_participants").fetchone()["c"],
+            "addresses": conn.execute("SELECT COUNT(*) c FROM mail_participant_addresses").fetchone()["c"],
+        }
+
+
+def _fts_query(query: str) -> str:
+    terms = [t for t in re.findall(r"[\w@.+-]+", query or "") if t]
+    return " AND ".join(f'"{t.replace(chr(34), chr(34) * 2)}"' for t in terms)
+
+
+def search_mail_archive(query: str, *, member_slug: str | None = None,
+                        year_from: int | None = None, year_to: int | None = None,
+                        limit: int = 8) -> list[dict]:
+    match = _fts_query(query)
+    if not match:
+        return []
+    limit = max(1, min(int(limit), 20))
+    sql = (
+        "SELECT m.message_id, m.thread_id, m.subject, m.from_name, m.from_email, "
+        "m.member_slug, m.sent_at, m.received_at, "
+        "snippet(mail_message_fts, 4, '[', ']', ' ... ', 18) AS snippet "
+        "FROM mail_message_fts JOIN mail_messages m "
+        "ON m.message_id = mail_message_fts.message_id "
+        "WHERE mail_message_fts MATCH ?"
+    )
+    args: list = [match]
+    if member_slug:
+        sql += " AND m.member_slug = ?"; args.append(member_slug)
+    if year_from:
+        sql += " AND m.sent_at >= ?"; args.append(f"{int(year_from):04d}-01-01")
+    if year_to:
+        sql += " AND m.sent_at < ?"; args.append(f"{int(year_to) + 1:04d}-01-01")
+    sql += " ORDER BY COALESCE(m.sent_at, m.received_at, m.imported_at) DESC LIMIT ?"
+    args.append(limit)
+    with connect() as conn:
+        return [dict(r) for r in conn.execute(sql, args)]
+
+
+def get_mail_thread(thread_id: str, *, limit: int = 50) -> dict | None:
+    limit = max(1, min(int(limit), 100))
+    with connect() as conn:
+        thread = conn.execute(
+            "SELECT * FROM mail_threads WHERE thread_id = ?",
+            (thread_id,),
+        ).fetchone()
+        if not thread:
+            return None
+        rows = conn.execute(
+            "SELECT message_id, from_name, from_email, member_slug, subject, sent_at, "
+            "body_clean FROM mail_messages WHERE thread_id = ? "
+            "ORDER BY sent_at ASC, message_id ASC LIMIT ?",
+            (thread_id, limit),
+        ).fetchall()
+    return {"thread": dict(thread), "messages": [dict(r) for r in rows]}
 
 
 # ── Conversations + rolling summary ──────────────────────────────────────────

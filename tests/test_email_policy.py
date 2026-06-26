@@ -9,6 +9,7 @@ from agent.email_jmap import InboundEmail
 def msg(
     *,
     from_email: str,
+    from_name: str | None = None,
     subject: str = "Hello",
     text: str = "Hello Oliver",
     to: list[str] | None = None,
@@ -19,7 +20,7 @@ def msg(
         id="m1",
         thread_id="t1",
         message_id="msg1@example.test",
-        from_name=None,
+        from_name=from_name,
         from_email=from_email,
         to=to or ["oliver@rwbookclub.com"],
         cc=cc or [],
@@ -102,6 +103,35 @@ class TestInboundEmailPolicy:
         assert decision.allowed is True
         assert decision.reason == "mailing_list_candidate"
         assert decision.reply_to == [config.BOOK_CLUB_MAILING_LIST_ADDRESS]
+
+    def test_mailing_list_sender_display_name_resolves_member(self):
+        decision = email_policy.inbound_decision(
+            msg(
+                from_email=config.BOOK_CLUB_MAILING_LIST_ADDRESS,
+                from_name="'Jamie Thingelstad' via rwbookclub",
+                to=[config.BOOK_CLUB_MAILING_LIST_ADDRESS],
+                subject="Meeting in 5 days!",
+            )
+        )
+        assert decision.allowed is True
+        assert decision.is_mailing_list is True
+        assert decision.member_slug == "jamie"
+
+    def test_direct_unknown_sender_cannot_spoof_member_by_display_name(self):
+        decision = email_policy.inbound_decision(
+            msg(
+                from_email="unknown@example.test",
+                from_name="Jamie Thingelstad",
+                to=["oliver@rwbookclub.com"],
+            )
+        )
+        assert decision.allowed is False
+        assert decision.reason == "sender_not_allowed"
+
+    def test_display_name_cleanup_for_google_groups(self):
+        assert email_policy.known_member_slug_for_display_name(
+            "'Jamie Thingelstad' via rwbookclub"
+        ) == "jamie"
 
     def test_mere_oliver_mention_on_mailing_list_is_model_candidate(self, fresh_db):
         fresh_db.link_member_email("tom@tomeri.org", "tom")

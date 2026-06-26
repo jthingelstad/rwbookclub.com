@@ -384,6 +384,37 @@ TOOLS = [
             "required": ["query"],
         },
     },
+    {
+        "name": "search_mail_archive",
+        "description": "Keyword-search the R/W Book Club mailing-list email archive and future "
+                       "archived inbound email. Use when a question asks what the club discussed, "
+                       "planned, nominated, voted on, or decided over email. This searches cleaned "
+                       "message bodies, not attachments or quoted history.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "words to search for; all terms must match"},
+                "member": {"type": "string", "description": "Optional member slug, e.g. jamie, tom, erik"},
+                "year_from": {"type": "integer", "minimum": 2016},
+                "year_to": {"type": "integer", "minimum": 2016},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 20},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "get_mail_thread",
+        "description": "Fetch a chronological cleaned transcript for one email archive thread "
+                       "returned by search_mail_archive.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "thread_id": {"type": "string"},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 100},
+            },
+            "required": ["thread_id"],
+        },
+    },
 ]
 
 
@@ -458,9 +489,33 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             limit = max(1, min(int(tool_input.get("limit", 12)), 20))
             rows = db.search_conversations(tool_input["query"], limit=limit)
             for r in rows:
-                r["channel"] = config.CHANNEL_NAMES.get(int(r["channel_id"]), r["channel_id"])
+                try:
+                    channel_key = int(r["channel_id"])
+                except (TypeError, ValueError):
+                    channel_key = r["channel_id"]
+                r["channel"] = config.CHANNEL_NAMES.get(channel_key, r["channel_id"])
                 r["content"] = (r["content"] or "")[:300]  # keep tool result compact
             return _dump(rows)
+        if name == "search_mail_archive":
+            limit = max(1, min(int(tool_input.get("limit", 8)), 20))
+            rows = db.search_mail_archive(
+                tool_input["query"],
+                member_slug=tool_input.get("member"),
+                year_from=tool_input.get("year_from"),
+                year_to=tool_input.get("year_to"),
+                limit=limit,
+            )
+            for r in rows:
+                r["snippet"] = (r.get("snippet") or "")[:500]
+            return _dump(rows)
+        if name == "get_mail_thread":
+            limit = max(1, min(int(tool_input.get("limit", 50)), 100))
+            thread = db.get_mail_thread(tool_input["thread_id"], limit=limit)
+            if not thread:
+                return _dump({"error": "no such mail thread"})
+            for msg in thread["messages"]:
+                msg["body_clean"] = (msg.get("body_clean") or "")[:1000]
+            return _dump(thread)
         if name == "record_availability":
             member_slug = ctx.get("member_slug")
             if not member_slug:

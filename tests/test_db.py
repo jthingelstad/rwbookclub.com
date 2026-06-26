@@ -247,6 +247,58 @@ class TestInboundEmail:
         assert db.mark_email_processing(email_id="m3")
 
 
+class TestMailArchive:
+    def test_upsert_search_and_thread_round_trip(self, fresh_db):
+        db = fresh_db
+        db.link_member_email("jamie@example.test", "jamie")
+        message = {
+            "message_id": "<m1@example.test>",
+            "thread_id": "x-gm-thrid:t1",
+            "parent_message_id": None,
+            "source": "historical_import",
+            "source_ref": "fixture:1",
+            "list_id": "rwbookclub@googlegroups.com",
+            "from_email": "jamie@example.test",
+            "from_name": "Jamie",
+            "member_slug": db.member_slug_for_email("jamie@example.test"),
+            "to": [{"name": "Club", "email": "rwbookclub@googlegroups.com"}],
+            "cc": [],
+            "reply_to": [],
+            "subject": "Book picks",
+            "subject_normalized": "book picks",
+            "sent_at": "2026-06-25T12:00:00+00:00",
+            "received_at": None,
+            "body_text": "I nominate a book about cities.",
+            "body_clean": "I nominate a book about cities.",
+            "body_html": None,
+            "attachments": None,
+            "headers": {"Message-ID": "<m1@example.test>"},
+        }
+        assert db.upsert_mail_message(message)
+        assert not db.upsert_mail_message(message)
+        db.rebuild_mail_thread_stats()
+
+        counts = db.mail_archive_counts()
+        assert counts["messages"] == 1
+        assert counts["threads"] == 1
+        assert counts["addresses"] == 1
+
+        rows = db.search_mail_archive("cities", member_slug="jamie")
+        assert len(rows) == 1
+        assert rows[0]["message_id"] == "<m1@example.test>"
+
+        thread = db.get_mail_thread("x-gm-thrid:t1")
+        assert thread is not None
+        assert thread["thread"]["message_count"] == 1
+        assert thread["messages"][0]["body_clean"] == "I nominate a book about cities."
+
+    def test_identity_claim_dedupes_pending(self, fresh_db):
+        db = fresh_db
+        first = db.add_identity_claim(surface="email", identifier="old@example.test")
+        second = db.add_identity_claim(surface="email", identifier="old@example.test")
+        assert first == second
+
+
 class TestReadingStatus:
     def test_set_and_get_reading_status(self, fresh_db):
         db = fresh_db

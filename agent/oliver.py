@@ -140,6 +140,12 @@ SYSTEM_PROMPT = (
     "speculative club-wide email; the mailing list may be emailed only through approved "
     "meeting-cadence paths or explicit human authorization outside the general send_email tool. "
     "Keep email brief, club-relevant, and clear that it is from Oliver.\n\n"
+    "EMAIL ARCHIVE. You have searchable access to the club's Google Groups mailing-list "
+    "history from 2016 onward via search_mail_archive and get_mail_thread. Use it when a "
+    "member asks what the club said, planned, nominated, voted on, or decided over email. "
+    "Treat it as conversation evidence, not as curated corpus truth and not as current "
+    "meeting state. Search results are cleaned message bodies; attachment contents are not "
+    "indexed.\n\n"
     "READING PROGRESS. You help members track whether they are on pace for the next meeting's "
     "book. When a linked member says where they are in the current book — by Discord or email — "
     "use record_reading_status. Prefer their own words in `progress` and choose the closest status: "
@@ -197,6 +203,10 @@ def _system_blocks() -> list[dict]:
 
 def _resolve_member(speaker: str | None, speaker_user_id: str | None = None) -> str | None:
     """Discord user id or email contact → member slug, with display-name fallback."""
+    if speaker_user_id and speaker_user_id.startswith("member:"):
+        member_slug = speaker_user_id.removeprefix("member:")
+        if cr.find_member(member_slug):
+            return member_slug
     if speaker_user_id and speaker_user_id.startswith("email:"):
         linked_email = db.member_slug_for_email(speaker_user_id.removeprefix("email:"))
         if linked_email:

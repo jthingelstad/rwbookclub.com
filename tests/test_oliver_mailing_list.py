@@ -82,3 +82,8 @@ def test_mailing_list_prompt_uses_unquoted_visible_text(monkeypatch):
 
     assert "I will miss it." in calls[0]
     assert "Anything I should answer?" not in calls[0]
+
+
+def test_explicit_member_identity_token_resolves_member():
+    assert oliver._resolve_member("R/W Book Club", "member:jamie") == "jamie"
+    assert oliver._resolve_member("R/W Book Club", "member:not-a-member") is None

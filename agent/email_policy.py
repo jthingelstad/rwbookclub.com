@@ -7,7 +7,7 @@ from html import unescape
 from dataclasses import dataclass
 from email.utils import getaddresses
 
-from agent import config, db
+from agent import config, corpus_read as cr, db
 
 EMAIL_QUOTE_RE = re.compile(r"^(>|on .+wrote:|from:|sent:|to:|subject:|--\s*$)", re.IGNORECASE)
 
@@ -52,6 +52,26 @@ def known_member_slug_for_email(email: str | None) -> str | None:
     return db.member_slug_for_email(normalize_email(email))
 
 
+def known_member_slug_for_display_name(name: str | None) -> str | None:
+    if not name:
+        return None
+    cleaned = re.sub(r"(?i)\s+via\s+rwbookclub\s*$", "", name).strip()
+    cleaned = re.sub(r"\s+", " ", cleaned.strip("'\"").strip())
+    if not cleaned:
+        return None
+    member = cr.find_member(cleaned)
+    if member:
+        return member.get("slug")
+    first_name = cleaned.split(" ", 1)[0]
+    matches = [
+        m for m in cr.members()
+        if (m.get("name") or "").strip().lower() == first_name.lower()
+    ]
+    if len(matches) == 1:
+        return matches[0].get("slug")
+    return None
+
+
 def is_known_member_address(email: str | None) -> bool:
     return known_member_slug_for_email(email) is not None
 
@@ -84,6 +104,8 @@ def current_message_text(text: str) -> str:
 def inbound_decision(msg) -> InboundDecision:
     member_slug = known_member_slug_for_email(getattr(msg, "from_email", None))
     list_message = is_mailing_list_message(msg)
+    if list_message and not member_slug:
+        member_slug = known_member_slug_for_display_name(getattr(msg, "from_name", None))
     if list_message:
         return InboundDecision(
             allowed=True,

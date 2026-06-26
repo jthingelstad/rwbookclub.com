@@ -26,7 +26,7 @@ from discord.ext import tasks
 
 from agent import (
     commands, config, context as kb, db, email_jmap, email_policy, gitwrite, meeting_rules,
-    oliver, tinylytics,
+    mail_archive, oliver, tinylytics,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -362,6 +362,17 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
     )
     if not claimed:
         return
+    try:
+        await asyncio.to_thread(
+            mail_archive.archive_inbound_email,
+            msg,
+            is_mailing_list=decision.is_mailing_list,
+            member_slug=decision.member_slug,
+        )
+    except Exception as e:
+        db.mark_email_processed(msg.id, status="failed", error=f"archive:{type(e).__name__}: {e}")
+        log.exception("Failed to archive inbound email %s", msg.id)
+        return
     db.add_activity(
         "email_received",
         "Email received",
@@ -407,12 +418,16 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
     mailing_list_result: oliver.MailingListEmailResult | None = None
     if decision.is_mailing_list:
         try:
+            speaker_user_id = (
+                f"member:{member_slug}" if member_slug
+                else f"email:{msg.from_email.lower()}"
+            )
             mailing_list_result = await asyncio.to_thread(
                 oliver.answer_mailing_list_email,
                 msg,
                 channel_id=channel_id,
                 speaker=msg.speaker,
-                speaker_user_id=f"email:{msg.from_email.lower()}",
+                speaker_user_id=speaker_user_id,
                 source_message_id=msg.id,
             )
         except Exception as e:

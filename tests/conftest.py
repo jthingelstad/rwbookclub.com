@@ -38,6 +38,8 @@ def fresh_db():
         "member_emails", "reading_statuses",
         "activity_events",
         "email_opens", "email_tracking", "member_contacts",
+        "mail_message_fts", "mail_messages", "mail_threads",
+        "identity_claims", "mail_participant_addresses", "mail_participants",
     ]
     with _db.connect() as conn:
         for t in tables:
