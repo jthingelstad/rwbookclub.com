@@ -22,7 +22,7 @@ a short supervised step (below).
 | 4. Generators + faithful corpus (`agent/corpus_gen.py`) | ✅ | Regenerated corpus is **byte-identical to the committed corpus except two intentional cleanups**: de-duped `a-distant-mirror`'s `['dan','dan']` picker, dropped `patterns-in-nature--jamie.md`. `corpus/validate.py` green, **240 agent tests pass**, **11ty build renders 553 files**. |
 | 5. Writes through the DB (`agent/corpus_write.py`) | ✅ | `write_book` / `schedule_meeting` upsert `club_*` under FKs → regenerate affected corpus files → `gitwrite`. Round-trip tests added. |
 | 3. Ops-data remap | ✅ **done** | Verified zero-orphan (`agent/script/verify_ops_mapping.py`) **and flipped** (2026-06-26): the ops tables now key on real `meeting_id`/`member_id` FKs (no `meeting_key`/`member_slug`). The mail archive's `member_id` is populated on all 2,446 messages. |
-| 6. Corpus enrichment | 🚧 in progress | **Slice A (hosting) done** (2026-06-26): `member_history`/`club_stats`/`get_book`/`club_context` + the member pages now surface who hosted meetings (the corpus never carried this); `_migrate_club` backfills host = picker for book-meetings missing a host. **Remaining:** fold mail-thread *summaries* into the private corpus (the now-private corpus unblocks this). See roadmap. |
+| 6. Corpus enrichment | ✅ done (scoped) | **Hosting** folded in (2026-06-26): `member_history`/`club_stats`/`get_book`/`club_context` + the member pages now surface who hosted meetings (the corpus never carried this); `_migrate_club` backfills host = picker for book-meetings missing a host. **Decision (2026-06-26): the email/Discord archive stays tool-accessed, not folded into the corpus** — Oliver reaches it on demand via `search_mail_archive`/`get_mail_thread`/`search_discussion`, keeping private message bodies out of the corpus. |
 
 Design note: the generator **reproduces the existing corpus shape faithfully**, so
 `corpus_read.py`, every `website/_data/*.js`, `validate.py`, and the 240 tests keep working
@@ -64,11 +64,12 @@ The authoritative DB is the natural home to make Oliver smarter:
 - **Meeting hosts** — ✅ **done.** `club_meeting_hosts` captures who hosted (176/184 directly +
   backfilled host=picker), now surfaced via `member_history`/`club_stats`/`get_book`/`club_context`
   and the member pages.
-- **Mailing list / Discord / reading** — `mail_messages` (2,446), `conversations`,
-  `reading_statuses` live in `oliver.db` and are already *reachable* via DB-backed tools
-  (`search_mail_archive`/`get_mail_thread`/`search_discussion`/`reading_status`). The remaining
-  work is folding mail-thread **summaries** (`mail_threads.summary`, currently empty) into the
-  now-private corpus — its own deliberate LLM pass.
+- **Mailing list / Discord / reading** — ✅ **stays tool-accessed (decided 2026-06-26).**
+  `mail_messages` (2,446), `conversations`, `reading_statuses` live in `oliver.db` and Oliver
+  reaches them on demand via `search_mail_archive`/`get_mail_thread`/`search_discussion`/
+  `reading_status`. We deliberately do **not** fold mail-thread summaries into the corpus — it
+  keeps private message bodies out of the corpus and avoids a summary-quality dependency.
+  (`mail_threads.summary` stays available if that ever changes.)
 - **Book cloud** — see `agent/team/work/2026-06-26-build-book-cloud.md` (slice 1a is
   ready to code); the new schema makes capture/retrieval straightforward.
 
