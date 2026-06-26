@@ -433,6 +433,10 @@ def hosts_for_meeting(meeting_id: int | None) -> list[dict]:
     return [dict(r) for r in rows]
 
 
+# Ensure the club schema + migrations at import (symmetric with db._ensure_schema), so a
+# bot restart always lands the full schema (e.g. the local meeting-date normalization).
+ensure_schema()
+
+
 if __name__ == "__main__":
-    ensure_schema()
     print(json.dumps(counts(), indent=2))
