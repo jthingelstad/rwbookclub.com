@@ -18,7 +18,7 @@ import discord
 from discord.ext import tasks
 
 from agent import (clubdb, config, context as kb, corpus_read, corpus_write, db, oliver,
-                   scheduler)
+                   publish, scheduler)
 from agent.mail import email_jmap, outbound
 from agent.club import meeting_campaign, meeting_emails, meeting_rules, openlibrary, reviews
 
@@ -26,6 +26,31 @@ log = logging.getLogger("oliver.commands")
 
 # Stashed by setup(); used by run_scheduler and helpers that need client.
 _client: discord.Client | None = None
+
+
+# ── Publish (rebuild + deploy the site after a data write) ───────────────────
+def schedule_publish() -> None:
+    """Rebuild + deploy the site in the background after a data write, so the Discord ack
+    stays fast. publish_site() regenerates the whole corpus from the DB, so a retry after a
+    busy lock still captures this write. Failures are logged + surfaced as an activity warning."""
+    async def _run() -> None:
+        for _ in range(3):
+            try:
+                await asyncio.to_thread(publish.publish_site)
+                return
+            except publish.PublishBusy:
+                await asyncio.sleep(20)  # a publish is running; retry to capture our write
+            except Exception:
+                log.exception("background publish failed")
+                db.add_activity(
+                    "warning", "Site publish failed",
+                    "A data write succeeded but rebuilding/deploying the site failed. "
+                    "Run `python -m agent.publish` manually, or check the logs.",
+                )
+                return
+        log.warning("publish still busy after retries; the next write will cover it")
+
+    asyncio.create_task(_run())
 
 
 # ── Admin gate ───────────────────────────────────────────────────────────────
@@ -485,6 +510,7 @@ class ReviewModal(discord.ui.Modal):
             await interaction.followup.send(
                 "Sorry — I couldn't save that just now. Try again in a moment.", ephemeral=True)
             return
+        schedule_publish()  # rebuild + deploy the site in the background
         verb = "Updated" if res["updated"] else "Logged"
         score = "DNF" if res["dnf"] else (f"{res['rating']}/5" if res["rating"] else "your notes")
         ack = await asyncio.to_thread(
@@ -725,6 +751,7 @@ async def oliver_add_book(interaction: discord.Interaction, title: str, isbn: st
         log.exception("add-book failed")
         await interaction.followup.send("Something went wrong adding that book.", ephemeral=True)
         return
+    schedule_publish()  # rebuild + deploy the site in the background
     authors = ", ".join(res["authors"]) or "unknown author"
     cover = "with cover" if res["hasCover"] else "no cover found"
     verb = "Updated" if res["updated"] else "Added"
@@ -756,6 +783,7 @@ async def oliver_schedule(interaction: discord.Interaction, book: str, date: str
         log.exception("schedule failed")
         await interaction.followup.send("Something went wrong scheduling that.", ephemeral=True)
         return
+    schedule_publish()  # rebuild + deploy the site in the background
     ack = await asyncio.to_thread(
         oliver.compose,
         "brief acknowledgement that an admin just scheduled the next club read",

@@ -16,6 +16,20 @@ __pycache__/
 *.db-wal
 *.db-shm
 
+# Generated knowledge corpus — regenerated from the club_* tables on disk; never committed
+# (kept private so it can hold sensitive context for Oliver). The site is built + deployed
+# locally from this corpus to the gh-pages branch (see agent/publish.py).
+corpus/data/
+
+# Machine-generated images (covers + author portraits) — fetched from Open Library / Wikimedia
+# by the enrichment loop; live locally + on the gh-pages branch. (Member photos are
+# human-curated and stay committed.)
+website/src/assets/images/covers/
+website/src/assets/images/authors/
+
+# Publish lock (agent/publish.py)
+.publish.lock
+
 # Oliver runtime logs (launchd captures stdout/stderr here)
 agent/logs/
 

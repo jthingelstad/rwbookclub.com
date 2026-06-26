@@ -1,6 +1,6 @@
 # AGENTS.md — rwbookclub.com
 
-Project-specific context for Codex. The site is live at rwbookclub.com (deployed from `main` via GitHub Pages). As of May 2026 there are 179 books, 184 meetings, 177 authors, and 12 members (5 current).
+Project-specific context for Codex. The site is live at rwbookclub.com (served by GitHub Pages from the **`gh-pages` branch**, built + deployed **locally** by Oliver — not from `main`/CI). The corpus (`corpus/data/`) and machine-generated images are **gitignored/private**, regenerated from the DB on disk. As of May 2026 there are 179 books, 184 meetings, 177 authors, and 12 members (5 current).
 
 ## Project
 
@@ -23,7 +23,8 @@ A root `package.json` (npm workspace over `website`) provides `npm run build`/`s
 - **Generator:** Eleventy 3, in `website/` (`npm run build`, `npm run serve` from the repo root via the workspace)
 - **Covers:** `npm run covers` (`python -m corpus.images`) backfills any missing book covers from Open Library into `website/src/assets/images/covers/`. Idempotent — only fetches what's absent.
 - **Input:** `website/src/` with Nunjucks templates; global data in `website/src/_data/` — the `*.js` modules glob and aggregate the per-entity files in `corpus/data/` (`books.js`/`members.js` derive cover/photo widths from disk; `reviews.js` parses the Markdown via gray-matter; `meetings.js` is new)
-- **Output:** `website/_site/` — published by GitHub Pages on push to `main` (the Actions artifact path is `website/_site`)
+- **Deploy:** `python -m agent.publish` (`npm run deploy`) regenerates the corpus from the DB, builds, and force-pushes `website/_site` as a clean orphan to `gh-pages` (which GitHub Pages serves). Oliver runs it in the background after data writes; developers run it after template changes. CI no longer builds/deploys.
+- **Output:** `website/_site/` → `gh-pages` branch. One-time manual GitHub setting: Pages → Source → Deploy from a branch → `gh-pages` / `(root)`.
 - **Pages:** `/` (home), `/books/<slug>/`, `/members/<slug>/`, `/about/`, `/stats/`, `/feed.xml`, `/llms.txt`, `/llms-full.txt`, `/robots.txt`, `/sitemap.xml`
 
 ### Nunjucks whitespace gotcha

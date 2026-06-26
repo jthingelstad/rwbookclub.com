@@ -1,9 +1,10 @@
 # corpus
 
-The canonical knowledge corpus for the R/W Book Club. **Git is the source of
-truth** — the data lives here as per-entity text files, edited directly (by
-people via PRs, and by the agent via commits). Airtable was the original home
-and is now a **cold backup only**.
+The knowledge corpus for the R/W Book Club — per-entity text files consumed by the
+website build and by Oliver at runtime. **It is generated from the authoritative
+`club_*` SQLite tables** (`agent/corpus_gen.py`), not hand-edited, and is
+**gitignored/private** (regenerated on disk, never committed — so it can hold
+sensitive context for Oliver). Airtable was the original home, now a cold backup.
 
 ## Layout
 
@@ -36,8 +37,9 @@ YAML frontmatter (body = the prose). `corpus/validate.py` checks every reference
 
 ## Editing
 
-Edit the files directly and commit. A push to `main` rebuilds and deploys the
-site (`.github/workflows/deploy.yml`). Git history is the club's audit log.
+Don't hand-edit these files (a regen clobbers them) — edit the DB via Oliver's
+write tools, then `python -m agent.publish` regenerates the corpus, builds, and
+deploys the site to the `gh-pages` branch.
 
 ## Covers
 
