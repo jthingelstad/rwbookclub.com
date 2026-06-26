@@ -283,7 +283,7 @@ def answer_mailing_list_email(msg, *, channel_id: str, speaker: str | None = Non
 def answer(question: str, channel_id: str = "default", speaker: str | None = None,
            speaker_user_id: str | None = None, source_message_id: str | None = None,
            *, use_history: bool = True, persist: bool = True, max_tokens: int = MAX_TOKENS,
-           model: str = MODEL, effort: str = "medium") -> str:
+           model: str = MODEL, effort: str = "medium", timeout: float | None = None) -> str:
     """Answer one message. Synchronous — call via asyncio.to_thread from the bot.
 
     use_history/persist default True for the conversational path. Set both False for a
@@ -291,6 +291,8 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
     is logged, so the call neither sees nor pollutes any channel's memory.
     """
     client = _get_client()
+    if timeout is not None:  # long-running one-offs (generate) need more than the chat cap
+        client = client.with_options(timeout=timeout)
     member_slug = _resolve_member(speaker, speaker_user_id)
 
     prior, summary = _history(channel_id) if use_history else ([], None)
@@ -370,21 +372,21 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
     return reply
 
 
-def generate(prompt: str, *, model: str = OPUS_MODEL, effort: str = "medium") -> str:
+def generate(prompt: str, *, model: str = OPUS_MODEL, effort: str = "high") -> str:
     """One-off, stateless, tool-enabled generation — for proactive content Oliver must
     research (e.g. a meeting topic email mined from the reading history).
 
     Runs the full tool loop (so corpus/history/mail-archive tools are available) but reads
     no channel history and persists nothing: each call is fresh from the corpus and never
-    touches a member-facing conversation. Defaults to Opus — these are rare, quality-critical
-    one-offs where the marginal cost is worth it. Synchronous; call via asyncio.to_thread.
+    touches a member-facing conversation. Defaults to Opus at high effort — these are rare,
+    quality-critical one-offs where the marginal cost and the few minutes are well spent.
+    Synchronous; call via asyncio.to_thread.
     """
-    # Generous token budget: these are long-form (full 3-section email) AND adaptive thinking
-    # shares the budget, so a tight cap truncates mid-draft — especially on Opus, which thinks
-    # more. 8192 leaves room for thinking + the whole email. (Higher effort thinks more and
-    # runs slower; medium keeps it complete and under the client timeout.)
+    # Opus at high effort spends a lot of the budget on adaptive thinking, so give it real
+    # headroom (16K) or the three-section email truncates mid-draft, and a generous timeout
+    # (well past the 120s chat cap) so a multi-minute run completes.
     return answer(prompt, channel_id="scheduler:generate", use_history=False, persist=False,
-                  max_tokens=8192, model=model, effort=effort)
+                  max_tokens=16000, model=model, effort=effort, timeout=600.0)
 
 
 def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -> str:

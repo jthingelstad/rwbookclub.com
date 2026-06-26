@@ -74,10 +74,12 @@ def topic_email_prompt(meeting: dict) -> str:
         "technically-minded club hasn't heard. Make it the part people forward to a friend.\n\n"
         "Format: this renders as an HTML email, so use markdown — a '## ' header for each section, "
         "numbered lists for the questions, *italics* for book titles, and **bold** sparingly on a "
-        "key phrase or two per section so it's easy to skim. Do NOT use '---' or horizontal-rule "
-        "lines anywhere — the section headers carry the structure. Write the ENTIRE email between "
-        "<email> and </email> tags and put NOTHING outside them — no preamble, no notes, no "
-        "sign-off (a signature is added automatically)."
+        "key phrase or two per section so it's easy to skim. Separate every paragraph with a fully "
+        "blank line, and leave a blank line after each '## ' header — never run paragraphs together "
+        "on consecutive lines (especially in the third section, which is prose). Do NOT use '---' "
+        "or horizontal-rule lines anywhere — the section headers carry the structure. Write the "
+        "ENTIRE email between <email> and </email> tags and put NOTHING outside them — no preamble, "
+        "no notes, no sign-off (a signature is added automatically)."
     )
 
 

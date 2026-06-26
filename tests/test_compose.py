@@ -75,6 +75,9 @@ def test_generate_is_stateless(monkeypatch):
         usage = _Usage()
 
     class _Client:
+        def with_options(self, **kwargs):  # generate() sets a per-request timeout
+            return self
+
         class messages:
             @staticmethod
             def create(**kwargs):
