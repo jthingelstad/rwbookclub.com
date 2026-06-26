@@ -141,29 +141,32 @@ class TestNotificationsDedup:
 
 class TestRollCall:
     def test_roll_call_and_attendance_round_trip(self, fresh_db):
+        from agent import clubdb
         db = fresh_db
+        mid = clubdb.meeting_id_for_book_slug("a-world-appears")
+        jamie, tom = clubdb.lookup_member_id("jamie"), clubdb.lookup_member_id("tom")
         db.upsert_roll_call(
-            meeting_key="book-a", channel_id="ch1", message_id="msg1", opened_by="admin"
+            meeting_id=mid, channel_id="ch1", message_id="msg1", opened_by="admin"
         )
-        row = db.get_roll_call("book-a")
+        row = db.get_roll_call(mid)
         assert row["status"] == "open"
         assert row["message_id"] == "msg1"
 
         db.set_attendance(
-            meeting_key="book-a", member_slug="jamie", status="yes",
+            meeting_id=mid, member_id=jamie, status="yes",
             updated_by_user_id="u1", source="button",
         )
         db.set_attendance(
-            meeting_key="book-a", member_slug="tom", status="no",
+            meeting_id=mid, member_id=tom, status="no",
             updated_by_user_id="u2", source="chat",
         )
-        attendance = db.attendance_for_meeting("book-a")
+        attendance = db.attendance_for_meeting(mid)
         assert {r["member_slug"]: r["status"] for r in attendance} == {
             "jamie": "yes",
             "tom": "no",
         }
-        assert db.close_roll_call("book-a")
-        assert db.get_roll_call("book-a")["status"] == "closed"
+        assert db.close_roll_call(mid)
+        assert db.get_roll_call(mid)["status"] == "closed"
 
 
 class TestSearchConversations:
@@ -301,10 +304,13 @@ class TestMailArchive:
 
 class TestReadingStatus:
     def test_set_and_get_reading_status(self, fresh_db):
+        from agent import clubdb
         db = fresh_db
+        mid = clubdb.meeting_id_for_book_slug("a-world-appears")
+        jamie = clubdb.lookup_member_id("jamie")
         db.set_reading_status(
-            meeting_key="a-world-appears",
-            member_slug="jamie",
+            meeting_id=mid,
+            member_id=jamie,
             status="on_track",
             progress="halfway",
             page=120,
@@ -312,20 +318,21 @@ class TestReadingStatus:
             source="email",
             updated_by="email:jamie@thingelstad.com",
         )
-        row = db.reading_status_for_member("a-world-appears", "jamie")
+        row = db.reading_status_for_member(mid, jamie)
         assert row["status"] == "on_track"
         assert row["progress"] == "halfway"
-        rows = db.reading_status_for_meeting("a-world-appears")
+        rows = db.reading_status_for_meeting(mid)
         assert rows[0]["member_slug"] == "jamie"
 
     def test_reading_status_validates_values(self, fresh_db):
         db = fresh_db
         import pytest
 
+        # Validation fires before any DB write, so the ids are irrelevant here.
         with pytest.raises(ValueError):
-            db.set_reading_status(meeting_key="m", member_slug="jamie", status="unknown")
+            db.set_reading_status(meeting_id=1, member_id=1, status="unknown")
         with pytest.raises(ValueError):
-            db.set_reading_status(meeting_key="m", member_slug="jamie", status="started", percent=101)
+            db.set_reading_status(meeting_id=1, member_id=1, status="started", percent=101)
 
 
 class TestActivityEvents:
@@ -362,10 +369,13 @@ class TestInboundEmails:
 
 class TestMemberContacts:
     def test_contact_and_email_open_round_trip(self, fresh_db):
+        from agent import clubdb
         db = fresh_db
+        mid = clubdb.meeting_id_for_book_slug("a-world-appears")
+        jamie = clubdb.lookup_member_id("jamie")
         cid = db.add_member_contact(
-            meeting_key="a-world-appears",
-            member_slug="jamie",
+            meeting_id=mid,
+            member_id=jamie,
             kind="reading_checkin",
             surface="email",
             direction="outbound",
@@ -375,23 +385,26 @@ class TestMemberContacts:
         db.add_email_tracking(
             token="tok1",
             contact_id=cid,
-            meeting_key="a-world-appears",
-            member_slug="jamie",
+            meeting_id=mid,
+            member_id=jamie,
             kind="reading_checkin",
             subject="Reading check-in",
         )
         row = db.record_email_open("tok1", remote_addr="127.0.0.1", user_agent="test")
         assert row["member_slug"] == "jamie"
-        contacts = db.member_contacts_for_meeting("a-world-appears")
+        contacts = db.member_contacts_for_meeting(mid)
         assert contacts[0]["status"] == "opened"
-        summary = db.email_open_summary("a-world-appears")
-        assert summary["jamie"]["open_count"] == 1
+        summary = db.email_open_summary(mid)
+        assert summary[jamie]["open_count"] == 1
 
     def test_contacts_sort_by_created_at_not_insert_order(self, fresh_db):
+        from agent import clubdb
         db = fresh_db
+        mid = clubdb.meeting_id_for_book_slug("a-world-appears")
+        jamie = clubdb.lookup_member_id("jamie")
         db.add_member_contact(
-            meeting_key="a-world-appears",
-            member_slug="jamie",
+            meeting_id=mid,
+            member_id=jamie,
             kind="email_reply",
             surface="email",
             direction="inbound",
@@ -405,10 +418,11 @@ class TestMemberContacts:
             )
             conn.execute(
                 "INSERT INTO member_contacts "
-                "(meeting_key, member_slug, kind, surface, direction, status, subject, created_at) "
-                "VALUES ('a-world-appears', 'jamie', 'email_reply', 'email', "
-                "'inbound', 'received', 'recovered older', '2026-06-09 16:00:00')"
+                "(meeting_id, member_id, kind, surface, direction, status, subject, created_at) "
+                "VALUES (?, ?, 'email_reply', 'email', "
+                "'inbound', 'received', 'recovered older', '2026-06-09 16:00:00')",
+                (mid, jamie),
             )
 
-        contacts = db.member_contacts_for_meeting("a-world-appears")
+        contacts = db.member_contacts_for_meeting(mid)
         assert [c["subject"] for c in contacts] == ["latest", "recovered older"]

@@ -127,7 +127,7 @@ CREATE INDEX IF NOT EXISTS idx_feedback_message ON feedback(message_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_reaction ON feedback(reaction, created_at);
 
 CREATE TABLE IF NOT EXISTS roll_calls (
-    meeting_key TEXT PRIMARY KEY,
+    meeting_id  INTEGER PRIMARY KEY REFERENCES club_meetings(id),
     channel_id  TEXT,
     message_id  TEXT,
     status      TEXT NOT NULL DEFAULT 'open', -- open | closed
@@ -137,15 +137,15 @@ CREATE TABLE IF NOT EXISTS roll_calls (
 );
 
 CREATE TABLE IF NOT EXISTS meeting_attendance (
-    meeting_key        TEXT NOT NULL,
-    member_slug        TEXT NOT NULL,
+    meeting_id         INTEGER NOT NULL REFERENCES club_meetings(id),
+    member_id          INTEGER NOT NULL REFERENCES club_members(id),
     status             TEXT NOT NULL,          -- yes | no | unsure
     source             TEXT NOT NULL DEFAULT 'button',
     updated_by_user_id TEXT,
     responded_at       TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (meeting_key, member_slug)
+    PRIMARY KEY (meeting_id, member_id)
 );
-CREATE INDEX IF NOT EXISTS idx_attendance_meeting ON meeting_attendance(meeting_key);
+CREATE INDEX IF NOT EXISTS idx_attendance_meeting ON meeting_attendance(meeting_id);
 
 CREATE TABLE IF NOT EXISTS proposals (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -175,8 +175,8 @@ CREATE TABLE IF NOT EXISTS inbound_emails (
 CREATE INDEX IF NOT EXISTS idx_inbound_emails_status ON inbound_emails(status, processed_at);
 
 CREATE TABLE IF NOT EXISTS reading_statuses (
-    meeting_key  TEXT NOT NULL,
-    member_slug  TEXT NOT NULL,
+    meeting_id   INTEGER NOT NULL REFERENCES club_meetings(id),
+    member_id    INTEGER NOT NULL REFERENCES club_members(id),
     status       TEXT NOT NULL,
     progress     TEXT,
     page         INTEGER,
@@ -184,9 +184,9 @@ CREATE TABLE IF NOT EXISTS reading_statuses (
     source       TEXT,
     updated_by   TEXT,
     updated_at   TEXT NOT NULL DEFAULT (datetime('now')),
-    PRIMARY KEY (meeting_key, member_slug)
+    PRIMARY KEY (meeting_id, member_id)
 );
-CREATE INDEX IF NOT EXISTS idx_reading_statuses_meeting ON reading_statuses(meeting_key, updated_at);
+CREATE INDEX IF NOT EXISTS idx_reading_statuses_meeting ON reading_statuses(meeting_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS activity_events (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -204,8 +204,8 @@ CREATE INDEX IF NOT EXISTS idx_activity_events_status ON activity_events(status,
 
 CREATE TABLE IF NOT EXISTS member_contacts (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    meeting_key TEXT NOT NULL,
-    member_slug TEXT NOT NULL,
+    meeting_id  INTEGER NOT NULL REFERENCES club_meetings(id),
+    member_id   INTEGER NOT NULL REFERENCES club_members(id),
     kind        TEXT NOT NULL, -- roll_call | reading_checkin | email_reply
     surface     TEXT NOT NULL, -- discord | email
     direction   TEXT NOT NULL, -- inbound | outbound
@@ -213,20 +213,20 @@ CREATE TABLE IF NOT EXISTS member_contacts (
     subject     TEXT,
     created_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
-CREATE INDEX IF NOT EXISTS idx_member_contacts_meeting ON member_contacts(meeting_key, member_slug, created_at);
+CREATE INDEX IF NOT EXISTS idx_member_contacts_meeting ON member_contacts(meeting_id, member_id, created_at);
 
 CREATE TABLE IF NOT EXISTS email_tracking (
     token       TEXT PRIMARY KEY,
     contact_id  INTEGER,
-    meeting_key TEXT,
-    member_slug TEXT,
+    meeting_id  INTEGER REFERENCES club_meetings(id),
+    member_id   INTEGER REFERENCES club_members(id),
     kind        TEXT,
     subject     TEXT,
     email_id    TEXT,
     created_at  TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY(contact_id) REFERENCES member_contacts(id)
 );
-CREATE INDEX IF NOT EXISTS idx_email_tracking_meeting ON email_tracking(meeting_key, member_slug);
+CREATE INDEX IF NOT EXISTS idx_email_tracking_meeting ON email_tracking(meeting_id, member_id);
 
 CREATE TABLE IF NOT EXISTS email_opens (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -405,11 +405,113 @@ def _migrate(conn: sqlite3.Connection) -> None:
             conn.execute(f"ALTER TABLE activity_events ADD COLUMN {col} {spec}")
 
 
+def _table_exists(conn: sqlite3.Connection, name: str) -> bool:
+    return conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (name,)
+    ).fetchone() is not None
+
+
+# meeting_key (a book slug) → its meeting id; member_slug → member id. Correlated
+# subqueries over the old row alias `o`, used by the one-time ops FK rebuild below.
+_MK = ("(SELECT MAX(mb.meeting_id) FROM club_books b "
+       "JOIN club_meeting_books mb ON mb.book_id = b.id WHERE b.slug = o.meeting_key)")
+_MID = "(SELECT id FROM club_members WHERE slug = o.member_slug)"
+
+
+def migrate_ops_to_fk(conn: sqlite3.Connection) -> None:
+    """One-time: rebuild the ops tables from loose text keys (meeting_key=book slug,
+    member_slug) onto integer FKs (meeting_id→club_meetings, member_id→club_members).
+    Guarded (only runs on the old schema, once club_* is imported) and idempotent."""
+    if "meeting_key" not in _columns(conn, "meeting_attendance"):
+        return  # already migrated / fresh DB created on the new schema
+    if not (_table_exists(conn, "club_books") and _table_exists(conn, "club_members")):
+        return  # club record not imported yet — nothing to map against
+
+    def _require_mappable(table: str, *, member: bool) -> None:
+        cond = f"{_MK} IS NULL" + (f" OR {_MID} IS NULL" if member else "")
+        bad = conn.execute(f"SELECT COUNT(*) c FROM {table} o WHERE {cond}").fetchone()["c"]
+        if bad:
+            raise RuntimeError(f"ops FK migration: {bad} row(s) in {table} do not map to a club id")
+
+    _require_mappable("roll_calls", member=False)
+    _require_mappable("meeting_attendance", member=True)
+    _require_mappable("reading_statuses", member=True)
+    _require_mappable("member_contacts", member=True)
+    # email_tracking ids are nullable — map what resolves, leave the rest NULL.
+
+    conn.commit()                                  # close any implicit tx so the PRAGMA takes effect
+    conn.execute("PRAGMA foreign_keys=OFF")
+    try:
+        conn.executescript(f"""
+        CREATE TABLE roll_calls_new (
+            meeting_id INTEGER PRIMARY KEY REFERENCES club_meetings(id),
+            channel_id TEXT, message_id TEXT, status TEXT NOT NULL DEFAULT 'open',
+            opened_by TEXT, opened_at TEXT NOT NULL DEFAULT (datetime('now')), closed_at TEXT);
+        INSERT INTO roll_calls_new(meeting_id, channel_id, message_id, status, opened_by, opened_at, closed_at)
+            SELECT {_MK}, channel_id, message_id, status, opened_by, opened_at, closed_at FROM roll_calls o;
+
+        CREATE TABLE meeting_attendance_new (
+            meeting_id INTEGER NOT NULL REFERENCES club_meetings(id),
+            member_id INTEGER NOT NULL REFERENCES club_members(id),
+            status TEXT NOT NULL, source TEXT NOT NULL DEFAULT 'button',
+            updated_by_user_id TEXT, responded_at TEXT NOT NULL DEFAULT (datetime('now')),
+            PRIMARY KEY (meeting_id, member_id));
+        INSERT INTO meeting_attendance_new(meeting_id, member_id, status, source, updated_by_user_id, responded_at)
+            SELECT {_MK}, {_MID}, status, source, updated_by_user_id, responded_at FROM meeting_attendance o;
+
+        CREATE TABLE reading_statuses_new (
+            meeting_id INTEGER NOT NULL REFERENCES club_meetings(id),
+            member_id INTEGER NOT NULL REFERENCES club_members(id),
+            status TEXT NOT NULL, progress TEXT, page INTEGER, percent INTEGER,
+            source TEXT, updated_by TEXT, updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+            PRIMARY KEY (meeting_id, member_id));
+        INSERT INTO reading_statuses_new(meeting_id, member_id, status, progress, page, percent, source, updated_by, updated_at)
+            SELECT {_MK}, {_MID}, status, progress, page, percent, source, updated_by, updated_at FROM reading_statuses o;
+
+        CREATE TABLE member_contacts_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            meeting_id INTEGER NOT NULL REFERENCES club_meetings(id),
+            member_id INTEGER NOT NULL REFERENCES club_members(id),
+            kind TEXT NOT NULL, surface TEXT NOT NULL, direction TEXT NOT NULL,
+            status TEXT NOT NULL, subject TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')));
+        INSERT INTO member_contacts_new(id, meeting_id, member_id, kind, surface, direction, status, subject, created_at)
+            SELECT id, {_MK}, {_MID}, kind, surface, direction, status, subject, created_at FROM member_contacts o;
+
+        CREATE TABLE email_tracking_new (
+            token TEXT PRIMARY KEY, contact_id INTEGER,
+            meeting_id INTEGER REFERENCES club_meetings(id),
+            member_id INTEGER REFERENCES club_members(id),
+            kind TEXT, subject TEXT, email_id TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY(contact_id) REFERENCES member_contacts(id));
+        INSERT INTO email_tracking_new(token, contact_id, meeting_id, member_id, kind, subject, email_id, created_at)
+            SELECT token, contact_id, {_MK}, {_MID}, kind, subject, email_id, created_at FROM email_tracking o;
+
+        DROP TABLE roll_calls;          ALTER TABLE roll_calls_new          RENAME TO roll_calls;
+        DROP TABLE meeting_attendance;  ALTER TABLE meeting_attendance_new  RENAME TO meeting_attendance;
+        DROP TABLE reading_statuses;    ALTER TABLE reading_statuses_new    RENAME TO reading_statuses;
+        DROP TABLE member_contacts;     ALTER TABLE member_contacts_new     RENAME TO member_contacts;
+        DROP TABLE email_tracking;      ALTER TABLE email_tracking_new      RENAME TO email_tracking;
+        CREATE INDEX IF NOT EXISTS idx_roll_calls_status ON roll_calls(status, opened_at);
+        CREATE INDEX IF NOT EXISTS idx_attendance_meeting ON meeting_attendance(meeting_id);
+        CREATE INDEX IF NOT EXISTS idx_reading_statuses_meeting ON reading_statuses(meeting_id, updated_at);
+        CREATE INDEX IF NOT EXISTS idx_member_contacts_meeting ON member_contacts(meeting_id, member_id, created_at);
+        CREATE INDEX IF NOT EXISTS idx_email_tracking_meeting ON email_tracking(meeting_id, member_id);
+        """)
+        conn.commit()
+    finally:
+        conn.execute("PRAGMA foreign_keys=ON")
+    dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
+    if dangling:
+        raise RuntimeError(f"ops FK migration left dangling references: {[tuple(r) for r in dangling]}")
+
+
 def _ensure_schema() -> None:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with connect() as conn:
         conn.executescript(_SCHEMA)
         _migrate(conn)
+        migrate_ops_to_fk(conn)
 
 
 _ensure_schema()
@@ -1031,61 +1133,66 @@ def feedback_stats() -> dict:
 
 
 # ── Meeting roll call + attendance ──────────────────────────────────────────
-def upsert_roll_call(*, meeting_key: str, channel_id: str | None = None,
+def upsert_roll_call(*, meeting_id: int, channel_id: str | None = None,
                      message_id: str | None = None, opened_by: str | None = None) -> None:
     with connect() as conn:
         conn.execute(
-            "INSERT INTO roll_calls (meeting_key, channel_id, message_id, opened_by, status) "
+            "INSERT INTO roll_calls (meeting_id, channel_id, message_id, opened_by, status) "
             "VALUES (?, ?, ?, ?, 'open') "
-            "ON CONFLICT(meeting_key) DO UPDATE SET "
+            "ON CONFLICT(meeting_id) DO UPDATE SET "
             "channel_id=COALESCE(excluded.channel_id, roll_calls.channel_id), "
             "message_id=COALESCE(excluded.message_id, roll_calls.message_id), "
             "opened_by=COALESCE(excluded.opened_by, roll_calls.opened_by), "
             "status='open', closed_at=NULL",
-            (meeting_key, channel_id, message_id, opened_by),
+            (meeting_id, channel_id, message_id, opened_by),
         )
 
 
-def get_roll_call(meeting_key: str) -> dict | None:
+def get_roll_call(meeting_id: int) -> dict | None:
     with connect() as conn:
         row = conn.execute(
-            "SELECT * FROM roll_calls WHERE meeting_key = ?",
-            (meeting_key,),
+            "SELECT * FROM roll_calls WHERE meeting_id = ?",
+            (meeting_id,),
         ).fetchone()
     return dict(row) if row else None
 
 
-def close_roll_call(meeting_key: str) -> bool:
+def close_roll_call(meeting_id: int) -> bool:
     with connect() as conn:
         cur = conn.execute(
             "UPDATE roll_calls SET status = 'closed', closed_at = ? "
-            "WHERE meeting_key = ? AND status != 'closed'",
-            (_now(), meeting_key),
+            "WHERE meeting_id = ? AND status != 'closed'",
+            (_now(), meeting_id),
         )
         return cur.rowcount > 0
 
 
-def set_attendance(*, meeting_key: str, member_slug: str, status: str,
+def set_attendance(*, meeting_id: int, member_id: int, status: str,
                    updated_by_user_id: str | None = None, source: str = "button") -> None:
     if status not in {"yes", "no", "unsure"}:
         raise ValueError("attendance status must be yes, no, or unsure")
     with connect() as conn:
         conn.execute(
             "INSERT INTO meeting_attendance "
-            "(meeting_key, member_slug, status, source, updated_by_user_id, responded_at) "
+            "(meeting_id, member_id, status, source, updated_by_user_id, responded_at) "
             "VALUES (?, ?, ?, ?, ?, ?) "
-            "ON CONFLICT(meeting_key, member_slug) DO UPDATE SET "
+            "ON CONFLICT(meeting_id, member_id) DO UPDATE SET "
             "status=excluded.status, source=excluded.source, "
             "updated_by_user_id=excluded.updated_by_user_id, responded_at=excluded.responded_at",
-            (meeting_key, member_slug, status, source, updated_by_user_id, _now()),
+            (meeting_id, member_id, status, source, updated_by_user_id, _now()),
         )
 
 
-def attendance_for_meeting(meeting_key: str) -> list[dict]:
+def attendance_for_meeting(meeting_id: int) -> list[dict]:
+    """Attendance rows for a meeting. Each row links by integer ids and also carries
+    the member's slug + name, projected for display only."""
     with connect() as conn:
         rows = conn.execute(
-            "SELECT * FROM meeting_attendance WHERE meeting_key = ? ORDER BY member_slug",
-            (meeting_key,),
+            "SELECT a.meeting_id, a.member_id, m.slug AS member_slug, m.name AS member_name, "
+            "a.status, a.source, a.updated_by_user_id, a.responded_at "
+            "FROM meeting_attendance a JOIN club_members m ON m.id = a.member_id "
+            "WHERE a.meeting_id = ? ORDER BY m.name",
+            (meeting_id,),
         ).fetchall()
     return [dict(r) for r in rows]
 
@@ -1178,7 +1285,7 @@ def mark_email_processed(email_id: str, *, reply_email_id: str | None = None,
 READING_STATUSES = {"not_started", "started", "on_track", "behind", "finished", "paused"}
 
 
-def set_reading_status(*, meeting_key: str, member_slug: str, status: str,
+def set_reading_status(*, meeting_id: int, member_id: int, status: str,
                        progress: str | None = None, page: int | None = None,
                        percent: int | None = None, source: str | None = None,
                        updated_by: str | None = None) -> None:
@@ -1191,30 +1298,35 @@ def set_reading_status(*, meeting_key: str, member_slug: str, status: str,
     with connect() as conn:
         conn.execute(
             "INSERT INTO reading_statuses "
-            "(meeting_key, member_slug, status, progress, page, percent, source, updated_by, updated_at) "
+            "(meeting_id, member_id, status, progress, page, percent, source, updated_by, updated_at) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
-            "ON CONFLICT(meeting_key, member_slug) DO UPDATE SET "
+            "ON CONFLICT(meeting_id, member_id) DO UPDATE SET "
             "status=excluded.status, progress=excluded.progress, page=excluded.page, "
             "percent=excluded.percent, source=excluded.source, updated_by=excluded.updated_by, "
             "updated_at=excluded.updated_at",
-            (meeting_key, member_slug, status, progress, page, percent, source, updated_by, _now()),
+            (meeting_id, member_id, status, progress, page, percent, source, updated_by, _now()),
         )
 
 
-def reading_status_for_meeting(meeting_key: str) -> list[dict]:
+def reading_status_for_meeting(meeting_id: int) -> list[dict]:
     with connect() as conn:
         rows = conn.execute(
-            "SELECT * FROM reading_statuses WHERE meeting_key = ? ORDER BY member_slug",
-            (meeting_key,),
+            "SELECT r.meeting_id, r.member_id, m.slug AS member_slug, m.name AS member_name, "
+            "r.status, r.progress, r.page, r.percent, r.source, r.updated_by, r.updated_at "
+            "FROM reading_statuses r JOIN club_members m ON m.id = r.member_id "
+            "WHERE r.meeting_id = ? ORDER BY m.name",
+            (meeting_id,),
         ).fetchall()
     return [dict(r) for r in rows]
 
 
-def reading_status_for_member(meeting_key: str, member_slug: str) -> dict | None:
+def reading_status_for_member(meeting_id: int, member_id: int) -> dict | None:
     with connect() as conn:
         row = conn.execute(
-            "SELECT * FROM reading_statuses WHERE meeting_key = ? AND member_slug = ?",
-            (meeting_key, member_slug),
+            "SELECT r.*, m.slug AS member_slug, m.name AS member_name "
+            "FROM reading_statuses r JOIN club_members m ON m.id = r.member_id "
+            "WHERE r.meeting_id = ? AND r.member_id = ?",
+            (meeting_id, member_id),
         ).fetchone()
     return dict(row) if row else None
 
@@ -1272,15 +1384,15 @@ def mark_activity_failed(activity_id: int, error: str, *, max_attempts: int = 5,
 
 
 # ── Member contact/campaign state ────────────────────────────────────────────
-def add_member_contact(*, meeting_key: str, member_slug: str, kind: str,
+def add_member_contact(*, meeting_id: int, member_id: int, kind: str,
                        surface: str, direction: str, status: str,
                        subject: str | None = None) -> int:
     with connect() as conn:
         cur = conn.execute(
             "INSERT INTO member_contacts "
-            "(meeting_key, member_slug, kind, surface, direction, status, subject) "
+            "(meeting_id, member_id, kind, surface, direction, status, subject) "
             "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (meeting_key, member_slug, kind, surface, direction, status, subject),
+            (meeting_id, member_id, kind, surface, direction, status, subject),
         )
         return cur.lastrowid
 
@@ -1293,26 +1405,28 @@ def update_member_contact_status(contact_id: int, status: str) -> None:
         )
 
 
-def member_contacts_for_meeting(meeting_key: str, *, limit: int = 200) -> list[dict]:
+def member_contacts_for_meeting(meeting_id: int, *, limit: int = 200) -> list[dict]:
     with connect() as conn:
         rows = conn.execute(
-            "SELECT * FROM member_contacts WHERE meeting_key = ? "
-            "ORDER BY datetime(created_at) DESC, id DESC LIMIT ?",
-            (meeting_key, limit),
+            "SELECT c.*, m.slug AS member_slug, m.name AS member_name "
+            "FROM member_contacts c JOIN club_members m ON m.id = c.member_id "
+            "WHERE c.meeting_id = ? "
+            "ORDER BY datetime(c.created_at) DESC, c.id DESC LIMIT ?",
+            (meeting_id, limit),
         ).fetchall()
     return [dict(r) for r in rows]
 
 
 def add_email_tracking(*, token: str, contact_id: int | None = None,
-                       meeting_key: str | None = None, member_slug: str | None = None,
+                       meeting_id: int | None = None, member_id: int | None = None,
                        kind: str | None = None, subject: str | None = None,
                        email_id: str | None = None) -> None:
     with connect() as conn:
         conn.execute(
             "INSERT INTO email_tracking "
-            "(token, contact_id, meeting_key, member_slug, kind, subject, email_id) "
+            "(token, contact_id, meeting_id, member_id, kind, subject, email_id) "
             "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (token, contact_id, meeting_key, member_slug, kind, subject, email_id),
+            (token, contact_id, meeting_id, member_id, kind, subject, email_id),
         )
 
 
@@ -1328,7 +1442,9 @@ def record_email_open(token: str, *, remote_addr: str | None = None,
                       user_agent: str | None = None) -> dict | None:
     with connect() as conn:
         row = conn.execute(
-            "SELECT * FROM email_tracking WHERE token = ?",
+            "SELECT et.*, m.slug AS member_slug, m.name AS member_name "
+            "FROM email_tracking et LEFT JOIN club_members m ON m.id = et.member_id "
+            "WHERE et.token = ?",
             (token,),
         ).fetchone()
         if not row:
@@ -1345,23 +1461,25 @@ def record_email_open(token: str, *, remote_addr: str | None = None,
         return dict(row)
 
 
-def email_open_summary(meeting_key: str) -> dict[str, dict]:
+def email_open_summary(meeting_id: int) -> dict[int, dict]:
+    """Per-member email-open summary for a meeting, keyed by integer member_id."""
     with connect() as conn:
         rows = conn.execute(
-            "SELECT et.member_slug, MAX(eo.opened_at) AS opened_at, COUNT(eo.id) AS open_count "
+            "SELECT et.member_id, MAX(eo.opened_at) AS opened_at, COUNT(eo.id) AS open_count "
             "FROM email_tracking et JOIN email_opens eo ON eo.token = et.token "
-            "WHERE et.meeting_key = ? AND et.member_slug IS NOT NULL "
-            "GROUP BY et.member_slug",
-            (meeting_key,),
+            "WHERE et.meeting_id = ? AND et.member_id IS NOT NULL "
+            "GROUP BY et.member_id",
+            (meeting_id,),
         ).fetchall()
-    return {r["member_slug"]: dict(r) for r in rows}
+    return {r["member_id"]: dict(r) for r in rows}
 
 
 def tracked_emails_without_open(*, limit: int = 200) -> list[dict]:
     with connect() as conn:
         rows = conn.execute(
-            "SELECT et.* FROM email_tracking et "
+            "SELECT et.*, m.slug AS member_slug, m.name AS member_name FROM email_tracking et "
             "LEFT JOIN email_opens eo ON eo.token = et.token "
+            "LEFT JOIN club_members m ON m.id = et.member_id "
             "WHERE eo.id IS NULL "
             "ORDER BY et.created_at DESC LIMIT ?",
             (limit,),

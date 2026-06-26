@@ -19,6 +19,7 @@ import json
 import logging
 from datetime import date
 
+from agent import clubdb
 from agent import config
 from agent import corpus_read as cr
 from agent import db
@@ -520,16 +521,20 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             member_slug = ctx.get("member_slug")
             if not member_slug:
                 return _dump({"error": "speaker is not linked to a club member"})
+            member_id = clubdb.lookup_member_id(member_slug)
             status = tool_input["status"]
             meeting = meeting_rules.next_meeting()
+            meeting_id = meeting["meetingId"]
+            if meeting_id is None or member_id is None:
+                return _dump({"error": "no scheduled meeting to record availability against"})
             db.upsert_roll_call(
-                meeting_key=meeting["meetingKey"],
+                meeting_id=meeting_id,
                 channel_id=ctx.get("channel_id"),
                 opened_by="oliver",
             )
             db.set_attendance(
-                meeting_key=meeting["meetingKey"],
-                member_slug=member_slug,
+                meeting_id=meeting_id,
+                member_id=member_id,
                 status=status,
                 updated_by_user_id=ctx.get("speaker_user_id"),
                 source=("email" if str(ctx.get("speaker_user_id") or "").startswith("email:") else "chat"),
@@ -539,7 +544,7 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 "Roll-call response recorded",
                 f"Member: {member_slug}\nStatus: {status}\nMeeting: {meeting['meetingKey']}",
             )
-            return _dump({"saved": True, "meetingStatus": meeting_rules.meeting_status(meeting["meetingKey"])})
+            return _dump({"saved": True, "meetingStatus": meeting_rules.meeting_status(meeting_id)})
         if name == "propose_action":
             pid = db.add_proposal(
                 kind=tool_input["kind"],
@@ -613,10 +618,14 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             member_slug = ctx.get("member_slug")
             if not member_slug:
                 return _dump({"error": "speaker is not linked to a club member"})
+            member_id = clubdb.lookup_member_id(member_slug)
             meeting = meeting_rules.next_meeting()
+            meeting_id = meeting["meetingId"]
+            if meeting_id is None or member_id is None:
+                return _dump({"error": "no scheduled meeting to record reading status against"})
             db.set_reading_status(
-                meeting_key=meeting["meetingKey"],
-                member_slug=member_slug,
+                meeting_id=meeting_id,
+                member_id=member_id,
                 status=tool_input["status"],
                 progress=tool_input.get("progress"),
                 page=tool_input.get("page"),
@@ -647,9 +656,13 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             if not email:
                 return _dump({"error": f"{member['name']} has no linked email address"})
             meeting = meeting_rules.next_meeting()
+            meeting_id = meeting["meetingId"]
+            member_id = clubdb.lookup_member_id(member["slug"])
+            if meeting_id is None or member_id is None:
+                return _dump({"error": "no scheduled meeting to check in against"})
             book = meeting.get("book") or {}
             title = book.get("title") or "the current book"
-            existing = db.reading_status_for_member(meeting["meetingKey"], member["slug"])
+            existing = db.reading_status_for_member(meeting_id, member_id)
             if existing and existing["status"] == "finished":
                 db.add_activity(
                     "reading_checkin_skipped",
@@ -676,7 +689,7 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             subject = f"Reading check-in: {title}"
             sent = outbound.send(
                 to=[email["email"]], subject=subject, body=body,
-                track={"meeting_key": meeting["meetingKey"], "member_slug": member["slug"], "kind": "reading_checkin"},
+                track={"meeting_id": meeting_id, "member_id": member_id, "kind": "reading_checkin"},
             )
             db.add_activity(
                 "email_sent",
@@ -707,6 +720,9 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 )
             status = meeting_rules.meeting_status()
             meeting = status["meeting"]
+            meeting_id = meeting["meetingId"]
+            if meeting_id is None:
+                return _dump({"error": "no scheduled meeting to run roll call against"})
             attendance = {r["memberSlug"]: r["status"] for r in status["attendance"]}
             skipped = []
             filtered_targets = []
@@ -724,11 +740,15 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 if not email:
                     missing.append({"member": member["slug"], "reason": "no linked email address"})
                     continue
+                member_id = clubdb.lookup_member_id(member["slug"])
+                if member_id is None:
+                    missing.append({"member": member["slug"], "reason": "not in the club database"})
+                    continue
                 subject = _roll_call_subject(status)
                 body = _roll_call_email_body(member.get("name") or member["slug"], status, note=note)
                 sent = outbound.send(
                     to=[email["email"]], subject=subject, body=body,
-                    track={"meeting_key": meeting["meetingKey"], "member_slug": member["slug"], "kind": "roll_call"},
+                    track={"meeting_id": meeting_id, "member_id": member_id, "kind": "roll_call"},
                 )
                 db.add_activity(
                     "email_sent",
@@ -738,7 +758,7 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 sent_rows.append({"member": member["slug"], **sent})
             if sent_rows:
                 db.upsert_roll_call(
-                    meeting_key=meeting["meetingKey"],
+                    meeting_id=meeting_id,
                     channel_id=ctx.get("channel_id"),
                     opened_by="email-tool",
                 )
@@ -746,7 +766,7 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 "sent": sent_rows,
                 "skipped": skipped,
                 "missing": missing,
-                "meetingStatus": meeting_rules.meeting_status(meeting["meetingKey"]),
+                "meetingStatus": meeting_rules.meeting_status(meeting_id),
             })
         return _dump({"error": f"unknown tool {name}"})
     except Exception as e:  # noqa: BLE001 - surface tool errors to the model, don't crash the loop
@@ -757,7 +777,11 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
 
 
 def _reading_status_snapshot(meeting: dict) -> dict:
-    rows = {r["member_slug"]: r for r in db.reading_status_for_meeting(meeting["meetingKey"])}
+    meeting_id = meeting.get("meetingId")
+    rows = {
+        r["member_slug"]: r
+        for r in (db.reading_status_for_meeting(meeting_id) if meeting_id is not None else [])
+    }
     members = [m for m in cr.members() if m.get("isCurrent")]
     statuses = []
     for member in sorted(members, key=lambda m: m.get("name") or m["slug"]):

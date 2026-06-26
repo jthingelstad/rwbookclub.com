@@ -78,27 +78,27 @@ def text_to_html(text: str, *, tracking_url_value: str | None = None) -> str:
     )
 
 
-def tracked_html(*, text: str, contact_id: int, meeting_key: str,
-                 member_slug: str, kind: str, subject: str) -> tuple[str | None, str | None]:
+def tracked_html(*, text: str, contact_id: int, meeting_id: int,
+                 member_id: int, kind: str, subject: str) -> tuple[str | None, str | None]:
     if not enabled():
         return (text_to_html(text) if config.OLIVER_EMAIL_HTML_ENABLED else None, None)
     token = new_token()
     db.add_email_tracking(
         token=token,
         contact_id=contact_id,
-        meeting_key=meeting_key,
-        member_slug=member_slug,
+        meeting_id=meeting_id,
+        member_id=member_id,
         kind=kind,
         subject=subject,
     )
     return text_to_html(text, tracking_url_value=tracking_url(token)), token
 
 
-def prepare_outbound(*, text: str, meeting_key: str, member_slug: str,
+def prepare_outbound(*, text: str, meeting_id: int, member_id: int,
                      kind: str, subject: str) -> tuple[int, str | None, str | None]:
     contact_id = db.add_member_contact(
-        meeting_key=meeting_key,
-        member_slug=member_slug,
+        meeting_id=meeting_id,
+        member_id=member_id,
         kind=kind,
         surface="email",
         direction="outbound",
@@ -108,8 +108,8 @@ def prepare_outbound(*, text: str, meeting_key: str, member_slug: str,
     html_body, token = tracked_html(
         text=text,
         contact_id=contact_id,
-        meeting_key=meeting_key,
-        member_slug=member_slug,
+        meeting_id=meeting_id,
+        member_id=member_id,
         kind=kind,
         subject=subject,
     )

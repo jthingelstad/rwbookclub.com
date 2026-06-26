@@ -24,7 +24,7 @@ import discord
 import requests
 from discord.ext import tasks
 
-from agent import commands, config, context as kb, db, gitwrite, oliver
+from agent import clubdb, commands, config, context as kb, db, gitwrite, oliver
 from agent.mail import email_jmap, email_policy, mail_archive, outbound, tinylytics
 from agent.club import meeting_rules
 
@@ -378,12 +378,14 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
         f"From: {msg.speaker} <{msg.from_email}>\nSubject: {msg.subject or '(no subject)'}",
     )
     member_slug = decision.member_slug
+    member_id = clubdb.lookup_member_id(member_slug)
     recorded_availability: str | None = None
-    if member_slug:
-        meeting = meeting_rules.next_meeting()
+    meeting = meeting_rules.next_meeting() if (member_slug and member_id is not None) else None
+    meeting_id = meeting["meetingId"] if meeting else None
+    if member_slug and member_id is not None and meeting_id is not None:
         db.add_member_contact(
-            meeting_key=meeting["meetingKey"],
-            member_slug=member_slug,
+            meeting_id=meeting_id,
+            member_id=member_id,
             kind="email_reply",
             surface="email",
             direction="inbound",
@@ -393,13 +395,13 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
         recorded_availability = _roll_call_status_from_email(msg.subject, msg.text)
         if recorded_availability:
             db.upsert_roll_call(
-                meeting_key=meeting["meetingKey"],
+                meeting_id=meeting_id,
                 channel_id=f"email:{msg.thread_id or msg.from_email.lower()}",
                 opened_by="email-reply",
             )
             db.set_attendance(
-                meeting_key=meeting["meetingKey"],
-                member_slug=member_slug,
+                meeting_id=meeting_id,
+                member_id=member_id,
                 status=recorded_availability,
                 updated_by_user_id=f"email:{msg.from_email.lower()}",
                 source="email",

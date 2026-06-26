@@ -23,23 +23,26 @@ MIN_DAYS_BETWEEN_READING_CHECKINS = 2
 def snapshot() -> dict:
     meeting_status = meeting_rules.meeting_status()
     meeting = meeting_status["meeting"]
-    meeting_key = meeting["meetingKey"]
-    reading_rows = {r["member_slug"]: r for r in db.reading_status_for_meeting(meeting_key)}
-    contacts = db.member_contacts_for_meeting(meeting_key)
-    opens = db.email_open_summary(meeting_key)
-    last_contact: dict[str, dict] = {}
-    last_roll_call: dict[str, dict] = {}
-    last_reading: dict[str, dict] = {}
-    reading_checkin_counts: dict[str, int] = {}
+    meeting_id = meeting["meetingId"]
+    reading_rows = {
+        r["member_id"]: r
+        for r in (db.reading_status_for_meeting(meeting_id) if meeting_id is not None else [])
+    }
+    contacts = db.member_contacts_for_meeting(meeting_id) if meeting_id is not None else []
+    opens = db.email_open_summary(meeting_id) if meeting_id is not None else {}
+    last_contact: dict[int, dict] = {}
+    last_roll_call: dict[int, dict] = {}
+    last_reading: dict[int, dict] = {}
+    reading_checkin_counts: dict[int, int] = {}
     for contact in contacts:
-        slug = contact["member_slug"]
-        last_contact.setdefault(slug, contact)
+        mid = contact["member_id"]
+        last_contact.setdefault(mid, contact)
         if contact["kind"] == "roll_call":
-            last_roll_call.setdefault(slug, contact)
+            last_roll_call.setdefault(mid, contact)
         if contact["kind"] == "reading_checkin":
-            last_reading.setdefault(slug, contact)
+            last_reading.setdefault(mid, contact)
             if contact["direction"] == "outbound" and contact["status"] in {"sent", "opened"}:
-                reading_checkin_counts[slug] = reading_checkin_counts.get(slug, 0) + 1
+                reading_checkin_counts[mid] = reading_checkin_counts.get(mid, 0) + 1
 
     discord_linked = {r["member_slug"] for r in db.list_member_identities()}
     email_linked = {r["member_slug"] for r in db.list_member_emails()}
@@ -54,13 +57,15 @@ def snapshot() -> dict:
 
     for row in meeting_status["attendance"]:
         slug = row["memberSlug"]
+        mid = row["memberId"]
         member = members_by_slug.get(slug, {"name": row["member"], "slug": slug})
-        reading = reading_rows.get(slug)
+        reading = reading_rows.get(mid)
         reading_status = reading.get("status") if reading else "unknown"
         reading_ok = reading_status in READING_OK
         combined = {
             "member": member.get("name"),
             "memberSlug": slug,
+            "memberId": mid,
             "attendance": row["status"],
             "reading": reading_status,
             "readingOk": reading_ok,
@@ -70,11 +75,11 @@ def snapshot() -> dict:
             "isPicker": row["isPicker"],
             "discordLinked": slug in discord_linked,
             "emailLinked": slug in email_linked,
-            "lastContact": _compact_contact(last_contact.get(slug)),
-            "lastRollCallContact": _compact_contact(last_roll_call.get(slug)),
-            "lastReadingContact": _compact_contact(last_reading.get(slug)),
-            "lastEmailOpen": opens.get(slug),
-            "readingCheckinCount": reading_checkin_counts.get(slug, 0),
+            "lastContact": _compact_contact(last_contact.get(mid)),
+            "lastRollCallContact": _compact_contact(last_roll_call.get(mid)),
+            "lastReadingContact": _compact_contact(last_reading.get(mid)),
+            "lastEmailOpen": opens.get(mid),
+            "readingCheckinCount": reading_checkin_counts.get(mid, 0),
         }
         if row["status"] == "pending":
             combined["nextAction"] = "roll_call"

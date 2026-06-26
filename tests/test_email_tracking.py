@@ -25,31 +25,33 @@ def test_text_to_html_renders_markdown():
 
 
 def test_prepare_outbound_creates_contact_and_tracking(monkeypatch, fresh_db):
-    from agent import config
+    from agent import clubdb, config
     from agent.mail import email_tracking
 
     monkeypatch.setattr(config, "TINYLYTICS_SITE_ID", "site-code")
     monkeypatch.setattr(config, "TINYLYTICS_SITE_ID_NUMERIC", "123")
     monkeypatch.setattr(config, "TINYLYTICS_API_KEY", "tly-ro-test")
+    mid = clubdb.meeting_id_for_book_slug("a-world-appears")
+    jamie = clubdb.lookup_member_id("jamie")
     contact_id, html, token = email_tracking.prepare_outbound(
         text="Hello",
-        meeting_key="a-world-appears",
-        member_slug="jamie",
+        meeting_id=mid,
+        member_id=jamie,
         kind="roll_call",
         subject="Roll call",
     )
     assert contact_id > 0
     assert token
     assert f"path=%2Foliver%2Femail%2F{token}" in html
-    contacts = fresh_db.member_contacts_for_meeting("a-world-appears")
+    contacts = fresh_db.member_contacts_for_meeting(mid)
     assert contacts[0]["status"] == "sending"
     email_tracking.mark_outbound_sent(contact_id, token, "email1")
-    contacts = fresh_db.member_contacts_for_meeting("a-world-appears")
+    contacts = fresh_db.member_contacts_for_meeting(mid)
     assert contacts[0]["status"] == "sent"
 
 
 def test_prepare_outbound_prefers_tinylytics_pixel(monkeypatch, fresh_db):
-    from agent import config
+    from agent import clubdb, config
     from agent.mail import email_tracking
 
     monkeypatch.setattr(config, "TINYLYTICS_SITE_ID", "site-code")
@@ -57,8 +59,8 @@ def test_prepare_outbound_prefers_tinylytics_pixel(monkeypatch, fresh_db):
     monkeypatch.setattr(config, "TINYLYTICS_API_KEY", "tly-ro-test")
     contact_id, html, token = email_tracking.prepare_outbound(
         text="Hello",
-        meeting_key="a-world-appears",
-        member_slug="jamie",
+        meeting_id=clubdb.meeting_id_for_book_slug("a-world-appears"),
+        member_id=clubdb.lookup_member_id("jamie"),
         kind="roll_call",
         subject="Roll call",
     )

@@ -25,16 +25,18 @@ def test_pixel_url_uses_path_token(monkeypatch):
 
 
 def test_sync_email_opens_marks_seen(monkeypatch, fresh_db):
-    from agent import config, db
+    from agent import clubdb, config, db
     from agent.mail import tinylytics
 
     monkeypatch.setattr(config, "TINYLYTICS_SITE_ID", "site-code")
     monkeypatch.setattr(config, "TINYLYTICS_SITE_ID_NUMERIC", "123")
     monkeypatch.setattr(config, "TINYLYTICS_API_KEY", "tly-ro-test")
 
+    mid = clubdb.meeting_id_for_book_slug("a-world-appears")
+    jamie = clubdb.lookup_member_id("jamie")
     cid = db.add_member_contact(
-        meeting_key="a-world-appears",
-        member_slug="jamie",
+        meeting_id=mid,
+        member_id=jamie,
         kind="reading_checkin",
         surface="email",
         direction="outbound",
@@ -44,8 +46,8 @@ def test_sync_email_opens_marks_seen(monkeypatch, fresh_db):
     db.add_email_tracking(
         token="tok1",
         contact_id=cid,
-        meeting_key="a-world-appears",
-        member_slug="jamie",
+        meeting_id=mid,
+        member_id=jamie,
         kind="reading_checkin",
         subject="Reading check-in",
     )
@@ -60,4 +62,4 @@ def test_sync_email_opens_marks_seen(monkeypatch, fresh_db):
     assert tinylytics.sync_email_opens() == 1
     assert calls[0][1]["path"] == "/oliver/email/tok1"
     assert calls[0][2]["Authorization"] == "Bearer tly-ro-test"
-    assert db.email_open_summary("a-world-appears")["jamie"]["open_count"] == 1
+    assert db.email_open_summary(mid)[jamie]["open_count"] == 1

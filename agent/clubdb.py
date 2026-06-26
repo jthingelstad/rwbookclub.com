@@ -335,6 +335,48 @@ def member_id_for_slug(conn: sqlite3.Connection, slug: str) -> int | None:
     return row["id"] if row else None
 
 
+# ── Module-level convenience lookups (own connection) for the ops/meeting layer ──
+def lookup_member_id(slug: str | None) -> int | None:
+    if not slug:
+        return None
+    with db.connect() as conn:
+        return member_id_for_slug(conn, slug)
+
+
+def meeting_id_for_book_slug(slug: str | None) -> int | None:
+    """The meeting a book slug refers to (its latest, if it spanned two)."""
+    if not slug:
+        return None
+    with db.connect() as conn:
+        row = conn.execute(
+            "SELECT MAX(mb.meeting_id) AS mid FROM club_books b "
+            "JOIN club_meeting_books mb ON mb.book_id = b.id WHERE b.slug = ?",
+            (slug,),
+        ).fetchone()
+    return row["mid"] if row and row["mid"] is not None else None
+
+
+def picker_ids_for_book_slug(slug: str | None) -> list[int]:
+    if not slug:
+        return []
+    with db.connect() as conn:
+        rows = conn.execute(
+            "SELECT bp.member_id FROM club_books b "
+            "JOIN club_book_pickers bp ON bp.book_id = b.id WHERE b.slug = ? ORDER BY bp.ordinal",
+            (slug,),
+        ).fetchall()
+    return [r["member_id"] for r in rows]
+
+
+def current_members() -> list[dict]:
+    """Current members from the authoritative table, id-native (id, slug, name)."""
+    with db.connect() as conn:
+        rows = conn.execute(
+            "SELECT id, slug, name FROM club_members WHERE is_current = 1 ORDER BY name"
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
 if __name__ == "__main__":
     ensure_schema()
     print(json.dumps(counts(), indent=2))

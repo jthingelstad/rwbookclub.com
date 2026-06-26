@@ -13,7 +13,7 @@ from __future__ import annotations
 import calendar
 from datetime import date, timedelta
 
-from agent import corpus_read, db
+from agent import clubdb, corpus_read, db
 
 QUORUM_REQUIRED = 3
 MEETING_WEEKDAY = 1  # Tuesday, where Monday is 0.
@@ -61,11 +61,14 @@ def next_meeting() -> dict:
 
     inferred_date = next_last_tuesday().isoformat()
     meeting_date = (book or {}).get("meetingDate") or inferred_date
-    meeting_key = (book or {}).get("slug") or meeting_date[:10]
+    book_slug = (book or {}).get("slug")
+    meeting_key = book_slug or meeting_date[:10]
     picker_slugs = [s for s in ((book or {}).get("pickerSlugs") or []) if s]
     picker_names = (book or {}).get("pickerNames") or []
     return {
         "meetingKey": meeting_key,
+        "meetingId": clubdb.meeting_id_for_book_slug(book_slug),
+        "pickerIds": clubdb.picker_ids_for_book_slug(book_slug),
         "date": meeting_date[:10],
         "expectedRuleDate": last_tuesday(
             int(meeting_date[:4]), int(meeting_date[5:7])
@@ -80,19 +83,21 @@ def next_meeting() -> dict:
     }
 
 
-def meeting_status(meeting_key: str | None = None) -> dict:
+def meeting_status(meeting_id: int | None = None) -> dict:
     meeting = next_meeting()
-    key = meeting_key or meeting["meetingKey"]
-    roll_call = db.get_roll_call(key)
-    attendance = {r["member_slug"]: r for r in db.attendance_for_meeting(key)}
-    members = _current_members()
-    picker_slugs = set(meeting.get("pickerSlugs") or [])
+    mid = meeting_id if meeting_id is not None else meeting["meetingId"]
+    roll_call = db.get_roll_call(mid) if mid is not None else None
+    attendance = {
+        r["member_id"]: r
+        for r in (db.attendance_for_meeting(mid) if mid is not None else [])
+    }
+    members = clubdb.current_members()
+    picker_ids = set(meeting.get("pickerIds") or [])
 
     rows = []
     yes = no = unsure = 0
     for member in members:
-        slug = member["slug"]
-        row = attendance.get(slug)
+        row = attendance.get(member["id"])
         status = row["status"] if row else "pending"
         if status == "yes":
             yes += 1
@@ -102,9 +107,10 @@ def meeting_status(meeting_key: str | None = None) -> dict:
             unsure += 1
         rows.append({
             "member": member.get("name"),
-            "memberSlug": slug,
+            "memberId": member["id"],
+            "memberSlug": member["slug"],
             "status": status,
-            "isPicker": slug in picker_slugs,
+            "isPicker": member["id"] in picker_ids,
             "updatedAt": row.get("responded_at") if row else None,
         })
 

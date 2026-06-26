@@ -3,7 +3,7 @@
 Every email Oliver sends routes through send(): it appends his contextual signature
 (unless sign=False), lets email_jmap render the markdown body into a formatted HTML part
 (email_tracking.text_to_html), and submits via JMAP. For per-member tracked mail
-(open-pixel + contact record) pass `track={meeting_key, member_slug, kind}`; the contact
+(open-pixel + contact record) pass `track={meeting_id, member_id, kind}`; the contact
 row is marked sent/failed here too. Omit `track` for list / personal / reply mail.
 """
 

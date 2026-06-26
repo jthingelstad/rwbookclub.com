@@ -30,33 +30,35 @@ def test_next_meeting_knows_current_scheduled_book():
 
 
 def test_meeting_status_flags_picker_conflict(fresh_db):
-    from agent import db
+    from agent import clubdb, db
     from agent.club import meeting_rules
 
     meeting = meeting_rules.next_meeting()
-    db.upsert_roll_call(meeting_key=meeting["meetingKey"], channel_id="ch1")
+    mid = meeting["meetingId"]
+    db.upsert_roll_call(meeting_id=mid, channel_id="ch1")
     for slug in ("jamie", "tom", "nick"):
-        db.set_attendance(meeting_key=meeting["meetingKey"], member_slug=slug, status="yes")
+        db.set_attendance(meeting_id=mid, member_id=clubdb.lookup_member_id(slug), status="yes")
     for slug in meeting["pickerSlugs"]:
-        db.set_attendance(meeting_key=meeting["meetingKey"], member_slug=slug, status="no")
+        db.set_attendance(meeting_id=mid, member_id=clubdb.lookup_member_id(slug), status="no")
 
-    status = meeting_rules.meeting_status(meeting["meetingKey"])
+    status = meeting_rules.meeting_status(mid)
     assert "picker_unavailable" in status["risks"]
     assert status["recommendation"] == "needs_attention"
 
 
 def test_meeting_status_ready_when_quorum_and_picker(fresh_db):
-    from agent import db
+    from agent import clubdb, db
     from agent.club import meeting_rules
 
     meeting = meeting_rules.next_meeting()
-    db.upsert_roll_call(meeting_key=meeting["meetingKey"], channel_id="ch1")
+    mid = meeting["meetingId"]
+    db.upsert_roll_call(meeting_id=mid, channel_id="ch1")
     yes = set(meeting["pickerSlugs"])
     yes.update(["jamie", "tom", "nick"])
     for slug in sorted(yes):
-        db.set_attendance(meeting_key=meeting["meetingKey"], member_slug=slug, status="yes")
+        db.set_attendance(meeting_id=mid, member_id=clubdb.lookup_member_id(slug), status="yes")
 
-    status = meeting_rules.meeting_status(meeting["meetingKey"])
+    status = meeting_rules.meeting_status(mid)
     assert status["hasQuorum"] is True
     assert status["pickerAvailable"] is True
     assert status["recommendation"] == "ready"
