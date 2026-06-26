@@ -55,8 +55,8 @@ the local file before any commit.
 **Phase 4 — Meetings & operations.** ✅ **Done.**
 `/oliver add-book` (fetches metadata + cover from Open Library, writes a book file) and
 `/oliver schedule` (book + date + picker → writes a placeholder meeting + sets the book's
-picker), admin-gated, via `agent/corpus_write.py` + `agent/gitwrite.py`; writes validate
-the corpus before commit and create missing author records for new books. An in-process
+picker), admin-gated, via `agent/corpus_write.py`; writes go to the `club_*` DB, regenerate
+the corpus, validate it, and create missing author records for new books. An in-process
 `discord.ext.tasks` loop (`agent/scheduler.py`, pure `due_notifications`) posts proactive
 upcoming-meeting reminders, a review nudge for the most-recent read, and milestone/anniversary
 notes to `DISCORD_MAIN_CHANNEL_ID` — deduped via a `notifications_sent` table; `/oliver tick`

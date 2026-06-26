@@ -179,8 +179,10 @@ def resolve_book(title: str, authors: list[str]) -> dict | None:
             return ent  # no author constraint available
         author_ids = _ids(ent, "P50")
         author_labels = labels(author_ids)
-        joined = " ".join(author_labels.values()).lower()
-        if any(ln in joined for ln in last_names):
+        # Whole-word match on the author labels' tokens (not substring) so a short/common
+        # last name like "Ford" can't match "Crawford"/"Stafford" on a same-titled work.
+        author_tokens = {t.strip(".,") for lbl in author_labels.values() for t in lbl.lower().split()}
+        if any(ln in author_tokens for ln in last_names):
             return ent
     return None
 

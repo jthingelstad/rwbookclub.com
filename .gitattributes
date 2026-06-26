@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Generated test fixture (regenerate via `python -m agent.script.dump_club_seed`) —
+# keep it out of diffs/linguist stats.
+tests/fixtures/club_seed.sql linguist-generated=true
