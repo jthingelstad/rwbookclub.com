@@ -13,10 +13,19 @@ Build-time preview / test:
 from __future__ import annotations
 
 import argparse
+import re
 
 from agent import oliver
 from agent.club import meeting_rules
 from agent.mail import outbound
+
+_EMAIL_TAG = re.compile(r"<email>(.*?)</email>", re.S | re.I)
+
+
+def _extract_email(text: str) -> str:
+    """Pull the email out of <email>…</email>, dropping any tool-loop preamble/notes."""
+    match = _EMAIL_TAG.search(text)
+    return (match.group(1) if match else text).strip()
 
 
 def _committed_names(status: dict) -> list[str]:
@@ -31,20 +40,31 @@ def topic_email_prompt(meeting: dict) -> str:
     pickers = ", ".join(meeting.get("pickerNames") or [])
     picker_line = f" {pickers} picked it." if pickers else ""
     return (
-        "Write the club's pre-meeting email that goes out two days before we meet — to the "
-        "whole mailing list. It has two jobs: (1) a brief final reminder that we meet on "
-        f"{when} to discuss {title} by {authors}.{picker_line} (2) Three to five discussion "
-        "provocations for this book that fold in OUR OWN reading history — real connections "
-        "to past club books, recurring arguments we've had, author or topic patterns, "
-        "questions we've never settled. Use your tools (related_books, compare_books, "
-        "review_summary, search_mail_archive, get_book) to find specific, non-obvious "
-        "connections grounded in what this club has actually read and discussed — not "
-        "generic book-club questions. Provocations and connections, not a formal agenda.\n\n"
-        "Format: plain-text email. You may use *asterisks* around book titles as usual, but "
-        "NO markdown bold, NO headings, and NO '---' divider lines. Output ONLY the email "
-        "itself, starting directly with a short greeting to the club — no subject line, no "
-        "preamble, no notes to me, nothing before the greeting. Do not sign off; a signature "
-        "is added automatically."
+        "Write the club's pre-meeting email that goes out two days before we meet, to the whole "
+        "mailing list. Research it properly with your tools first, then write a rich, surprising "
+        "email a long-time member would be glad to get.\n\n"
+        f"Open with a short greeting and a one-line reminder that we meet on {when} to discuss "
+        f"{title} by {authors}.{picker_line}\n\n"
+        "Then three sections, each under its own '## ' header:\n\n"
+        "## Connections\n"
+        "3-5 provocations that set this book against OUR OWN reading history — real, specific, "
+        "non-obvious connections to past club books, recurring arguments we've had, author or "
+        "topic patterns, questions we've never settled. Ground these in what the club has actually "
+        "read and discussed; use related_books, compare_books, review_summary, and "
+        "search_mail_archive.\n\n"
+        "## On the Book\n"
+        "5-7 discussion questions about THIS book on its own terms — its arguments, methods, the "
+        "author's choices, what's provocative, weak, or unresolved in it. These must NOT reference "
+        "other club books; they're for digging into this one.\n\n"
+        "## A third section — your call\n"
+        "Give it your own header and surprise us: something genuinely interesting and unexpected "
+        "about the book, its author, its making, its reception, a strange fact, or a debate it "
+        "sparked. Use web_search if it helps you find a real, delightful angle this "
+        "technically-minded club hasn't heard. Make it the part people forward to a friend.\n\n"
+        "Format: plain-text email; a '## ' header for each of the three sections; *asterisks* "
+        "around book titles; no other markdown. Write the ENTIRE email between <email> and "
+        "</email> tags and put NOTHING outside them — no preamble, no notes, no sign-off (a "
+        "signature is added automatically)."
     )
 
 
@@ -53,7 +73,7 @@ def topic_email(meeting: dict | None = None) -> dict:
     meeting = meeting or meeting_rules.next_meeting()
     title = (meeting.get("book") or {}).get("title") or "our next book"
     when = meeting.get("date") or ""
-    body = oliver.generate(topic_email_prompt(meeting))  # signature added by outbound.send
+    body = _extract_email(oliver.generate(topic_email_prompt(meeting)))  # signature added by outbound.send
     subject = f"Discussion topics for {title}" + (f" — meeting {when}" if when else "")
     return {"subject": subject, "body": body}
 

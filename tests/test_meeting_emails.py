@@ -18,6 +18,19 @@ def test_topic_email_prompt_includes_facts():
     assert "reading history" in prompt
 
 
+def test_extract_email_strips_preamble_and_trailing_notes():
+    raw = ("Good — I have what I need. Let me write this.\n\n"
+           "<email>Hello all,\n\n## Connections\nstuff</email>\n\nnotes after")
+    out = meeting_emails._extract_email(raw)
+    assert out.startswith("Hello all,")
+    assert "Good — I have" not in out
+    assert "notes after" not in out
+
+
+def test_extract_email_without_tags_returns_text():
+    assert meeting_emails._extract_email("just an email") == "just an email"
+
+
 def test_topic_email_builds_subject_and_body(monkeypatch):
     monkeypatch.setattr(meeting_emails.oliver, "generate", lambda prompt: "TOPIC BODY")
     out = meeting_emails.topic_email(MEETING)
