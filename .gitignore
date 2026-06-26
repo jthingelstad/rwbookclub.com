@@ -25,5 +25,8 @@ agent/logs/
 # Scratch space for one-off imports (e.g. mailbox/Takeout dumps) — never committed
 tmp/
 
+# One-time Airtable import cache (contains member PII: emails/mobiles) — never committed
+agent/script/_airtable_cache/
+
 # OS
 .DS_Store
