@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 import functools
 import logging
-from datetime import date, datetime
+from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import discord
@@ -163,18 +163,10 @@ def _attendance_by_member(status: dict) -> dict[str, str]:
     return {r["memberSlug"]: r["status"] for r in status["attendance"]}
 
 
-def _days_until_text(meeting_date: str) -> str:
-    try:
-        days = (date.fromisoformat(meeting_date) - date.today()).days
-    except ValueError:
-        return ""
-    if days == 0:
-        return "today"
-    if days == 1:
-        return "tomorrow"
-    if days > 1:
-        return f"in {days} days"
-    return f"{abs(days)} days ago"
+# Roll-call email text lives in meeting_rules so the command path and the
+# request_roll_call_update tool share one copy (no wording drift).
+_days_until_text = meeting_rules.days_until_text
+_roll_call_email_body = meeting_rules.roll_call_email_body
 
 
 def _admin_check_message(interaction: discord.Interaction) -> str | None:
@@ -238,24 +230,6 @@ async def _roll_call_reminder(status: dict) -> str:
     )
 
 
-def _roll_call_email_body(member_name: str, status: dict) -> str:
-    meeting = status["meeting"]
-    title = (meeting.get("book") or {}).get("title") or "the next meeting"
-    timing = _days_until_text(meeting["date"])
-    meeting_when = f"{meeting['date']}" + (f" ({timing})" if timing else "")
-    picker = ", ".join(meeting.get("pickerNames") or [])
-    picker_line = f"\n\n{picker} picked this one, and the picker needs to be able to attend." if picker else ""
-    return (
-        f"Hi {member_name},\n\n"
-        f"Roll call for {title}: the meeting is {meeting_when}.\n\n"
-        "Can you make it? Reply with yes, no, or unsure and I'll update the roll-call tracker."
-        f"{picker_line}\n\n"
-        f"Current status: {status['counts']['yes']} yes, {status['counts']['no']} no, "
-        f"{status['counts']['unsure']} unsure, {status['counts']['pending']} pending. "
-        f"We need {status['counts']['quorumRequired']} yes responses."
-    )
-
-
 def _reading_checkin_body(member_name: str, meeting: dict, *, note: str | None = None) -> str:
     book = meeting.get("book") or {}
     title = book.get("title") or "the current book"
@@ -278,7 +252,7 @@ async def _send_roll_call_email_to_member(member: dict, status: dict) -> dict | 
         return None
     meeting = status["meeting"]
     title = (meeting.get("book") or {}).get("title") or "the next meeting"
-    subject = f"Roll call: {title} on {meeting['date']}"
+    subject = meeting_rules.roll_call_subject(status)
     timing = _days_until_text(meeting["date"])
     counts = status["counts"]
     picker = ", ".join(meeting.get("pickerNames") or [])
@@ -482,7 +456,7 @@ async def record_attendance_response(interaction: discord.Interaction, status: s
 
 # ── Modals ───────────────────────────────────────────────────────────────────
 class ReviewModal(discord.ui.Modal):
-    """The /oliver review form — five inputs, one submit, written to the Git corpus."""
+    """The /oliver review form — five inputs, one submit, upserted to the club_* DB (the corpus is then regenerated + redeployed)."""
 
     def __init__(self, slug: str, title: str, member_slug: str,
                  existing: dict | None = None) -> None:
@@ -510,7 +484,7 @@ class ReviewModal(discord.ui.Modal):
             self.add_item(item)
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
-        await interaction.response.defer(ephemeral=True)  # git write may take a few seconds
+        await interaction.response.defer(ephemeral=True)  # DB upsert + corpus regen may take a moment
         try:
             res = await asyncio.to_thread(
                 reviews.write_review, self.slug, self.member_slug,
@@ -1214,6 +1188,6 @@ def setup(client: discord.Client) -> None:
 
 
 def start_scheduler() -> None:
-    """Kick off the daily loop. Call from on_ready once the gateway is up."""
+    """Kick off the hourly scheduler loop. Call from on_ready once the gateway is up."""
     if config.MAIN_CHANNEL_ID and not scheduler_loop.is_running():
         scheduler_loop.start()

@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import date
 
 from agent import clubdb
 from agent import config
@@ -822,42 +821,8 @@ def _meeting_readiness_snapshot() -> dict:
     }
 
 
-def _days_until_text(meeting_date: str) -> str:
-    try:
-        days = (date.fromisoformat(meeting_date) - date.today()).days
-    except ValueError:
-        return ""
-    if days == 0:
-        return "today"
-    if days == 1:
-        return "tomorrow"
-    if days > 1:
-        return f"in {days} days"
-    return f"{abs(days)} days ago"
-
-
-def _roll_call_subject(status: dict) -> str:
-    meeting = status["meeting"]
-    title = (meeting.get("book") or {}).get("title") or "the next meeting"
-    return f"Roll call: {title} on {meeting['date']}"
-
-
-def _roll_call_email_body(member_name: str, status: dict, *, note: str | None = None) -> str:
-    meeting = status["meeting"]
-    title = (meeting.get("book") or {}).get("title") or "the next meeting"
-    timing = _days_until_text(meeting["date"])
-    meeting_when = f"{meeting['date']}" + (f" ({timing})" if timing else "")
-    picker = ", ".join(meeting.get("pickerNames") or [])
-    picker_line = f"\n\n{picker} picked this one, and the picker needs to be able to attend." if picker else ""
-    extra = f"\n\n{note.strip()}" if note else ""
-    counts = status["counts"]
-    return (
-        f"Hi {member_name},\n\n"
-        f"Roll call for {title}: the meeting is {meeting_when}.\n\n"
-        "Can you make it? Reply with yes, no, or unsure and I'll update the roll-call tracker."
-        f"{picker_line}"
-        f"{extra}\n\n"
-        f"Current status: {counts['yes']} yes, {counts['no']} no, "
-        f"{counts['unsure']} unsure, {counts['pending']} pending. "
-        f"We need {counts['quorumRequired']} yes responses."
-    )
+# Roll-call email text is shared with the command path; it lives in meeting_rules so the
+# wording can't drift between the two senders.
+_days_until_text = meeting_rules.days_until_text
+_roll_call_subject = meeting_rules.roll_call_subject
+_roll_call_email_body = meeting_rules.roll_call_email_body

@@ -420,7 +420,8 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
                     usage["cr"] += u.cache_read_input_tokens or 0
                     usage["cc"] += u.cache_creation_input_tokens or 0
                 except Exception:  # noqa: BLE001 — best-effort
-                    pass
+                    log.warning("answer(): forced final-answer call failed after round cap",
+                                exc_info=True)
                 text = _text_of(resp.content)
             else:
                 text = _text_of(resp.content)
@@ -446,7 +447,7 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
                         usage["cc"] += u.cache_creation_input_tokens or 0
                         text = _text_of(resp.content)
                     except Exception:  # noqa: BLE001 — best-effort retry
-                        pass
+                        log.warning("answer(): empty-text nudge retry failed", exc_info=True)
             reply = text or "I'm not sure how to answer that one."
             break
 

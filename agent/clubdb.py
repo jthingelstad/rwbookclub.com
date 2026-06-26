@@ -1,8 +1,8 @@
 """Authoritative club record — the relational source of truth (class A, in SQLite).
 
 This is the inversion: the club's books / meetings / members / authors / reviews /
-awards live here under integer primary keys and real foreign keys. The Git corpus
-(``corpus/data/*``) and the 11ty website are *generated* from these tables (see
+awards live here under integer primary keys and real foreign keys. The corpus
+(``corpus/data/*``, gitignored) and the 11ty website are *generated* from these tables (see
 ``agent.corpus_gen``); Airtable is retired after the one-time import (see
 ``agent.script.import_airtable``).
 
@@ -207,6 +207,12 @@ MEETING_TZ = "America/Chicago"  # the club's single timezone (Minneapolis)
 
 def _migrate_club(conn: sqlite3.Connection) -> None:
     """Additive club-schema migrations (idempotent).
+
+    Runs on every `ensure_schema()`. Steps 2 and 3 are one-time data migrations retained only
+    for long-lived DBs that predate them; for a freshly seeded DB they are no-ops — the local
+    date normalization finds nothing to convert, and `import_airtable` already seeds
+    club_meeting_hosts directly, so the host backfill touches no rows. Cheap and idempotent,
+    so they stay rather than being gated behind a version flag.
 
     1. Add club_meetings.start_time if missing.
     2. Normalize club_meetings.date from the legacy UTC ISO datetime to the club's LOCAL

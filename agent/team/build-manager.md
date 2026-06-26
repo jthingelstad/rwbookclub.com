@@ -26,8 +26,8 @@ When invoked as a routine or automation:
 - Split work into small, reviewable slices.
 - Identify code ownership boundaries across `agent/`, `corpus/`, `tests/`, and
   `website/`.
-- Guard the Git corpus as the canonical public data layer.
-- Guard SQLite as private operational state.
+- Guard the `club_*` SQLite tables as the canonical club record (the corpus is generated from them, private/gitignored).
+- Guard Oliver's class-B SQLite as private operational state.
 - Ensure external actions remain explicit and authorized.
 - Coordinate when Evaluator or Club Ethnographer review is required.
 - Keep documentation updated when behavior changes.
