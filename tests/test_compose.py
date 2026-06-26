@@ -34,6 +34,24 @@ def test_compose_returns_model_text(monkeypatch):
     assert captured["system"][0]["text"].startswith("# WHO YOU ARE")
 
 
+def test_compose_email_medium_asks_for_greeting_and_signoff(monkeypatch):
+    captured = {}
+
+    class _Client:
+        class messages:
+            @staticmethod
+            def create(**kwargs):
+                captured.update(kwargs)
+                return _Resp("Hi Tom, can you make the meeting? — Oliver")
+
+    monkeypatch.setattr(oliver, "_get_client", lambda: _Client())
+    oliver.compose("roll-call email", {"recipient name": "Tom"},
+                   fallback="TEMPLATE", medium="email")
+    prompt = captured["messages"][0]["content"]
+    assert "sign off" in prompt.lower()
+    assert "email" in prompt.lower()
+
+
 def test_compose_falls_back_on_error(monkeypatch):
     class _Client:
         class messages:

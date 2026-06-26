@@ -362,23 +362,35 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
     return reply
 
 
-def compose(kind: str, facts: dict, *, fallback: str) -> str:
+def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -> str:
     """Voice a proactive or templated surface in Oliver's register from given facts.
 
     A single tool-less LLM call against the charter-rich system prompt. No channel
     history is read or written, so these synthetic situations never pollute Oliver's
     conversational memory or rolling summary. The facts are authoritative — Oliver
     only voices them, he does not look anything up — which keeps counts and dates
-    correct. Any failure (API error, timeout, empty completion) returns `fallback`,
-    the caller's existing template: a proactive message must still go out, and an LLM
-    hiccup must never drop a roll-call. Synchronous; call via asyncio.to_thread.
+    correct. `medium` shapes the envelope: a "discord" message has no greeting or
+    sign-off; an "email" opens with a greeting and signs off as Oliver. Any failure
+    (API error, timeout, empty completion) returns `fallback`, the caller's existing
+    template: a proactive message must still go out, and an LLM hiccup must never drop
+    a roll-call. Synchronous; call via asyncio.to_thread.
     """
     facts_lines = "\n".join(f"- {k}: {v}" for k, v in facts.items() if v not in (None, ""))
+    if medium == "email":
+        envelope = (
+            "Write it as a short email in your voice: open with a brief greeting by name if a "
+            "name is given, make the ask clearly, and sign off simply as Oliver. No subject "
+            "line and no markdown headings."
+        )
+    else:
+        envelope = (
+            "Write it as a short Discord message in your voice: no greeting, no sign-off, no "
+            "markdown headings, no bulleted lists."
+        )
     prompt = (
-        f"Compose a {kind} for the club, in your own voice, from these exact facts. Use the "
-        "names, numbers, and dates exactly as given — do not invent, drop, or change any of "
-        "them. No subject line, no markdown headings, no sign-off. Keep it short and in your "
-        f"register.\n\nFacts:\n{facts_lines}"
+        f"Compose a {kind} from these exact facts. Use the names, numbers, and dates exactly "
+        f"as given — do not invent, drop, or change any of them. {envelope}\n\n"
+        f"Facts:\n{facts_lines}"
     )
     try:
         resp = _get_client().messages.create(

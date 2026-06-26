@@ -211,7 +211,27 @@ async def _send_roll_call_email_to_member(member: dict, status: dict) -> dict | 
     meeting = status["meeting"]
     title = (meeting.get("book") or {}).get("title") or "the next meeting"
     subject = f"Roll call: {title} on {meeting['date']}"
-    body = _roll_call_email_body(member["name"], status)
+    timing = _days_until_text(meeting["date"])
+    counts = status["counts"]
+    picker = ", ".join(meeting.get("pickerNames") or [])
+    body = await asyncio.to_thread(
+        oliver.compose,
+        "roll-call email asking a club member whether they can attend the next meeting",
+        {
+            "recipient name": member["name"],
+            "book": title,
+            "meeting date": meeting["date"] + (f" ({timing})" if timing else ""),
+            "picker": picker or None,
+            "picker rule": "the picker needs to be able to attend" if picker else None,
+            "how to respond": "reply yes, no, or unsure and Oliver updates the roll-call tracker",
+            "current responses": (
+                f"{counts['yes']} yes, {counts['no']} no, {counts['unsure']} unsure, "
+                f"{counts['pending']} pending; {counts['quorumRequired']} yes responses needed"
+            ),
+        },
+        fallback=_roll_call_email_body(member["name"], status),
+        medium="email",
+    )
     contact_id = None
     try:
         contact_id, html_body, tracking_token = email_tracking.prepare_outbound(
@@ -248,7 +268,23 @@ async def _send_reading_checkin_email_to_member(member: dict, meeting: dict,
         return None
     title = (meeting.get("book") or {}).get("title") or "the current book"
     subject = f"Reading check-in: {title}"
-    body = _reading_checkin_body(member["name"], meeting, note=note)
+    timing = _days_until_text(meeting["date"])
+    body = await asyncio.to_thread(
+        oliver.compose,
+        "short reading check-in email asking a club member how far along they are in the book",
+        {
+            "recipient name": member["name"],
+            "book": title,
+            "meeting date": meeting["date"] + (f" ({timing})" if timing else ""),
+            "how to respond": (
+                'reply briefly like "halfway and on track", "page 120, behind", or "finished" '
+                "and Oliver updates the tracker"
+            ),
+            "extra note": note,
+        },
+        fallback=_reading_checkin_body(member["name"], meeting, note=note),
+        medium="email",
+    )
     contact_id = None
     try:
         contact_id, html_body, tracking_token = email_tracking.prepare_outbound(
