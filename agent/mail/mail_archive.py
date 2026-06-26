@@ -19,7 +19,8 @@ from html import unescape
 from pathlib import Path
 from typing import Iterable
 
-from agent import config, db, email_policy
+from agent import config, db
+from agent.mail import email_policy
 
 GOOGLE_GROUPS_ADDRESS = "rwbookclub@googlegroups.com"
 GOOGLE_GROUPS_FOOTER = "You received this message because you are subscribed to the Google Groups"

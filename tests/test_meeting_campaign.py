@@ -32,7 +32,7 @@ def _campaign(days: int, *, count: int = 0, last_contact: str | None = None) -> 
 
 
 def test_first_reading_checkin_due_at_14_days():
-    from agent import meeting_campaign
+    from agent.club import meeting_campaign
 
     assert meeting_campaign.reading_checkin_candidates(
         _campaign(14),
@@ -41,7 +41,7 @@ def test_first_reading_checkin_due_at_14_days():
 
 
 def test_second_reading_checkin_waits_until_7_day_window_and_spacing():
-    from agent import meeting_campaign
+    from agent.club import meeting_campaign
 
     assert meeting_campaign.reading_checkin_candidates(
         _campaign(8, count=1, last_contact="2026-06-16 10:00:00"),
@@ -58,7 +58,7 @@ def test_second_reading_checkin_waits_until_7_day_window_and_spacing():
 
 
 def test_third_reading_checkin_waits_until_2_day_window():
-    from agent import meeting_campaign
+    from agent.club import meeting_campaign
 
     assert meeting_campaign.reading_checkin_candidates(
         _campaign(3, count=2, last_contact="2026-06-24 10:00:00"),
@@ -71,7 +71,7 @@ def test_third_reading_checkin_waits_until_2_day_window():
 
 
 def test_reading_checkins_stop_after_three():
-    from agent import meeting_campaign
+    from agent.club import meeting_campaign
 
     assert meeting_campaign.reading_checkin_candidates(
         _campaign(1, count=3, last_contact="2026-06-27 10:00:00"),

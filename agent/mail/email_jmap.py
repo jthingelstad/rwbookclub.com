@@ -15,7 +15,8 @@ from typing import Any
 
 import requests
 
-from agent import config, email_tracking
+from agent import config
+from agent.mail import email_tracking
 
 log = logging.getLogger("oliver.email")
 

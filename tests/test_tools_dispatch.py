@@ -176,7 +176,7 @@ class TestDispatchHappyPaths:
         assert result == {"error": "email is not configured"}
 
     def test_send_email_blocked_inside_inbound_email_channel(self, monkeypatch):
-        from agent import email_jmap
+        from agent.mail import email_jmap
         from agent.tools import dispatch
 
         monkeypatch.setattr(email_jmap, "enabled", lambda: True)
@@ -190,7 +190,7 @@ class TestDispatchHappyPaths:
         }
 
     def test_send_email_allows_linked_member_recipient(self, monkeypatch, fresh_db):
-        from agent import email_jmap
+        from agent.mail import email_jmap
         from agent.tools import dispatch
 
         sent = []
@@ -210,7 +210,7 @@ class TestDispatchHappyPaths:
         assert sent[0]["to"] == ["jamie@thingelstad.com"]
 
     def test_send_email_blocks_unknown_recipient(self, monkeypatch, fresh_db):
-        from agent import email_jmap
+        from agent.mail import email_jmap
         from agent.tools import dispatch
 
         monkeypatch.setattr(email_jmap, "enabled", lambda: True)
@@ -223,7 +223,8 @@ class TestDispatchHappyPaths:
         assert result == {"error": "Oliver can only email linked book club member addresses from this tool"}
 
     def test_send_email_blocks_mailing_list_recipient(self, monkeypatch):
-        from agent import config, email_jmap
+        from agent import config
+        from agent.mail import email_jmap
         from agent.tools import dispatch
 
         monkeypatch.setattr(email_jmap, "enabled", lambda: True)
@@ -240,7 +241,7 @@ class TestDispatchHappyPaths:
         }
 
     def test_request_reading_update_blocked_inside_inbound_email_channel(self, monkeypatch, fresh_db):
-        from agent import email_jmap
+        from agent.mail import email_jmap
         from agent.tools import dispatch
 
         monkeypatch.setattr(email_jmap, "enabled", lambda: True)
@@ -263,7 +264,8 @@ class TestDispatchHappyPaths:
         assert result == {"error": "email is not configured"}
 
     def test_request_roll_call_update_sends_to_linked_current_members(self, monkeypatch, fresh_db):
-        from agent import config, email_jmap
+        from agent import config
+        from agent.mail import email_jmap
         from agent.tools import dispatch
 
         sent = []
@@ -287,7 +289,9 @@ class TestDispatchHappyPaths:
         assert all("2026-06-30" in call["body"] for call in sent)
 
     def test_request_roll_call_update_skips_confirmed_members(self, monkeypatch, fresh_db):
-        from agent import config, email_jmap, meeting_rules
+        from agent import config
+        from agent.mail import email_jmap
+        from agent.club import meeting_rules
         from agent.tools import dispatch
 
         sent = []
@@ -315,7 +319,9 @@ class TestDispatchHappyPaths:
         assert result["skipped"] == [{"member": "jamie", "reason": "already yes"}]
 
     def test_request_roll_call_update_all_skipped_does_not_open_roll_call(self, monkeypatch, fresh_db):
-        from agent import config, email_jmap, meeting_rules
+        from agent import config
+        from agent.mail import email_jmap
+        from agent.club import meeting_rules
         from agent.tools import dispatch
 
         sent = []
@@ -338,7 +344,7 @@ class TestDispatchHappyPaths:
         assert fresh_db.get_roll_call(meeting["meetingKey"]) is None
 
     def test_request_roll_call_update_blocked_inside_inbound_email_channel(self, monkeypatch, fresh_db):
-        from agent import email_jmap
+        from agent.mail import email_jmap
         from agent.tools import dispatch
 
         monkeypatch.setattr(email_jmap, "enabled", lambda: True)
@@ -351,7 +357,8 @@ class TestDispatchHappyPaths:
         assert result == {"error": "roll-call emails cannot be initiated from inbound email"}
 
     def test_request_reading_update_skips_finished_member(self, monkeypatch, fresh_db):
-        from agent import email_jmap, meeting_rules
+        from agent.mail import email_jmap
+        from agent.club import meeting_rules
         from agent.tools import dispatch
 
         monkeypatch.setattr(email_jmap, "enabled", lambda: True)
@@ -371,7 +378,7 @@ class TestDispatchHappyPaths:
         assert "already marked finished" in result["reason"]
 
     def test_meeting_readiness_combines_attendance_and_reading(self, fresh_db):
-        from agent import meeting_rules
+        from agent.club import meeting_rules
         from agent.tools import dispatch
 
         meeting = meeting_rules.next_meeting()
@@ -388,7 +395,8 @@ class TestDispatchHappyPaths:
         assert result["needsReading"] == []
 
     def test_meeting_readiness_requires_picker_attendance(self, fresh_db):
-        from agent import corpus_read, meeting_rules
+        from agent import corpus_read
+        from agent.club import meeting_rules
         from agent.tools import dispatch
 
         meeting = meeting_rules.next_meeting()
@@ -414,7 +422,7 @@ class TestDispatchHappyPaths:
         assert result["ready"] is False
 
     def test_meeting_campaign_returns_recommended_actions_and_contacts(self, fresh_db):
-        from agent import meeting_rules
+        from agent.club import meeting_rules
         from agent.tools import dispatch
 
         meeting = meeting_rules.next_meeting()

@@ -15,7 +15,8 @@ class FakeResponse:
 
 
 def test_pixel_url_uses_path_token(monkeypatch):
-    from agent import config, tinylytics
+    from agent import config
+    from agent.mail import tinylytics
 
     monkeypatch.setattr(config, "TINYLYTICS_SITE_ID", "site code")
     url = tinylytics.pixel_url("tok1")
@@ -24,7 +25,8 @@ def test_pixel_url_uses_path_token(monkeypatch):
 
 
 def test_sync_email_opens_marks_seen(monkeypatch, fresh_db):
-    from agent import config, db, tinylytics
+    from agent import config, db
+    from agent.mail import tinylytics
 
     monkeypatch.setattr(config, "TINYLYTICS_SITE_ID", "site-code")
     monkeypatch.setattr(config, "TINYLYTICS_SITE_ID_NUMERIC", "123")

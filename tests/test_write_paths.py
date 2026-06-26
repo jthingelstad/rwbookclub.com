@@ -8,7 +8,7 @@ import pytest
 
 
 def test_review_sync_failure_does_not_write_file(monkeypatch, tmp_path):
-    from agent import reviews
+    from agent.club import reviews
     from agent.gitwrite import GitWriteError
 
     reviews_dir = tmp_path / "reviews"

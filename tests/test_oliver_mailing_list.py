@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from agent import oliver
-from agent.email_jmap import InboundEmail
+from agent.mail.email_jmap import InboundEmail
 
 
 def msg(text: str) -> InboundEmail:

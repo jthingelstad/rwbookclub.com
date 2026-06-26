@@ -6,21 +6,21 @@ from datetime import date
 
 
 def test_last_tuesday():
-    from agent import meeting_rules
+    from agent.club import meeting_rules
 
     assert meeting_rules.last_tuesday(2026, 6).isoformat() == "2026-06-30"
     assert meeting_rules.last_tuesday(2026, 5).isoformat() == "2026-05-26"
 
 
 def test_next_last_tuesday_moves_to_next_month_after_date():
-    from agent import meeting_rules
+    from agent.club import meeting_rules
 
     assert meeting_rules.next_last_tuesday(date(2026, 5, 28)).isoformat() == "2026-06-30"
     assert meeting_rules.next_last_tuesday(date(2026, 6, 1)).isoformat() == "2026-06-30"
 
 
 def test_next_meeting_knows_current_scheduled_book():
-    from agent import meeting_rules
+    from agent.club import meeting_rules
 
     meeting = meeting_rules.next_meeting()
     assert meeting["meetingKey"] == "a-world-appears"
@@ -30,7 +30,8 @@ def test_next_meeting_knows_current_scheduled_book():
 
 
 def test_meeting_status_flags_picker_conflict(fresh_db):
-    from agent import db, meeting_rules
+    from agent import db
+    from agent.club import meeting_rules
 
     meeting = meeting_rules.next_meeting()
     db.upsert_roll_call(meeting_key=meeting["meetingKey"], channel_id="ch1")
@@ -45,7 +46,8 @@ def test_meeting_status_flags_picker_conflict(fresh_db):
 
 
 def test_meeting_status_ready_when_quorum_and_picker(fresh_db):
-    from agent import db, meeting_rules
+    from agent import db
+    from agent.club import meeting_rules
 
     meeting = meeting_rules.next_meeting()
     db.upsert_roll_call(meeting_key=meeting["meetingKey"], channel_id="ch1")

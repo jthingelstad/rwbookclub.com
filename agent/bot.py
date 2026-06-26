@@ -24,10 +24,9 @@ import discord
 import requests
 from discord.ext import tasks
 
-from agent import (
-    commands, config, context as kb, db, email_jmap, email_policy, gitwrite, meeting_rules,
-    mail_archive, oliver, tinylytics,
-)
+from agent import commands, config, context as kb, db, gitwrite, oliver
+from agent.mail import email_jmap, email_policy, mail_archive, tinylytics
+from agent.club import meeting_rules
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("oliver")

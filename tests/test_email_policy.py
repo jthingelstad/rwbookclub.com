@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from agent import config, email_policy
-from agent.email_jmap import InboundEmail
+from agent import config
+from agent.mail import email_policy
+from agent.mail.email_jmap import InboundEmail
 
 
 def msg(

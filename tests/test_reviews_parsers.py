@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from agent.reviews import ReviewError, _parse_1to5, _parse_rating
+from agent.club.reviews import ReviewError, _parse_1to5, _parse_rating
 
 
 class TestParseRating:

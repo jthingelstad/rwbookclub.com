@@ -10,7 +10,8 @@ from __future__ import annotations
 
 from datetime import date
 
-from agent import corpus_read, db, meeting_rules
+from agent import corpus_read, db
+from agent.club import meeting_rules
 
 READING_OK = {"finished", "on_track"}
 ROLL_CALL_START_DAYS = 14

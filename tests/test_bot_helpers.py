@@ -13,7 +13,7 @@ from agent.bot import (
     _roll_call_status_from_email,
     _strip_address,
 )
-from agent.email_jmap import InboundEmail
+from agent.mail.email_jmap import InboundEmail
 
 
 class TestIsAddressed:

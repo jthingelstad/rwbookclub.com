@@ -17,9 +17,10 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import discord
 from discord.ext import tasks
 
-from agent import (config, context as kb, corpus_read, corpus_write, db,
-                   email_jmap, email_tracking, meeting_campaign, meeting_rules, oliver,
-                   openlibrary, reviews, scheduler)
+from agent import (config, context as kb, corpus_read, corpus_write, db, oliver,
+                   scheduler)
+from agent.mail import email_jmap, email_tracking
+from agent.club import meeting_campaign, meeting_rules, openlibrary, reviews
 
 log = logging.getLogger("oliver.commands")
 

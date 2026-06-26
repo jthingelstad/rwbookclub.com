@@ -3,8 +3,8 @@ from __future__ import annotations
 import mailbox
 from email.message import EmailMessage
 
-from agent import mail_archive
-from agent.email_jmap import InboundEmail
+from agent.mail import mail_archive
+from agent.mail.email_jmap import InboundEmail
 
 
 def _message(*, sender: str = "Jamie <jamie@example.test>",

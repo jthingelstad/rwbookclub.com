@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from agent.email_jmap import InboundEmail, JMAPClient, JMAPError, _addresses, _text_body
+from agent.mail.email_jmap import InboundEmail, JMAPClient, JMAPError, _addresses, _text_body
 
 
 class FakeJMAPClient(JMAPClient):

@@ -22,11 +22,11 @@ from datetime import date
 from agent import config
 from agent import corpus_read as cr
 from agent import db
-from agent import email_jmap
-from agent import email_policy
-from agent import email_tracking
-from agent import meeting_campaign
-from agent import meeting_rules
+from agent.mail import email_jmap
+from agent.mail import email_policy
+from agent.mail import email_tracking
+from agent.club import meeting_campaign
+from agent.club import meeting_rules
 
 log = logging.getLogger("oliver.tools")
 

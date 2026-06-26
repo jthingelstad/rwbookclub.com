@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 from agent import context as kb
 from agent import corpus_read as cr
 from agent import db
-from agent import email_policy
+from agent.mail import email_policy
 from agent.tools import TOOLS, dispatch
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")

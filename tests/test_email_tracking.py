@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 def test_text_to_html_escapes_and_includes_tracking_notice():
-    from agent import email_tracking
+    from agent.mail import email_tracking
 
     html = email_tracking.text_to_html(
         "Hi Jamie,\n\n<finished>",
@@ -16,7 +16,8 @@ def test_text_to_html_escapes_and_includes_tracking_notice():
 
 
 def test_prepare_outbound_creates_contact_and_tracking(monkeypatch, fresh_db):
-    from agent import config, email_tracking
+    from agent import config
+    from agent.mail import email_tracking
 
     monkeypatch.setattr(config, "TINYLYTICS_SITE_ID", "site-code")
     monkeypatch.setattr(config, "TINYLYTICS_SITE_ID_NUMERIC", "123")
@@ -39,7 +40,8 @@ def test_prepare_outbound_creates_contact_and_tracking(monkeypatch, fresh_db):
 
 
 def test_prepare_outbound_prefers_tinylytics_pixel(monkeypatch, fresh_db):
-    from agent import config, email_tracking
+    from agent import config
+    from agent.mail import email_tracking
 
     monkeypatch.setattr(config, "TINYLYTICS_SITE_ID", "site-code")
     monkeypatch.setattr(config, "TINYLYTICS_SITE_ID_NUMERIC", "123")

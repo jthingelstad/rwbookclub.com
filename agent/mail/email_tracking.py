@@ -5,7 +5,8 @@ from __future__ import annotations
 import html
 import secrets
 
-from agent import config, db, tinylytics
+from agent import config, db
+from agent.mail import tinylytics
 
 
 def enabled() -> bool:
