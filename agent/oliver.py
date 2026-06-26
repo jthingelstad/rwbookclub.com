@@ -379,8 +379,8 @@ def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -
     if medium == "email":
         envelope = (
             "Write it as a short email in your voice: open with a brief greeting by name if a "
-            "name is given, make the ask clearly, and sign off simply as Oliver. No subject "
-            "line and no markdown headings."
+            "name is given, and make the ask clearly. Do not sign off — a signature is added "
+            "automatically. No subject line and no markdown headings."
         )
     else:
         envelope = (

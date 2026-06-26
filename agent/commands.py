@@ -19,7 +19,7 @@ from discord.ext import tasks
 
 from agent import (config, context as kb, corpus_read, corpus_write, db, oliver,
                    scheduler)
-from agent.mail import email_jmap, email_tracking
+from agent.mail import email_jmap, email_tracking, signature
 from agent.club import meeting_campaign, meeting_rules, openlibrary, reviews
 
 log = logging.getLogger("oliver.commands")
@@ -206,8 +206,7 @@ def _roll_call_email_body(member_name: str, status: dict) -> str:
         f"{picker_line}\n\n"
         f"Current status: {status['counts']['yes']} yes, {status['counts']['no']} no, "
         f"{status['counts']['unsure']} unsure, {status['counts']['pending']} pending. "
-        f"We need {status['counts']['quorumRequired']} yes responses.\n\n"
-        "Oliver"
+        f"We need {status['counts']['quorumRequired']} yes responses."
     )
 
 
@@ -223,7 +222,7 @@ def _reading_checkin_body(member_name: str, meeting: dict, *, note: str | None =
         "Where are you in the book, and do you feel on track?\n\n"
         "Reply with something short like \"halfway and on track\", "
         "\"page 120, behind\", or \"finished\" and I'll update the tracker."
-        f"{extra}\n\nOliver"
+        f"{extra}"
     )
 
 
@@ -255,6 +254,7 @@ async def _send_roll_call_email_to_member(member: dict, status: dict) -> dict | 
         fallback=_roll_call_email_body(member["name"], status),
         medium="email",
     )
+    body = body.rstrip() + "\n\n" + await asyncio.to_thread(signature.email_signature)
     contact_id = None
     try:
         contact_id, html_body, tracking_token = email_tracking.prepare_outbound(
@@ -308,6 +308,7 @@ async def _send_reading_checkin_email_to_member(member: dict, meeting: dict,
         fallback=_reading_checkin_body(member["name"], meeting, note=note),
         medium="email",
     )
+    body = body.rstrip() + "\n\n" + await asyncio.to_thread(signature.email_signature)
     contact_id = None
     try:
         contact_id, html_body, tracking_token = email_tracking.prepare_outbound(
