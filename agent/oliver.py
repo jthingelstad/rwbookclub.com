@@ -406,7 +406,9 @@ def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -
         )
     prompt = (
         f"Compose a {kind} from these exact facts. Use the names, numbers, and dates exactly "
-        f"as given — do not invent, drop, or change any of them. {envelope}\n\n"
+        f"as given — do not invent, drop, or change any of them. {envelope} Output only the "
+        "finished message — no preamble, no notes to me, no '---' dividers, nothing before or "
+        f"after it.\n\n"
         f"Facts:\n{facts_lines}"
     )
     try:

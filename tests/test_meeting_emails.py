@@ -39,7 +39,8 @@ def test_topic_email_builds_subject_and_body(monkeypatch):
     assert "2026-06-30" in out["subject"]
 
 
-def test_week_reminder_passes_committed_names_to_compose(monkeypatch):
+def test_week_reminder_separates_yes_no_and_pending(monkeypatch):
+    """A member who declined must be reported as 'not coming', never nudged as pending."""
     captured = {}
 
     def fake_compose(kind, facts, **kwargs):
@@ -51,11 +52,14 @@ def test_week_reminder_passes_committed_names_to_compose(monkeypatch):
         "attendance": [
             {"member": "Erik", "status": "yes"},
             {"member": "Loren", "status": "yes"},
-            {"member": "Tom", "status": "pending"},
+            {"member": "Tom", "status": "no"},       # clearly declined
+            {"member": "Nick", "status": "pending"},
         ],
         "counts": {},
     }
     out = meeting_emails.week_reminder(MEETING, status)
     assert out["body"] == "WEEK BODY"
     assert "A World Appears" in out["subject"]
-    assert captured["committed to attend so far"] == "Erik, Loren"  # only the yes responses
+    assert captured["confirmed coming"] == "Erik, Loren"
+    assert captured["not able to make it"] == "Tom"            # Tom is a 'no', not pending
+    assert captured["still waiting to hear from"] == "Nick"    # only Nick gets nudged
