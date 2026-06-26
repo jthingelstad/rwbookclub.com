@@ -22,5 +22,8 @@ agent/logs/
 # Claude Code session state (CronCreate locks, etc.)
 .claude/
 
+# Scratch space for one-off imports (e.g. mailbox/Takeout dumps) — never committed
+tmp/
+
 # OS
 .DS_Store
