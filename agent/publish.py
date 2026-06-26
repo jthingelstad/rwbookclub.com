@@ -99,12 +99,19 @@ def _deploy_gh_pages(message: str) -> None:
         shutil.rmtree(SITE_DIR / ".git", ignore_errors=True)
 
 
+# Floor for the partial-build guard: well below the ~179 real book pages, but high enough
+# that a corpus-less or half-rendered build (which can still emit index.html + CNAME) is caught.
+MIN_BOOK_PAGES = 50
+
+
 def publish_site() -> dict:
     """Regenerate corpus → build the site → deploy `_site` to the gh-pages branch.
 
-    Guards against the silent-empty-site failure mode (a missing corpus builds an empty
-    site with no error) by refusing to deploy unless `_site/index.html` and `_site/CNAME`
-    both exist. Raises PublishBusy if a publish is already running (non-blocking lock)."""
+    Guards against the silent-empty-site / partial-build failure modes (a missing or bad
+    corpus can still emit `index.html` + the passthrough `CNAME`) by refusing to deploy
+    unless those exist AND at least MIN_BOOK_PAGES book pages rendered. Builds from a clean
+    `_site` so a crash-orphaned `_site/.git` or stale pages can never ride along. Raises
+    PublishBusy if a publish is already running (non-blocking lock)."""
     lock_file = open(LOCK_PATH, "w")  # noqa: SIM115 - held for the duration below
     try:
         try:
@@ -113,13 +120,19 @@ def publish_site() -> dict:
             raise PublishBusy("a publish is already in progress") from e
 
         written = ensure_corpus()
+        shutil.rmtree(SITE_DIR, ignore_errors=True)  # clean tree every build
         _run([_bin("npm"), "run", "build"], BUILD_TIMEOUT)
         if not (SITE_DIR / "index.html").exists():
             raise PublishError("build produced no _site/index.html — refusing to deploy")
         if not (SITE_DIR / "CNAME").exists():
             raise PublishError("_site/CNAME missing — refusing to deploy (would drop the custom domain)")
+        book_pages = len(list((SITE_DIR / "books").glob("*/index.html")))
+        if book_pages < MIN_BOOK_PAGES:
+            raise PublishError(
+                f"build produced only {book_pages} book pages (< {MIN_BOOK_PAGES}) — "
+                "refusing to deploy a partial/empty site")
         _deploy_gh_pages("Deploy site")
-        log.info("published site to gh-pages: %s", written)
+        log.info("published site to gh-pages (%d book pages): %s", book_pages, written)
         return {"corpus": written, "deployed": True}
     finally:
         fcntl.flock(lock_file, fcntl.LOCK_UN)

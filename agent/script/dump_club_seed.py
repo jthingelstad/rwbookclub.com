@@ -25,7 +25,11 @@ def _lit(v) -> str:
         return "NULL"
     if isinstance(v, (int, float)):
         return repr(v)
-    return "'" + str(v).replace("'", "''") + "'"
+    # Normalize CR → LF so the dump is byte-stable: some bios carry CR bytes from
+    # OL/Wikipedia extracts, and git's `* text=auto` strips them on commit, which would
+    # otherwise make every regen reintroduce them (a spurious diff + CRLF warning).
+    text = str(v).replace("\r\n", "\n").replace("\r", "\n")
+    return "'" + text.replace("'", "''") + "'"
 
 
 def main() -> None:
@@ -36,6 +40,7 @@ def main() -> None:
         for table in clubdb.CLUB_TABLES:
             rows = conn.execute(f"SELECT * FROM {table}").fetchall()
             if not rows:
+                out.write(f"\n-- {table} (0 rows)\n")  # visible so an empty table isn't silently dropped
                 continue
             cols = rows[0].keys()
             collist = ", ".join(cols)

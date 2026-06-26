@@ -13,9 +13,9 @@ rwbookclub.com/
 └── agent/     # Python: Oliver, the Discord agent — consumes the corpus
 ```
 
-The three pieces share one repo and one root `.env`. The **corpus** is the shared
-knowledge layer — **Git is the source of truth** (per-entity text files); Airtable
-is a read-only cold backup. Both the website and Oliver read from the corpus.
+The three pieces share one repo and one root `.env`. The **`club_*` SQLite tables**
+(`agent/oliver.db`) are the source of truth; the **corpus** is a private, gitignored
+artifact generated from them that both the website build and Oliver read.
 
 ## Quick start
 
@@ -24,14 +24,17 @@ npm install                 # installs the website workspace
 npm run build               # build the site → website/_site
 npm run serve               # local dev server
 npm run covers              # backfill missing book covers from Open Library
+npm run deploy              # regen corpus + build + deploy to the gh-pages branch
 
 pip install -r corpus/requirements.txt -r agent/requirements.txt
+python -m agent.corpus_gen  # regenerate the (gitignored) corpus from the DB
 python -m agent.bot         # run Oliver (needs Discord + Anthropic keys in .env)
 ```
 
-Club data is edited directly as text files in `corpus/data/` and committed; a push
-to `main` rebuilds and deploys the site. All Python commands run from the repo root.
-Copy `.env.example` to `.env` and fill in the secrets first.
+Club data lives in the `club_*` SQLite tables; Oliver's write tools edit the DB and the
+corpus is regenerated from it (don't hand-edit `corpus/data/` — a regen clobbers it). The
+site is built + deployed locally to the `gh-pages` branch (`npm run deploy`), not by CI. All
+Python commands run from the repo root. Copy `.env.example` to `.env` and fill in the secrets first.
 
 ## What's on the site
 
@@ -50,4 +53,4 @@ The club's data lives in **SQLite** (`agent/oliver.db`, the `club_*` tables — 
 
 **Oliver** (`agent/`) is a separate long-running process — a discord.py bot that answers questions in the club's `#ask-oliver` channel via Claude, using the corpus as context. It runs on its own host, not in GitHub Actions. See [`agent/README.md`](agent/README.md).
 
-See [`CLAUDE.md`](CLAUDE.md) for the data schema and conventions, [`corpus/README.md`](corpus/README.md) for the data layer, and [`agent/ROADMAP.md`](agent/ROADMAP.md) for where Oliver is headed.
+See [`CLAUDE.md`](CLAUDE.md) for the data schema and conventions, [`corpus/README.md`](corpus/README.md) for the data layer, and [`agent/docs/ROADMAP.md`](agent/docs/ROADMAP.md) for where Oliver is headed.

@@ -10,14 +10,11 @@ sensitive context for Oliver). Airtable was the original home, now a cold backup
 
 ```
 corpus/
-├── airtable.py     # shared client (still used by the agent + cold-backup re-import)
-├── images.py       # ensure book covers exist; fetch missing ones from Open Library
-├── fetch.py        # COLD BACKUP: re-pull Airtable into grouped JSON (see below)
-├── migrate.py      # COLD BACKUP: explode grouped JSON into per-entity files
-├── normalize.py    # one-time: strip derived fields → normalized per-entity files
+├── images.py       # ensure book covers exist; fetch missing ones from Open Library (OL ids from the DB)
 ├── validate.py     # referential-integrity check (every slug reference resolves)
+├── paths.py        # filesystem paths + the slug helper
 ├── requirements.txt
-└── data/                       # canonical, committed
+└── data/                       # GENERATED from the club_* tables; gitignored (private, on-disk only)
     ├── books/<slug>.json       # 179
     ├── members/<slug>.json     # 12
     ├── meetings/<date>--<id>.json   # 184 (first-class)
@@ -53,23 +50,19 @@ variants in `website/src/assets/images/covers/` are left untouched. Member
 photos are no longer fetched automatically (Airtable held those URLs) — add a
 new member's photo file manually.
 
-## Cold-backup re-import from Airtable (rarely needed)
+## Regenerating
 
-Airtable is kept read-only as a safety net. To re-pull it (requires
-`AIRTABLE_PAT` in the root `.env`):
+The corpus is rebuilt from the DB; it is never hand-edited:
 
 ```bash
-python -m corpus.fetch      # Airtable → grouped JSON in corpus/data/raw/
-python -m corpus.migrate    # grouped JSON → per-entity files (+ meetings from Airtable)
-python -m corpus.normalize  # strip derived fields → normalized shape
-python -m corpus.validate   # check every reference resolves
-python -m corpus.images     # backfill any missing covers
+python -m agent.corpus_gen   # club_* tables → corpus/data/* (full regen + prune)
+python -m corpus.validate    # check every reference resolves
+python -m corpus.images      # backfill any missing covers
 ```
 
-Review the diff before committing — this overwrites the per-entity files with
-Airtable's current state.
+One-time re-seed of the DB from the original Airtable base (requires `AIRTABLE_PAT`):
+`python -m agent.script.import_airtable` (the table IDs live in that script).
 
 ## Schema
 
-The full Airtable schema (table IDs, fields, conventions) is documented in the
-repo-root `CLAUDE.md`; the table IDs live in `airtable.py`.
+The full club schema (tables, fields, conventions) is documented in the repo-root `CLAUDE.md`.

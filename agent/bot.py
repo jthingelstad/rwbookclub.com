@@ -18,6 +18,7 @@ import asyncio
 import logging
 import re
 import subprocess
+import sys
 from collections import defaultdict
 
 import discord
@@ -28,7 +29,17 @@ from agent import clubdb, commands, config, context as kb, db, oliver, publish
 from agent.mail import email_jmap, email_policy, mail_archive, outbound, tinylytics
 from agent.club import meeting_rules
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+# Split the streams so launchd's logs are useful: activity (DEBUG/INFO) → stdout (oliver.log),
+# problems (WARNING+) → stderr (oliver.err). So `oliver.err` is the problems-only signal and
+# `oliver.log` is the activity stream (the monitoring skills read accordingly).
+_log_fmt = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+_stdout_handler = logging.StreamHandler(sys.stdout)
+_stdout_handler.addFilter(lambda r: r.levelno < logging.WARNING)
+_stdout_handler.setFormatter(_log_fmt)
+_stderr_handler = logging.StreamHandler(sys.stderr)
+_stderr_handler.setLevel(logging.WARNING)
+_stderr_handler.setFormatter(_log_fmt)
+logging.basicConfig(level=logging.INFO, handlers=[_stdout_handler, _stderr_handler])
 log = logging.getLogger("oliver")
 
 # Oliver answers everything in #ask-oliver, but in the main channel he speaks only

@@ -63,7 +63,7 @@ Implementation context:
 - `agent/meeting_rules.py`
 - `agent/meeting_campaign.py`
 - `agent/email_jmap.py`
-- `agent/gitwrite.py`
+- `agent/publish.py`
 - `tests/`
 
 ## Outputs
