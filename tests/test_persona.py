@@ -37,6 +37,15 @@ def test_charter_leads_the_system_prompt():
     assert blocks[1]["cache_control"]["type"] == "ephemeral"
 
 
+def test_meeting_date_grounding_rule_present():
+    from agent import oliver
+
+    block0 = oliver._system_blocks()[0]["text"]
+    # Oliver must verify a meeting date against current_meeting_status, not echo a member's.
+    assert "current_meeting_status" in block0
+    assert "NEVER repeat a date" in block0
+
+
 def test_missing_charter_file_fails_loudly(monkeypatch, tmp_path):
     # Oliver must refuse to start voiceless rather than silently drop identity.
     monkeypatch.setattr(persona, "_DOCS", Path(tmp_path))

@@ -169,7 +169,7 @@ TOOLS = [
     },
     {
         "name": "current_meeting_status",
-        "description": "Check roll-call status for the next meeting using club rules: last Tuesday, quorum of 3 of 5 current members, and picker must attend. Read-only.",
+        "description": "The source of truth for the NEXT meeting: its canonical date, the book, and the picker, plus roll-call status under club rules (last Tuesday, quorum of 3 of 5 current members, picker must attend). Call this to verify any meeting date/time/book a member states before agreeing to it. Read-only.",
         "input_schema": {"type": "object", "properties": {}},
     },
     {
