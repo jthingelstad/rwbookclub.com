@@ -142,13 +142,30 @@ def _club_now() -> datetime:
         return datetime.now().astimezone()
 
 
-def _roll_call_message() -> str:
-    status = meeting_rules.meeting_status()
+def _roll_call_message(status: dict | None = None) -> str:
+    status = status or meeting_rules.meeting_status()
     meeting = status["meeting"]
     title = (meeting.get("book") or {}).get("title") or "the next meeting"
     return (
         f"📋 **Roll call:** {title} on {meeting['date']}\n"
         "Please tap your attendance below. We need 3 of 5 current members, and the picker has to be there."
+    )
+
+
+async def _roll_call_announcement(status: dict) -> str:
+    """Oliver's voiced roll-call announcement; degrades to the template on LLM failure."""
+    meeting = status["meeting"]
+    title = (meeting.get("book") or {}).get("title") or "the next meeting"
+    facts = {
+        "what": "you are opening an attendance roll call for the upcoming meeting",
+        "book": title,
+        "meeting date": meeting["date"],
+        "quorum rule": "we need 3 of 5 current members, and the picker has to attend",
+        "how to respond": "members tap the attendance buttons directly below your message",
+    }
+    return await asyncio.to_thread(
+        oliver.compose, "roll-call announcement for the club channel",
+        facts, fallback=_roll_call_message(status),
     )
 
 
@@ -730,13 +747,20 @@ async def roll_call_cmd(interaction: discord.Interaction,
         await _email_roll_call(interaction)
         return
 
-    text = _roll_call_message() if act == "start" else (
-        "🔔 Roll call reminder.\n\n"
-        + meeting_rules.format_status(meeting_rules.meeting_status(meeting["meetingKey"]))
-    )
-    await interaction.response.send_message(text, view=AttendanceView())
-    try:
+    if act == "start":
+        # Oliver voices the announcement — defer past the 3s ack window first.
+        status = meeting_rules.meeting_status(meeting["meetingKey"])
+        await interaction.response.defer()
+        text = await _roll_call_announcement(status)
+        sent = await interaction.followup.send(text, view=AttendanceView())
+    else:  # remind — fast operational status, stays templated
+        text = (
+            "🔔 Roll call reminder.\n\n"
+            + meeting_rules.format_status(meeting_rules.meeting_status(meeting["meetingKey"]))
+        )
+        await interaction.response.send_message(text, view=AttendanceView())
         sent = await interaction.original_response()
+    try:
         db.upsert_roll_call(
             meeting_key=meeting["meetingKey"],
             channel_id=str(sent.channel.id),
@@ -850,9 +874,12 @@ async def run_scheduler() -> int:
         log.warning("DISCORD_MAIN_CHANNEL_ID %s not found", config.MAIN_CHANNEL_ID)
     if main is not None:
         due = await asyncio.to_thread(scheduler.due_notifications, now, db.sent_keys())
-        for key, msg in due:
+        for note in due:
+            msg = await asyncio.to_thread(
+                oliver.compose, note.kind, note.facts, fallback=note.fallback
+            )
             await main.send(msg)
-            db.mark_sent(key)
+            db.mark_sent(note.key)
             posted += 1
 
         status = await asyncio.to_thread(meeting_rules.meeting_status)
@@ -870,7 +897,7 @@ async def run_scheduler() -> int:
                 and roll_key not in db.sent_keys()
                 and _should_start_scheduled_roll_call(status, roll_call)
             ):
-                sent = await main.send(_roll_call_message(), view=AttendanceView())
+                sent = await main.send(await _roll_call_announcement(status), view=AttendanceView())
                 db.upsert_roll_call(
                     meeting_key=meeting["meetingKey"],
                     channel_id=str(sent.channel.id),
@@ -904,10 +931,25 @@ async def run_scheduler() -> int:
             alert_key = f"attendance-alert-{meeting['meetingKey']}"
             status = await asyncio.to_thread(meeting_rules.meeting_status)
             if 0 <= days <= 3 and status["recommendation"] != "ready" and alert_key not in db.sent_keys():
-                await main.send(
-                    "⚠️ Attendance may need attention.\n\n"
-                    + meeting_rules.format_status(status)
+                counts = status["counts"]
+                meeting_book = (meeting.get("book") or {}).get("title") or "the next book"
+                alert = await asyncio.to_thread(
+                    oliver.compose,
+                    "attendance alert nudging the club to confirm before the meeting",
+                    {
+                        "concern": "attendance for the upcoming meeting may fall short of quorum",
+                        "book": meeting_book,
+                        "meeting date": meeting["date"],
+                        "days away": days,
+                        "responses so far": (
+                            f"{counts['yes']} yes, {counts['no']} no, "
+                            f"{counts['unsure']} unsure, {counts['pending']} pending"
+                        ),
+                        "yes responses needed": counts["quorumRequired"],
+                    },
+                    fallback="⚠️ Attendance may need attention.\n\n" + meeting_rules.format_status(status),
                 )
+                await main.send(alert)
                 db.mark_sent(alert_key)
                 db.add_activity(
                     "attendance_alert",

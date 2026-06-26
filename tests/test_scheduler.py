@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import pytest
-
 
 def _fake_book(title, slug, *, picker=None, date=None, placeholder=False):
     return {
@@ -25,8 +23,13 @@ class TestDueNotifications:
                             date="2026-06-30T00:00:00Z", placeholder=True)]
         monkeypatch.setattr(scheduler.cr, "books", lambda: books)
         due = scheduler.due_notifications(now, set())
-        keys = [k for k, _ in due]
+        keys = [n.key for n in due]
         assert "meeting-patterns-soon" in keys
+        # The facts carry the structured data Oliver voices; fallback is the template.
+        note = next(n for n in due if n.key == "meeting-patterns-soon")
+        assert note.facts["book"] == "Patterns in Nature"
+        assert note.facts["picker"] == "Tom"
+        assert "Patterns in Nature" in note.fallback
 
     def test_meeting_reminder_outside_window(self, monkeypatch):
         """A placeholder meeting 10 days out should NOT produce a reminder yet."""
@@ -36,7 +39,7 @@ class TestDueNotifications:
                             date="2026-06-30T00:00:00Z", placeholder=True)]
         monkeypatch.setattr(scheduler.cr, "books", lambda: books)
         due = scheduler.due_notifications(now, set())
-        assert not [k for k, _ in due if k.startswith("meeting-")]
+        assert not [n for n in due if n.key.startswith("meeting-")]
 
     def test_review_nudge_recent_read(self, monkeypatch):
         """A non-placeholder book read within 30 days should produce a review nudge."""
@@ -46,7 +49,7 @@ class TestDueNotifications:
                             date="2026-06-20T00:00:00Z", placeholder=False)]
         monkeypatch.setattr(scheduler.cr, "books", lambda: books)
         due = scheduler.due_notifications(now, set())
-        assert any(k == "review-nudge-just-read" for k, _ in due)
+        assert any(n.key == "review-nudge-just-read" for n in due)
 
     def test_milestone_at_multiple_of_25(self, monkeypatch):
         from agent import scheduler
@@ -55,7 +58,7 @@ class TestDueNotifications:
                  for i in range(25)]
         monkeypatch.setattr(scheduler.cr, "books", lambda: books)
         due = scheduler.due_notifications(now, set())
-        assert any(k == "milestone-books-25" for k, _ in due)
+        assert any(n.key == "milestone-books-25" for n in due)
 
     def test_no_milestone_at_non_multiple(self, monkeypatch):
         from agent import scheduler
@@ -64,21 +67,21 @@ class TestDueNotifications:
                  for i in range(26)]
         monkeypatch.setattr(scheduler.cr, "books", lambda: books)
         due = scheduler.due_notifications(now, set())
-        assert not [k for k, _ in due if k.startswith("milestone-")]
+        assert not [n for n in due if n.key.startswith("milestone-")]
 
     def test_anniversary_fires_in_april(self, monkeypatch):
         from agent import scheduler
         monkeypatch.setattr(scheduler.cr, "books", lambda: [])
         now_april = datetime(2026, 4, 10, 12, 0, tzinfo=timezone.utc)
         due = scheduler.due_notifications(now_april, set())
-        assert any(k == "anniversary-2026" for k, _ in due)
+        assert any(n.key == "anniversary-2026" for n in due)
 
     def test_no_anniversary_outside_april(self, monkeypatch):
         from agent import scheduler
         monkeypatch.setattr(scheduler.cr, "books", lambda: [])
         now_may = datetime(2026, 5, 1, 12, 0, tzinfo=timezone.utc)
         due = scheduler.due_notifications(now_may, set())
-        assert not any(k.startswith("anniversary-") for k, _ in due)
+        assert not any(n.key.startswith("anniversary-") for n in due)
 
     def test_dedup_via_already_sent(self, monkeypatch):
         """Keys in already_sent are filtered out."""
@@ -86,6 +89,6 @@ class TestDueNotifications:
         monkeypatch.setattr(scheduler.cr, "books", lambda: [])
         now = datetime(2026, 4, 10, 12, 0, tzinfo=timezone.utc)
         first = scheduler.due_notifications(now, set())
-        sent_keys = {k for k, _ in first}
+        sent_keys = {n.key for n in first}
         second = scheduler.due_notifications(now, sent_keys)
         assert second == []
