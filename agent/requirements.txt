@@ -1,7 +1,7 @@
-# Oliver reuses the corpus package (Airtable client + data paths), so it needs
-# the corpus deps too.
+# Oliver reuses the corpus package (shared data paths + deps), so it needs the
+# corpus deps too.
 -r ../corpus/requirements.txt
 
 discord.py>=2.7.1
-anthropic>=0.111.0
-markdown>=3.10
+anthropic>=0.112.0
+markdown>=3.10.2

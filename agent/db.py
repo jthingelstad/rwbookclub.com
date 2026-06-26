@@ -1,6 +1,6 @@
 """Oliver's private memory & state — SQLite (class B).
 
-Holds what doesn't belong in the public Git corpus: durable notes Oliver learns,
+Holds what doesn't belong in the club record or the generated corpus: durable notes Oliver learns,
 per-channel conversation history + rolling summaries, reminders, and usage logs.
 Gitignored, local to wherever Oliver runs; backup is a deployment concern.
 

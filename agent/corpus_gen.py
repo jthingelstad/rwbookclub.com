@@ -1,4 +1,4 @@
-"""Generate the Git corpus (``corpus/data/*``) from the authoritative ``club_*`` tables.
+"""Generate the corpus (``corpus/data/*``, gitignored) from the authoritative ``club_*`` tables.
 
 This is the inverse of ``corpus/normalize.py``: it reproduces the exact normalized
 on-disk shape the website (`website/src/_data/*.js`) and Oliver (`agent/corpus_read.py`)

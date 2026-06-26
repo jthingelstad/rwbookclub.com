@@ -1,5 +1,10 @@
 # Test-only dependencies. Install with:
 #   pip install -r tests/requirements.txt
 
-pytest>=9.1.0
-ruff>=0.15
+# Keep the floor at the version the venv/CI actually run, so a fresh install
+# matches what tests were validated against (keep dev in sync: pip install -U pytest).
+pytest>=9.1.1,<10
+# Keep ruff in lockstep with the pre-commit hook pin (.pre-commit-config.yaml
+# `rev:`) so a passing local hook can't fail CI lint on a newer ruff. Bump both
+# together.
+ruff==0.15.20

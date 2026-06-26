@@ -1,0 +1,12 @@
+# Project tooling config. Ruff keeps its own `ruff.toml`; this file currently
+# only pins pytest discovery so the test run is explicit rather than implicit.
+
+[tool.pytest.ini_options]
+# Only collect the unit suite under tests/. Note tests/eval.py is the LLM-driven
+# evaluation harness — it makes REAL Anthropic API calls and must never run as a
+# unit test. It is excluded here two ways: it lives behind `if __name__ ==
+# "__main__"`, and `python_files` below only matches `test_*.py`, not `eval.py`.
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

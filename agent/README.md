@@ -176,7 +176,7 @@ deploys, or hits the network.
 
 For behavioral quality, `python -m tests.eval --round N --note "..."` runs Oliver through
 generated plus golden Discord-style conversations and judges tool choice, grounding, tone,
-identity, memory use, and multi-turn context. It writes rounds to `oliver-test-log.md`.
+identity, memory use, and multi-turn context. It writes rounds to `agent/logs/oliver-eval-log.md` (gitignored).
 
 ## Discord setup
 

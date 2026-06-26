@@ -218,3 +218,56 @@ def summarize_club_state() -> dict:
         },
         "feedback": db.feedback_stats(),
     }
+
+
+# ── Roll-call email text ─────────────────────────────────────────────────────
+# Shared by both senders — the `/oliver roll-call` command path (commands.py) and the
+# request_roll_call_update tool (tools.py) — so subject/body wording can't drift between
+# the two copies. Pure text; lives here (not in club/meeting_emails, which imports oliver)
+# to stay free of the oliver→tools import cycle.
+
+def days_until_text(meeting_date: str) -> str:
+    """Human phrasing for how far off a meeting date is ("today", "in 3 days", …)."""
+    try:
+        days = (date.fromisoformat(meeting_date) - date.today()).days
+    except ValueError:
+        return ""
+    if days == 0:
+        return "today"
+    if days == 1:
+        return "tomorrow"
+    if days > 1:
+        return f"in {days} days"
+    return f"{abs(days)} days ago"
+
+
+def roll_call_subject(status: dict) -> str:
+    meeting = status["meeting"]
+    title = (meeting.get("book") or {}).get("title") or "the next meeting"
+    return f"Roll call: {title} on {meeting['date']}"
+
+
+def roll_call_email_body(member_name: str, status: dict, *, note: str | None = None) -> str:
+    """Plain-text roll-call email asking one member whether they can attend.
+
+    `note` appends an optional extra line (used by the tool path); the command path
+    passes none, producing byte-identical output to the old local copies.
+    """
+    meeting = status["meeting"]
+    title = (meeting.get("book") or {}).get("title") or "the next meeting"
+    timing = days_until_text(meeting["date"])
+    meeting_when = f"{meeting['date']}" + (f" ({timing})" if timing else "")
+    picker = ", ".join(meeting.get("pickerNames") or [])
+    picker_line = f"\n\n{picker} picked this one, and the picker needs to be able to attend." if picker else ""
+    extra = f"\n\n{note.strip()}" if note else ""
+    counts = status["counts"]
+    return (
+        f"Hi {member_name},\n\n"
+        f"Roll call for {title}: the meeting is {meeting_when}.\n\n"
+        "Can you make it? Reply with yes, no, or unsure and I'll update the roll-call tracker."
+        f"{picker_line}"
+        f"{extra}\n\n"
+        f"Current status: {counts['yes']} yes, {counts['no']} no, "
+        f"{counts['unsure']} unsure, {counts['pending']} pending. "
+        f"We need {counts['quorumRequired']} yes responses."
+    )

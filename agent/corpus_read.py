@@ -1,4 +1,4 @@
-"""Read/query layer over the normalized Git corpus for Oliver's tools.
+"""Read/query layer over the normalized corpus (generated from SQLite, gitignored) for Oliver's tools.
 
 The corpus is normalized: book files are intrinsic + picker (member slugs); meetings
 own date + book refs; reviews/awards reference by slug. This module mirrors the
@@ -30,8 +30,8 @@ def _load_json_dir(name: str) -> list[dict]:
 def parse_frontmatter(text: str) -> tuple[dict, str]:
     """Split a YAML-frontmatter Markdown doc into (frontmatter dict, body str).
 
-    Public because reviews.py and bot.py reach into this same parser — both
-    need to read review files the same way the loader does.
+    Public because the review-prefill path in commands.py reaches into this same
+    parser — it needs to read review files the same way the loader does.
     """
     if text.startswith("---"):
         _, fm, *rest = text.split("---", 2)
