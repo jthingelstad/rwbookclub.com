@@ -5,16 +5,10 @@ import json
 from agent import clubdb, corpus_write, db
 
 
-def _patch_git(monkeypatch):
-    monkeypatch.setattr(corpus_write.gitwrite, "sync", lambda: None)
-    monkeypatch.setattr(corpus_write.gitwrite, "commit_paths", lambda *_a, **_k: "sha")
-
-
 def test_write_book_persists_to_db_and_regenerates_corpus(monkeypatch, tmp_path):
     data = tmp_path / "data"
     (data / "books").mkdir(parents=True)
     monkeypatch.setattr(corpus_write, "DATA_DIR", data)
-    _patch_git(monkeypatch)
 
     out = corpus_write.write_book(
         {"title": "Test Driven Clubbing", "authors": ["Ada Lovelace"],
@@ -46,7 +40,6 @@ def test_schedule_meeting_persists_picker_and_placeholder(monkeypatch, tmp_path)
     for d in ("books", "meetings", "authors", "members"):
         (data / d).mkdir(parents=True)
     monkeypatch.setattr(corpus_write, "DATA_DIR", data)
-    _patch_git(monkeypatch)
 
     # Seed a member (id+row) and its corpus file (validate needs the member file).
     clubdb.ensure_schema()

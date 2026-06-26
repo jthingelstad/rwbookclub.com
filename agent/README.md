@@ -11,9 +11,10 @@ agent/
 ├── oliver.py       # the agent loop (tool use, caching, conversation history)
 ├── tools.py        # read/memory/email tool schemas + dispatch
 ├── email_jmap.py   # Fastmail JMAP send/receive, scoped to Inbox/Oliver + Sent/Oliver
-├── corpus_read.py  # query/join layer over the normalized Git corpus
-├── corpus_write.py # write books + meetings (add-book / schedule) via gitwrite
-├── reviews.py      # write reviews   (gitwrite.py = commit/push corpus changes)
+├── corpus_read.py  # query/join layer over the (private, generated) corpus
+├── corpus_write.py # write books + meetings (add-book / schedule) → DB + regen
+├── reviews.py      # write reviews → club_reviews (DB-backed) + regen
+├── publish.py      # local build + deploy of the site to the gh-pages branch
 ├── scheduler.py    # pure due_notifications (reminders / nudges / milestones)
 ├── meeting_rules.py # last-Tuesday roll call, quorum, picker-attendance checks
 ├── openlibrary.py  # metadata lookup for add-book
@@ -39,9 +40,9 @@ agent/
   `compare_books`, `review_summary`), email (`send_email`, `email_status`), proposal staging
   (`propose_action`, `open_proposals`), plus `remember`, `recall`, `set_reminder`, and explicit
   self-reported `record_availability` (SQLite).
-- **Reviews** (`/oliver review`): members log reviews via a Discord form that writes to the
-  Git corpus (`reviews.py` → `gitwrite.py`) — see below. Review identity comes from the
-  private Discord-user → member map, not mutable display names.
+- **Reviews** (`/oliver review`): members log reviews via a Discord form that writes
+  `club_reviews` (DB-backed) and regenerates the corpus review file — see below. Review
+  identity comes from the private Discord-user → member map, not mutable display names.
 - **Operations** (admin, `/oliver`): `add-book` (Open Library → book file + cover), `schedule`
   (book + date + picker → a meeting), `roll-call start/remind/close`, `link-member`,
   `identities`, `stats`, `tick`, `feedback`, and memory maintenance. Writes go through
@@ -109,7 +110,8 @@ Run from the **repo root** so the `agent` and `corpus` packages resolve.
 | `ANTHROPIC_API_KEY` | Claude API key |
 | `DISCORD_BOT_ID` | The bot's user ID (reference) |
 | `OLIVER_DB_PATH` | Optional — SQLite path (default `agent/oliver.db`) |
-| `OLIVER_GIT_PUSH` | Optional — set to `0` to commit corpus writes locally without pushing |
+| `OLIVER_CORPUS_DIR` | Optional — corpus dir override (tests redirect to a temp dir) |
+| `OLIVER_ENRICH_ON_WRITE` | Optional — set to `0` to skip inline enrichment on add-book (tests) |
 | `FASTMAIL_JMAP_TOKEN` | Optional — Fastmail API token for Oliver email |
 | `OLIVER_EMAIL_ADDRESS` | Optional — defaults to `oliver@rwbookclub.com` |
 | `OLIVER_EMAIL_INBOX_PARENT` / `OLIVER_EMAIL_INBOX_FOLDER` | Optional — defaults to `Inbox` / `Oliver`; only this folder is polled |
@@ -147,11 +149,11 @@ Admins can inspect and repair private state in Discord:
 
 Members log book reviews with the `/oliver review` command: pick the book (autocomplete), fill the
 form (rating 1–5 or DNF, the review, recommend?, discussion quality, favorite quote), and
-submit. Oliver writes `corpus/data/reviews/<book>--<member>.md`, commits, and pushes to
-`main` — live after the deploy. Only linked club members can submit, and submitting the
-form is the confirmation. `reviews.py` → `gitwrite.py` is the single write path (any future
-front-end reuses it). Writes are rolled back locally if corpus validation fails before commit.
-Set `OLIVER_GIT_PUSH=0` to commit locally without pushing (dev).
+submit. Oliver upserts the review into `club_reviews` (the authoritative DB) and regenerates the
+corpus review file (`corpus/data/reviews/<book>--<member>.md`); the command then schedules a
+background publish that rebuilds + deploys the site to `gh-pages`. Only linked club members can
+submit, and submitting the form is the confirmation. `reviews.py` → `clubdb.upsert_review` is the
+single write path (any future front-end reuses it).
 
 ## Tests
 
@@ -163,10 +165,11 @@ pytest tests/                             # 112 tests, ~0.6s
 Pure helpers (`_is_addressed`, `_strip_address`, rating parsers, `parse_frontmatter`,
 `scheduler.due_notifications`, `meeting_rules`, richer corpus relationship tools,
 `find_books` scoring, `books()` cache, dispatch error paths, db round-trips) all locked in.
-Tests use a scratch SQLite DB (`tests/conftest.py`
-sets `OLIVER_DB_PATH` before any agent module imports) and never touch the live state.
-`OLIVER_GIT_PUSH=0` + `OLIVER_GIT_DRYRUN=1` are set by the conftest as belt-and-suspenders
-against any accidental git activity.
+Tests use a scratch SQLite DB and a temp corpus dir (`tests/conftest.py` sets `OLIVER_DB_PATH`
+and `OLIVER_CORPUS_DIR` before any agent module imports), seed `club_*` from the public-safe
+`tests/fixtures/club_seed.sql`, and never touch the live state. An autouse fixture stubs
+`publish.publish_site`, and `OLIVER_ENRICH_ON_WRITE=0` keeps add-book offline — so no test builds,
+deploys, or hits the network.
 
 For behavioral quality, `python -m tests.eval --round N --note "..."` runs Oliver through
 generated plus golden Discord-style conversations and judges tool choice, grounding, tone,

@@ -1,8 +1,7 @@
-"""Filesystem paths + the slug helper — everything that's not Airtable-specific.
+"""Filesystem paths + the slug helper.
 
 Imported by everything in `corpus/` and `agent/` that needs to resolve a file
-in the corpus or normalize a name to a slug. The Airtable client + table ids
-live in `corpus.airtable`; that module imports paths from here.
+in the corpus or normalize a name to a slug.
 """
 
 from __future__ import annotations
@@ -19,7 +18,6 @@ REPO_ROOT = CORPUS_DIR.parent
 # OLIVER_CORPUS_DIR lets tests redirect it to a temp dir so a test run never touches
 # the developer's real corpus/data.
 DATA_DIR = Path(os.environ.get("OLIVER_CORPUS_DIR") or CORPUS_DIR / "data")
-RAW_DATA_DIR = DATA_DIR / "raw"
 # Responsive cover/photo variants are website presentation assets, so the
 # image step writes them straight into the website tree.
 COVERS_DIR = REPO_ROOT / "website" / "src" / "assets" / "images" / "covers"
