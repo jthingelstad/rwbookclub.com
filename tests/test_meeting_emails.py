@@ -12,10 +12,26 @@ MEETING = {
 def test_topic_email_prompt_includes_facts():
     prompt = meeting_emails.topic_email_prompt(MEETING)
     assert "A World Appears" in prompt
-    assert "2026-06-30" in prompt
+    assert "June 30" in prompt          # friendly date, not the ISO form
+    assert "2026-06-30" not in prompt
     assert "Jamie" in prompt
     assert "two days before" in prompt
     assert "reading history" in prompt
+
+
+def test_friendly_date():
+    assert meeting_emails._friendly_date("2026-06-30") == "Tuesday, June 30"
+    assert meeting_emails._friendly_date("2026-06-30T00:00:00Z") == "Tuesday, June 30"
+    assert meeting_emails._friendly_date("not-a-date") == "not-a-date"
+
+
+def test_extract_email_handles_unclosed_tag():
+    # A truncated generation may open <email> but never close it.
+    raw = "preamble\n\n<email>Hello all,\n\n## On the Book\n\n1. A question"
+    out = meeting_emails._extract_email(raw)
+    assert out.startswith("Hello all,")
+    assert "<email>" not in out
+    assert "preamble" not in out
 
 
 def test_extract_email_strips_preamble_and_trailing_notes():
@@ -36,7 +52,7 @@ def test_topic_email_builds_subject_and_body(monkeypatch):
     out = meeting_emails.topic_email(MEETING)
     assert out["body"] == "TOPIC BODY"  # signature is added later by outbound.send
     assert "A World Appears" in out["subject"]
-    assert "2026-06-30" in out["subject"]
+    assert "June 30" in out["subject"]  # friendly date, not ISO
 
 
 def test_week_reminder_separates_yes_no_and_pending(monkeypatch):

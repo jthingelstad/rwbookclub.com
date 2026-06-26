@@ -11,6 +11,7 @@ import random
 from datetime import date
 
 from agent import corpus_read as cr
+from agent.club import meeting_rules
 
 
 def _fun_facts(stats: dict, books: list[dict], today: date) -> list[str]:
@@ -57,7 +58,7 @@ def email_signature(*, today: date | None = None, rng: random.Random | None = No
     upcoming = cr.upcoming_meetings()
     if upcoming:
         nxt = upcoming[0]
-        when = (nxt.get("meetingDate") or "")[:10]
+        when = meeting_rules.friendly_date(nxt.get("meetingDate"))
         picker = f", picked by {nxt['pickedBy']}" if nxt.get("pickedBy") else ""
         tail = f" on {when}" if when else ""
         lines.append(f"📚 Next up: {nxt['title']}{picker}{tail}.")

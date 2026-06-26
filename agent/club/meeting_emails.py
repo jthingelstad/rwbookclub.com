@@ -17,30 +17,44 @@ import re
 
 from agent import oliver
 from agent.club import meeting_rules
+from agent.club.meeting_rules import friendly_date as _friendly_date
 from agent.mail import outbound
 
 _EMAIL_TAG = re.compile(r"<email>(.*?)</email>", re.S | re.I)
 
 
 def _extract_email(text: str) -> str:
-    """Pull the email out of <email>…</email>, dropping any tool-loop preamble/notes."""
+    """Pull the email out of <email>…</email>, tolerating a missing closing tag, and drop
+    any tool-loop preamble/notes around it."""
     match = _EMAIL_TAG.search(text)
-    return (match.group(1) if match else text).strip()
+    if match:
+        return match.group(1).strip()
+    # Unclosed/partial tags (e.g. truncated generation): take everything after an opening
+    # <email>, then strip any stray tag so it never leaks into the sent email.
+    opened = re.search(r"<email>", text, re.I)
+    if opened:
+        text = text[opened.end():]
+    return re.sub(r"</?email\s*>", "", text, flags=re.I).strip()
 
 
 def topic_email_prompt(meeting: dict) -> str:
     book = meeting.get("book") or {}
     title = book.get("title") or "our next book"
     authors = ", ".join(book.get("authors") or []) or "the author"
-    when = meeting.get("date") or "the meeting date"
+    when = _friendly_date(meeting.get("date")) or "the meeting date"
     pickers = ", ".join(meeting.get("pickerNames") or [])
     picker_line = f" {pickers} picked it." if pickers else ""
     return (
         "Write the club's pre-meeting email that goes out two days before we meet, to the whole "
         "mailing list. Research it properly with your tools first, then write a rich, surprising "
         "email a long-time member would be glad to get.\n\n"
-        f"Open with a short greeting and a one-line reminder that we meet on {when} to discuss "
-        f"{title} by {authors}.{picker_line}\n\n"
+        f"Open with a short greeting and a one-line reminder that we meet {when} (it's two days "
+        f"out — phrase the date the way a person would, like 'this Tuesday', not a numeric date) "
+        f"to discuss {title} by {authors}.{picker_line}\n\n"
+        "Then a second paragraph (2-4 sentences) that sets the book up and bridges into what "
+        "follows — why it's worth the evening, the tension or question at its heart, and a nod "
+        "that what's below is material to chew on before Tuesday. Make it inviting, not a "
+        "summary.\n\n"
         "Then three sections, each under its own '## ' header, in this exact order:\n\n"
         "## On the Book\n"
         "5-7 discussion questions about THIS book on its own terms — its arguments, methods, the "
@@ -60,9 +74,10 @@ def topic_email_prompt(meeting: dict) -> str:
         "technically-minded club hasn't heard. Make it the part people forward to a friend.\n\n"
         "Format: this renders as an HTML email, so use markdown — a '## ' header for each section, "
         "numbered lists for the questions, *italics* for book titles, and **bold** sparingly on a "
-        "key phrase or two per section so it's easy to skim. Write the ENTIRE email between <email> "
-        "and </email> tags and put NOTHING outside them — no preamble, no notes, no sign-off (a "
-        "signature is added automatically)."
+        "key phrase or two per section so it's easy to skim. Do NOT use '---' or horizontal-rule "
+        "lines anywhere — the section headers carry the structure. Write the ENTIRE email between "
+        "<email> and </email> tags and put NOTHING outside them — no preamble, no notes, no "
+        "sign-off (a signature is added automatically)."
     )
 
 
@@ -70,9 +85,9 @@ def topic_email(meeting: dict | None = None) -> dict:
     """The 2-day discussion-topics email. Subject + body (body includes the signature)."""
     meeting = meeting or meeting_rules.next_meeting()
     title = (meeting.get("book") or {}).get("title") or "our next book"
-    when = meeting.get("date") or ""
+    when = _friendly_date(meeting.get("date"))
     body = _extract_email(oliver.generate(topic_email_prompt(meeting)))  # signature added by outbound.send
-    subject = f"Discussion topics for {title}" + (f" — meeting {when}" if when else "")
+    subject = f"Discussion topics for {title}" + (f" — {when}" if when else "")
     return {"subject": subject, "body": body}
 
 
@@ -85,12 +100,12 @@ def week_reminder(meeting: dict | None = None, status: dict | None = None) -> di
     meeting = meeting or meeting_rules.next_meeting()
     status = status or meeting_rules.meeting_status(meeting["meetingKey"])
     title = (meeting.get("book") or {}).get("title") or "our next book"
-    when = meeting.get("date") or ""
+    when = _friendly_date(meeting.get("date"))
     coming = _names(status, "yes")
     not_coming = _names(status, "no")
     waiting_on = _names(status, "pending", "unsure")
     fallback = (
-        f"Hi all — a reminder that the R/W Book Club meets on {when} to discuss {title}.\n\n"
+        f"Hi all — a reminder that the R/W Book Club meets {when} to discuss {title}.\n\n"
         + (f"Coming: {', '.join(coming)}.\n" if coming else "")
         + (f"Can't make it: {', '.join(not_coming)}.\n" if not_coming else "")
         + (f"\nStill need to hear from {', '.join(waiting_on)} — please reply.\n"
@@ -101,7 +116,7 @@ def week_reminder(meeting: dict | None = None, status: dict | None = None) -> di
         {
             "occasion": "the monthly meeting is about a week away",
             "book": title,
-            "meeting date": when,
+            "meeting date": f"{when} (about a week out — say it naturally, like 'next Tuesday')",
             "confirmed coming": ", ".join(coming) or "no one yet",
             "not able to make it": ", ".join(not_coming) or None,
             "still waiting to hear from": ", ".join(waiting_on) or "everyone has responded",
@@ -111,7 +126,7 @@ def week_reminder(meeting: dict | None = None, status: dict | None = None) -> di
         fallback=fallback,
         medium="email",
     )  # signature added by outbound.send
-    subject = f"Reminder: {title} on {when}" if when else f"Reminder: {title}"
+    subject = f"Reminder: {title} — {when}" if when else f"Reminder: {title}"
     return {"subject": subject, "body": body}
 
 

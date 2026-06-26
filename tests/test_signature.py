@@ -24,7 +24,7 @@ def test_signature_includes_oliver_next_book_and_a_fact(monkeypatch):
     assert lines[0] == "— Oliver"
     assert "Next up: Stiff" in lines[1]
     assert "picked by Tom" in lines[1]
-    assert "2026-07-28" in lines[1]
+    assert "July 28" in lines[1]  # friendly date, not the ISO form
     assert len(lines) == 3  # Oliver + next-up + one fun fact
 
 

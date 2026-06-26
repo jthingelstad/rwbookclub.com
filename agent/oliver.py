@@ -281,7 +281,7 @@ def answer_mailing_list_email(msg, *, channel_id: str, speaker: str | None = Non
 
 def answer(question: str, channel_id: str = "default", speaker: str | None = None,
            speaker_user_id: str | None = None, source_message_id: str | None = None,
-           *, use_history: bool = True, persist: bool = True) -> str:
+           *, use_history: bool = True, persist: bool = True, max_tokens: int = MAX_TOKENS) -> str:
     """Answer one message. Synchronous — call via asyncio.to_thread from the bot.
 
     use_history/persist default True for the conversational path. Set both False for a
@@ -302,7 +302,7 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
         rounds += 1
         resp = client.messages.create(
             model=MODEL,
-            max_tokens=MAX_TOKENS,
+            max_tokens=max_tokens,
             system=_system_blocks(),
             tools=TOOLS,
             thinking={"type": "adaptive"},
@@ -326,7 +326,7 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
                     "visible text. Use what you've already gathered."})
                 try:
                     resp = client.messages.create(
-                        model=MODEL, max_tokens=MAX_TOKENS,
+                        model=MODEL, max_tokens=max_tokens,
                         system=_system_blocks(), tools=TOOLS,
                         thinking={"type": "adaptive"},
                         output_config={"effort": "medium"},
@@ -376,7 +376,10 @@ def generate(prompt: str) -> str:
     no channel history and persists nothing: each call is fresh from the corpus and never
     touches a member-facing conversation. Synchronous; call via asyncio.to_thread.
     """
-    return answer(prompt, channel_id="scheduler:generate", use_history=False, persist=False)
+    # Higher token budget than the chat path: these (e.g. the topic email) are long-form,
+    # and adaptive thinking shares the budget, so 2048 can truncate mid-draft.
+    return answer(prompt, channel_id="scheduler:generate", use_history=False, persist=False,
+                  max_tokens=4096)
 
 
 def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -> str:
@@ -395,9 +398,10 @@ def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -
     facts_lines = "\n".join(f"- {k}: {v}" for k, v in facts.items() if v not in (None, ""))
     if medium == "email":
         envelope = (
-            "Write it as a short email in your voice: open with a brief greeting by name if a "
-            "name is given, and make the ask clearly. Do not sign off — a signature is added "
-            "automatically. No subject line and no markdown headings."
+            "Write it as a short email in your voice: open with a brief greeting, and make the "
+            "ask clearly. Use *italics* for book titles and **bold** sparingly on the key facts "
+            "(the date, who's confirmed). Do not sign off — a signature is added automatically. "
+            "No subject line and no markdown headings."
         )
     else:
         envelope = (

@@ -35,6 +35,26 @@ def new_token() -> str:
     return secrets.token_urlsafe(18)
 
 
+# Email CSS. Delivered as a <style> block (well-supported in Apple Mail, Gmail, and
+# most modern clients); a .oliver-email wrapper scopes it so it can't bleed into quoted
+# replies. Tuned for a readable long-form discussion email: clear section headers,
+# breathing room between numbered points.
+_EMAIL_CSS = (
+    ".oliver-email{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,"
+    "Arial,sans-serif;font-size:16px;line-height:1.55;color:#2a2a2a;max-width:640px;"
+    "margin:0 auto;padding:8px 2px;}"
+    ".oliver-email p{margin:0 0 16px;}"
+    ".oliver-email h2{font-size:20px;font-weight:600;color:#111;margin:34px 0 14px;"
+    "padding-bottom:6px;border-bottom:2px solid #e4e4e4;}"
+    ".oliver-email h3{font-size:17px;font-weight:600;color:#111;margin:28px 0 10px;}"
+    ".oliver-email ol,.oliver-email ul{padding-left:24px;margin:0 0 16px;}"
+    ".oliver-email li{margin-bottom:12px;padding-left:4px;}"
+    ".oliver-email strong{font-weight:600;color:#111;}"
+    ".oliver-email hr{border:0;border-top:1px solid #ececec;margin:24px 0;}"
+    ".oliver-email a{color:#2563eb;}"
+)
+
+
 def text_to_html(text: str, *, tracking_url_value: str | None = None) -> str:
     body = _render_markdown(text) or "<p></p>"
     footer = ""
@@ -50,10 +70,11 @@ def text_to_html(text: str, *, tracking_url_value: str | None = None) -> str:
             "alt=\"\" style=\"display:none;width:1px;height:1px;border:0;\" />"
         )
     return (
-        "<!doctype html><html><body "
-        "style=\"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"
-        "font-size:16px;line-height:1.45;color:#222;\">"
-        f"{body}{footer}{pixel}</body></html>"
+        "<!doctype html><html><head><meta charset=\"utf-8\">"
+        "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+        f"<style>{_EMAIL_CSS}</style></head>"
+        "<body><div class=\"oliver-email\">"
+        f"{body}{footer}{pixel}</div></body></html>"
     )
 
 

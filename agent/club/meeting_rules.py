@@ -24,6 +24,15 @@ def last_tuesday(year: int, month: int) -> date:
     return last - timedelta(days=(last.weekday() - MEETING_WEEKDAY) % 7)
 
 
+def friendly_date(iso: str | None) -> str:
+    """ISO date → 'Tuesday, June 30' (how a person writes it), or '' if unparseable."""
+    try:
+        d = date.fromisoformat((iso or "")[:10])
+    except ValueError:
+        return iso or ""
+    return f"{d.strftime('%A, %B')} {d.day}"
+
+
 def next_last_tuesday(today: date | None = None) -> date:
     today = today or date.today()
     candidate = last_tuesday(today.year, today.month)
