@@ -23,6 +23,7 @@ import sqlite3
 from typing import Iterator
 
 from agent import db
+from corpus.paths import slugify
 
 # ── Schema ───────────────────────────────────────────────────────────────────
 # Prefixed ``club_`` so they never collide with the operational ``member_*`` /
@@ -248,6 +249,90 @@ def all_awards(conn: sqlite3.Connection) -> list[dict]:
         a["book_slugs"] = books_by_award.get(a["id"], [])
         a["voter_slugs"] = voters_by_award.get(a["id"], [])
     return awards
+
+
+# ── Writes (Oliver manages the DB; corpus is regenerated after) ──────────────
+def _next_id(conn: sqlite3.Connection, table: str) -> int:
+    return conn.execute(f"SELECT COALESCE(MAX(id), 0) + 1 AS n FROM {table}").fetchone()["n"]
+
+
+def _author_id(conn: sqlite3.Connection, name: str) -> int:
+    """Find an author by exact name, or mint a new club_authors row."""
+    row = conn.execute("SELECT id FROM club_authors WHERE name = ?", (name,)).fetchone()
+    if row:
+        return row["id"]
+    aid = _next_id(conn, "club_authors")
+    conn.execute(
+        "INSERT INTO club_authors(id, slug, name, bio) VALUES (?, ?, ?, NULL)",
+        (aid, slugify(name), name),
+    )
+    return aid
+
+
+def upsert_book(conn: sqlite3.Connection, meta: dict) -> dict:
+    """Insert or update a book (by slug) under FKs. Rebuilds its author links.
+    Returns {id, slug, existed, author_ids}. FK integrity is enforced by the DB."""
+    title = (meta.get("title") or "").strip()
+    if not title:
+        raise ValueError("a book needs a title")
+    slug = slugify(title)
+    existing = conn.execute("SELECT id FROM club_books WHERE slug = ?", (slug,)).fetchone()
+    book_id = existing["id"] if existing else (meta.get("bookId") or _next_id(conn, "club_books"))
+    subjects = meta.get("subjects")
+    subjects_json = json.dumps(subjects, ensure_ascii=False) if subjects is not None else None
+    conn.execute(
+        "INSERT INTO club_books(id, slug, title, subtitle, topic, fiction, publication_year, "
+        "page_count, isbn13, ol_key, synopsis, subjects_json) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?) "
+        "ON CONFLICT(id) DO UPDATE SET slug=excluded.slug, title=excluded.title, "
+        "subtitle=excluded.subtitle, topic=excluded.topic, fiction=excluded.fiction, "
+        "publication_year=excluded.publication_year, page_count=excluded.page_count, "
+        "isbn13=excluded.isbn13, ol_key=excluded.ol_key, synopsis=excluded.synopsis, "
+        "subjects_json=excluded.subjects_json",
+        (book_id, slug, title, meta.get("subtitle"), meta.get("topic"),
+         1 if meta.get("fiction") else 0, meta.get("publicationYear"), meta.get("pageCount"),
+         meta.get("isbn13"), meta.get("olKey"), meta.get("synopsis"), subjects_json),
+    )
+    author_ids = [_author_id(conn, a) for a in (meta.get("authors") or []) if a]
+    conn.execute("DELETE FROM club_book_authors WHERE book_id = ?", (book_id,))
+    conn.executemany(
+        "INSERT INTO club_book_authors(book_id, author_id, ordinal) VALUES (?, ?, ?)",
+        [(book_id, aid, i) for i, aid in enumerate(author_ids)],
+    )
+    return {"id": book_id, "slug": slug, "existed": bool(existing), "author_ids": author_ids}
+
+
+def set_book_picker(conn: sqlite3.Connection, book_id: int, member_id: int) -> None:
+    conn.execute("DELETE FROM club_book_pickers WHERE book_id = ?", (book_id,))
+    conn.execute(
+        "INSERT INTO club_book_pickers(book_id, member_id, ordinal) VALUES (?, ?, 0)",
+        (book_id, member_id),
+    )
+
+
+def create_meeting(conn: sqlite3.Connection, *, date_iso: str, book_id: int,
+                   types: list[str] | None = None, placeholder: bool = True) -> int:
+    mid = _next_id(conn, "club_meetings")
+    conn.execute(
+        "INSERT INTO club_meetings(id, date, type_json, location, notes, placeholder) "
+        "VALUES (?, ?, ?, NULL, NULL, ?)",
+        (mid, date_iso, json.dumps(types or ["Book"]), 1 if placeholder else 0),
+    )
+    conn.execute(
+        "INSERT INTO club_meeting_books(meeting_id, book_id, ordinal) VALUES (?, ?, 0)",
+        (mid, book_id),
+    )
+    return mid
+
+
+def book_id_for_slug(conn: sqlite3.Connection, slug: str) -> int | None:
+    row = conn.execute("SELECT id FROM club_books WHERE slug = ?", (slug,)).fetchone()
+    return row["id"] if row else None
+
+
+def member_id_for_slug(conn: sqlite3.Connection, slug: str) -> int | None:
+    row = conn.execute("SELECT id FROM club_members WHERE slug = ?", (slug,)).fetchone()
+    return row["id"] if row else None
 
 
 if __name__ == "__main__":

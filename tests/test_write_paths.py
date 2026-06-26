@@ -59,7 +59,9 @@ def test_add_book_creates_missing_author_records(monkeypatch, tmp_path):
 
     assert (data_dir / "books" / "new-book.json").exists()
     author = json.loads((data_dir / "authors" / "new-author.json").read_text())
-    assert author == {"name": "New Author", "bio": None}
+    # Normalized shape: bio is omitted (not null) until one is set — matches every
+    # existing bio-less author file the generator reproduces.
+    assert author == {"name": "New Author"}
 
 
 def test_schedule_sync_failure_does_not_touch_book(monkeypatch, tmp_path):

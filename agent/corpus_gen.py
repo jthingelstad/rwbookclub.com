@@ -36,6 +36,7 @@ ENTITY_DIRS = ["books", "meetings", "members", "authors", "awards", "reviews"]
 
 
 def _write_json(path: Path, obj: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n")
 
 
@@ -154,6 +155,29 @@ def generate(out_root: Path = DEFAULT_OUT) -> dict:
 
     written["_pruned"] = sum(_prune(out_root / d, keep[d]) for d in ENTITY_DIRS)
     return written
+
+
+# ── Targeted single-entity writers (used by the DB-backed write path) ─────────
+def write_book_file(conn, book_id: int, out_root: Path = DEFAULT_OUT) -> Path:
+    b = next(b for b in clubdb.all_books(conn) if b["id"] == book_id)
+    path = Path(out_root) / "books" / f"{b['slug']}.json"
+    _write_json(path, _book_doc(b))
+    return path
+
+
+def write_author_file(conn, author_id: int, out_root: Path = DEFAULT_OUT) -> Path:
+    a = next(a for a in clubdb.all_authors(conn) if a["id"] == author_id)
+    path = Path(out_root) / "authors" / f"{a['slug']}.json"
+    _write_json(path, _author_doc(a))
+    return path
+
+
+def write_meeting_file(conn, meeting_id: int, out_root: Path = DEFAULT_OUT) -> Path:
+    m = next(m for m in clubdb.all_meetings(conn) if m["id"] == meeting_id)
+    stem = f"{(m['date'] or 'undated')[:10]}--{m['id']}"
+    path = Path(out_root) / "meetings" / f"{stem}.json"
+    _write_json(path, _meeting_doc(m))
+    return path
 
 
 def main() -> None:
