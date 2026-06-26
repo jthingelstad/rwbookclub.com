@@ -6,14 +6,14 @@ Project-specific context for Claude Code. The site is live at rwbookclub.com (de
 
 rwbookclub.com is the home of the R/W Book Club, which has been meeting since April 2003. The club reads about 8 books per year, mostly non-fiction (about 88%), and rotates picking and hosting among members.
 
-**Git is the canonical source of truth** for club data — it lives as per-entity text files in `corpus/data/` (see the corpus section). Airtable was the original home and is now a read-only cold backup. Edit the corpus files directly; do not reintroduce Airtable as a live dependency.
+**SQLite is the source of truth** for club data — the `club_*` tables in `agent/oliver.db` hold the authoritative club record (books/meetings/members/authors/reviews/awards) under integer primary keys and real foreign keys. The Git corpus (`corpus/data/`) **and** the website are **generated** from it (`python -m agent.corpus_gen`). **Do not hand-edit `corpus/data/` — a regen will clobber it.** Change the data through Oliver's write tools / the DB. Airtable was the original home and was retired after a one-time import (`python -m agent.script.import_airtable`). See `MIGRATION-PLAN.md` and `MIGRATION-STATUS.md`. (This inversion happened 2026-06-26; sections below that still say "Git is canonical / edit corpus directly" predate it and are kept for the Airtable schema reference only.)
 
 ## Monorepo layout
 
 This repo is a flat, polyglot monorepo with three top-level concerns:
 
 - **`website/`** — the Eleventy 3 static site (Node). Consumes the corpus.
-- **`corpus/`** — the canonical knowledge layer (Python). Per-entity text files in `corpus/data/` (`books/`, `members/`, `meetings/`, `authors/`, `reviews/`, `awards/`) are the source of truth, **normalized**: each fact stored once, relationships by **slug** (meetings own date + book refs; books carry `picker`), and derived fields (meeting date, picks, counts) computed at build/read time. Records are JSON, reviews Markdown+frontmatter. `corpus/validate.py` checks reference integrity; `corpus/images.py` backfills covers from Open Library; `fetch.py` + `migrate.py` + `normalize.py` are the cold-backup re-import path. The agent will eventually own this.
+- **`corpus/`** — the **generated** knowledge layer (Python). Per-entity text files in `corpus/data/` (`books/`, `members/`, `meetings/`, `authors/`, `reviews/`, `awards/`) are produced from the `club_*` SQLite tables by `agent/corpus_gen.py`, reproducing the normalized on-disk shape (`corpus/normalize.py`): each fact once, relationships by **slug** (slug = filename stem, an output detail — never identity in the DB), derived fields computed at build/read time. Records are JSON, reviews Markdown+frontmatter. `corpus/validate.py` checks reference integrity. `corpus/images.py` backfills covers from Open Library. `fetch.py`/`migrate.py`/`normalize.py` are the legacy Airtable→corpus path (superseded by `agent.script.import_airtable` → DB → `agent.corpus_gen`). **Oliver now owns this**: writes land in the DB, then the corpus is regenerated and committed.
 - **`agent/`** — Oliver, the club's Discord bot (Python). Consumes the corpus; answers questions in `#ask-oliver` via Claude.
 
 A root `package.json` (npm workspace over `website`) provides `npm run build`/`serve`/`covers`. All Python runs from the repo root (`python -m corpus.images`, `python -m agent.bot`). One shared root `.env`.
@@ -30,9 +30,9 @@ A root `package.json` (npm workspace over `website`) provides `npm run build`/`s
 
 Loops and `{% set %}` tags emit a newline per iteration by default. When a loop's only job is to build up a variable (not render output), use `{%-` / `-%}` on every tag in the block, otherwise a 179-iteration loop dumps ~360 blank lines into the output. The `futureBooks` setup block in `website/src/llms*.txt.njk` is the canonical example.
 
-## Data Source (Airtable — cold backup)
+## Data Source (Airtable — retired; historical reference)
 
-Git is canonical; the details below are for the rare cold-backup re-import (`python -m corpus.fetch && python -m corpus.migrate`) and for understanding the shape the per-entity files mirror.
+SQLite (`club_*`) is now authoritative (see top). Airtable was the original store and the seed for the one-time `agent.script.import_airtable`; it is **no longer a live dependency**. The schema below is kept to explain the field shapes the import read and the IDs (`Book ID`/`Meeting ID`/`Member ID`/`Author ID`/`Review ID`) that became the integer primary keys.
 
 - **Airtable base ID:** `appmiF5yLSzx0klJc`
 - **Credentials:** the shared root `.env` holds `AIRTABLE_BASE_ID` and `AIRTABLE_PAT` (corpus), the `DISCORD_*` identifiers + `DISCORD_BOT_TOKEN` and `ANTHROPIC_API_KEY` (agent). See `.env.example` for the full list. Never commit `.env`. Never hard-code the PAT, bot token, or API key.
@@ -277,8 +277,8 @@ requests.patch(f"{base_url}/{books_table}", json=body, headers=auth)
 
 ## Things not to do
 
-- Don't reintroduce Airtable (or any other store) as a live data dependency. **Git is canonical** — edit the per-entity files in `corpus/data/`. Airtable is a read-only cold backup.
-- Don't change the corpus file schema/shape (fields, file layout) without asking first. The schema has been deliberately curated.
+- Don't reintroduce Airtable as a live dependency, and **don't hand-edit `corpus/data/`** — **SQLite (`club_*`) is authoritative** and the corpus is generated (regen clobbers hand edits). Change data via Oliver's write tools / the DB, then `python -m agent.corpus_gen`.
+- Don't change the corpus file schema/shape (fields, file layout) without asking first — it's the contract both the website and `corpus_read.py` consume, and the generator (`agent/corpus_gen.py`) must keep reproducing it.
 - Don't re-categorize books across the Topic field without per-book confirmation from Jamie.
 - Don't fetch metadata from Google Books. The unauthenticated daily quota is exhausted on this network. Use Open Library.
 - Don't commit `.env` or hard-code the PAT, bot token, or API key.
