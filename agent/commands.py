@@ -20,7 +20,8 @@ from discord.ext import tasks
 from agent import (clubdb, config, context as kb, corpus_read, corpus_write, db, oliver,
                    publish, scheduler)
 from agent.mail import email_jmap, outbound
-from agent.club import meeting_campaign, meeting_emails, meeting_rules, openlibrary, reviews
+from agent.club import (meeting_campaign, meeting_emails, meeting_rules, openlibrary,
+                        release_notes, reviews)
 
 log = logging.getLogger("oliver.commands")
 
@@ -529,6 +530,73 @@ async def oliver_stats(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(
         f"Corpus holds {kb.book_count()} books. Model: {oliver.MODEL}.", ephemeral=True,
     )
+
+
+@oliver_cmds.command(name="release-notes",
+                     description="Draft & send release notes from recent changes (admin).")
+@discord.app_commands.describe(days="Look back this many days for changes (1-90)",
+                               to="Where to send — yourself (default) or the club mailing list")
+@discord.app_commands.choices(to=[
+    discord.app_commands.Choice(name="me", value="me"),
+    discord.app_commands.Choice(name="list", value="list"),
+])
+@admin_only
+async def release_notes_cmd(interaction: discord.Interaction, days: int,
+                            to: discord.app_commands.Choice[str] | None = None) -> None:
+    if not 1 <= days <= 90:
+        await interaction.response.send_message("Pick a window between 1 and 90 days.", ephemeral=True)
+        return
+    if not email_jmap.enabled():
+        await interaction.response.send_message(
+            "Email isn't configured (no FASTMAIL_JMAP_TOKEN), so I can't send release notes.",
+            ephemeral=True)
+        return
+
+    target = to.value if to else "me"
+    await interaction.response.defer(ephemeral=True)
+    try:
+        email = await asyncio.to_thread(release_notes.release_notes_email, days)
+    except Exception:
+        log.exception("release-notes generation failed")
+        db.add_activity("warning", "Release notes failed",
+                        f"Days: {days}\nGenerating the release-notes email raised an exception.")
+        await interaction.followup.send("Something went wrong drafting the release notes.", ephemeral=True)
+        return
+    if email is None:
+        await interaction.followup.send(f"No changes in the last {days} days — nothing to announce.",
+                                        ephemeral=True)
+        return
+
+    try:
+        if target == "list":
+            await _send_club_email(email["subject"], email["body"])
+            db.add_activity("release_notes_sent", "Release notes sent",
+                            f"Days: {days}\nTo: club mailing list\nSubject: {email['subject']}")
+            await interaction.followup.send(
+                f"📣 Sent release notes (last {days} days) to the club list and mirrored to the main "
+                f"channel.\nSubject: *{email['subject']}*", ephemeral=True)
+        else:
+            slug = db.member_slug_for_user(str(interaction.user.id))
+            rec = db.email_for_member(slug) if slug else None
+            if not rec:
+                await interaction.followup.send(
+                    "You don't have a linked email address, so I can only send this to the list "
+                    "(`to:list`) — or link an email first.", ephemeral=True)
+                return
+            sent = await asyncio.to_thread(
+                outbound.send, to=[rec["email"]], subject=email["subject"], body=email["body"])
+            db.add_activity("release_notes_sent", "Release notes sent",
+                            f"Days: {days}\nTo: {rec['email']} (admin)\nSubject: {email['subject']}\n"
+                            f"Email ID: {sent.get('emailId')}")
+            await interaction.followup.send(
+                f"📝 Emailed the {days}-day release-notes draft to `{rec['email']}` "
+                f"(`{sent.get('emailId')}`).\nSubject: *{email['subject']}*\n"
+                "Review it, then re-run with `to:list` to send it to the club.", ephemeral=True)
+    except Exception:
+        log.exception("release-notes send failed")
+        db.add_activity("warning", "Release notes send failed",
+                        f"Days: {days}\nTo: {target}\nThe draft was generated but sending failed.")
+        await interaction.followup.send("I drafted the notes but couldn't send the email.", ephemeral=True)
 
 
 @oliver_cmds.command(name="link-member", description="Link a Discord user to a club member (admin).")

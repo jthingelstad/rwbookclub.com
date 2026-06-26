@@ -1,0 +1,174 @@
+"""Release-notes email: Oliver tells the club, in his own voice, what new capabilities
+he's recently gained.
+
+Mirrors `club/meeting_emails.py` (the 2-day topic email): gather source material, build a
+prompt, run it through `oliver.generate` (Opus/high, stateless tool loop), and pull the
+subject + body out of `<subject>`/`<email>` tags. The body is returned UNSIGNED — the
+signature is appended by `outbound.finalize`/`outbound.send`, exactly like the topic email.
+
+Source material is the repo itself: git history over the look-back window (commit subjects,
+bodies, and file stats, plus the merge lines that mark each shipped feature) and the
+capability docs (ROADMAP — the de-facto changelog — and which docs changed in the window).
+The grounding rule in the prompt is strict: describe only what's in the material, never
+invent a capability.
+
+Build-time preview / test:
+    python -m agent.club.release_notes --days 7              # print the draft
+    python -m agent.club.release_notes --days 7 --send a@b   # also deliver it to that address
+"""
+
+from __future__ import annotations
+
+import argparse
+import re
+from datetime import date
+
+from agent import oliver, publish
+from agent.club.meeting_emails import _extract_email
+from agent.club.meeting_rules import friendly_date as _friendly_date
+from agent.mail import outbound
+
+# A dense rework day can produce dozens of commits; cap the detailed list so the prompt
+# stays bounded, and tell the model (and the reader) when we truncated rather than dropping
+# silently.
+_COMMIT_CAP = 60
+_ROADMAP_PATH = publish.REPO_ROOT / "agent" / "docs" / "ROADMAP.md"
+_SUBJECT_TAG = re.compile(r"<subject>(.*?)</subject>", re.S | re.I)
+
+
+def _extract_subject(text: str) -> str:
+    """Pull the one-line subject from <subject>…</subject>, tolerating a missing close tag.
+
+    Unlike the email body, the subject is a single line — so on an unclosed tag we take only
+    the first non-empty line after <subject> (never the email block that follows it).
+    """
+    m = _SUBJECT_TAG.search(text)
+    if m:
+        return " ".join(m.group(1).split()).strip()
+    opened = re.search(r"<subject>", text, re.I)
+    if opened:
+        rest = text[opened.end():].strip()
+        first = rest.splitlines()[0] if rest else ""
+        return re.sub(r"</?subject\s*>", "", first, flags=re.I).strip()
+    return ""
+
+
+def recent_changes(days: int) -> dict:
+    """Gather the git + docs source material for the last `days` days."""
+    since = f"--since={days} days ago"
+    total = [ln for ln in publish.git_output(["log", since, "--oneline"]).splitlines() if ln]
+    count = len(total)
+
+    merges = publish.git_output(["log", since, "--merges", "--pretty=format:- %h %s"]).strip()
+    commits = publish.git_output([
+        "log", since, "-n", str(_COMMIT_CAP), "--no-merges", "--stat", "--date=short",
+        "--pretty=format:%n### %h %ad %s%n%b",
+    ]).strip()
+
+    doc_lines = publish.git_output(
+        ["log", since, "--name-only", "--pretty=format:", "--", "*.md"]
+    ).splitlines()
+    changed_docs = sorted({ln.strip() for ln in doc_lines if ln.strip().endswith(".md")})
+
+    try:
+        roadmap = _ROADMAP_PATH.read_text()
+    except OSError:
+        roadmap = ""
+
+    return {
+        "days": days,
+        "count": count,
+        "truncated": count > _COMMIT_CAP,
+        "merges": merges,
+        "commits": commits,
+        "changed_docs": changed_docs,
+        "roadmap": roadmap,
+    }
+
+
+def release_notes_prompt(material: dict) -> str:
+    days = material["days"]
+    trunc = (
+        f"\n(NOTE: {material['count']} commits landed in this window; only the {_COMMIT_CAP} "
+        "most recent are shown in full below. Say so if it matters.)"
+        if material["truncated"] else ""
+    )
+    docs = "\n".join(f"- {d}" for d in material["changed_docs"]) or "(no docs changed)"
+    return (
+        "Write a short email to the R/W Book Club announcing the new capabilities YOU — Oliver — "
+        f"have gained over the last {days} days. This is you, in first person, telling the club "
+        "what you can now do and what changed under the hood.\n\n"
+        "VOICE: first person throughout (\"I can now…\", \"I rebuilt…\", \"I learned…\"). "
+        "Technically strong and specific — name the actual mechanism, don't be hand-wavey. Share "
+        "it with genuine fun and a real desire to teach: this club is technical and several "
+        "members are interested in how agents are built, so the internals are a feature, not "
+        "noise. Wherever you can, give a sentence of background on WHY the change is good — what "
+        "it improves, what it prevents, what it makes possible.\n\n"
+        "GROUNDING (important): describe ONLY changes that appear in the material below. Do not "
+        "invent features, numbers, or capabilities. If something is unclear, leave it out. Where "
+        "a change is internal plumbing, it's fine — explain it honestly and make it interesting.\n\n"
+        "STRUCTURE — exactly three '## ' sections, in this order:\n\n"
+        "## The story\n"
+        "A short narrative (2-4 sentences, prose) of what's genuinely interesting in this batch — "
+        "the throughline, what you were working toward, why it matters to the club.\n\n"
+        "## Features\n"
+        "A bulleted list of the things members should actually notice and use — the changes that "
+        "touch their experience. Lead each bullet with the capability, then a sentence on why it's "
+        "good. Keep it to what a member cares about.\n\n"
+        "## Release Notes\n"
+        "A bulleted list going into real, specific detail on what changed — the agent-construction "
+        "level. This is for the technically-minded; be precise about mechanisms, tradeoffs, and "
+        "fixes. More detail here than you'd think to include; this crowd will enjoy it.\n\n"
+        "FORMAT: this renders as an HTML email, so use markdown — a '## ' header for each section, "
+        "bulleted lists, *italics* for things like file or feature names, and **bold** sparingly on "
+        "a key phrase. Separate every paragraph and bullet group with a fully blank line, and leave "
+        "a blank line after each '## ' header. Do NOT use '---' or horizontal rules. Do NOT sign off "
+        "— a signature is added automatically.\n\n"
+        "OUTPUT: first write a single-line subject — fun, fitting, and a little bit clever for this "
+        "audience — between <subject> and </subject>. Then write the ENTIRE email between <email> "
+        "and </email> tags, with NOTHING outside the two tag pairs (no preamble, no notes).\n\n"
+        "=== SOURCE MATERIAL (last "
+        f"{days} days) ==={trunc}\n\n"
+        "--- Shipped features (merge commits) ---\n"
+        f"{material['merges'] or '(none)'}\n\n"
+        "--- Commits in detail (subject, body, files changed) ---\n"
+        f"{material['commits'] or '(none)'}\n\n"
+        "--- Docs changed in this window ---\n"
+        f"{docs}\n\n"
+        "--- Current ROADMAP.md (the running feature log, for context on why things matter) ---\n"
+        f"{material['roadmap'] or '(unavailable)'}\n"
+    )
+
+
+def release_notes_email(days: int) -> dict | None:
+    """Build the release-notes email. Returns {subject, body} (body unsigned), or None if
+    there were no changes in the window (caller should report that plainly)."""
+    material = recent_changes(days)
+    if material["count"] == 0:
+        return None
+    out = oliver.generate(release_notes_prompt(material))
+    body = _extract_email(out)
+    subject = _extract_subject(out) or f"Under my hood: what changed — {_friendly_date(date.today().isoformat())}"
+    return {"subject": subject, "body": body}
+
+
+def _main() -> None:
+    parser = argparse.ArgumentParser(description="Preview (and optionally send) Oliver's release-notes email.")
+    parser.add_argument("--days", type=int, default=7, help="look back this many days")
+    parser.add_argument("--send", metavar="EMAIL", help="also deliver the draft to this address")
+    args = parser.parse_args()
+
+    email = release_notes_email(args.days)
+    if email is None:
+        print(f"No changes in the last {args.days} days — nothing to announce.")
+        return
+    print(f"Subject: {email['subject']}\n")
+    print(outbound.finalize(email["body"]))  # show exactly what would be sent (incl. signature)
+
+    if args.send:
+        outbound.send(to=[args.send], subject=email["subject"], body=email["body"])
+        print(f"\n[sent to {args.send}]")
+
+
+if __name__ == "__main__":
+    _main()
