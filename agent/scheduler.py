@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from agent import corpus_read as cr
 
@@ -31,12 +32,18 @@ class Notification:
 
 
 def _parse(dt: str | None) -> datetime | None:
+    """Parse a meeting date/datetime to an aware datetime. Meeting dates are now LOCAL
+    ('YYYY-MM-DD', America/Chicago) — a bare date parses naive, so attach the club tz so
+    arithmetic against an aware `now` works (legacy 'Z' datetimes stay UTC-aware)."""
     if not dt:
         return None
     try:
-        return datetime.fromisoformat(dt.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(dt.replace("Z", "+00:00"))
     except ValueError:
         return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=ZoneInfo("America/Chicago"))
+    return parsed
 
 
 def due_notifications(now: datetime, already_sent: set[str]) -> list[Notification]:
