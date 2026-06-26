@@ -789,6 +789,7 @@ body.shelf .page {
   letter-spacing: -0.02em;
 }
 .member-website a { color: var(--ink-soft); }
+.member-stats { color: var(--ink-soft); margin: 0.5rem 0 0; font-size: var(--type-sm, 0.9rem); }
 @media (max-width: 560px) {
   .member-header { grid-template-columns: 140px 1fr; gap: var(--gap-sm); }
 }

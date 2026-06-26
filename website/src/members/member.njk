@@ -32,6 +32,7 @@ eleventyComputed:
           </a>
         </p>
       {% endif %}
+      <p class="member-stats">Picked {{ member.pickedCount }} · Hosted {{ member.hostedCount }} meeting{% if member.hostedCount != 1 %}s{% endif %}</p>
     </div>
   </header>
 

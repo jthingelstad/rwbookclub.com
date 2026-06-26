@@ -21,8 +21,8 @@ a short supervised step (below).
 | 2. Airtable → SQLite import (`agent/script/import_airtable.py`) | ✅ | 12 members, 177 authors, 179 books, 184 meetings, 8 reviews, 1 award. IDs + member email/mobile + meeting hosts from Airtable; live scalars + relationships from the corpus. 1 expected warning (dropped Oliver test review). |
 | 4. Generators + faithful corpus (`agent/corpus_gen.py`) | ✅ | Regenerated corpus is **byte-identical to the committed corpus except two intentional cleanups**: de-duped `a-distant-mirror`'s `['dan','dan']` picker, dropped `patterns-in-nature--jamie.md`. `corpus/validate.py` green, **240 agent tests pass**, **11ty build renders 553 files**. |
 | 5. Writes through the DB (`agent/corpus_write.py`) | ✅ | `write_book` / `schedule_meeting` upsert `club_*` under FKs → regenerate affected corpus files → `gitwrite`. Round-trip tests added. |
-| 3. Ops-data remap (verification) | ✅ proven, ⏸ not flipped | `agent/script/verify_ops_mapping.py`: **zero orphans** — every attendance/roll-call/reading/contact/email-tracking row remaps onto a real `meeting_id`/`member_id` FK. The live column rewrite is the supervised step below. |
-| 6. Corpus enrichment | 📋 documented | The DB now holds data the corpus never did (e.g. `club_meeting_hosts` — who hosted all 184 meetings) and sits beside the mail archive / Discord history / reading status. Enrichment is additive and trivial from here. See roadmap. |
+| 3. Ops-data remap | ✅ **done** | Verified zero-orphan (`agent/script/verify_ops_mapping.py`) **and flipped** (2026-06-26): the ops tables now key on real `meeting_id`/`member_id` FKs (no `meeting_key`/`member_slug`). The mail archive's `member_id` is populated on all 2,446 messages. |
+| 6. Corpus enrichment | 🚧 in progress | **Slice A (hosting) done** (2026-06-26): `member_history`/`club_stats`/`get_book`/`club_context` + the member pages now surface who hosted meetings (the corpus never carried this); `_migrate_club` backfills host = picker for book-meetings missing a host. **Remaining:** fold mail-thread *summaries* into the private corpus (the now-private corpus unblocks this). See roadmap. |
 
 Design note: the generator **reproduces the existing corpus shape faithfully**, so
 `corpus_read.py`, every `website/_data/*.js`, `validate.py`, and the 240 tests keep working
@@ -51,22 +51,24 @@ A pre-cut snapshot of the live DB is in `agent/backups/` style; the import is wi
 on the `club_*` tables only, so re-running it is safe. **Rollback** = `git revert` the merge
 + restart; the `club_*` tables are additive and harmless if left in place.
 
-### Deferred (optional, supervised): ops-layer FK column rewrite
+### Ops-layer FK column rewrite — ✅ done (2026-06-26)
 
-The ops tables still key on `meeting_key` (book slug) / `member_slug`. The remap is proven
-(zero orphans) and the FK target tables are designed. Flipping the columns means rewriting
-~40 call sites across the live Discord/email/scheduler hot path (inventory in the migration
-notes) + a table rebuild + bot restart. The data maps cleanly today, so this is a
-future-proofing refactor (clean move/cancel-meeting semantics), **not** required for "SQLite
-authoritative." Do it as its own watched change.
+The ops tables (`meeting_attendance`/`roll_calls`/`reading_statuses`/`member_contacts`/
+`email_tracking` + the member/mail tables) were flipped from `meeting_key`/`member_slug` to real
+`meeting_id`/`member_id` FKs, with the call sites rewritten and a guarded one-time table rebuild.
+Move/cancel-meeting now keeps attendance attached via FK rather than orphaning it.
 
 ## Enrichment roadmap (Phase 6 — additive, no website impact)
 
-The authoritative DB is now the natural home to make Oliver smarter:
-- **Meeting hosts** — `club_meeting_hosts` already captures who hosted every meeting (the
-  corpus never carried this). Expose via a DB-backed read for member/hosting history.
-- **Mailing list / Discord / reading** — `mail_messages` (2,445), `conversations`,
-  `reading_statuses` already live in `oliver.db`. Fold summaries into Oliver's context.
+The authoritative DB is the natural home to make Oliver smarter:
+- **Meeting hosts** — ✅ **done.** `club_meeting_hosts` captures who hosted (176/184 directly +
+  backfilled host=picker), now surfaced via `member_history`/`club_stats`/`get_book`/`club_context`
+  and the member pages.
+- **Mailing list / Discord / reading** — `mail_messages` (2,446), `conversations`,
+  `reading_statuses` live in `oliver.db` and are already *reachable* via DB-backed tools
+  (`search_mail_archive`/`get_mail_thread`/`search_discussion`/`reading_status`). The remaining
+  work is folding mail-thread **summaries** (`mail_threads.summary`, currently empty) into the
+  now-private corpus — its own deliberate LLM pass.
 - **Book cloud** — see `agent/team/work/2026-06-26-build-book-cloud.md` (slice 1a is
   ready to code); the new schema makes capture/retrieval straightforward.
 

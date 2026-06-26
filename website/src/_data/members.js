@@ -28,7 +28,16 @@ function photoWidthsBySlug() {
 module.exports = function () {
   const members = buildBooks.readJsonDir("members");
   const books = buildBooks(); // enriched (has pickerNames, meetingDate, year)
+  const meetings = buildBooks.readJsonDir("meetings"); // carry meeting.host[] (slugs)
   const widthsBySlug = photoWidthsBySlug();
+
+  // member slug → count of meetings they hosted (meeting-level, ≠ picks).
+  const hostedBySlug = new Map();
+  for (const mt of meetings) {
+    for (const slug of mt.host || []) {
+      hostedBySlug.set(slug, (hostedBySlug.get(slug) || 0) + 1);
+    }
+  }
 
   members.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
@@ -46,6 +55,7 @@ module.exports = function () {
       ...m,
       pickedCount: picked.length,
       pickedBooks,
+      hostedCount: hostedBySlug.get(m.slug) || 0,
       hasPhoto: Boolean(widths && widths.length),
       photoWidths: widths || null,
     };
