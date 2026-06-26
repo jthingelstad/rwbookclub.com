@@ -1,8 +1,12 @@
 {
   "meetingId": 159,
-  "date": "2006-07-29T23:00:00.000Z",
+  "date": "2006-07-29",
+  "startTime": "18:00",
   "books": [
     "genghis-khan-and-the-making-of-the-modern-world"
+  ],
+  "host": [
+    "dan"
   ],
   "type": [
     "Book"

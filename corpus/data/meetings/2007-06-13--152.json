@@ -1,9 +1,13 @@
 {
   "meetingId": 152,
-  "date": "2007-06-13T23:00:00.000Z",
+  "date": "2007-06-13",
+  "startTime": "18:00",
   "books": [
     "watchmen",
     "understanding-comics"
+  ],
+  "host": [
+    "erik"
   ],
   "type": [
     "Book"

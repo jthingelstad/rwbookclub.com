@@ -1,0 +1,17 @@
+{
+  "meetingId": 56,
+  "date": "2018-01-23",
+  "startTime": "18:00",
+  "books": [
+    "walkaway"
+  ],
+  "host": [
+    "loren"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

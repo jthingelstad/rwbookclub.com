@@ -1,8 +1,12 @@
 {
   "meetingId": 52,
-  "date": "2018-07-25T23:00:00.000Z",
+  "date": "2018-07-25",
+  "startTime": "18:00",
   "books": [
     "collapse"
+  ],
+  "host": [
+    "erik"
   ],
   "type": [
     "Book"

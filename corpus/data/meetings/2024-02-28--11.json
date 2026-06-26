@@ -1,0 +1,17 @@
+{
+  "meetingId": 11,
+  "date": "2024-02-28",
+  "startTime": "18:00",
+  "books": [
+    "medici-money"
+  ],
+  "host": [
+    "jamie"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

@@ -1,8 +1,12 @@
 {
   "meetingId": 69,
-  "date": "2016-08-22T23:00:00.000Z",
+  "date": "2016-08-22",
+  "startTime": "18:00",
   "books": [
     "the-metaphysical-club"
+  ],
+  "host": [
+    "tom"
   ],
   "type": [
     "Book"

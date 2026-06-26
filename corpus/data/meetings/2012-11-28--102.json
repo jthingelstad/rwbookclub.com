@@ -1,0 +1,17 @@
+{
+  "meetingId": 102,
+  "date": "2012-11-28",
+  "startTime": "18:00",
+  "books": [
+    "join-the-club"
+  ],
+  "host": [
+    "tom"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

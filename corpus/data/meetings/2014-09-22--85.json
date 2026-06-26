@@ -1,8 +1,12 @@
 {
   "meetingId": 85,
-  "date": "2014-09-22T23:00:00.000Z",
+  "date": "2014-09-22",
+  "startTime": "18:00",
   "books": [
     "far-from-the-tree"
+  ],
+  "host": [
+    "erik"
   ],
   "type": [
     "Book"

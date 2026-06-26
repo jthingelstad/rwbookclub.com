@@ -1,0 +1,15 @@
+{
+  "meetingId": 18,
+  "date": "2023-02-07",
+  "startTime": "18:00",
+  "books": [],
+  "host": [
+    "jamie"
+  ],
+  "type": [
+    "Picking"
+  ],
+  "location": "Jamie's House",
+  "notes": null,
+  "placeholder": false
+}

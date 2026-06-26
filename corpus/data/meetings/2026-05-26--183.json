@@ -1,8 +1,12 @@
 {
   "meetingId": 183,
-  "date": "2026-05-26T23:30:00.000Z",
+  "date": "2026-05-26",
+  "startTime": "18:30",
   "books": [
     "patterns-in-nature"
+  ],
+  "host": [
+    "tom"
   ],
   "type": [
     "Book"

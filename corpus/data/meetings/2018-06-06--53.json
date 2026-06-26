@@ -1,8 +1,12 @@
 {
   "meetingId": 53,
-  "date": "2018-06-06T23:00:00.000Z",
+  "date": "2018-06-06",
+  "startTime": "18:00",
   "books": [
     "sapiens"
+  ],
+  "host": [
+    "loren"
   ],
   "type": [
     "Book"

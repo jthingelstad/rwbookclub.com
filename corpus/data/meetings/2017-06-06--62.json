@@ -1,8 +1,12 @@
 {
   "meetingId": 62,
-  "date": "2017-06-06T23:00:00.000Z",
+  "date": "2017-06-06",
+  "startTime": "18:00",
   "books": [
     "stuff-matters"
+  ],
+  "host": [
+    "jamie"
   ],
   "type": [
     "Book"

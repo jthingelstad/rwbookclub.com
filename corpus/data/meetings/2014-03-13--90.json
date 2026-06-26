@@ -1,8 +1,12 @@
 {
   "meetingId": 90,
-  "date": "2014-03-13T23:00:00.000Z",
+  "date": "2014-03-13",
+  "startTime": "18:00",
   "books": [
     "a-history-of-god"
+  ],
+  "host": [
+    "tom"
   ],
   "type": [
     "Book"

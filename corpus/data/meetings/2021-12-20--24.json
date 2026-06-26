@@ -1,0 +1,13 @@
+{
+  "meetingId": 24,
+  "date": "2021-12-20",
+  "startTime": "19:00",
+  "books": [],
+  "host": [],
+  "type": [
+    "Picking"
+  ],
+  "location": "Zoom",
+  "notes": null,
+  "placeholder": false
+}

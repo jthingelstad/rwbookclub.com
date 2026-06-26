@@ -1,0 +1,17 @@
+{
+  "meetingId": 182,
+  "date": "2026-01-27",
+  "startTime": "19:00",
+  "books": [
+    "the-overstory"
+  ],
+  "host": [
+    "erik"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

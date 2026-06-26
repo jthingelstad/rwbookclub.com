@@ -1,0 +1,17 @@
+{
+  "meetingId": 39,
+  "date": "2020-06-03",
+  "startTime": "19:00",
+  "books": [
+    "benjamin-franklin"
+  ],
+  "host": [
+    "erik"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Zoom",
+  "notes": null,
+  "placeholder": false
+}

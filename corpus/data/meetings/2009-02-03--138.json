@@ -1,0 +1,17 @@
+{
+  "meetingId": 138,
+  "date": "2009-02-03",
+  "startTime": "18:00",
+  "books": [
+    "the-nine"
+  ],
+  "host": [
+    "erik"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

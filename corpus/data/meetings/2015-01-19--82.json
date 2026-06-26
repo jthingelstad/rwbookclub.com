@@ -1,0 +1,17 @@
+{
+  "meetingId": 82,
+  "date": "2015-01-19",
+  "startTime": "18:00",
+  "books": [
+    "the-structure-and-dynamics-of-networks"
+  ],
+  "host": [
+    "nick"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

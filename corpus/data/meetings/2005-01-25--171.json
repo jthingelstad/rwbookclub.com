@@ -1,0 +1,17 @@
+{
+  "meetingId": 171,
+  "date": "2005-01-25",
+  "startTime": "18:00",
+  "books": [
+    "divorce-among-the-gulls"
+  ],
+  "host": [
+    "david"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

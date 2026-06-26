@@ -1,8 +1,12 @@
 {
   "meetingId": 87,
-  "date": "2014-07-21T23:00:00.000Z",
+  "date": "2014-07-21",
+  "startTime": "18:00",
   "books": [
     "the-everything-store"
+  ],
+  "host": [
+    "nick"
   ],
   "type": [
     "Book"

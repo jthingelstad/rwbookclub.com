@@ -1,8 +1,12 @@
 {
   "meetingId": 168,
-  "date": "2005-06-10T23:00:00.000Z",
+  "date": "2005-06-10",
+  "startTime": "18:00",
   "books": [
     "the-plot-against-america"
+  ],
+  "host": [
+    "erik"
   ],
   "type": [
     "Book"

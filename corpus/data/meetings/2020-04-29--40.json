@@ -1,8 +1,12 @@
 {
   "meetingId": 40,
-  "date": "2020-04-29T23:30:00.000Z",
+  "date": "2020-04-29",
+  "startTime": "18:30",
   "books": [
     "replay"
+  ],
+  "host": [
+    "tom"
   ],
   "type": [
     "Book"

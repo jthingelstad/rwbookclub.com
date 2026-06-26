@@ -1,8 +1,12 @@
 {
   "meetingId": 75,
-  "date": "2015-10-26T23:00:00.000Z",
+  "date": "2015-10-26",
+  "startTime": "18:00",
   "books": [
     "the-world-until-yesterday"
+  ],
+  "host": [
+    "nick"
   ],
   "type": [
     "Book"

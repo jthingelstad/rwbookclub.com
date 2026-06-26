@@ -1,9 +1,13 @@
 {
   "meetingId": 41,
-  "date": "2020-03-25T23:00:00.000Z",
+  "date": "2020-03-25",
+  "startTime": "18:00",
   "books": [
     "the-roman-republic",
     "the-hundred-year-marathon"
+  ],
+  "host": [
+    "nick"
   ],
   "type": [
     "Book"

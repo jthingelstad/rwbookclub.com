@@ -1,0 +1,17 @@
+{
+  "meetingId": 130,
+  "date": "2009-12-01",
+  "startTime": "18:00",
+  "books": [
+    "play"
+  ],
+  "host": [
+    "john"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

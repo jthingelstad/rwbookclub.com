@@ -1,0 +1,17 @@
+{
+  "meetingId": 170,
+  "date": "2005-03-12",
+  "startTime": "18:00",
+  "books": [
+    "free-culture"
+  ],
+  "host": [
+    "john"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

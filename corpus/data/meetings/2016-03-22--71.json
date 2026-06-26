@@ -1,8 +1,12 @@
 {
   "meetingId": 71,
-  "date": "2016-03-22T23:00:00.000Z",
+  "date": "2016-03-22",
+  "startTime": "18:00",
   "books": [
     "the-rise-and-fall-of-american-growth"
+  ],
+  "host": [
+    "loren"
   ],
   "type": [
     "Book"

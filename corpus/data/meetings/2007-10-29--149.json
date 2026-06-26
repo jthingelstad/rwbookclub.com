@@ -1,8 +1,12 @@
 {
   "meetingId": 149,
-  "date": "2007-10-29T23:00:00.000Z",
+  "date": "2007-10-29",
+  "startTime": "18:00",
   "books": [
     "musicophilia"
+  ],
+  "host": [
+    "dan"
   ],
   "type": [
     "Book"

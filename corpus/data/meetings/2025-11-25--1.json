@@ -1,0 +1,17 @@
+{
+  "meetingId": 1,
+  "date": "2025-11-25",
+  "startTime": "18:30",
+  "books": [
+    "enshittification"
+  ],
+  "host": [
+    "tom"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Waterbury Restaurant",
+  "notes": null,
+  "placeholder": false
+}

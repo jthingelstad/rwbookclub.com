@@ -1,0 +1,17 @@
+{
+  "meetingId": 117,
+  "date": "2011-03-01",
+  "startTime": "18:00",
+  "books": [
+    "the-master-switch"
+  ],
+  "host": [
+    "tom"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

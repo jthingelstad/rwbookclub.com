@@ -1,8 +1,12 @@
 {
   "meetingId": 144,
-  "date": "2008-05-20T23:00:00.000Z",
+  "date": "2008-05-20",
+  "startTime": "18:00",
   "books": [
     "the-black-swan"
+  ],
+  "host": [
+    "dan"
   ],
   "type": [
     "Book"

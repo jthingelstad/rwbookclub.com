@@ -1,8 +1,12 @@
 {
   "meetingId": 89,
-  "date": "2014-04-22T23:00:00.000Z",
+  "date": "2014-04-22",
+  "startTime": "18:00",
   "books": [
     "the-martian"
+  ],
+  "host": [
+    "erik"
   ],
   "type": [
     "Book"

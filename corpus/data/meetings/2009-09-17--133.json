@@ -1,8 +1,12 @@
 {
   "meetingId": 133,
-  "date": "2009-09-17T23:00:00.000Z",
+  "date": "2009-09-17",
+  "startTime": "18:00",
   "books": [
     "sustainable-energy-without-the-hot-air"
+  ],
+  "host": [
+    "erik"
   ],
   "type": [
     "Book"

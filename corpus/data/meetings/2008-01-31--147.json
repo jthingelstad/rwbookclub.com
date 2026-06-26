@@ -1,0 +1,17 @@
+{
+  "meetingId": 147,
+  "date": "2008-01-31",
+  "startTime": "18:00",
+  "books": [
+    "the-world-without-us"
+  ],
+  "host": [
+    "jamie"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

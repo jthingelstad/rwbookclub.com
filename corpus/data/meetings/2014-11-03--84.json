@@ -1,0 +1,17 @@
+{
+  "meetingId": 84,
+  "date": "2014-11-03",
+  "startTime": "18:00",
+  "books": [
+    "far-from-the-tree"
+  ],
+  "host": [
+    "jamie"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

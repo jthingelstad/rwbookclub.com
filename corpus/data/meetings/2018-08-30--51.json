@@ -1,8 +1,12 @@
 {
   "meetingId": 51,
-  "date": "2018-08-30T23:00:00.000Z",
+  "date": "2018-08-30",
+  "startTime": "18:00",
   "books": [
     "freedom-tm"
+  ],
+  "host": [
+    "loren"
   ],
   "type": [
     "Book"

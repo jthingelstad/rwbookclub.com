@@ -1,8 +1,12 @@
 {
   "meetingId": 70,
-  "date": "2016-05-02T23:00:00.000Z",
+  "date": "2016-05-02",
+  "startTime": "18:00",
   "books": [
     "american-nations"
+  ],
+  "host": [
+    "nick"
   ],
   "type": [
     "Book"

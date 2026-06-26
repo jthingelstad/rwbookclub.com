@@ -1,8 +1,12 @@
 {
   "meetingId": 179,
-  "date": "2003-08-20T23:00:00.000Z",
+  "date": "2003-08-20",
+  "startTime": "18:00",
   "books": [
     "the-blank-slate"
+  ],
+  "host": [
+    "john"
   ],
   "type": [
     "Book"

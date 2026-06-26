@@ -1,8 +1,12 @@
 {
   "meetingId": 29,
-  "date": "2021-06-16T23:00:00.000Z",
+  "date": "2021-06-16",
+  "startTime": "18:00",
   "books": [
     "klara-and-the-sun"
+  ],
+  "host": [
+    "tom"
   ],
   "type": [
     "Book"

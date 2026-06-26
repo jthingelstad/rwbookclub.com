@@ -1,8 +1,12 @@
 {
   "meetingId": 9,
-  "date": "2024-05-29T23:00:00.000Z",
+  "date": "2024-05-29",
+  "startTime": "18:00",
   "books": [
     "the-power-law"
+  ],
+  "host": [
+    "nick"
   ],
   "type": [
     "Book"

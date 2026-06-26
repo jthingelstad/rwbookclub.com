@@ -1,8 +1,12 @@
 {
   "meetingId": 145,
-  "date": "2008-04-14T23:00:00.000Z",
+  "date": "2008-04-14",
+  "startTime": "18:00",
   "books": [
     "cheating"
+  ],
+  "host": [
+    "tom"
   ],
   "type": [
     "Book"

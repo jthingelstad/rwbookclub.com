@@ -1,8 +1,12 @@
 {
   "meetingId": 115,
-  "date": "2011-06-20T23:00:00.000Z",
+  "date": "2011-06-20",
+  "startTime": "18:00",
   "books": [
     "never-let-me-go"
+  ],
+  "host": [
+    "erik"
   ],
   "type": [
     "Book"

@@ -1,0 +1,17 @@
+{
+  "meetingId": 73,
+  "date": "2015-12-21",
+  "startTime": "18:00",
+  "books": [
+    "superforecasting"
+  ],
+  "host": [
+    "erik"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

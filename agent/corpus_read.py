@@ -131,19 +131,26 @@ def books() -> list[dict]:
                 continue
             pnames.append(mem["name"])
             pslugs.append(mem["slug"] if mem.get("isCurrent") else None)
+        host_slugs = (mt.get("host") if mt else None) or []
+        host_names = [member_by_slug[h]["name"] for h in host_slugs if h in member_by_slug]
         eb = dict(b)
         eb.update({
             "meetingDate": md,
+            "meetingStartTime": (mt.get("startTime") if mt else None),
             "year": int(md[:4]) if md else None,
             "placeholder": bool(mt.get("placeholder")) if mt else False,
             "isUpcoming": is_upcoming,
             "isRead": is_read,
             "meetingNotes": (mt.get("notes") if mt else None),
             "meetingLocation": (mt.get("location") if mt else None),
+            # Picker = who chose the book (book-level). Host = who ran the meeting where it
+            # was discussed (meeting-level); usually the same person, but can differ.
             "pickerName": pnames[0] if pnames else None,
             "pickerSlug": pslugs[0] if pslugs else None,
             "pickerNames": pnames or None,
             "pickerSlugs": pslugs or None,
+            "meetingHostNames": host_names or None,
+            "meetingHostSlugs": host_slugs or None,
         })
         out.append(eb)
     _books_cache = out

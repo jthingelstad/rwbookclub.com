@@ -1,8 +1,12 @@
 {
   "meetingId": 158,
-  "date": "2006-10-03T23:00:00.000Z",
+  "date": "2006-10-03",
+  "startTime": "18:00",
   "books": [
     "stumbling-on-happiness"
+  ],
+  "host": [
+    "david"
   ],
   "type": [
     "Book"

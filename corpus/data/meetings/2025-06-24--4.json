@@ -1,8 +1,12 @@
 {
   "meetingId": 4,
-  "date": "2025-06-24T23:30:00.000Z",
+  "date": "2025-06-24",
+  "startTime": "18:30",
   "books": [
     "co-intelligence"
+  ],
+  "host": [
+    "jamie"
   ],
   "type": [
     "Book"

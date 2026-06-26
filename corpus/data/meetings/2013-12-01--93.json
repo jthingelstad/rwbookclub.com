@@ -1,0 +1,17 @@
+{
+  "meetingId": 93,
+  "date": "2013-12-01",
+  "startTime": "18:00",
+  "books": [
+    "the-emperor-of-all-maladies"
+  ],
+  "host": [
+    "dan"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

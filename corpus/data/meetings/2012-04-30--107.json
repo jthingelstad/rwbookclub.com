@@ -1,8 +1,12 @@
 {
   "meetingId": 107,
-  "date": "2012-04-30T23:00:00.000Z",
+  "date": "2012-04-30",
+  "startTime": "18:00",
   "books": [
     "thinking-fast-and-slow"
+  ],
+  "host": [
+    "john"
   ],
   "type": [
     "Book"

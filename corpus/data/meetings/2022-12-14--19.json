@@ -1,0 +1,17 @@
+{
+  "meetingId": 19,
+  "date": "2022-12-14",
+  "startTime": "18:00",
+  "books": [
+    "mni-sota-makoce"
+  ],
+  "host": [
+    "erik"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Erik's Apartment",
+  "notes": null,
+  "placeholder": false
+}

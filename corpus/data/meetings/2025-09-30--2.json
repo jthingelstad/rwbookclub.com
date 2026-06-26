@@ -1,8 +1,12 @@
 {
   "meetingId": 2,
-  "date": "2025-09-30T23:30:00.000Z",
+  "date": "2025-09-30",
+  "startTime": "18:30",
   "books": [
     "heart-of-darkness"
+  ],
+  "host": [
+    "nick"
   ],
   "type": [
     "Book"

@@ -63,8 +63,10 @@ def _book_doc(b: dict) -> dict:
 def _meeting_doc(m: dict) -> dict:
     return {
         "meetingId": m["id"],
-        "date": m["date"],
+        "date": m["date"],                 # LOCAL date 'YYYY-MM-DD' (America/Chicago)
+        "startTime": m["start_time"],      # LOCAL 'HH:MM' or null
         "books": m["book_slugs"],
+        "host": m["host_slugs"],           # who hosted (meeting-level; ≠ a book's picker)
         "type": m["type"],
         "location": m["location"],
         "notes": m["notes"],

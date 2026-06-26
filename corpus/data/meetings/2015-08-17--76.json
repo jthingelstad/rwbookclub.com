@@ -1,8 +1,12 @@
 {
   "meetingId": 76,
-  "date": "2015-08-17T23:00:00.000Z",
+  "date": "2015-08-17",
+  "startTime": "18:00",
   "books": [
     "amusing-ourselves-to-death"
+  ],
+  "host": [
+    "tom"
   ],
   "type": [
     "Book"

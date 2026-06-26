@@ -1,0 +1,17 @@
+{
+  "meetingId": 109,
+  "date": "2012-01-24",
+  "startTime": "18:00",
+  "books": [
+    "republic-lost"
+  ],
+  "host": [
+    "erik"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

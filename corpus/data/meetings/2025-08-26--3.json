@@ -1,8 +1,12 @@
 {
   "meetingId": 3,
-  "date": "2025-08-26T23:30:00.000Z",
+  "date": "2025-08-26",
+  "startTime": "18:30",
   "books": [
     "the-origins-of-totalitarianism"
+  ],
+  "host": [
+    "loren"
   ],
   "type": [
     "Book"

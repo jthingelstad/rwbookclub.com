@@ -1,8 +1,12 @@
 {
   "meetingId": 17,
-  "date": "2023-04-11T23:00:00.000Z",
+  "date": "2023-04-11",
+  "startTime": "18:00",
   "books": [
     "to-shake-the-sleeping-self"
+  ],
+  "host": [
+    "jamie"
   ],
   "type": [
     "Book"

@@ -71,9 +71,10 @@ CREATE INDEX IF NOT EXISTS idx_club_book_authors_author ON club_book_authors(aut
 
 CREATE TABLE IF NOT EXISTS club_meetings (
     id          INTEGER PRIMARY KEY,        -- Airtable Meeting ID
-    date        TEXT,                       -- full ISO datetime, verbatim from Airtable
+    date        TEXT,                       -- LOCAL meeting date 'YYYY-MM-DD' (America/Chicago)
+    start_time  TEXT,                       -- LOCAL start time 'HH:MM' (America/Chicago), NULL if TBD
     type_json   TEXT,                       -- JSON array of meeting types
-    location    TEXT,
+    location    TEXT,                       -- host-set venue (free text)
     notes       TEXT,
     placeholder INTEGER NOT NULL DEFAULT 0
 );
@@ -153,10 +154,44 @@ CLUB_TABLES = [
 ]
 
 
+MEETING_TZ = "America/Chicago"  # the club's single timezone (Minneapolis)
+
+
+def _migrate_club(conn: sqlite3.Connection) -> None:
+    """Additive club-schema migrations (idempotent).
+
+    1. Add club_meetings.start_time if missing.
+    2. Normalize club_meetings.date from the legacy UTC ISO datetime to the club's LOCAL
+       date + start_time (America/Chicago). The old import stored the Airtable UTC instant,
+       which displays the wrong day for evening meetings (6-7pm local rolls past midnight
+       UTC in winter). Converting UTC -> local recovers the true local date and time
+       (verified to match Airtable's 'Formatted Meeting Time' for all rows). Idempotent:
+       once converted, `date` is 'YYYY-MM-DD' (no 'T') and is skipped.
+    """
+    import datetime
+    from zoneinfo import ZoneInfo
+
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(club_meetings)")}
+    if "start_time" not in cols:
+        conn.execute("ALTER TABLE club_meetings ADD COLUMN start_time TEXT")
+
+    chi = ZoneInfo(MEETING_TZ)
+    rows = conn.execute(
+        "SELECT id, date FROM club_meetings WHERE date LIKE '%T%'"
+    ).fetchall()
+    for r in rows:
+        local = datetime.datetime.fromisoformat(r["date"].replace("Z", "+00:00")).astimezone(chi)
+        conn.execute(
+            "UPDATE club_meetings SET date = ?, start_time = ? WHERE id = ?",
+            (local.strftime("%Y-%m-%d"), local.strftime("%H:%M"), r["id"]),
+        )
+
+
 def ensure_schema() -> None:
     """Create the club-record tables idempotently. Safe to call repeatedly."""
     with db.connect() as conn:
         conn.executescript(CLUB_SCHEMA)
+        _migrate_club(conn)
 
 
 # ── Connection helper ────────────────────────────────────────────────────────
@@ -207,8 +242,15 @@ def all_meetings(conn: sqlite3.Connection) -> list[dict]:
         "JOIN club_books b ON b.id = mb.book_id ORDER BY mb.meeting_id, mb.ordinal"
     ):
         books_by_meeting.setdefault(r["meeting_id"], []).append(r["slug"])
+    hosts_by_meeting: dict[int, list[str]] = {}
+    for r in conn.execute(
+        "SELECT mh.meeting_id, m.slug FROM club_meeting_hosts mh "
+        "JOIN club_members m ON m.id = mh.member_id ORDER BY mh.meeting_id, mh.ordinal"
+    ):
+        hosts_by_meeting.setdefault(r["meeting_id"], []).append(r["slug"])
     for m in meetings:
         m["book_slugs"] = books_by_meeting.get(m["id"], [])
+        m["host_slugs"] = hosts_by_meeting.get(m["id"], [])
         m["type"] = json.loads(m["type_json"]) if m["type_json"] else []
     return meetings
 
@@ -373,6 +415,21 @@ def current_members() -> list[dict]:
     with db.connect() as conn:
         rows = conn.execute(
             "SELECT id, slug, name FROM club_members WHERE is_current = 1 ORDER BY name"
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def hosts_for_meeting(meeting_id: int | None) -> list[dict]:
+    """Who hosted a meeting (the meeting-level host; distinct from a book's picker).
+    Returns [{slug, name}] in host order."""
+    if meeting_id is None:
+        return []
+    with db.connect() as conn:
+        rows = conn.execute(
+            "SELECT m.slug, m.name FROM club_meeting_hosts mh "
+            "JOIN club_members m ON m.id = mh.member_id "
+            "WHERE mh.meeting_id = ? ORDER BY mh.ordinal",
+            (meeting_id,),
         ).fetchall()
     return [dict(r) for r in rows]
 

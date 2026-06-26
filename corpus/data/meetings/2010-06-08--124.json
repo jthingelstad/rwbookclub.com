@@ -1,8 +1,12 @@
 {
   "meetingId": 124,
-  "date": "2010-06-08T23:00:00.000Z",
+  "date": "2010-06-08",
+  "startTime": "18:00",
   "books": [
     "team-of-rivals"
+  ],
+  "host": [
+    "john"
   ],
   "type": [
     "Book"

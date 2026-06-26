@@ -1,8 +1,12 @@
 {
   "meetingId": 50,
-  "date": "2018-10-01T23:00:00.000Z",
+  "date": "2018-10-01",
+  "startTime": "18:00",
   "books": [
     "how-to-change-your-mind"
+  ],
+  "host": [
+    "jamie"
   ],
   "type": [
     "Book"

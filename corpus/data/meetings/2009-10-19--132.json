@@ -1,8 +1,12 @@
 {
   "meetingId": 132,
-  "date": "2009-10-19T23:00:00.000Z",
+  "date": "2009-10-19",
+  "startTime": "18:00",
   "books": [
     "creativity"
+  ],
+  "host": [
+    "jamie"
   ],
   "type": [
     "Book"

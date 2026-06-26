@@ -1,8 +1,12 @@
 {
   "meetingId": 135,
-  "date": "2009-05-29T23:00:00.000Z",
+  "date": "2009-05-29",
+  "startTime": "18:00",
   "books": [
     "honest-signals"
+  ],
+  "host": [
+    "tom"
   ],
   "type": [
     "Book"

@@ -1,8 +1,12 @@
 {
   "meetingId": 134,
-  "date": "2009-08-12T23:00:00.000Z",
+  "date": "2009-08-12",
+  "startTime": "18:00",
   "books": [
     "the-china-study"
+  ],
+  "host": [
+    "dan"
   ],
   "type": [
     "Spouses"

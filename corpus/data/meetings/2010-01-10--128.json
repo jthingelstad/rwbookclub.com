@@ -1,0 +1,17 @@
+{
+  "meetingId": 128,
+  "date": "2010-01-10",
+  "startTime": "18:00",
+  "books": [
+    "influence"
+  ],
+  "host": [
+    "tom"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

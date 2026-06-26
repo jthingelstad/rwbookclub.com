@@ -1,8 +1,12 @@
 {
   "meetingId": 16,
-  "date": "2023-05-30T23:00:00.000Z",
+  "date": "2023-05-30",
+  "startTime": "18:00",
   "books": [
     "a-supposedly-fun-thing-i-ll-never-do-again"
+  ],
+  "host": [
+    "loren"
   ],
   "type": [
     "Book"

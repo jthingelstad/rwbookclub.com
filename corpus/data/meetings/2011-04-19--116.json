@@ -1,8 +1,12 @@
 {
   "meetingId": 116,
-  "date": "2011-04-19T23:00:00.000Z",
+  "date": "2011-04-19",
+  "startTime": "18:00",
   "books": [
     "triumph-of-the-city"
+  ],
+  "host": [
+    "dan"
   ],
   "type": [
     "Book"

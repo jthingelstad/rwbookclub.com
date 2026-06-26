@@ -1,8 +1,12 @@
 {
   "meetingId": 46,
-  "date": "2019-07-17T23:00:00.000Z",
+  "date": "2019-07-17",
+  "startTime": "18:00",
   "books": [
     "educated"
+  ],
+  "host": [
+    "loren"
   ],
   "type": [
     "Book"

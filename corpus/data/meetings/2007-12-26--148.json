@@ -1,0 +1,17 @@
+{
+  "meetingId": 148,
+  "date": "2007-12-26",
+  "startTime": "18:00",
+  "books": [
+    "beautiful-evidence"
+  ],
+  "host": [
+    "erik"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

@@ -1,8 +1,12 @@
 {
   "meetingId": 8,
-  "date": "2024-09-17T23:00:00.000Z",
+  "date": "2024-09-17",
+  "startTime": "18:00",
   "books": [
     "army-of-none"
+  ],
+  "host": [
+    "tom"
   ],
   "type": [
     "Book"

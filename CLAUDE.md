@@ -150,11 +150,28 @@ Primary field is `Award Name` (free-form text). For tracking annual awards. Empt
 
 ## Conventions and Gotchas
 
-### Host = Picker (legacy), Picked by (current)
+### Picker (book) vs host (meeting) — distinct, usually the same
 
-`Meetings.Host` is the historical picker field. As of April 2026 a `Picked by` link field was added directly to the Books table, making the Host traversal unnecessary. The fetch script now reads `Books.Picked by` directly. The field supports multiple members (for books that spanned two meetings/pickers) and may be empty for "group picks".
+These are **two distinct relationships** (don't conflate them, despite the Airtable field
+named `Host` and the old "Host = Picker" shorthand):
 
-`Members.Picked Count` is still a rollup from `Meetings.Host` and remains accurate.
+- **picker** = who *chose the book* — a **book-level** relationship (`club_book_pickers`,
+  M:N, ordered). A book can have **multiple pickers** (e.g. a long book split first-half /
+  second-half between two members). Surfaced as `book.picker[]` in the corpus.
+- **host** = who *ran/hosted the meeting* (and sets its location + time) — a **meeting-level**
+  relationship (`club_meeting_hosts`, M:N, ordered). Surfaced as `meeting.host[]`.
+
+**Default:** a meeting's host is the picker of the book discussed. But they can diverge — one
+host can run a meeting that discusses **two books with two different pickers**. They agree in
+all current historical data, but the model stores them independently.
+
+### Meeting date + time are LOCAL (America/Chicago)
+
+`club_meetings.date` is the **local** meeting date `YYYY-MM-DD` and `start_time` is the local
+`HH:MM` (the club is single-timezone, Minneapolis). The original import stored Airtable's UTC
+instant, which displayed the wrong day for evening meetings (6-7pm local rolls past midnight
+UTC in winter) — `clubdb._migrate_club` normalized them to local. This is what an iCal feed
+(`DTSTART;TZID=America/Chicago`) builds on, so members can subscribe to meeting times.
 
 ### Books-to-Meetings is many-to-many
 

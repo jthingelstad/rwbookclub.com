@@ -1,8 +1,12 @@
 {
   "meetingId": 146,
-  "date": "2008-03-14T23:00:00.000Z",
+  "date": "2008-03-14",
+  "startTime": "18:00",
   "books": [
     "how-doctors-think"
+  ],
+  "host": [
+    "john"
   ],
   "type": [
     "Book"

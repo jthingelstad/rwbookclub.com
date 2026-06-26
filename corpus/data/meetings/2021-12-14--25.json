@@ -1,0 +1,17 @@
+{
+  "meetingId": 25,
+  "date": "2021-12-14",
+  "startTime": "18:30",
+  "books": [
+    "caste"
+  ],
+  "host": [
+    "erik"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Erik's Home",
+  "notes": null,
+  "placeholder": false
+}

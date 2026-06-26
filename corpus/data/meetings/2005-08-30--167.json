@@ -1,8 +1,12 @@
 {
   "meetingId": 167,
-  "date": "2005-08-30T23:00:00.000Z",
+  "date": "2005-08-30",
+  "startTime": "18:00",
   "books": [
     "freakonomics"
+  ],
+  "host": [
+    "david"
   ],
   "type": [
     "Book"

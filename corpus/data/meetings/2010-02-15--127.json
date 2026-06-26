@@ -1,0 +1,17 @@
+{
+  "meetingId": 127,
+  "date": "2010-02-15",
+  "startTime": "18:00",
+  "books": [
+    "creating-a-world-without-poverty"
+  ],
+  "host": [
+    "dan"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

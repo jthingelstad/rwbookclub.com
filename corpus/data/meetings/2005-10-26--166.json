@@ -1,8 +1,12 @@
 {
   "meetingId": 166,
-  "date": "2005-10-26T23:00:00.000Z",
+  "date": "2005-10-26",
+  "startTime": "18:00",
   "books": [
     "the-complexity-of-cooperation"
+  ],
+  "host": [
+    "john"
   ],
   "type": [
     "Book"

@@ -1,8 +1,12 @@
 {
   "meetingId": 86,
-  "date": "2014-08-26T23:00:00.000Z",
+  "date": "2014-08-26",
+  "startTime": "18:00",
   "books": [
     "thinking-in-systems"
+  ],
+  "host": [
+    "tom"
   ],
   "type": [
     "Book"

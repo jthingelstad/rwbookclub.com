@@ -1,8 +1,12 @@
 {
   "meetingId": 184,
-  "date": "2026-06-30T23:30:00.000Z",
+  "date": "2026-06-30",
+  "startTime": "18:30",
   "books": [
     "a-world-appears"
+  ],
+  "host": [
+    "jamie"
   ],
   "type": [
     "Book"

@@ -1,8 +1,12 @@
 {
   "meetingId": 151,
-  "date": "2007-07-26T23:00:00.000Z",
+  "date": "2007-07-26",
+  "startTime": "18:00",
   "books": [
     "beautiful-code"
+  ],
+  "host": [
+    "john"
   ],
   "type": [
     "Book"

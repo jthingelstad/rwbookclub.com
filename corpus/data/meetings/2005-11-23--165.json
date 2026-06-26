@@ -1,0 +1,17 @@
+{
+  "meetingId": 165,
+  "date": "2005-11-23",
+  "startTime": "18:00",
+  "books": [
+    "the-search"
+  ],
+  "host": [
+    "tom"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

@@ -1,9 +1,13 @@
 {
   "meetingId": 15,
-  "date": "2023-07-11T23:00:00.000Z",
+  "date": "2023-07-11",
+  "startTime": "18:00",
   "books": [
     "men-without-work",
     "nation-of-takers"
+  ],
+  "host": [
+    "nick"
   ],
   "type": [
     "Book"

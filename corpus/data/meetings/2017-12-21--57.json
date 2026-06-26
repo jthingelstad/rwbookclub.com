@@ -1,0 +1,17 @@
+{
+  "meetingId": 57,
+  "date": "2017-12-21",
+  "startTime": "18:00",
+  "books": [
+    "daemon"
+  ],
+  "host": [
+    "jamie"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Cafe Alma",
+  "notes": null,
+  "placeholder": false
+}

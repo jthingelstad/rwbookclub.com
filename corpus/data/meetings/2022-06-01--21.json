@@ -1,9 +1,13 @@
 {
   "meetingId": 21,
-  "date": "2022-06-01T23:00:00.000Z",
+  "date": "2022-06-01",
+  "startTime": "18:00",
   "books": [
     "aeschylus-i",
     "the-florentines"
+  ],
+  "host": [
+    "nick"
   ],
   "type": [
     "Book"

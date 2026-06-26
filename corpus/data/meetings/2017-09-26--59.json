@@ -1,8 +1,12 @@
 {
   "meetingId": 59,
-  "date": "2017-09-26T23:00:00.000Z",
+  "date": "2017-09-26",
+  "startTime": "18:00",
   "books": [
     "how-to-live"
+  ],
+  "host": [
+    "tom"
   ],
   "type": [
     "Book"

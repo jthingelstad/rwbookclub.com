@@ -177,7 +177,7 @@ def run_import(*, write: bool = True) -> dict:
     meeting_host_rows = []
     for stem, mt in meetings.items():
         mid = mt["meetingId"]
-        meeting_rows.append((mid, mt.get("date"),
+        meeting_rows.append((mid, mt.get("date"), mt.get("startTime"),
                              json.dumps(mt.get("type") or [], ensure_ascii=False),
                              mt.get("location"), mt.get("notes"),
                              1 if mt.get("placeholder") else 0))
@@ -244,7 +244,7 @@ def run_import(*, write: bool = True) -> dict:
         conn.executemany("INSERT INTO club_books(id,slug,title,subtitle,topic,fiction,publication_year,page_count,isbn13,ol_key,synopsis,subjects_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", book_rows)
         conn.executemany("INSERT INTO club_book_authors(book_id,author_id,ordinal) VALUES (?,?,?)", book_author_rows)
         conn.executemany("INSERT INTO club_book_pickers(book_id,member_id,ordinal) VALUES (?,?,?)", book_picker_rows)
-        conn.executemany("INSERT INTO club_meetings(id,date,type_json,location,notes,placeholder) VALUES (?,?,?,?,?,?)", meeting_rows)
+        conn.executemany("INSERT INTO club_meetings(id,date,start_time,type_json,location,notes,placeholder) VALUES (?,?,?,?,?,?,?)", meeting_rows)
         conn.executemany("INSERT INTO club_meeting_books(meeting_id,book_id,ordinal) VALUES (?,?,?)", meeting_book_rows)
         conn.executemany("INSERT INTO club_meeting_hosts(meeting_id,member_id,ordinal) VALUES (?,?,?)", meeting_host_rows)
         conn.executemany("INSERT INTO club_reviews(id,airtable_id,book_id,member_id,rating,dnf,discussion_quality,would_recommend,favorite_quote,body,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)", review_rows)

@@ -1,0 +1,17 @@
+{
+  "meetingId": 65,
+  "date": "2017-02-22",
+  "startTime": "18:00",
+  "books": [
+    "the-vital-question"
+  ],
+  "host": [
+    "nick"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": "Lake Monster Brewing",
+  "notes": null,
+  "placeholder": false
+}

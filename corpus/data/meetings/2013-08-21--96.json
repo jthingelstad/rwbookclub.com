@@ -1,8 +1,12 @@
 {
   "meetingId": 96,
-  "date": "2013-08-21T23:00:00.000Z",
+  "date": "2013-08-21",
+  "startTime": "18:00",
   "books": [
     "the-real-north-korea"
+  ],
+  "host": [
+    "tom"
   ],
   "type": [
     "Book"

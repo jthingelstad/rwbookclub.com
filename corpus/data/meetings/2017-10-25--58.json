@@ -1,8 +1,12 @@
 {
   "meetingId": 58,
-  "date": "2017-10-25T23:00:00.000Z",
+  "date": "2017-10-25",
+  "startTime": "18:00",
   "books": [
     "a-crack-in-creation"
+  ],
+  "host": [
+    "erik"
   ],
   "type": [
     "Book"

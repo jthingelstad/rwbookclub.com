@@ -1,0 +1,17 @@
+{
+  "meetingId": 48,
+  "date": "2019-01-22",
+  "startTime": "18:00",
+  "books": [
+    "scale"
+  ],
+  "host": [
+    "tom"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

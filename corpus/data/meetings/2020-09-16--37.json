@@ -1,8 +1,12 @@
 {
   "meetingId": 37,
-  "date": "2020-09-16T23:30:00.000Z",
+  "date": "2020-09-16",
+  "startTime": "18:30",
   "books": [
     "bending-adversity"
+  ],
+  "host": [
+    "loren"
   ],
   "type": [
     "Book"

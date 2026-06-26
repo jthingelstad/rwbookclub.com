@@ -1,8 +1,12 @@
 {
   "meetingId": 177,
-  "date": "2004-04-15T23:00:00.000Z",
+  "date": "2004-04-15",
+  "startTime": "18:00",
   "books": [
     "pompeii"
+  ],
+  "host": [
+    "brad"
   ],
   "type": [
     "Book"

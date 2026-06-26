@@ -1,8 +1,12 @@
 {
   "meetingId": 176,
-  "date": "2004-05-16T23:00:00.000Z",
+  "date": "2004-05-16",
+  "startTime": "18:00",
   "books": [
     "over-the-edge-of-the-world"
+  ],
+  "host": [
+    "john"
   ],
   "type": [
     "Book"

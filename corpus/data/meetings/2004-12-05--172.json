@@ -1,0 +1,17 @@
+{
+  "meetingId": 172,
+  "date": "2004-12-05",
+  "startTime": "18:00",
+  "books": [
+    "sailing-alone-around-the-room"
+  ],
+  "host": [
+    "erik"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

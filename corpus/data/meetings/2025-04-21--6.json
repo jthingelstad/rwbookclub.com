@@ -1,7 +1,9 @@
 {
   "meetingId": 6,
-  "date": "2025-04-21T23:30:00.000Z",
+  "date": "2025-04-21",
+  "startTime": "18:30",
   "books": [],
+  "host": [],
   "type": [
     "Picking"
   ],

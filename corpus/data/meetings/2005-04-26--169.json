@@ -1,8 +1,12 @@
 {
   "meetingId": 169,
-  "date": "2005-04-26T23:00:00.000Z",
+  "date": "2005-04-26",
+  "startTime": "18:00",
   "books": [
     "hackers-and-painters"
+  ],
+  "host": [
+    "dan"
   ],
   "type": [
     "Book"

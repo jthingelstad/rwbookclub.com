@@ -1,0 +1,17 @@
+{
+  "meetingId": 110,
+  "date": "2011-12-13",
+  "startTime": "18:00",
+  "books": [
+    "darwin-s-radio"
+  ],
+  "host": [
+    "dan"
+  ],
+  "type": [
+    "Book"
+  ],
+  "location": null,
+  "notes": null,
+  "placeholder": false
+}

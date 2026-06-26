@@ -65,9 +65,18 @@ def _seed_club_from_corpus():
                     )
         for mt in cr.meetings():
             conn.execute(
-                "INSERT OR IGNORE INTO club_meetings(id, date, placeholder) VALUES (?, ?, ?)",
-                (mt["meetingId"], mt.get("date"), 1 if mt.get("placeholder") else 0),
+                "INSERT OR IGNORE INTO club_meetings(id, date, start_time, placeholder) "
+                "VALUES (?, ?, ?, ?)",
+                (mt["meetingId"], mt.get("date"), mt.get("startTime"),
+                 1 if mt.get("placeholder") else 0),
             )
+            for j, hslug in enumerate(mt.get("host") or []):
+                if hslug in member_id:
+                    conn.execute(
+                        "INSERT OR IGNORE INTO club_meeting_hosts(meeting_id, member_id, ordinal) "
+                        "VALUES (?, ?, ?)",
+                        (mt["meetingId"], member_id[hslug], j),
+                    )
             for j, bslug in enumerate(mt.get("books") or []):
                 row = conn.execute("SELECT id FROM club_books WHERE slug = ?", (bslug,)).fetchone()
                 if row:

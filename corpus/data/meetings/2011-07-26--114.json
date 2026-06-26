@@ -1,8 +1,12 @@
 {
   "meetingId": 114,
-  "date": "2011-07-26T23:00:00.000Z",
+  "date": "2011-07-26",
+  "startTime": "18:00",
   "books": [
     "ant-encounters"
+  ],
+  "host": [
+    "jamie"
   ],
   "type": [
     "Book"

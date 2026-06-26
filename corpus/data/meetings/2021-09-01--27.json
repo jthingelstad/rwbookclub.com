@@ -1,8 +1,12 @@
 {
   "meetingId": 27,
-  "date": "2021-09-01T23:00:00.000Z",
+  "date": "2021-09-01",
+  "startTime": "18:00",
   "books": [
     "evicted"
+  ],
+  "host": [
+    "loren"
   ],
   "type": [
     "Book"

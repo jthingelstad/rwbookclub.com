@@ -1,0 +1,15 @@
+{
+  "meetingId": 131,
+  "date": "2009-11-01",
+  "startTime": "18:00",
+  "books": [],
+  "host": [
+    "john"
+  ],
+  "type": [
+    "Movie"
+  ],
+  "location": null,
+  "notes": "<outing to see District 9>",
+  "placeholder": false
+}

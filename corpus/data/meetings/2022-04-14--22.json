@@ -1,8 +1,12 @@
 {
   "meetingId": 22,
-  "date": "2022-04-14T23:00:00.000Z",
+  "date": "2022-04-14",
+  "startTime": "18:00",
   "books": [
     "empire-of-pain"
+  ],
+  "host": [
+    "loren"
   ],
   "type": [
     "Book"

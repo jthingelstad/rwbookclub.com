@@ -1,8 +1,12 @@
 {
   "meetingId": 63,
-  "date": "2017-04-24T23:00:00.000Z",
+  "date": "2017-04-24",
+  "startTime": "18:00",
   "books": [
     "norse-mythology"
+  ],
+  "host": [
+    "erik"
   ],
   "type": [
     "Book"
