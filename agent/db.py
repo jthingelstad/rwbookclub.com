@@ -37,23 +37,20 @@ CREATE TABLE IF NOT EXISTS memories (
 );
 CREATE INDEX IF NOT EXISTS idx_memories_subject ON memories(subject);
 
+-- One identity map for every way we recognize / reach a member: Discord ids AND email
+-- addresses (the single email store). Keyed by member_id FK — slug is never stored here.
 CREATE TABLE IF NOT EXISTS member_identities (
-    discord_user_id TEXT PRIMARY KEY,
-    member_slug     TEXT NOT NULL,
-    linked_by       TEXT,
-    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS idx_member_identities_slug ON member_identities(member_slug);
-
-CREATE TABLE IF NOT EXISTS member_emails (
-    email       TEXT PRIMARY KEY,
-    member_slug TEXT NOT NULL,
+    surface     TEXT NOT NULL,               -- 'discord' | 'email'
+    identifier  TEXT NOT NULL,               -- discord user id | normalized email address
+    member_id   INTEGER NOT NULL REFERENCES club_members(id),
+    is_primary  INTEGER NOT NULL DEFAULT 0,  -- canonical handle/address per (member, surface)
     linked_by   TEXT,
     created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (surface, identifier)
 );
-CREATE INDEX IF NOT EXISTS idx_member_emails_slug ON member_emails(member_slug);
+-- member_id indexes for these tables are created post-migration (see _ensure_member_indexes),
+-- because on a pre-migration DB the member_id column doesn't exist yet.
 
 CREATE TABLE IF NOT EXISTS conversations (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -241,19 +238,17 @@ CREATE INDEX IF NOT EXISTS idx_email_opens_token ON email_opens(token, opened_at
 CREATE TABLE IF NOT EXISTS mail_participants (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     display_name      TEXT,
-    member_slug       TEXT,
+    member_id         INTEGER REFERENCES club_members(id),  -- NULL for lists/unknown senders
     participant_type  TEXT NOT NULL DEFAULT 'person', -- person | list | system | unknown
-    membership_status TEXT,
     notes             TEXT,
     created_at        TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at        TEXT NOT NULL DEFAULT (datetime('now'))
 );
-CREATE INDEX IF NOT EXISTS idx_mail_participants_slug ON mail_participants(member_slug);
+-- idx_mail_participants_member created post-migration (member_id may be added by migration)
 
 CREATE TABLE IF NOT EXISTS mail_participant_addresses (
     email          TEXT PRIMARY KEY,
     participant_id INTEGER NOT NULL,
-    member_slug    TEXT,
     display_name   TEXT,
     source         TEXT NOT NULL,
     confidence     REAL NOT NULL DEFAULT 1.0,
@@ -263,21 +258,19 @@ CREATE TABLE IF NOT EXISTS mail_participant_addresses (
 );
 CREATE INDEX IF NOT EXISTS idx_mail_participant_addresses_participant
     ON mail_participant_addresses(participant_id);
-CREATE INDEX IF NOT EXISTS idx_mail_participant_addresses_slug
-    ON mail_participant_addresses(member_slug);
 
 CREATE TABLE IF NOT EXISTS identity_claims (
-    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
-    surface               TEXT NOT NULL,
-    identifier            TEXT NOT NULL,
-    display_name          TEXT,
-    candidate_member_slug TEXT,
-    confidence            REAL,
-    status                TEXT NOT NULL DEFAULT 'pending',
-    evidence_json         TEXT,
-    created_at            TEXT NOT NULL DEFAULT (datetime('now')),
-    resolved_at           TEXT,
-    resolved_by           TEXT
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    surface             TEXT NOT NULL,
+    identifier          TEXT NOT NULL,
+    display_name        TEXT,
+    candidate_member_id INTEGER REFERENCES club_members(id),
+    confidence          REAL,
+    status              TEXT NOT NULL DEFAULT 'pending',
+    evidence_json       TEXT,
+    created_at          TEXT NOT NULL DEFAULT (datetime('now')),
+    resolved_at         TEXT,
+    resolved_by         TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_identity_claims_status ON identity_claims(status, created_at);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_identity_claims_unique_pending
@@ -310,7 +303,7 @@ CREATE TABLE IF NOT EXISTS mail_messages (
     sender_participant_id      INTEGER,
     from_email                 TEXT,
     from_name                  TEXT,
-    member_slug                TEXT,
+    member_id                  INTEGER REFERENCES club_members(id),
     to_json                    TEXT,
     cc_json                    TEXT,
     reply_to_json              TEXT,
@@ -328,7 +321,7 @@ CREATE TABLE IF NOT EXISTS mail_messages (
     FOREIGN KEY(thread_id) REFERENCES mail_threads(thread_id)
 );
 CREATE INDEX IF NOT EXISTS idx_mail_messages_thread_sent ON mail_messages(thread_id, sent_at);
-CREATE INDEX IF NOT EXISTS idx_mail_messages_member_sent ON mail_messages(member_slug, sent_at);
+CREATE INDEX IF NOT EXISTS idx_mail_messages_member_sent ON mail_messages(member_id, sent_at);
 CREATE INDEX IF NOT EXISTS idx_mail_messages_from_email ON mail_messages(from_email);
 CREATE INDEX IF NOT EXISTS idx_mail_messages_sent_at ON mail_messages(sent_at);
 CREATE INDEX IF NOT EXISTS idx_mail_messages_inbound_email
@@ -506,12 +499,107 @@ def migrate_ops_to_fk(conn: sqlite3.Connection) -> None:
         raise RuntimeError(f"ops FK migration left dangling references: {[tuple(r) for r in dangling]}")
 
 
+def migrate_identity_to_fk(conn: sqlite3.Connection) -> None:
+    """One-time: move the identity/mail subsystem onto integer member_id FKs.
+
+    - Fold member_identities (Discord) + member_emails into ONE member_identities table
+      keyed by (surface, identifier) → member_id (the single email store; is_primary marks
+      the canonical address that was club_members.email).
+    - mail_participants / mail_messages / identity_claims: member_slug → member_id
+      (nullable — lists/unknown senders have none). mail_participant_addresses drops its
+      redundant member_slug (resolve via participant.member_id).
+    - Drop the now-dead club_members.email / .mobile (the address lives in member_identities).
+    Guarded on the old member_identities schema; idempotent.
+    """
+    if "discord_user_id" not in _columns(conn, "member_identities"):
+        return  # already unified
+    if not (_table_exists(conn, "club_members") and _table_exists(conn, "member_emails")):
+        return
+    sid = "(SELECT id FROM club_members WHERE slug = o.member_slug)"
+    for tbl in ("member_identities", "member_emails"):
+        bad = conn.execute(
+            f"SELECT COUNT(*) c FROM {tbl} o WHERE {sid} IS NULL"
+        ).fetchone()["c"]
+        if bad:
+            raise RuntimeError(f"identity migration: {bad} {tbl} rows do not map to a club member")
+
+    conn.commit()
+    conn.execute("PRAGMA foreign_keys=OFF")
+    try:
+        conn.executescript(f"""
+        CREATE TABLE member_identities_new (
+            surface TEXT NOT NULL, identifier TEXT NOT NULL,
+            member_id INTEGER NOT NULL REFERENCES club_members(id),
+            is_primary INTEGER NOT NULL DEFAULT 0, linked_by TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+            PRIMARY KEY (surface, identifier));
+        INSERT INTO member_identities_new(surface, identifier, member_id, is_primary, linked_by, created_at, updated_at)
+            SELECT 'discord', o.discord_user_id, {sid}, 0, o.linked_by, o.created_at, o.updated_at
+            FROM member_identities o;
+        INSERT INTO member_identities_new(surface, identifier, member_id, is_primary, linked_by, created_at, updated_at)
+            SELECT 'email', o.email, {sid},
+                   CASE WHEN (SELECT email FROM club_members WHERE slug = o.member_slug) = o.email THEN 1 ELSE 0 END,
+                   o.linked_by, o.created_at, o.updated_at
+            FROM member_emails o;
+        -- Don't lose any club_members.email that wasn't already in member_emails (e.g. dan's,
+        -- a former member). Add as a primary; OR IGNORE skips ones already folded above.
+        INSERT OR IGNORE INTO member_identities_new(surface, identifier, member_id, is_primary, linked_by, created_at, updated_at)
+            SELECT 'email', m.email, m.id, 1, 'club_members.email', datetime('now'), datetime('now')
+            FROM club_members m WHERE m.email IS NOT NULL;
+        DROP TABLE member_identities;
+        DROP TABLE member_emails;
+        ALTER TABLE member_identities_new RENAME TO member_identities;
+        CREATE INDEX IF NOT EXISTS idx_member_identities_member ON member_identities(member_id, surface);
+
+        DROP INDEX IF EXISTS idx_mail_participants_slug;
+        ALTER TABLE mail_participants ADD COLUMN member_id INTEGER REFERENCES club_members(id);
+        UPDATE mail_participants SET member_id = (SELECT id FROM club_members WHERE slug = member_slug);
+        ALTER TABLE mail_participants DROP COLUMN member_slug;
+        ALTER TABLE mail_participants DROP COLUMN membership_status;
+        CREATE INDEX IF NOT EXISTS idx_mail_participants_member ON mail_participants(member_id);
+
+        DROP INDEX IF EXISTS idx_mail_participant_addresses_slug;
+        ALTER TABLE mail_participant_addresses DROP COLUMN member_slug;
+
+        DROP INDEX IF EXISTS idx_mail_messages_member_sent;
+        ALTER TABLE mail_messages ADD COLUMN member_id INTEGER REFERENCES club_members(id);
+        UPDATE mail_messages SET member_id = (SELECT id FROM club_members WHERE slug = member_slug);
+        ALTER TABLE mail_messages DROP COLUMN member_slug;
+        CREATE INDEX IF NOT EXISTS idx_mail_messages_member_sent ON mail_messages(member_id, sent_at);
+
+        ALTER TABLE identity_claims ADD COLUMN candidate_member_id INTEGER REFERENCES club_members(id);
+        UPDATE identity_claims SET candidate_member_id = (SELECT id FROM club_members WHERE slug = candidate_member_slug);
+        ALTER TABLE identity_claims DROP COLUMN candidate_member_slug;
+
+        ALTER TABLE club_members DROP COLUMN email;
+        ALTER TABLE club_members DROP COLUMN mobile;
+        """)
+        conn.commit()
+    finally:
+        conn.execute("PRAGMA foreign_keys=ON")
+    dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
+    if dangling:
+        raise RuntimeError(f"identity migration left dangling references: {[tuple(r) for r in dangling]}")
+
+
+def _ensure_member_indexes(conn: sqlite3.Connection) -> None:
+    """Indexes on member_id columns that only exist once the table is in its new shape
+    (fresh DB via _SCHEMA, or existing DB via migrate_identity_to_fk). Safe + idempotent."""
+    if "member_id" in _columns(conn, "member_identities"):
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_member_identities_member ON member_identities(member_id, surface)")
+    if "member_id" in _columns(conn, "mail_participants"):
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_mail_participants_member ON mail_participants(member_id)")
+
+
 def _ensure_schema() -> None:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with connect() as conn:
         conn.executescript(_SCHEMA)
         _migrate(conn)
         migrate_ops_to_fk(conn)
+        migrate_identity_to_fk(conn)
+        _ensure_member_indexes(conn)
 
 
 _ensure_schema()
@@ -571,16 +659,45 @@ def delete_memory(memory_id: int) -> bool:
         return cur.rowcount > 0
 
 
-# ── Discord identity map ─────────────────────────────────────────────────────
-def link_member_identity(discord_user_id: str, member_slug: str, *, linked_by: str | None = None) -> None:
+# ── Member identity map (one table: Discord ids + emails → member_id) ─────────
+# Storage is keyed by member_id (FK to club_members); the helpers keep a slug-based
+# interface because callers build a 'member:<slug>' speaker string / look up the corpus
+# member by slug. Slug↔id is resolved at this boundary, ids are the stored link.
+def _member_id_for_slug(conn: sqlite3.Connection, slug: str | None) -> int | None:
+    if not slug:
+        return None
+    r = conn.execute("SELECT id FROM club_members WHERE slug = ?", (slug,)).fetchone()
+    return r["id"] if r else None
+
+
+def link_identity(surface: str, identifier: str, member_slug: str, *,
+                  is_primary: bool = False, linked_by: str | None = None) -> None:
     with connect() as conn:
+        mid = _member_id_for_slug(conn, member_slug)
+        if mid is None:
+            raise ValueError(f"no club member with slug {member_slug!r}")
         conn.execute(
-            "INSERT INTO member_identities (discord_user_id, member_slug, linked_by, updated_at) "
-            "VALUES (?, ?, ?, ?) ON CONFLICT(discord_user_id) DO UPDATE SET "
-            "member_slug=excluded.member_slug, linked_by=excluded.linked_by, "
-            "updated_at=excluded.updated_at",
-            (discord_user_id, member_slug, linked_by, _now()),
+            "INSERT INTO member_identities (surface, identifier, member_id, is_primary, linked_by, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(surface, identifier) DO UPDATE SET "
+            "member_id=excluded.member_id, is_primary=excluded.is_primary, "
+            "linked_by=excluded.linked_by, updated_at=excluded.updated_at",
+            (surface, identifier, mid, 1 if is_primary else 0, linked_by, _now()),
         )
+
+
+def member_id_for_identity(surface: str, identifier: str | None) -> int | None:
+    if not identifier:
+        return None
+    with connect() as conn:
+        r = conn.execute(
+            "SELECT member_id FROM member_identities WHERE surface = ? AND identifier = ?",
+            (surface, identifier),
+        ).fetchone()
+    return r["member_id"] if r else None
+
+
+def link_member_identity(discord_user_id: str, member_slug: str, *, linked_by: str | None = None) -> None:
+    link_identity("discord", discord_user_id, member_slug, linked_by=linked_by)
 
 
 def member_slug_for_user(discord_user_id: str | None) -> str | None:
@@ -588,27 +705,21 @@ def member_slug_for_user(discord_user_id: str | None) -> str | None:
         return None
     with connect() as conn:
         row = conn.execute(
-            "SELECT member_slug FROM member_identities WHERE discord_user_id = ?",
+            "SELECT m.slug FROM member_identities mi JOIN club_members m ON m.id = mi.member_id "
+            "WHERE mi.surface = 'discord' AND mi.identifier = ?",
             (discord_user_id,),
         ).fetchone()
-    return row["member_slug"] if row else None
-
-
-def identity_for_member(member_slug: str) -> dict | None:
-    with connect() as conn:
-        row = conn.execute(
-            "SELECT discord_user_id, member_slug, linked_by, created_at, updated_at "
-            "FROM member_identities WHERE member_slug = ? ORDER BY updated_at DESC LIMIT 1",
-            (member_slug,),
-        ).fetchone()
-    return dict(row) if row else None
+    return row["slug"] if row else None
 
 
 def list_member_identities() -> list[dict]:
+    """Discord links with member_slug projected (callers + admin display)."""
     with connect() as conn:
         rows = conn.execute(
-            "SELECT discord_user_id, member_slug, linked_by, created_at, updated_at "
-            "FROM member_identities ORDER BY member_slug"
+            "SELECT mi.identifier AS discord_user_id, m.slug AS member_slug, "
+            "mi.linked_by, mi.created_at, mi.updated_at "
+            "FROM member_identities mi JOIN club_members m ON m.id = mi.member_id "
+            "WHERE mi.surface = 'discord' ORDER BY m.slug"
         ).fetchall()
     return [dict(r) for r in rows]
 
@@ -617,18 +728,12 @@ def _normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
-def link_member_email(email: str, member_slug: str, *, linked_by: str | None = None) -> None:
+def link_member_email(email: str, member_slug: str, *, linked_by: str | None = None,
+                      is_primary: bool = False) -> None:
     email = _normalize_email(email)
     if not email or "@" not in email:
         raise ValueError("email must look like an email address")
-    with connect() as conn:
-        conn.execute(
-            "INSERT INTO member_emails (email, member_slug, linked_by, updated_at) "
-            "VALUES (?, ?, ?, ?) ON CONFLICT(email) DO UPDATE SET "
-            "member_slug=excluded.member_slug, linked_by=excluded.linked_by, "
-            "updated_at=excluded.updated_at",
-            (email, member_slug, linked_by, _now()),
-        )
+    link_identity("email", email, member_slug, is_primary=is_primary, linked_by=linked_by)
 
 
 def member_slug_for_email(email: str | None) -> str | None:
@@ -636,27 +741,45 @@ def member_slug_for_email(email: str | None) -> str | None:
         return None
     with connect() as conn:
         row = conn.execute(
-            "SELECT member_slug FROM member_emails WHERE email = ?",
+            "SELECT m.slug FROM member_identities mi JOIN club_members m ON m.id = mi.member_id "
+            "WHERE mi.surface = 'email' AND mi.identifier = ?",
             (_normalize_email(email),),
         ).fetchone()
-    return row["member_slug"] if row else None
+    return row["slug"] if row else None
 
 
 def email_for_member(member_slug: str) -> dict | None:
+    """The member's primary email as {email, member_slug}, or None. Primary first."""
     with connect() as conn:
         row = conn.execute(
-            "SELECT email, member_slug, linked_by, created_at, updated_at "
-            "FROM member_emails WHERE member_slug = ? ORDER BY updated_at DESC LIMIT 1",
+            "SELECT mi.identifier AS email, m.slug AS member_slug, mi.is_primary, mi.linked_by "
+            "FROM member_identities mi JOIN club_members m ON m.id = mi.member_id "
+            "WHERE mi.surface = 'email' AND m.slug = ? "
+            "ORDER BY mi.is_primary DESC, mi.updated_at DESC LIMIT 1",
             (member_slug,),
         ).fetchone()
     return dict(row) if row else None
 
 
+def emails_for_member(member_slug: str) -> list[str]:
+    """All of a member's email addresses, primary first."""
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT mi.identifier AS email FROM member_identities mi "
+            "JOIN club_members m ON m.id = mi.member_id "
+            "WHERE mi.surface = 'email' AND m.slug = ? ORDER BY mi.is_primary DESC, mi.identifier",
+            (member_slug,),
+        ).fetchall()
+    return [r["email"] for r in rows]
+
+
 def list_member_emails() -> list[dict]:
     with connect() as conn:
         rows = conn.execute(
-            "SELECT email, member_slug, linked_by, created_at, updated_at "
-            "FROM member_emails ORDER BY member_slug, email"
+            "SELECT mi.identifier AS email, m.slug AS member_slug, mi.is_primary, "
+            "mi.linked_by, mi.created_at, mi.updated_at "
+            "FROM member_identities mi JOIN club_members m ON m.id = mi.member_id "
+            "WHERE mi.surface = 'email' ORDER BY m.slug, mi.identifier"
         ).fetchall()
     return [dict(r) for r in rows]
 
@@ -673,9 +796,12 @@ def _upsert_mail_participant(conn: sqlite3.Connection, *, email: str | None,
                              member_slug: str | None = None,
                              source: str = "historical_import",
                              participant_type: str = "person",
-                             membership_status: str | None = None,
                              confidence: float = 1.0) -> int | None:
+    """Resolve/create the archive participant for a sender. member_slug (when the sender is
+    a known member) is stored as member_id; member-ness/current-ness derives from that FK,
+    so there's no separate membership_status and addresses don't re-store the member."""
     normalized_email = _normalize_email(email) if email else None
+    member_id = _member_id_for_slug(conn, member_slug)
     participant_id: int | None = None
     if normalized_email:
         row = conn.execute(
@@ -684,62 +810,42 @@ def _upsert_mail_participant(conn: sqlite3.Connection, *, email: str | None,
         ).fetchone()
         if row:
             participant_id = int(row["participant_id"])
-    if participant_id is None and member_slug:
+    if participant_id is None and member_id is not None:
         row = conn.execute(
-            "SELECT id FROM mail_participants WHERE member_slug = ? "
-            "ORDER BY updated_at DESC LIMIT 1",
-            (member_slug,),
+            "SELECT id FROM mail_participants WHERE member_id = ? ORDER BY updated_at DESC LIMIT 1",
+            (member_id,),
         ).fetchone()
         if row:
             participant_id = int(row["id"])
     now = _now()
     if participant_id is None:
-        status = membership_status or ("current" if member_slug else "historical")
         cur = conn.execute(
-            "INSERT INTO mail_participants "
-            "(display_name, member_slug, participant_type, membership_status, updated_at) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (display_name, member_slug, participant_type, status, now),
+            "INSERT INTO mail_participants (display_name, member_id, participant_type, updated_at) "
+            "VALUES (?, ?, ?, ?)",
+            (display_name, member_id, participant_type, now),
         )
         participant_id = int(cur.lastrowid)
     else:
         conn.execute(
             "UPDATE mail_participants SET "
             "display_name = COALESCE(?, display_name), "
-            "member_slug = COALESCE(?, member_slug), "
+            "member_id = COALESCE(?, member_id), "
             "participant_type = COALESCE(?, participant_type), "
-            "membership_status = COALESCE(?, membership_status), "
             "updated_at = ? WHERE id = ?",
-            (display_name, member_slug, participant_type, membership_status, now, participant_id),
+            (display_name, member_id, participant_type, now, participant_id),
         )
     if normalized_email:
         conn.execute(
             "INSERT INTO mail_participant_addresses "
-            "(email, participant_id, member_slug, display_name, source, confidence, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?) "
+            "(email, participant_id, display_name, source, confidence, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?) "
             "ON CONFLICT(email) DO UPDATE SET "
             "participant_id=excluded.participant_id, "
-            "member_slug=COALESCE(excluded.member_slug, mail_participant_addresses.member_slug), "
             "display_name=COALESCE(excluded.display_name, mail_participant_addresses.display_name), "
             "source=excluded.source, confidence=excluded.confidence, updated_at=excluded.updated_at",
-            (normalized_email, participant_id, member_slug, display_name, source, confidence, now),
+            (normalized_email, participant_id, display_name, source, confidence, now),
         )
     return participant_id
-
-
-def mail_participant_for_address(email: str | None) -> dict | None:
-    if not email:
-        return None
-    with connect() as conn:
-        row = conn.execute(
-            "SELECT a.email, a.participant_id, a.member_slug, a.display_name, "
-            "a.source, a.confidence, p.participant_type, p.membership_status "
-            "FROM mail_participant_addresses a "
-            "JOIN mail_participants p ON p.id = a.participant_id "
-            "WHERE a.email = ?",
-            (_normalize_email(email),),
-        ).fetchone()
-    return dict(row) if row else None
 
 
 def add_identity_claim(*, surface: str, identifier: str,
@@ -748,12 +854,13 @@ def add_identity_claim(*, surface: str, identifier: str,
                        confidence: float | None = None,
                        evidence: dict | None = None) -> int:
     with connect() as conn:
+        candidate_member_id = _member_id_for_slug(conn, candidate_member_slug)
         cur = conn.execute(
             "INSERT OR IGNORE INTO identity_claims "
-            "(surface, identifier, display_name, candidate_member_slug, confidence, evidence_json) "
+            "(surface, identifier, display_name, candidate_member_id, confidence, evidence_json) "
             "VALUES (?, ?, ?, ?, ?, ?)",
             (
-                surface, identifier, display_name, candidate_member_slug,
+                surface, identifier, display_name, candidate_member_id,
                 confidence, _json_or_none(evidence),
             ),
         )
@@ -778,6 +885,7 @@ def upsert_mail_message(message: dict) -> bool:
     from_email = _normalize_email(message.get("from_email") or "") or None
     member_slug = message.get("member_slug")
     with connect() as conn:
+        member_id = _member_id_for_slug(conn, member_slug)
         existed = conn.execute(
             "SELECT 1 FROM mail_messages WHERE message_id = ?",
             (message_id,),
@@ -805,7 +913,7 @@ def upsert_mail_message(message: dict) -> bool:
         cols = [
             "message_id", "thread_id", "parent_message_id", "source", "source_ref",
             "list_id", "sender_participant_id", "from_email", "from_name",
-            "member_slug", "to_json", "cc_json", "reply_to_json", "subject",
+            "member_id", "to_json", "cc_json", "reply_to_json", "subject",
             "sent_at", "received_at", "body_text", "body_clean", "body_html",
             "attachments_json", "headers_json", "processed_inbound_email_id",
         ]
@@ -819,7 +927,7 @@ def upsert_mail_message(message: dict) -> bool:
             "sender_participant_id": participant_id,
             "from_email": from_email,
             "from_name": message.get("from_name"),
-            "member_slug": member_slug,
+            "member_id": member_id,
             "to_json": _json_or_none(message.get("to")),
             "cc_json": _json_or_none(message.get("cc")),
             "reply_to_json": _json_or_none(message.get("reply_to")),
@@ -871,10 +979,12 @@ def rebuild_mail_thread_stats() -> None:
             ).fetchone()
             participants = [
                 dict(r) for r in conn.execute(
-                    "SELECT member_slug, from_email, from_name, COUNT(*) AS message_count "
-                    "FROM mail_messages WHERE thread_id = ? "
-                    "GROUP BY member_slug, from_email, from_name "
-                    "ORDER BY message_count DESC, from_email",
+                    "SELECT cm.slug AS member_slug, mm.from_email, mm.from_name, "
+                    "COUNT(*) AS message_count "
+                    "FROM mail_messages mm LEFT JOIN club_members cm ON cm.id = mm.member_id "
+                    "WHERE mm.thread_id = ? "
+                    "GROUP BY cm.slug, mm.from_email, mm.from_name "
+                    "ORDER BY message_count DESC, mm.from_email",
                     (thread_id,),
                 )
             ]
@@ -913,15 +1023,16 @@ def search_mail_archive(query: str, *, member_slug: str | None = None,
     limit = max(1, min(int(limit), 20))
     sql = (
         "SELECT m.message_id, m.thread_id, m.subject, m.from_name, m.from_email, "
-        "m.member_slug, m.sent_at, m.received_at, "
+        "cm.slug AS member_slug, m.sent_at, m.received_at, "
         "snippet(mail_message_fts, 4, '[', ']', ' ... ', 18) AS snippet "
         "FROM mail_message_fts JOIN mail_messages m "
         "ON m.message_id = mail_message_fts.message_id "
+        "LEFT JOIN club_members cm ON cm.id = m.member_id "
         "WHERE mail_message_fts MATCH ?"
     )
     args: list = [match]
     if member_slug:
-        sql += " AND m.member_slug = ?"; args.append(member_slug)
+        sql += " AND m.member_id = (SELECT id FROM club_members WHERE slug = ?)"; args.append(member_slug)
     if year_from:
         sql += " AND m.sent_at >= ?"; args.append(f"{int(year_from):04d}-01-01")
     if year_to:
@@ -942,9 +1053,10 @@ def get_mail_thread(thread_id: str, *, limit: int = 50) -> dict | None:
         if not thread:
             return None
         rows = conn.execute(
-            "SELECT message_id, from_name, from_email, member_slug, subject, sent_at, "
-            "body_clean FROM mail_messages WHERE thread_id = ? "
-            "ORDER BY sent_at ASC, message_id ASC LIMIT ?",
+            "SELECT m.message_id, m.from_name, m.from_email, cm.slug AS member_slug, "
+            "m.subject, m.sent_at, m.body_clean FROM mail_messages m "
+            "LEFT JOIN club_members cm ON cm.id = m.member_id "
+            "WHERE m.thread_id = ? ORDER BY m.sent_at ASC, m.message_id ASC LIMIT ?",
             (thread_id, limit),
         ).fetchall()
     return {"thread": dict(thread), "messages": [dict(r) for r in rows]}

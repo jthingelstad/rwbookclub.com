@@ -61,7 +61,7 @@ class TestMemberIdentities:
         db.link_member_identity("123", "jamie", linked_by="admin")
         assert db.member_slug_for_user("123") == "jamie"
         assert db.member_slug_for_user("999") is None
-        row = db.identity_for_member("jamie")
+        row = next(r for r in db.list_member_identities() if r["member_slug"] == "jamie")
         assert row["discord_user_id"] == "123"
         assert row["linked_by"] == "admin"
 

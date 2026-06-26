@@ -34,9 +34,8 @@ CREATE TABLE IF NOT EXISTS club_members (
     slug        TEXT NOT NULL UNIQUE,       -- corpus filename stem (output only)
     name        TEXT NOT NULL,
     is_current  INTEGER NOT NULL DEFAULT 0,
-    website     TEXT,
-    email       TEXT,                       -- recovered from Airtable (corpus dropped it)
-    mobile      TEXT
+    website     TEXT
+    -- contact addresses live in member_identities (surface='email'); see db.py
 );
 
 CREATE TABLE IF NOT EXISTS club_authors (

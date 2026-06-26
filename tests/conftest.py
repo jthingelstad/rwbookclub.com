@@ -37,10 +37,12 @@ def _seed_club_from_corpus():
     from agent import db as _db
     clubdb.ensure_schema()
     with _db.connect() as conn:
-        # Clear the ops tables that FK into club_* first, so deleting club rows can't
-        # trip a foreign-key constraint from a prior test's leftover ops rows.
+        # Clear everything that FKs into club_members / club_meetings first, so deleting
+        # club rows can't trip a foreign-key constraint from a prior test's leftover rows.
         for t in ("email_opens", "email_tracking", "member_contacts",
-                  "reading_statuses", "meeting_attendance", "roll_calls"):
+                  "reading_statuses", "meeting_attendance", "roll_calls",
+                  "mail_message_fts", "mail_messages", "mail_participant_addresses",
+                  "mail_participants", "identity_claims", "member_identities"):
             conn.execute(f"DELETE FROM {t}")
         for t in reversed(clubdb.CLUB_TABLES):
             conn.execute(f"DELETE FROM {t}")
@@ -97,7 +99,7 @@ def fresh_db():
         "usage_log", "notifications_sent", "responses", "feedback",
         "member_identities", "meeting_attendance", "roll_calls", "proposals",
         "inbound_emails",
-        "member_emails", "reading_statuses",
+        "reading_statuses",
         "activity_events",
         "email_opens", "email_tracking", "member_contacts",
         "mail_message_fts", "mail_messages", "mail_threads",
