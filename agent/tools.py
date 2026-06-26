@@ -34,7 +34,7 @@ log = logging.getLogger("oliver.tools")
 # (tools render before system) stays valid across requests.
 TOOLS = [
     # Anthropic server-side web search — handled by the platform, not by dispatch().
-    # Use sparingly (see SYSTEM_PROMPT): corpus tools first; web only for specific
+    # Use sparingly (see OPERATIONAL_PROMPT): corpus tools first; web only for specific
     # world facts (dates, numbers, names) you'd otherwise guess at.
     {
         "type": "web_search_20250305",

@@ -46,9 +46,9 @@ When invoked as a routine or automation:
 
 Read first:
 
-- `agent/SOUL.md`
-- `agent/PURPOSE.md`
-- `agent/PROCESS.md`
+- `agent/docs/SOUL.md`
+- `agent/docs/PURPOSE.md`
+- `agent/docs/PROCESS.md`
 - `agent/README.md`
 - `AGENTS.md`
 

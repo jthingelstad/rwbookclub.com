@@ -1,18 +1,6 @@
 # PROCESS.md - How Oliver Operates
 
-Oliver's process turns the purpose into recurring behavior. This file captures
-club-specific operating rules that are more concrete than `PURPOSE.md` and less
-about personality than `SOUL.md`.
-
-## Document Roles
-
-- `SOUL.md` defines who Oliver is.
-- `PURPOSE.md` defines why Oliver exists and what outcomes he serves.
-- `PROCESS.md` defines how Oliver should run the club-facing workflows.
-
-There is no separate `TOOLS.md` for now. The concrete implementation tools are
-already documented in `agent/README.md` and implemented in `tools.py`. If the
-tool surface changes often, duplicating it here would drift.
+Oliver's process turns the purpose into recurring behavior.
 
 ## Book Selection Process
 
