@@ -26,9 +26,19 @@ def _picks_by_slug() -> Counter:
     return picks
 
 
+def _hosts_by_slug() -> Counter:
+    """Career meetings-hosted count per member slug (derived from meetings.host)."""
+    hosts: Counter = Counter()
+    for mt in cr.meetings():
+        for slug in (mt.get("host") or []):
+            hosts[slug] += 1
+    return hosts
+
+
 def club_context() -> str:
     stats = cr.club_stats()
     picks = _picks_by_slug()
+    hosts = _hosts_by_slug()
     current = sorted(
         (m for m in cr.members() if m.get("isCurrent")),
         key=lambda m: picks[m.get("slug")],
@@ -44,8 +54,11 @@ def club_context() -> str:
         f"({stats['nonfiction']} non-fiction, {stats['fiction']} fiction), "
         f"{stats['firstYear']}–{stats['lastYear']}.",
         "Top topics: " + ", ".join(f"{t} ({n})" for t, n in stats["topics"][:6]) + ".",
-        "Current members (by picks): "
-        + ", ".join(f"{m['name']} ({picks[m.get('slug')]})" for m in current) + ".",
+        "Current members (picks / meetings hosted): "
+        + ", ".join(
+            f"{m['name']} ({picks[m.get('slug')]} picks, {hosts[m.get('slug')]} hosted)"
+            for m in current
+        ) + ".",
     ]
     if upcoming:
         nxt = "; ".join(

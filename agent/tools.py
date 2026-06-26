@@ -123,7 +123,7 @@ TOOLS = [
     },
     {
         "name": "member_history",
-        "description": "A member's picks and reviews. Use for 'what has Tom picked', 'what did Jamie think of things'.",
+        "description": "A member's picks, the meetings they hosted, and their reviews. Use for 'what has Tom picked', 'how many meetings has Erik hosted', 'what did Jamie think of things'.",
         "input_schema": {
             "type": "object",
             "properties": {"member": {"type": "string", "description": "member name or slug"}},
@@ -151,7 +151,7 @@ TOOLS = [
     },
     {
         "name": "club_stats",
-        "description": "Aggregate stats: totals, topic mix, fiction split, books-by-year, picker leaderboard, page stats.",
+        "description": "Aggregate stats: totals, topic mix, fiction split, books-by-year, picker leaderboard, host leaderboard (meetings hosted per member), page stats.",
         "input_schema": {"type": "object", "properties": {}},
     },
     {

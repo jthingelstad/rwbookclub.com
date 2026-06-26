@@ -215,6 +215,10 @@ def _migrate_club(conn: sqlite3.Connection) -> None:
        UTC in winter). Converting UTC -> local recovers the true local date and time
        (verified to match Airtable's 'Formatted Meeting Time' for all rows). Idempotent:
        once converted, `date` is 'YYYY-MM-DD' (no 'T') and is skipped.
+    3. Backfill hosts for meetings that have a book but no host, using the book's picker(s):
+       the host is normally the picker of the book discussed, so this is a correct fill, not a
+       guess. Idempotent (only meetings with zero host rows are touched). Bookless social/
+       picking meetings have no picker and are correctly left host-less.
     """
     import datetime
     from zoneinfo import ZoneInfo
@@ -233,6 +237,23 @@ def _migrate_club(conn: sqlite3.Connection) -> None:
             "UPDATE club_meetings SET date = ?, start_time = ? WHERE id = ?",
             (local.strftime("%Y-%m-%d"), local.strftime("%H:%M"), r["id"]),
         )
+
+    for r in conn.execute(
+        "SELECT DISTINCT meeting_id FROM club_meeting_books "
+        "WHERE meeting_id NOT IN (SELECT meeting_id FROM club_meeting_hosts)"
+    ).fetchall():
+        pickers = conn.execute(
+            "SELECT DISTINCT bp.member_id FROM club_meeting_books mb "
+            "JOIN club_book_pickers bp ON bp.book_id = mb.book_id "
+            "WHERE mb.meeting_id = ? ORDER BY bp.member_id",
+            (r["meeting_id"],),
+        ).fetchall()
+        for ordinal, p in enumerate(pickers):
+            conn.execute(
+                "INSERT OR IGNORE INTO club_meeting_hosts(meeting_id, member_id, ordinal) "
+                "VALUES (?, ?, ?)",
+                (r["meeting_id"], p["member_id"], ordinal),
+            )
 
 
 def ensure_schema() -> None:

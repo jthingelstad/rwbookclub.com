@@ -375,6 +375,7 @@ def get_book(slug_or_title: str) -> dict | None:
     brief["isbn13"] = b.get("isbn13")
     brief["meetingDate"] = b.get("meetingDate")
     brief["meetingNotes"] = b.get("meetingNotes")
+    brief["host"] = b.get("meetingHostNames")  # who hosted the meeting (≠ pickedBy)
     brief["reviews"] = _reviews_for(book_slug=b.get("slug"))
     brief["awards"] = awards_for_book(b.get("slug"))  # the club's own awards
     # External enrichment (Open Library / Wikidata) — editions, reader ratings,
@@ -494,12 +495,32 @@ def compare_books(book_refs: list[str]) -> dict:
     }
 
 
+def _book_titles_by_slug() -> dict[str, str]:
+    return {b["slug"]: b.get("title") for b in _load_json_dir("books")}
+
+
+def _hosted_meetings_for(member_slug: str) -> list[dict]:
+    """Meetings a member hosted (most-recent first): {date, year, books[titles]}.
+    Hosting is meeting-level (a host can run a 2-book meeting), so derive from meetings()."""
+    titles = _book_titles_by_slug()
+    out = [
+        {"date": mt.get("date"),
+         "year": int(mt["date"][:4]) if mt.get("date") else None,
+         "books": [titles.get(s, s) for s in (mt.get("books") or [])]}
+        for mt in meetings() if member_slug in (mt.get("host") or [])
+    ]
+    out.sort(key=lambda h: h.get("date") or "", reverse=True)
+    return out
+
+
 def member_history(name_or_slug: str) -> dict | None:
     m = find_member(name_or_slug)
     if not m:
         return None
     picked = [b for b in books() if m["slug"] in (b.get("picker") or [])]
     picked.sort(key=lambda b: b.get("meetingDate") or "", reverse=True)
+    # Hosting — who ran the meeting (distinct from picking the book; usually the same person).
+    hosted = _hosted_meetings_for(m["slug"])
     return {
         "name": m.get("name"),
         "slug": m.get("slug"),
@@ -507,6 +528,8 @@ def member_history(name_or_slug: str) -> dict | None:
         "website": m.get("website"),
         "pickedCount": len(picked),
         "picks": [{"title": b.get("title"), "year": b.get("year")} for b in picked],
+        "hostedCount": len(hosted),
+        "hosted": hosted,
         "reviews": _reviews_for(member_slug=m.get("slug")),
     }
 
@@ -535,6 +558,13 @@ def club_stats() -> dict:
     topics = Counter(b.get("topic") or "Uncategorized" for b in read)
     years = Counter(b.get("year") for b in read if b.get("year"))
     pickers = Counter(b.get("pickerName") for b in read if b.get("pickerName"))
+    # Hosting leaderboard — meetings hosted per member (meeting-level; ≠ picker leaderboard).
+    name_by_slug = {mm["slug"]: mm.get("name") for mm in members()}
+    hosts = Counter()
+    for mt in meetings():
+        for s in (mt.get("host") or []):
+            if name_by_slug.get(s):
+                hosts[name_by_slug[s]] += 1
     pages = [b.get("pageCount") for b in read if b.get("pageCount")]
     pub_years = [b.get("publicationYear") for b in read if b.get("publicationYear")]
     fiction = sum(1 for b in read if b.get("fiction"))
@@ -550,6 +580,7 @@ def club_stats() -> dict:
         "topics": topics.most_common(),
         "booksByYear": sorted(years.items()),
         "pickerLeaderboard": pickers.most_common(),
+        "hostLeaderboard": hosts.most_common(),
         "oldestPublication": min(pub_years) if pub_years else None,
         "newestPublication": max(pub_years) if pub_years else None,
     }

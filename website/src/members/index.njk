@@ -19,6 +19,7 @@ permalink: /members/
       <li>
         <a href="/members/{{ m.slug }}/">{{ m.name }}</a>
         {% if m.pickedCount %}<span class="pick-count">{{ m.pickedCount }} pick{% if m.pickedCount != 1 %}s{% endif %}</span>{% endif %}
+        {% if m.hostedCount %}<span class="pick-count">{{ m.hostedCount }} hosted</span>{% endif %}
       </li>
     {% endfor %}
   </ul>
