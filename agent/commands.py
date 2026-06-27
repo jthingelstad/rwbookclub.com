@@ -129,10 +129,7 @@ def _reading_status_text() -> str:
     book = meeting.get("book") or {}
     title = book.get("title") or "the current book"
     meeting_id = meeting["meetingId"]
-    rows = {
-        r["member_slug"]: r
-        for r in (db.reading_status_for_meeting(meeting_id) if meeting_id is not None else [])
-    }
+    rows = _reading_status_by_member(meeting_id)
     current = sorted(
         [m for m in corpus_read.members() if m.get("isCurrent")],
         key=lambda m: m.get("name") or m["slug"],
@@ -140,23 +137,23 @@ def _reading_status_text() -> str:
     lines = [f"Reading status for **{title}** on {meeting['date']}:"]
     for member in current:
         row = rows.get(member["slug"])
-        if not row:
+        if not row or (row.get("reading") or "unknown") == "unknown":
             lines.append(f"• {member['name']}: unknown")
             continue
         details = []
-        if row.get("progress"):
-            details.append(row["progress"])
-        if row.get("page") is not None:
-            details.append(f"page {row['page']}")
-        if row.get("percent") is not None:
-            details.append(f"{row['percent']}%")
+        if row.get("reading_progress"):
+            details.append(row["reading_progress"])
+        if row.get("reading_page") is not None:
+            details.append(f"page {row['reading_page']}")
+        if row.get("reading_percent") is not None:
+            details.append(f"{row['reading_percent']}%")
         suffix = f" — {', '.join(details)}" if details else ""
-        lines.append(f"• {member['name']}: {row['status'].replace('_', ' ')}{suffix}")
+        lines.append(f"• {member['name']}: {row['reading'].replace('_', ' ')}{suffix}")
     return "\n".join(lines)
 
 
 def _reading_status_by_member(meeting_id: int | None) -> dict[str, dict]:
-    rows = db.reading_status_for_meeting(meeting_id) if meeting_id is not None else []
+    rows = db.meeting_member_status_for_meeting(meeting_id) if meeting_id is not None else []
     return {r["member_slug"]: r for r in rows}
 
 
@@ -284,8 +281,9 @@ async def _send_roll_call_email_to_member(member: dict, status: dict) -> dict | 
         to=[email["email"]],
         subject=subject,
         body=body,
-        contact={"meeting_id": meeting_id, "member_id": member_id, "kind": "roll_call"},
     )
+    await asyncio.to_thread(db.record_attendance_request, meeting_id, member_id,
+                            actor="oliver", surface="email")
     db.add_activity(
         "email_sent",
         "Roll-call email sent",
@@ -327,8 +325,9 @@ async def _send_reading_checkin_email_to_member(member: dict, meeting: dict,
         to=[email["email"]],
         subject=subject,
         body=body,
-        contact={"meeting_id": meeting_id, "member_id": member_id, "kind": "reading_checkin"},
     )
+    await asyncio.to_thread(db.record_reading_request, meeting_id, member_id,
+                            actor="oliver", surface="email")
     db.add_activity(
         "email_sent",
         "Reading check-in email sent",
@@ -377,11 +376,15 @@ async def _email_roll_call(interaction: discord.Interaction) -> None:
         except Exception:
             log.exception("roll-call email failed for %s", member["slug"])
             missing.append(f"{member['name']} (send failed)")
-    if sent and meeting["meetingId"] is not None:
-        db.upsert_roll_call(
-            meeting_id=meeting["meetingId"],
-            channel_id=str(interaction.channel_id) if interaction.channel_id else None,
-            opened_by=f"email:{interaction.user.id}",
+    if sent and meeting["meetingId"] is not None and not db.has_open_roll_call(meeting["meetingId"]):
+        db.record_group_event(
+            meeting["meetingId"],
+            "roll_call_opened",
+            actor="oliver",
+            detail={
+                "channel_id": str(interaction.channel_id) if interaction.channel_id else None,
+                "opened_by": f"email:{interaction.user.id}",
+            },
         )
     lines = [f"Sent roll-call email to {len(sent)} pending member(s): {', '.join(sent) or 'none'}."]
     if skipped:
@@ -427,21 +430,16 @@ async def record_attendance_response(interaction: discord.Interaction, status: s
         await interaction.response.send_message(
             "There's no scheduled meeting to record against yet.", ephemeral=True)
         return
-    roll_call = db.get_roll_call(meeting_id)
+    roll_call = db.current_roll_call(meeting_id)
     if roll_call and roll_call.get("status") == "closed":
         await interaction.response.send_message("That roll call is closed.", ephemeral=True)
         return
-    db.upsert_roll_call(
-        meeting_id=meeting_id,
-        channel_id=str(interaction.channel_id) if interaction.channel_id else None,
-        opened_by="button",
-    )
-    db.set_attendance(
-        meeting_id=meeting_id,
-        member_id=member_id,
-        status=status,
-        updated_by_user_id=str(interaction.user.id),
-        source="button",
+    db.record_attendance_report(
+        meeting_id,
+        member_id,
+        status,
+        surface="discord",
+        updated_by=str(interaction.user.id),
     )
     db.add_activity(
         "roll_call_update",
@@ -736,14 +734,14 @@ async def reading_status_cmd(interaction: discord.Interaction, status: str | Non
             await interaction.response.send_message(
                 "There's no scheduled meeting to record reading status against yet.", ephemeral=True)
             return
-        db.set_reading_status(
-            meeting_id=meeting_id,
-            member_id=member_id,
-            status=normalized,
+        db.record_reading_report(
+            meeting_id,
+            member_id,
+            normalized,
             progress=progress,
             page=page,
             percent=percent,
-            source="discord",
+            surface="discord",
             updated_by=str(interaction.user.id),
         )
         db.add_activity(
@@ -780,9 +778,9 @@ async def reading_checkin_cmd(interaction: discord.Interaction, member: str,
     title = book.get("title") or "the current book"
     meeting_id = meeting["meetingId"]
     member_id = clubdb.lookup_member_id(m["slug"])
-    existing = (db.reading_status_for_member(meeting_id, member_id)
+    existing = (db.meeting_member_status(meeting_id, member_id)
                 if (meeting_id is not None and member_id is not None) else None)
-    if existing and existing["status"] == "finished":
+    if existing and existing["reading"] == "finished":
         db.add_activity(
             "reading_checkin_skipped",
             "Reading check-in skipped",
@@ -936,8 +934,8 @@ async def roll_call_cmd(interaction: discord.Interaction,
         return
 
     if act == "close":
-        if meeting["meetingId"] is not None:
-            db.close_roll_call(meeting["meetingId"])
+        if meeting["meetingId"] is not None and db.has_open_roll_call(meeting["meetingId"]):
+            db.record_group_event(meeting["meetingId"], "roll_call_closed", actor="admin")
         await interaction.response.send_message(
             meeting_rules.format_status(meeting_rules.meeting_status(meeting["meetingId"])),
             ephemeral=True)
@@ -956,11 +954,15 @@ async def roll_call_cmd(interaction: discord.Interaction,
     sent = await interaction.followup.send(text, view=AttendanceView())
     try:
         if meeting["meetingId"] is not None:
-            db.upsert_roll_call(
-                meeting_id=meeting["meetingId"],
-                channel_id=str(sent.channel.id),
-                message_id=str(sent.id),
-                opened_by=str(interaction.user.id),
+            db.record_group_event(
+                meeting["meetingId"],
+                "roll_call_opened",
+                actor="oliver",
+                detail={
+                    "channel_id": str(sent.channel.id),
+                    "message_id": str(sent.id),
+                    "opened_by": str(interaction.user.id),
+                },
             )
     except discord.HTTPException:
         log.exception("Failed to record roll-call message")
@@ -1120,23 +1122,25 @@ async def run_scheduler() -> int:
             meeting_date = None
         if meeting_date:
             days = (meeting_date.date() - now.date()).days
-            roll_key = f"roll-call-{meeting['meetingKey']}"
             meeting_id = meeting["meetingId"]
-            roll_call = await asyncio.to_thread(db.get_roll_call, meeting_id) if meeting_id is not None else None
+            roll_call = await asyncio.to_thread(db.current_roll_call, meeting_id) if meeting_id is not None else None
             if (
                 0 <= days <= meeting_campaign.ROLL_CALL_START_DAYS
                 and meeting_id is not None
-                and roll_key not in db.sent_keys()
+                and not db.has_open_roll_call(meeting_id)
                 and _should_start_scheduled_roll_call(status, roll_call)
             ):
                 sent = await main.send(await _roll_call_announcement(status), view=AttendanceView())
-                db.upsert_roll_call(
-                    meeting_id=meeting_id,
-                    channel_id=str(sent.channel.id),
-                    message_id=str(sent.id),
-                    opened_by="scheduler",
+                db.record_group_event(
+                    meeting_id,
+                    "roll_call_opened",
+                    actor="oliver",
+                    detail={
+                        "channel_id": str(sent.channel.id),
+                        "message_id": str(sent.id),
+                        "opened_by": "scheduler",
+                    },
                 )
-                db.mark_sent(roll_key)
                 db.add_activity(
                     "roll_call_started",
                     "Roll call started in Discord",
@@ -1160,9 +1164,10 @@ async def run_scheduler() -> int:
                                 posted += 1
                         except Exception:
                             log.exception("scheduled roll-call email failed for %s", member["slug"])
-            alert_key = f"attendance-alert-{meeting['meetingKey']}"
             status = await asyncio.to_thread(meeting_rules.meeting_status)
-            if 0 <= days <= 3 and status["recommendation"] != "ready" and alert_key not in db.sent_keys():
+            if (0 <= days <= 3 and status["recommendation"] != "ready"
+                    and meeting_id is not None
+                    and not db.has_group_event(meeting_id, "attendance_alert_sent")):
                 counts = status["counts"]
                 meeting_book = (meeting.get("book") or {}).get("title") or "the next book"
                 alert = await asyncio.to_thread(
@@ -1182,7 +1187,8 @@ async def run_scheduler() -> int:
                     fallback="⚠️ Attendance may need attention.\n\n" + meeting_rules.format_status(status),
                 )
                 await main.send(alert)
-                db.mark_sent(alert_key)
+                db.record_group_event(meeting_id, "attendance_alert_sent", actor="oliver",
+                                      surface="discord")
                 db.add_activity(
                     "attendance_alert",
                     "Attendance alert posted",
@@ -1197,9 +1203,6 @@ async def run_scheduler() -> int:
                 )
                 for candidate in candidates:
                     slug = candidate["memberSlug"]
-                    key = f"reading-checkin-{meeting['meetingKey']}-{slug}-{candidate['checkinNumber']}"
-                    if key in db.sent_keys():
-                        continue
                     member = corpus_read.find_member(slug)
                     if not member or not db.email_for_member(slug):
                         continue
@@ -1213,7 +1216,6 @@ async def run_scheduler() -> int:
                         log.exception("scheduled reading-checkin email failed for %s", slug)
                         continue
                     if sent_email:
-                        db.mark_sent(key)
                         db.add_activity(
                             "reading_checkin_scheduled",
                             "Scheduled reading check-in sent",
@@ -1223,20 +1225,22 @@ async def run_scheduler() -> int:
 
             # Club-wide cadence emails (OFF unless CLUB_EMAIL_CADENCE_ENABLED): the
             # 1-week reminder and the 2-day discussion-topics email, each once per meeting.
-            if config.CLUB_EMAIL_CADENCE_ENABLED and email_jmap.enabled():
-                week_key = f"week-reminder-{meeting['meetingKey']}"
-                if 0 <= days <= 7 and week_key not in db.sent_keys():
+            if config.CLUB_EMAIL_CADENCE_ENABLED and email_jmap.enabled() and meeting_id is not None:
+                if (0 <= days <= 7
+                        and not db.has_group_event(meeting_id, "week_reminder_sent")):
                     email = await asyncio.to_thread(meeting_emails.week_reminder, meeting, status)
                     await _send_club_email(email["subject"], email["body"])
-                    db.mark_sent(week_key)
+                    db.record_group_event(meeting_id, "week_reminder_sent", actor="oliver",
+                                          surface="email")
                     db.add_activity("club_email_sent", "1-week reminder sent to the mailing list",
                                     f"Meeting: {meeting['meetingKey']}")
                     posted += 1
-                topic_key = f"topic-email-{meeting['meetingKey']}"
-                if 0 <= days <= 2 and topic_key not in db.sent_keys():
+                if (0 <= days <= 2
+                        and not db.has_group_event(meeting_id, "briefing_sent")):
                     email = await asyncio.to_thread(meeting_emails.topic_email, meeting)
                     await _send_club_email(email["subject"], email["body"])
-                    db.mark_sent(topic_key)
+                    db.record_group_event(meeting_id, "briefing_sent", actor="oliver",
+                                          surface="email")
                     db.add_activity("club_email_sent", "2-day topic email sent to the mailing list",
                                     f"Meeting: {meeting['meetingKey']}")
                     posted += 1

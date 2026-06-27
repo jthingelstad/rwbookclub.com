@@ -1,8 +1,7 @@
-"""HTML email rendering for Oliver, plus the per-member outbound contact log.
+"""HTML email rendering for Oliver — markdown body → styled HTML for the email part.
 
-No open tracking: Oliver does not record whether a member opens an email (no pixel, no
-external poll). `prepare_outbound`/`mark_outbound_*` only write the operational `member_contacts`
-row (we emailed X for roll-call/reading-checkin; status sent/failed) the campaign view reads.
+No open tracking and no per-member contact log here: Oliver records its outbound asks as
+`events` at the call site (where the meeting/member ids are known). This module is pure render.
 """
 
 from __future__ import annotations
@@ -10,8 +9,6 @@ from __future__ import annotations
 import html
 
 import markdown as _markdown
-
-from agent import config, db
 
 
 def _render_markdown(text: str) -> str:
@@ -55,27 +52,3 @@ def text_to_html(text: str) -> str:
         "<body><div class=\"oliver-email\">"
         f"{body}</div></body></html>"
     )
-
-
-def prepare_outbound(*, text: str, meeting_id: int, member_id: int,
-                     kind: str, subject: str) -> tuple[int, str | None]:
-    """Log the outbound contact in member_contacts and render the HTML body. No tracking."""
-    contact_id = db.add_member_contact(
-        meeting_id=meeting_id,
-        member_id=member_id,
-        kind=kind,
-        surface="email",
-        direction="outbound",
-        status="sending",
-        subject=subject,
-    )
-    html_body = text_to_html(text) if config.OLIVER_EMAIL_HTML_ENABLED else None
-    return contact_id, html_body
-
-
-def mark_outbound_sent(contact_id: int) -> None:
-    db.update_member_contact_status(contact_id, "sent")
-
-
-def mark_outbound_failed(contact_id: int) -> None:
-    db.update_member_contact_status(contact_id, "failed")

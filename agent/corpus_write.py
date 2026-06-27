@@ -103,6 +103,14 @@ def schedule_meeting(book_query: str, date_iso: str, picker_query: str) -> dict:
         meeting_id = clubdb.create_meeting(conn, date_iso=iso, book_id=book_id, placeholder=True)
         corpus_gen.write_book_file(conn, book_id, DATA_DIR)
         corpus_gen.write_meeting_file(conn, meeting_id, DATA_DIR)
+    # Chronicle hook: drop a meeting_scheduled event on the club timeline at the meeting's
+    # date so the event log reflects future meetings, not just past ones.
+    db.record_meeting_scheduled(
+        meeting_id,
+        actor="oliver",
+        detail={"book": book["title"], "date": day, "picker": member["name"]},
+        occurred_at=day,
+    )
     _validate_or_raise()
     # Corpus is private/local now; the site is rebuilt + deployed by the publish step
     # (the caller schedules it). Nothing is committed to git here.

@@ -121,9 +121,9 @@ class TestDispatchHappyPaths:
             "channel_id": "ch1",
         }))
         assert result["saved"] is True
-        rows = fresh_db.attendance_for_meeting(result["meetingStatus"]["meeting"]["meetingId"])
+        rows = fresh_db.meeting_member_status_for_meeting(result["meetingStatus"]["meeting"]["meetingId"])
         assert rows[0]["member_slug"] == "jamie"
-        assert rows[0]["status"] == "yes"
+        assert rows[0]["attendance"] == "yes"
 
     def test_record_availability_saves_email_source(self, fresh_db):
         from agent.tools import dispatch
@@ -134,8 +134,10 @@ class TestDispatchHappyPaths:
             "channel_id": "email:t1",
         }))
         assert result["saved"] is True
-        rows = fresh_db.attendance_for_meeting(result["meetingStatus"]["meeting"]["meetingId"])
-        assert rows[0]["source"] == "email"
+        mid = result["meetingStatus"]["meeting"]["meetingId"]
+        events = fresh_db.meeting_events(mid, kind="attendance_reported")
+        assert events[0]["surface"] == "email"
+        assert events[0]["detail"] == "no"
 
     def test_record_reading_status_requires_linked_speaker(self, fresh_db):
         from agent.tools import dispatch
@@ -156,9 +158,10 @@ class TestDispatchHappyPaths:
         }))
         assert result["saved"] is True
         meeting_id = result["readingStatus"]["meeting"]["meetingId"]
-        row = fresh_db.reading_status_for_member(meeting_id, clubdb.lookup_member_id("jamie"))
-        assert row["status"] == "on_track"
-        assert row["source"] == "email"
+        row = fresh_db.meeting_member_status(meeting_id, clubdb.lookup_member_id("jamie"))
+        assert row["reading"] == "on_track"
+        events = fresh_db.meeting_events(meeting_id, kind="reading_reported")
+        assert events[0]["surface"] == "email"
 
     def test_reading_status_returns_current_book(self, fresh_db):
         from agent.tools import dispatch
@@ -304,12 +307,8 @@ class TestDispatchHappyPaths:
             "subject": kwargs["subject"],
         })
         meeting = meeting_rules.next_meeting()
-        fresh_db.set_attendance(
-            meeting_id=meeting["meetingId"],
-            member_id=clubdb.lookup_member_id("jamie"),
-            status="yes",
-            source="email",
-        )
+        fresh_db.record_attendance_report(
+            meeting["meetingId"], clubdb.lookup_member_id("jamie"), "yes", surface="email")
         fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
         fresh_db.link_member_email("tom@tomeri.org", "tom")
         result = json.loads(dispatch("request_roll_call_update", {}, {
@@ -334,7 +333,7 @@ class TestDispatchHappyPaths:
             "subject": kwargs["subject"],
         })
         meeting = meeting_rules.next_meeting()
-        fresh_db.set_attendance(meeting_id=meeting["meetingId"], member_id=clubdb.lookup_member_id("jamie"), status="yes")
+        fresh_db.record_attendance_report(meeting["meetingId"], clubdb.lookup_member_id("jamie"), "yes")
         fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
         result = json.loads(dispatch("request_roll_call_update", {"member": "jamie"}, {
             "speaker_user_id": str(config.ADMIN_USER_ID),
@@ -343,7 +342,7 @@ class TestDispatchHappyPaths:
         }))
         assert result["sent"] == []
         assert sent == []
-        assert fresh_db.get_roll_call(meeting["meetingId"]) is None
+        assert fresh_db.current_roll_call(meeting["meetingId"]) is None
 
     def test_request_roll_call_update_blocked_inside_inbound_email_channel(self, monkeypatch, fresh_db):
         from agent.mail import email_jmap
@@ -366,12 +365,8 @@ class TestDispatchHappyPaths:
         monkeypatch.setattr(email_jmap, "enabled", lambda: True)
         fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
         meeting = meeting_rules.next_meeting()
-        fresh_db.set_reading_status(
-            meeting_id=meeting["meetingId"],
-            member_id=clubdb.lookup_member_id("jamie"),
-            status="finished",
-            source="email",
-        )
+        fresh_db.record_reading_report(
+            meeting["meetingId"], clubdb.lookup_member_id("jamie"), "finished", surface="email")
         result = json.loads(dispatch("request_reading_update", {"member": "jamie"}, {
             "speaker_user_id": "email:jamie@thingelstad.com",
             "member_slug": "jamie",
@@ -384,12 +379,8 @@ class TestDispatchHappyPaths:
         from agent.tools import dispatch
 
         meeting = meeting_rules.next_meeting()
-        fresh_db.set_attendance(meeting_id=meeting["meetingId"], member_id=clubdb.lookup_member_id("jamie"), status="yes")
-        fresh_db.set_reading_status(
-            meeting_id=meeting["meetingId"],
-            member_id=clubdb.lookup_member_id("jamie"),
-            status="finished",
-        )
+        fresh_db.record_attendance_report(meeting["meetingId"], clubdb.lookup_member_id("jamie"), "yes")
+        fresh_db.record_reading_report(meeting["meetingId"], clubdb.lookup_member_id("jamie"), "finished")
         result = json.loads(dispatch("meeting_readiness", {}, {}))
         assert result["counts"]["attending"] == 1
         assert result["counts"]["attendingAndFinished"] == 1
@@ -408,16 +399,10 @@ class TestDispatchHappyPaths:
             if m.get("isCurrent") and m["slug"] not in pickers
         ]
         for member in non_pickers[:3]:
-            fresh_db.set_attendance(
-                meeting_id=meeting["meetingId"],
-                member_id=clubdb.lookup_member_id(member["slug"]),
-                status="yes",
-            )
-            fresh_db.set_reading_status(
-                meeting_id=meeting["meetingId"],
-                member_id=clubdb.lookup_member_id(member["slug"]),
-                status="finished",
-            )
+            fresh_db.record_attendance_report(
+                meeting["meetingId"], clubdb.lookup_member_id(member["slug"]), "yes")
+            fresh_db.record_reading_report(
+                meeting["meetingId"], clubdb.lookup_member_id(member["slug"]), "finished")
         result = json.loads(dispatch("meeting_readiness", {}, {}))
         assert result["attendance"]["hasQuorum"] is True
         assert result["attendance"]["pickerAvailable"] is False
@@ -429,19 +414,13 @@ class TestDispatchHappyPaths:
 
         meeting = meeting_rules.next_meeting()
         fresh_db.link_member_email("jamie@example.test", "jamie")
-        fresh_db.add_member_contact(
-            meeting_id=meeting["meetingId"],
-            member_id=clubdb.lookup_member_id("jamie"),
-            kind="reading_checkin",
-            surface="email",
-            direction="outbound",
-            status="sent",
-            subject="Reading check-in",
-        )
+        fresh_db.record_reading_request(
+            meeting["meetingId"], clubdb.lookup_member_id("jamie"), surface="email")
         result = json.loads(dispatch("meeting_campaign", {}, {}))
         jamie = next(m for m in result["members"] if m["memberSlug"] == "jamie")
         assert jamie["emailLinked"] is True
-        assert jamie["lastContact"]["kind"] == "reading_checkin"
+        assert jamie["readingCheckinCount"] == 1
+        assert jamie["readingLastAskedAt"]
         assert result["recommendedActions"]
 
     def test_recent_channel_context_returns_logged_messages(self, fresh_db):

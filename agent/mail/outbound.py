@@ -2,15 +2,14 @@
 
 Every email Oliver sends routes through send(): it appends his contextual signature
 (unless sign=False), lets email_jmap render the markdown body into a formatted HTML part
-(email_render.text_to_html), and submits via JMAP. For per-member mail pass
-`contact={meeting_id, member_id, kind}` to log the outbound contact in member_contacts
-(marked sent/failed here); there is no open tracking. Omit `contact` for list / personal /
-reply mail.
+(email_render.text_to_html), and submits via JMAP. Sending is pure — Oliver records its
+outbound asks as `events` at the call site (where the meeting/member ids are known), so
+this module no longer logs per-member contacts.
 """
 
 from __future__ import annotations
 
-from agent.mail import email_jmap, email_render, signature
+from agent.mail import email_jmap, signature
 
 
 def finalize(body: str, *, sign: bool = True) -> str:
@@ -20,26 +19,10 @@ def finalize(body: str, *, sign: bool = True) -> str:
     return body
 
 
-def send(*, to, subject: str, body: str, sign: bool = True, contact: dict | None = None,
+def send(*, to, subject: str, body: str, sign: bool = True,
          cc=None, in_reply_to: str | None = None, references=None) -> dict:
-    """Append signature → render HTML → send. Returns the JMAP send result.
-
-    Pass `contact={meeting_id, member_id, kind}` to log the send in member_contacts
-    (sent/failed). No open tracking is performed.
-    """
+    """Append signature → render HTML → send. Returns the JMAP send result."""
     body = finalize(body, sign=sign)
-    if contact is not None:
-        contact_id, html_body = email_render.prepare_outbound(
-            text=body, subject=subject, **contact)
-        try:
-            sent = email_jmap.send_email(
-                to=to, subject=subject, body=body, html_body=html_body,
-                cc=cc, in_reply_to=in_reply_to, references=references)
-        except Exception:
-            email_render.mark_outbound_failed(contact_id)
-            raise
-        email_render.mark_outbound_sent(contact_id)
-        return sent
     return email_jmap.send_email(
         to=to, subject=subject, body=body, cc=cc,
         in_reply_to=in_reply_to, references=references)

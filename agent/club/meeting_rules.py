@@ -86,10 +86,10 @@ def next_meeting() -> dict:
 def meeting_status(meeting_id: int | None = None) -> dict:
     meeting = next_meeting()
     mid = meeting_id if meeting_id is not None else meeting["meetingId"]
-    roll_call = db.get_roll_call(mid) if mid is not None else None
-    attendance = {
+    roll_call = db.current_roll_call(mid) if mid is not None else None
+    status_rows = {
         r["member_id"]: r
-        for r in (db.attendance_for_meeting(mid) if mid is not None else [])
+        for r in (db.meeting_member_status_for_meeting(mid) if mid is not None else [])
     }
     members = clubdb.current_members()
     picker_ids = set(meeting.get("pickerIds") or [])
@@ -97,8 +97,9 @@ def meeting_status(meeting_id: int | None = None) -> dict:
     rows = []
     yes = no = unsure = 0
     for member in members:
-        row = attendance.get(member["id"])
-        status = row["status"] if row else "pending"
+        row = status_rows.get(member["id"])
+        # a missing row, or attendance still 'unknown', counts as pending
+        status = row["attendance"] if row and row["attendance"] != "unknown" else "pending"
         if status == "yes":
             yes += 1
         elif status == "no":
@@ -111,7 +112,7 @@ def meeting_status(meeting_id: int | None = None) -> dict:
             "memberSlug": member["slug"],
             "status": status,
             "isPicker": member["id"] in picker_ids,
-            "updatedAt": row.get("responded_at") if row else None,
+            "updatedAt": row.get("attendance_answered_at") if row else None,
         })
 
     pending = len([r for r in rows if r["status"] == "pending"])

@@ -152,21 +152,25 @@ independently. Books↔meetings is M:N (`club_meeting_books`) for the rare two-b
 
 ---
 
-## 2. Class B — identity, meeting operations, outreach
+## 2. Class B — identity + the event log / status projection
 
-These reference the club record by integer FK. `club_members` / `club_meetings` are shown trimmed
-(full attributes in §1).
+Meeting operations are event-sourced: one append-only `events` log (the club's **timeline**) plus a
+`meeting_member_status` current-state **projection**, both written atomically by `db.record_event`.
+This replaced the four entangled tables (`meeting_attendance`, `reading_statuses`, `member_contacts`,
+`roll_calls`) — see `migrate_meeting_events`. `events` carries nullable `member_id` **and** `meeting_id`,
+so the same table holds meeting-ops (both ids), member-life events (member only), and club happenings
+(neither); a `category` groups the free-form `kind` (taxonomy in the build plan). `occurred_at` is when
+it happened/will happen (future meetings sit at the right point); `created_at` is when it was recorded.
+The projection is sparse — a missing row, or `attendance='unknown'`, means "pending / keep asking".
+`club_members` / `club_meetings` are shown trimmed (full attributes in §1).
 
 ```mermaid
 erDiagram
-    club_members   ||--o{ member_identities  : "discord/email/sms handles"
-    club_members   ||--o{ meeting_attendance : ""
-    club_meetings  ||--o{ meeting_attendance : ""
-    club_members   ||--o{ reading_statuses   : ""
-    club_meetings  ||--o{ reading_statuses   : ""
-    club_members   ||--o{ member_contacts    : "contacted"
-    club_meetings  ||--o{ member_contacts    : "about"
-    club_meetings  ||--o| roll_calls         : "one per meeting"
+    club_members   ||--o{ member_identities      : "discord/email/sms handles"
+    club_members   ||--o{ events                  : "actor / subject (nullable)"
+    club_meetings  ||--o{ events                  : "scope (nullable)"
+    club_members   ||--o{ meeting_member_status   : ""
+    club_meetings  ||--o{ meeting_member_status   : ""
 
     club_members  { int id PK }
     club_meetings { int id PK }
@@ -177,33 +181,28 @@ erDiagram
         int is_primary
         text linked_by
     }
-    meeting_attendance {
-        int meeting_id PK,FK
-        int member_id PK,FK
-        text status
-        text source
-    }
-    reading_statuses {
-        int meeting_id PK,FK
-        int member_id PK,FK
-        text status
-        int page
-        int percent
-    }
-    member_contacts {
+    events {
         int id PK
-        int meeting_id FK
         int member_id FK
+        int meeting_id FK
+        text actor
+        text category
         text kind
+        text detail
         text surface
-        text direction
-        text status
+        text source
+        text occurred_at
+        text created_at
     }
-    roll_calls {
+    meeting_member_status {
         int meeting_id PK,FK
-        text status
-        text channel_id
-        text message_id
+        int member_id PK,FK
+        text attendance
+        text reading
+        int attendance_asks
+        int reading_asks
+        text attendance_answered_at
+        text reading_last_asked_at
     }
 ```
 
@@ -288,14 +287,26 @@ messages); these are about preventing future drift and tidying retired-system re
    `mail_messages.member_id` is the only member link.
 5. ~~**Missing FK-column indexes.**~~ **Done.** Added `idx_attendance_member`,
    `idx_reading_statuses_member`, `idx_member_contacts_member`. Also removed `identity_claims` (a dead
-   write-only staging table) and added an `sms` member-handle surface.
+   write-only staging table) and added an `sms` member-handle surface. *(The attendance/reading/contact
+   tables those indexes covered were since folded into `events`; see below.)*
+
+### Refactored (2026-06-27 — event-sourced meeting ops)
+
+- **The four meeting-ops tables** (`meeting_attendance`, `reading_statuses`, `member_contacts`,
+  `roll_calls`) were collapsed into one append-only **`events`** log + a **`meeting_member_status`**
+  projection (§2), written atomically by `db.record_event`. "Where do we stand?" is now one projection
+  read and "have I already asked Jamie?" is `attendance_asks` on his row; the timeline also records
+  group cadence actions (roll-call open/close, week reminder, 2-day briefing) and future events
+  (`meeting_scheduled` at the meeting date). Migration: `migrate_meeting_events` seeds the projection
+  from the old status rows, backfills event history (timestamps from the source rows), then drops the
+  four tables. Phase 2 will mine the email archive into the same timeline.
 
 ### Removed (2026-06-27 — member privacy)
 
 - **Email open-tracking** (`email_tracking` + `email_opens` tables, the open-pixel, the Tinylytics
-  email poller). Oliver no longer records whether members open emails. The operational
-  `member_contacts` outreach log (we emailed X; sent/failed) is kept; website Tinylytics
-  (analytics + kudos) is unrelated and stays.
+  email poller). Oliver no longer records whether members open emails. Website Tinylytics
+  (analytics + kudos) is unrelated and stays. The outbound-contact log that recorded sent/failed
+  asks was folded into the `events` log (see Refactored, above).
 
 ### Re-classified — not issues
 

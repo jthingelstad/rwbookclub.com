@@ -35,11 +35,10 @@ def test_meeting_status_flags_picker_conflict(fresh_db):
 
     meeting = meeting_rules.next_meeting()
     mid = meeting["meetingId"]
-    db.upsert_roll_call(meeting_id=mid, channel_id="ch1")
     for slug in ("jamie", "tom", "nick"):
-        db.set_attendance(meeting_id=mid, member_id=clubdb.lookup_member_id(slug), status="yes")
+        db.record_attendance_report(mid, clubdb.lookup_member_id(slug), "yes")
     for slug in meeting["pickerSlugs"]:
-        db.set_attendance(meeting_id=mid, member_id=clubdb.lookup_member_id(slug), status="no")
+        db.record_attendance_report(mid, clubdb.lookup_member_id(slug), "no")
 
     status = meeting_rules.meeting_status(mid)
     assert "picker_unavailable" in status["risks"]
@@ -52,11 +51,10 @@ def test_meeting_status_ready_when_quorum_and_picker(fresh_db):
 
     meeting = meeting_rules.next_meeting()
     mid = meeting["meetingId"]
-    db.upsert_roll_call(meeting_id=mid, channel_id="ch1")
     yes = set(meeting["pickerSlugs"])
     yes.update(["jamie", "tom", "nick"])
     for slug in sorted(yes):
-        db.set_attendance(meeting_id=mid, member_id=clubdb.lookup_member_id(slug), status="yes")
+        db.record_attendance_report(mid, clubdb.lookup_member_id(slug), "yes")
 
     status = meeting_rules.meeting_status(mid)
     assert status["hasQuorum"] is True
