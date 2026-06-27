@@ -10,7 +10,6 @@ deployed separately by the publish step (the corpus is no longer committed to gi
 from __future__ import annotations
 
 import re
-import uuid
 
 from corpus.paths import DATA_DIR
 from corpus.validate import validate_data_dir
@@ -76,8 +75,8 @@ def write_review(book_query: str, member_name: str, *, rating: str | None = None
         raise ReviewError("A review needs at least a rating, a DNF, or some text.")
 
     # DB-backed write (the club record is authoritative); the corpus review file is then
-    # regenerated from the DB. A new review mints a `rev_*` external id (stored as
-    # airtable_id), preserved across edits — mirrors the old markdown id/createdAt behavior.
+    # regenerated from the DB. The review's stable corpus `id` is its club_reviews.id (the
+    # integer PK), preserved across edits — mirrors the old markdown id/createdAt behavior.
     with db.connect() as conn:                          # transaction = commit point
         book_id = clubdb.book_id_for_slug(conn, book["slug"])
         member_id = clubdb.member_id_for_slug(conn, member["slug"])
@@ -87,7 +86,6 @@ def write_review(book_query: str, member_name: str, *, rating: str | None = None
             conn, book_id=book_id, member_id=member_id, rating=rating_val, dnf=dnf,
             discussion_quality=discussion_val, would_recommend=_parse_bool(recommend),
             favorite_quote=quote_val, body=body or None,
-            airtable_id=f"rev_{uuid.uuid4().hex[:16]}",
         )
         path = corpus_gen.write_review_file(conn, res["id"], DATA_DIR)
     _validate_or_raise()

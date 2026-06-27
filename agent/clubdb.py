@@ -108,9 +108,7 @@ CREATE TABLE IF NOT EXISTS club_meeting_hosts (
 CREATE INDEX IF NOT EXISTS idx_club_meeting_hosts_member ON club_meeting_hosts(member_id);
 
 CREATE TABLE IF NOT EXISTS club_reviews (
-    id                 INTEGER PRIMARY KEY,  -- Airtable Review ID
-    airtable_id        TEXT,                 -- the review's STABLE PUBLIC id (the corpus `id`; see corpus_gen).
-                                             -- Originally an Airtable rec…; new reviews mint a rev_<uuid>. NOT vestigial.
+    id                 INTEGER PRIMARY KEY,  -- the review's stable id (the corpus `id`; minted via _next_id)
     book_id            INTEGER NOT NULL REFERENCES club_books(id) ON DELETE CASCADE,
     member_id          INTEGER NOT NULL REFERENCES club_members(id) ON DELETE CASCADE,
     rating             INTEGER,
@@ -518,34 +516,32 @@ def upsert_review(conn: sqlite3.Connection, *, book_id: int, member_id: int,
                   rating: int | None = None, dnf: bool = False,
                   discussion_quality: int | None = None, would_recommend: bool = False,
                   favorite_quote: str | None = None, body: str | None = None,
-                  airtable_id: str | None = None, created_at: str | None = None) -> dict:
-    """Insert or update a review under FKs, keyed by (book_id, member_id). Preserves the
-    existing row's id / airtable_id / created_at on update (mirrors the old markdown's
-    id/createdAt preservation). Returns {id, airtable_id, created_at, existed}."""
+                  created_at: str | None = None) -> dict:
+    """Insert or update a review under FKs, keyed by (book_id, member_id). Preserves the existing
+    row's id / created_at on update (mirrors the old markdown's id/createdAt preservation).
+    Returns {id, created_at, existed}."""
     existing = conn.execute(
-        "SELECT id, airtable_id, created_at FROM club_reviews WHERE book_id = ? AND member_id = ?",
+        "SELECT id, created_at FROM club_reviews WHERE book_id = ? AND member_id = ?",
         (book_id, member_id),
     ).fetchone()
     if existing:
         rid = existing["id"]
-        airtable_id = existing["airtable_id"] or airtable_id
         created_at = existing["created_at"] or created_at
     else:
         rid = _next_id(conn, "club_reviews")
         created_at = created_at or datetime.now(timezone.utc).isoformat()
     conn.execute(
-        "INSERT INTO club_reviews(id, airtable_id, book_id, member_id, rating, dnf, "
+        "INSERT INTO club_reviews(id, book_id, member_id, rating, dnf, "
         "discussion_quality, would_recommend, favorite_quote, body, created_at) "
-        "VALUES (?,?,?,?,?,?,?,?,?,?,?) "
-        "ON CONFLICT(id) DO UPDATE SET airtable_id=excluded.airtable_id, rating=excluded.rating, "
+        "VALUES (?,?,?,?,?,?,?,?,?,?) "
+        "ON CONFLICT(id) DO UPDATE SET rating=excluded.rating, "
         "dnf=excluded.dnf, discussion_quality=excluded.discussion_quality, "
         "would_recommend=excluded.would_recommend, favorite_quote=excluded.favorite_quote, "
         "body=excluded.body",
-        (rid, airtable_id, book_id, member_id, rating, 1 if dnf else 0, discussion_quality,
+        (rid, book_id, member_id, rating, 1 if dnf else 0, discussion_quality,
          1 if would_recommend else 0, favorite_quote, body, created_at),
     )
-    return {"id": rid, "airtable_id": airtable_id, "created_at": created_at,
-            "existed": bool(existing)}
+    return {"id": rid, "created_at": created_at, "existed": bool(existing)}
 
 
 def set_book_picker(conn: sqlite3.Connection, book_id: int, member_id: int) -> None:

@@ -30,8 +30,8 @@ def test_review_is_db_backed_and_survives_regen(reset_books_cache):
 
 
 def test_review_update_preserves_id_and_created_at(reset_books_cache):
-    """Editing a review keeps its club_reviews id / airtable_id / created_at (the 'preserve
-    id+createdAt on update' contract), and updates the mutable fields."""
+    """Editing a review keeps its club_reviews id / created_at (the 'preserve id+createdAt on
+    update' contract — the corpus review `id` is club_reviews.id), and updates the mutable fields."""
     from agent import clubdb, db
     from agent.club import reviews
 
@@ -40,17 +40,16 @@ def test_review_update_preserves_id_and_created_at(reset_books_cache):
         bid = clubdb.book_id_for_slug(conn, "being-mortal")
         mid = clubdb.member_id_for_slug(conn, "brad")
         before = conn.execute(
-            "SELECT id, airtable_id, created_at, rating FROM club_reviews "
+            "SELECT id, created_at, rating FROM club_reviews "
             "WHERE book_id = ? AND member_id = ?", (bid, mid)).fetchone()
 
     res = reviews.write_review("being-mortal", "Brad", rating="5", review="Changed my mind.")
     assert res["updated"] is True
     with db.connect() as conn:
         after = conn.execute(
-            "SELECT id, airtable_id, created_at, rating, body FROM club_reviews "
+            "SELECT id, created_at, rating, body FROM club_reviews "
             "WHERE book_id = ? AND member_id = ?", (bid, mid)).fetchone()
     assert after["id"] == before["id"]
-    assert after["airtable_id"] == before["airtable_id"]
     assert after["created_at"] == before["created_at"]
     assert after["rating"] == 5 and after["body"] == "Changed my mind."
 

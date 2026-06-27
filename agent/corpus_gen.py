@@ -130,7 +130,7 @@ def _award_doc(a: dict) -> dict:
 
 def _review_text(r: dict) -> str:
     front = {
-        "id": r["airtable_id"],
+        "id": r["id"],
         "book": r["book_slug"],
         "member": r["member_slug"],
         "rating": r["rating"],

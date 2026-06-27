@@ -1362,14 +1362,14 @@ INSERT INTO club_meeting_hosts (meeting_id, member_id, ordinal) VALUES (183, 12,
 INSERT INTO club_meeting_hosts (meeting_id, member_id, ordinal) VALUES (184, 6, 0);
 
 -- club_reviews (8 rows)
-INSERT INTO club_reviews (id, airtable_id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (1, 'rec13NISfkfOKplZG', 4, 6, 5, 0, NULL, 0, NULL, NULL, '2026-04-09T18:36:15.000Z');
-INSERT INTO club_reviews (id, airtable_id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (4, 'recy2tXyceEBoSgZs', 7, 6, 5, 0, NULL, 0, NULL, NULL, '2026-04-09T18:43:24.000Z');
-INSERT INTO club_reviews (id, airtable_id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (5, 'recOVDiQEz2XdZACy', 3, 6, NULL, 1, NULL, 0, NULL, NULL, '2026-04-10T02:20:12.000Z');
-INSERT INTO club_reviews (id, airtable_id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (6, 'rec1bFDMEaSUWUZf4', 17, 6, NULL, 1, NULL, 0, NULL, NULL, '2026-04-10T02:20:32.000Z');
-INSERT INTO club_reviews (id, airtable_id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (7, 'recgQwISN1FMMmxrs', 28, 6, NULL, 1, NULL, 0, NULL, NULL, '2026-04-10T02:20:55.000Z');
-INSERT INTO club_reviews (id, airtable_id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (8, 'recKLTYkZJpy6iaBO', 39, 6, 5, 0, NULL, 0, NULL, NULL, '2026-04-10T02:21:19.000Z');
-INSERT INTO club_reviews (id, airtable_id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (9, 'recLK9D9ynUI6RYUu', 30, 6, 5, 0, 5, 1, NULL, 'This is one of my favorite books that we have ever read as a book club. I''ve come back to this book over and over again with concepts and models that apply to everyday things that I’m encountering. I''ve recommended it to dozens of people. Very good read!', '2026-04-10T02:21:45.000Z');
-INSERT INTO club_reviews (id, airtable_id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (10, 'recqp8KhUCpIVdx8c', 87, 6, 5, 0, 4, 1, NULL, 'Page turner of a book. Great read!', '2026-04-10T03:39:09.000Z');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (1, 4, 6, 5, 0, NULL, 0, NULL, NULL, '2026-04-09T18:36:15.000Z');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (4, 7, 6, 5, 0, NULL, 0, NULL, NULL, '2026-04-09T18:43:24.000Z');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (5, 3, 6, NULL, 1, NULL, 0, NULL, NULL, '2026-04-10T02:20:12.000Z');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (6, 17, 6, NULL, 1, NULL, 0, NULL, NULL, '2026-04-10T02:20:32.000Z');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (7, 28, 6, NULL, 1, NULL, 0, NULL, NULL, '2026-04-10T02:20:55.000Z');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (8, 39, 6, 5, 0, NULL, 0, NULL, NULL, '2026-04-10T02:21:19.000Z');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (9, 30, 6, 5, 0, 5, 1, NULL, 'This is one of my favorite books that we have ever read as a book club. I''ve come back to this book over and over again with concepts and models that apply to everyday things that I’m encountering. I''ve recommended it to dozens of people. Very good read!', '2026-04-10T02:21:45.000Z');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (10, 87, 6, 5, 0, 4, 1, NULL, 'Page turner of a book. Great read!', '2026-04-10T03:39:09.000Z');
 
 -- club_awards (1 rows)
 INSERT INTO club_awards (id, name, year, award_category, notes) VALUES (1, 'Book of the Year', 2016, 'Book of the Year', NULL);

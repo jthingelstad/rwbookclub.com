@@ -90,7 +90,6 @@ erDiagram
         int rating
         int dnf
         int discussion_quality
-        text airtable_id  "vestigial"
     }
     club_awards {
         int id PK
@@ -317,11 +316,14 @@ messages); these are about preventing future drift and tidying retired-system re
   (analytics + kudos) is unrelated and stays. The outbound-contact log that recorded sent/failed
   asks was folded into the `events` log (see Refactored, above).
 
-### Re-classified — not issues
+### Resolved (2026-06-27 — dropped `club_reviews.airtable_id`)
 
-3. **`club_reviews.airtable_id` is NOT vestigial.** It is the review's **stable public id** (the corpus
-   `id`, see `corpus_gen`), preserved across edits and asserted by tests. Kept; the column comment was
-   corrected. New reviews mint a `rev_<uuid>`, not an Airtable key.
+- **`club_reviews.airtable_id`** (an Airtable record id repurposed as the corpus review `id`) was
+  **dropped**. The integer PK `club_reviews.id` is an equally stable, edit-surviving identity, and
+  nothing public referenced the old value (no URL/feed/anchor — `book.njk`/`validate.py` key off the
+  `book--member` filename). The corpus review `id` now comes from `club_reviews.id`. Migration:
+  `migrate_drop_review_airtable_id`. *(This reverses the earlier "NOT vestigial" call — with Airtable
+  fully retired, the record id had no remaining use.)*
 
 ### Low (deferred)
 

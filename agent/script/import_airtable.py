@@ -209,7 +209,7 @@ def run_import(*, write: bool = True) -> dict:
         if bid is None or mid is None:
             warnings.append(f"review {rec} book/member slug did not resolve — skipped")
             continue
-        review_rows.append((rid, rec, bid, mid, r.get("rating"),
+        review_rows.append((rid, bid, mid, r.get("rating"),
                             1 if r.get("dnf") else 0, r.get("discussionQuality"),
                             1 if r.get("wouldRecommend") else 0, r.get("favoriteQuote"),
                             r.get("_body") or None, r.get("createdAt")))
@@ -258,7 +258,7 @@ def run_import(*, write: bool = True) -> dict:
         conn.executemany("INSERT INTO club_meetings(id,date,start_time,type_json,location,notes,placeholder) VALUES (?,?,?,?,?,?,?)", meeting_rows)
         conn.executemany("INSERT INTO club_meeting_books(meeting_id,book_id,ordinal) VALUES (?,?,?)", meeting_book_rows)
         conn.executemany("INSERT INTO club_meeting_hosts(meeting_id,member_id,ordinal) VALUES (?,?,?)", meeting_host_rows)
-        conn.executemany("INSERT INTO club_reviews(id,airtable_id,book_id,member_id,rating,dnf,discussion_quality,would_recommend,favorite_quote,body,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)", review_rows)
+        conn.executemany("INSERT INTO club_reviews(id,book_id,member_id,rating,dnf,discussion_quality,would_recommend,favorite_quote,body,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)", review_rows)
         conn.executemany("INSERT INTO club_awards(id,name,year,award_category,notes) VALUES (?,?,?,?,?)", award_rows)
         conn.executemany("INSERT INTO club_award_books(award_id,book_id) VALUES (?,?)", award_book_rows)
         conn.executemany("INSERT INTO club_award_voters(award_id,member_id) VALUES (?,?)", award_voter_rows)

@@ -628,6 +628,27 @@ def migrate_website_to_identities(conn: sqlite3.Connection) -> None:
         raise RuntimeError(f"website migration left dangling references: {[tuple(r) for r in dangling]}")
 
 
+def migrate_drop_review_airtable_id(conn: sqlite3.Connection) -> None:
+    """One-time: drop the vestigial `club_reviews.airtable_id`. It was an Airtable record id
+    repurposed as the corpus review `id`, but the integer PK (`club_reviews.id`) is an equally
+    stable, edit-surviving identity and nothing public references the old value. Guarded on the
+    column existing; the corpus review `id` now comes from `club_reviews.id`.
+    """
+    if "airtable_id" not in _columns(conn, "club_reviews"):
+        return
+
+    conn.commit()
+    conn.execute("PRAGMA foreign_keys=OFF")
+    try:
+        conn.executescript("ALTER TABLE club_reviews DROP COLUMN airtable_id;")
+        conn.commit()
+    finally:
+        conn.execute("PRAGMA foreign_keys=ON")
+    dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
+    if dangling:
+        raise RuntimeError(f"review airtable_id drop left dangling references: {[tuple(r) for r in dangling]}")
+
+
 def migrate_meeting_events(conn: sqlite3.Connection) -> None:
     """One-time: collapse the four meeting-ops tables (meeting_attendance, reading_statuses,
     member_contacts, roll_calls) into the unified `events` log + the `meeting_member_status`
@@ -715,6 +736,7 @@ def _ensure_schema() -> None:
         migrate_identity_to_fk(conn)
         migrate_drop_legacy_identity(conn)
         migrate_website_to_identities(conn)
+        migrate_drop_review_airtable_id(conn)
         migrate_drop_email_tracking(conn)
         migrate_meeting_events(conn)
         _ensure_member_indexes(conn)
