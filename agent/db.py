@@ -41,8 +41,8 @@ CREATE INDEX IF NOT EXISTS idx_memories_subject ON memories(subject);
 -- addresses, and phone numbers (the single handle store). Keyed by member_id FK — slug is
 -- never stored here. club_members is the person; member_identities holds their handles.
 CREATE TABLE IF NOT EXISTS member_identities (
-    surface     TEXT NOT NULL,               -- 'discord' | 'email' | 'sms'
-    identifier  TEXT NOT NULL,               -- discord user id | normalized email | E.164-ish phone
+    surface     TEXT NOT NULL,               -- 'discord' | 'email' | 'sms' | 'website'
+    identifier  TEXT NOT NULL,               -- discord id | normalized email | E.164-ish phone | url
     member_id   INTEGER NOT NULL REFERENCES club_members(id),
     is_primary  INTEGER NOT NULL DEFAULT 0,  -- canonical handle/address per (member, surface)
     linked_by   TEXT,
@@ -602,6 +602,32 @@ def migrate_drop_email_tracking(conn: sqlite3.Connection) -> None:
         raise RuntimeError(f"email-tracking drop left dangling references: {[tuple(r) for r in dangling]}")
 
 
+def migrate_website_to_identities(conn: sqlite3.Connection) -> None:
+    """One-time: fold the single `club_members.website` column into `member_identities`
+    (surface='website') so a member can have multiple website URLs, like emails/phones. Mirrors
+    migrate_identity_to_fk (which folded email/mobile). Guarded on the column still existing.
+    """
+    if "website" not in _columns(conn, "club_members"):
+        return
+
+    conn.commit()
+    conn.execute("PRAGMA foreign_keys=OFF")
+    try:
+        conn.executescript("""
+        INSERT OR IGNORE INTO member_identities
+            (surface, identifier, member_id, is_primary, linked_by, created_at, updated_at)
+            SELECT 'website', website, id, 1, 'club_members.website', datetime('now'), datetime('now')
+            FROM club_members WHERE website IS NOT NULL AND TRIM(website) != '';
+        ALTER TABLE club_members DROP COLUMN website;
+        """)
+        conn.commit()
+    finally:
+        conn.execute("PRAGMA foreign_keys=ON")
+    dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
+    if dangling:
+        raise RuntimeError(f"website migration left dangling references: {[tuple(r) for r in dangling]}")
+
+
 def migrate_meeting_events(conn: sqlite3.Connection) -> None:
     """One-time: collapse the four meeting-ops tables (meeting_attendance, reading_statuses,
     member_contacts, roll_calls) into the unified `events` log + the `meeting_member_status`
@@ -688,6 +714,7 @@ def _ensure_schema() -> None:
         migrate_ops_to_fk(conn)
         migrate_identity_to_fk(conn)
         migrate_drop_legacy_identity(conn)
+        migrate_website_to_identities(conn)
         migrate_drop_email_tracking(conn)
         migrate_meeting_events(conn)
         _ensure_member_indexes(conn)
@@ -911,6 +938,75 @@ def list_member_sms() -> list[dict]:
             "WHERE mi.surface = 'sms' ORDER BY m.slug, mi.identifier"
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+def _normalize_url(url: str) -> str:
+    """Light normal form for a website URL: trim, default to https:// when no scheme is given, drop a
+    trailing slash. Shape validation (a host with a dot) happens in link_member_website."""
+    url = url.strip()
+    if url and "://" not in url:
+        url = "https://" + url
+    return url.rstrip("/")
+
+
+def link_member_website(url: str, member_slug: str, *, linked_by: str | None = None,
+                        is_primary: bool = False) -> None:
+    url = _normalize_url(url)
+    host = url.split("://", 1)[-1].split("/", 1)[0]
+    if not url or "." not in host:
+        raise ValueError("website must look like a URL, e.g. https://example.com")
+    link_identity("website", url, member_slug, is_primary=is_primary, linked_by=linked_by)
+
+
+def websites_for_member(member_slug: str) -> list[str]:
+    """All of a member's website URLs, primary first. Public — shown on the member's profile page."""
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT mi.identifier AS url FROM member_identities mi "
+            "JOIN club_members m ON m.id = mi.member_id "
+            "WHERE mi.surface = 'website' AND m.slug = ? "
+            "ORDER BY mi.is_primary DESC, mi.created_at, mi.identifier",
+            (member_slug,),
+        ).fetchall()
+    return [r["url"] for r in rows]
+
+
+def list_member_websites() -> list[dict]:
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT mi.identifier AS url, m.slug AS member_slug, mi.is_primary, "
+            "mi.linked_by, mi.created_at, mi.updated_at "
+            "FROM member_identities mi JOIN club_members m ON m.id = mi.member_id "
+            "WHERE mi.surface = 'website' ORDER BY m.slug, mi.identifier"
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+# The first (and only) identity-removal path. Email is deliberately NOT removable: addresses anchor
+# mailing-list attribution (mail_messages.member_id resolves through them), so dropping one would
+# silently break who past + future list mail is attributed to.
+def unlink_member_identity(surface: str, identifier: str, member_slug: str) -> bool:
+    """Delete one of a member's own identities (member-scoped). Returns True if a row was removed.
+    Refuses surface='email' — those can never be removed."""
+    if surface == "email":
+        raise ValueError("email addresses can't be removed — they anchor mailing-list attribution")
+    with connect() as conn:
+        mid = _member_id_for_slug(conn, member_slug)
+        if mid is None:
+            return False
+        cur = conn.execute(
+            "DELETE FROM member_identities WHERE surface = ? AND identifier = ? AND member_id = ?",
+            (surface, identifier, mid),
+        )
+        return cur.rowcount > 0
+
+
+def remove_member_website(url: str, member_slug: str) -> bool:
+    return unlink_member_identity("website", _normalize_url(url), member_slug)
+
+
+def remove_member_sms(number: str, member_slug: str) -> bool:
+    return unlink_member_identity("sms", _normalize_phone(number), member_slug)
 
 
 # ── Mail archive ─────────────────────────────────────────────────────────────

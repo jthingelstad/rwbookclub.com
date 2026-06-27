@@ -34,9 +34,8 @@ CREATE TABLE IF NOT EXISTS club_members (
     id          INTEGER PRIMARY KEY,        -- Airtable Member ID
     slug        TEXT NOT NULL UNIQUE,       -- corpus filename stem (output only)
     name        TEXT NOT NULL,
-    is_current  INTEGER NOT NULL DEFAULT 0,
-    website     TEXT
-    -- contact addresses live in member_identities (surface='email'); see db.py
+    is_current  INTEGER NOT NULL DEFAULT 0
+    -- contact + web addresses live in member_identities (surface='email'|'sms'|'website'); see db.py
 );
 
 CREATE TABLE IF NOT EXISTS club_authors (

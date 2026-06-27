@@ -513,6 +513,7 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             email_links = db.list_member_emails()
             email_linked = {r["member_slug"] for r in email_links}
             sms_linked = {r["member_slug"] for r in db.list_member_sms()}
+            website_linked = {r["member_slug"] for r in db.list_member_websites()}
             current = [m for m in cr.members() if m.get("isCurrent")]
             return _dump({
                 "speakerUserId": ctx.get("speaker_user_id"),
@@ -521,6 +522,7 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 "linkedCurrentMembers": sorted(linked),
                 "emailLinkedCurrentMembers": sorted(email_linked),
                 "smsLinkedCurrentMembers": sorted(sms_linked),
+                "websiteLinkedCurrentMembers": sorted(website_linked),
                 "missingCurrentMembers": [
                     {"slug": m["slug"], "name": m.get("name")}
                     for m in current if m["slug"] not in linked

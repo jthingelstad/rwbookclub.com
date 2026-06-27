@@ -16,7 +16,7 @@ The database holds **two classes** of data (see `agent/docs/ROADMAP.md`):
 
 **One member identity.** `club_members` is the single record of a person (`is_current` = active/
 inactive); `member_identities` holds that person's handles — `(surface, identifier) → member_id`,
-`surface ∈ {discord, email, sms}` — and **every** member-referencing table FKs to `club_members(id)`.
+`surface ∈ {discord, email, sms, website}` — and **every** member-referencing table FKs to `club_members(id)`.
 There is no separate participant/claims identity store.
 
 Foreign keys **are enforced at runtime** — `db.connect()` sets `PRAGMA foreign_keys=ON` (the `OFF`
@@ -75,7 +75,6 @@ erDiagram
         text slug
         text name
         int is_current
-        text website
     }
     club_meetings {
         int id PK
@@ -289,6 +288,16 @@ messages); these are about preventing future drift and tidying retired-system re
    `idx_reading_statuses_member`, `idx_member_contacts_member`. Also removed `identity_claims` (a dead
    write-only staging table) and added an `sms` member-handle surface. *(The attendance/reading/contact
    tables those indexes covered were since folded into `events`; see below.)*
+
+### Refactored (2026-06-27 — member websites → identities)
+
+- **`club_members.website`** (a single nullable column) was folded into `member_identities` as a new
+  `surface='website'`, so a member can have **multiple** website URLs (like emails/phones). Websites are
+  public — they're the only identity surface emitted into the corpus (`members/<slug>.json` →
+  `websites[]`) and rendered on the profile page. Members self-manage handles via `/oliver add-website`
+  / `add-email` / `add-phone` and `remove-website` / `remove-phone`; **email can never be removed**
+  (`db.unlink_member_identity` blocks `surface='email'`) because it anchors mailing-list attribution.
+  Migration: `migrate_website_to_identities`.
 
 ### Refactored (2026-06-27 — event-sourced meeting ops)
 

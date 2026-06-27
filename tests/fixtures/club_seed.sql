@@ -2,18 +2,18 @@
 --   python -m agent.script.dump_club_seed > tests/fixtures/club_seed.sql
 
 -- club_members (12 rows)
-INSERT INTO club_members (id, slug, name, is_current, website) VALUES (1, 'brad', 'Brad', 0, NULL);
-INSERT INTO club_members (id, slug, name, is_current, website) VALUES (2, 'dan', 'Dan', 0, NULL);
-INSERT INTO club_members (id, slug, name, is_current, website) VALUES (3, 'david', 'David', 0, NULL);
-INSERT INTO club_members (id, slug, name, is_current, website) VALUES (4, 'erik', 'Erik', 1, 'https://www.linkedin.com/in/erikjordan/');
-INSERT INTO club_members (id, slug, name, is_current, website) VALUES (5, 'j-rauser', 'J Rauser', 0, NULL);
-INSERT INTO club_members (id, slug, name, is_current, website) VALUES (6, 'jamie', 'Jamie', 1, 'https://www.thingelstad.com');
-INSERT INTO club_members (id, slug, name, is_current, website) VALUES (7, 'jeffrey', 'Jeffrey', 0, NULL);
-INSERT INTO club_members (id, slug, name, is_current, website) VALUES (8, 'john', 'John', 0, NULL);
-INSERT INTO club_members (id, slug, name, is_current, website) VALUES (9, 'loren', 'Loren', 1, 'https://lorenterveen.com');
-INSERT INTO club_members (id, slug, name, is_current, website) VALUES (10, 'nick', 'Nick', 1, 'https://www.linkedin.com/in/nick-swenson-976b7337/');
-INSERT INTO club_members (id, slug, name, is_current, website) VALUES (11, 'scott', 'Scott', 0, NULL);
-INSERT INTO club_members (id, slug, name, is_current, website) VALUES (12, 'tom', 'Tom', 1, 'https://tomeri.org');
+INSERT INTO club_members (id, slug, name, is_current) VALUES (1, 'brad', 'Brad', 0);
+INSERT INTO club_members (id, slug, name, is_current) VALUES (2, 'dan', 'Dan', 0);
+INSERT INTO club_members (id, slug, name, is_current) VALUES (3, 'david', 'David', 0);
+INSERT INTO club_members (id, slug, name, is_current) VALUES (4, 'erik', 'Erik', 1);
+INSERT INTO club_members (id, slug, name, is_current) VALUES (5, 'j-rauser', 'J Rauser', 0);
+INSERT INTO club_members (id, slug, name, is_current) VALUES (6, 'jamie', 'Jamie', 1);
+INSERT INTO club_members (id, slug, name, is_current) VALUES (7, 'jeffrey', 'Jeffrey', 0);
+INSERT INTO club_members (id, slug, name, is_current) VALUES (8, 'john', 'John', 0);
+INSERT INTO club_members (id, slug, name, is_current) VALUES (9, 'loren', 'Loren', 1);
+INSERT INTO club_members (id, slug, name, is_current) VALUES (10, 'nick', 'Nick', 1);
+INSERT INTO club_members (id, slug, name, is_current) VALUES (11, 'scott', 'Scott', 0);
+INSERT INTO club_members (id, slug, name, is_current) VALUES (12, 'tom', 'Tom', 1);
 
 -- club_authors (177 rows)
 INSERT INTO club_authors (id, slug, name, bio) VALUES (1, 'cory-doctorow', 'Cory Doctorow', 'From his website: Cory Doctorow (craphound.com) is a science fiction author, activist, journalist and blogger -- the co-editor of Boing Boing (boingboing.net) and the author of the bestselling Tor Teens/HarperCollins UK novel LITTLE BROTHER. He is the former European director of the Electronic Frontier Foundation and co-founded the UK Open Rights Group. Born in Toronto, Canada, he now lives in London. 2 Creative Commons-licensed photos: cindiann: http://www.flickr.com/photos/trucolorsfly/2625294688/ & Joi Ito, Creative Commons Attribution 3.0.');

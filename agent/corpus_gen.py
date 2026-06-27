@@ -94,7 +94,10 @@ def _meeting_doc(m: dict) -> dict:
 
 
 def _member_doc(m: dict) -> dict:
-    return {"name": m["name"], "isCurrent": bool(m["is_current"]), "website": m["website"]}
+    # `websites` are sourced from member_identities (surface='website') and attached to `m` by the
+    # generate() loop — multiple per member, public, rendered on the profile page. Emails/phones are
+    # private and never enter the corpus.
+    return {"name": m["name"], "isCurrent": bool(m["is_current"]), "websites": m.get("websites") or []}
 
 
 def _author_doc(a: dict) -> dict:
@@ -171,8 +174,16 @@ def generate(out_root: Path = DEFAULT_OUT) -> dict:
         for m in clubdb.all_meetings(conn):
             stem = f"{(m['date'] or 'undated')[:10]}--{m['id']}"
             emit_json("meetings", f"{stem}.json", _meeting_doc(m))
+        websites_by_id: dict[int, list[str]] = {}
+        for r in conn.execute(
+            "SELECT member_id, identifier FROM member_identities WHERE surface = 'website' "
+            "ORDER BY is_primary DESC, created_at, identifier"
+        ):
+            websites_by_id.setdefault(r["member_id"], []).append(r["identifier"])
         for m in clubdb.all_members(conn):
-            emit_json("members", f"{m['slug']}.json", _member_doc(m))
+            doc_src = dict(m)
+            doc_src["websites"] = websites_by_id.get(m["id"], [])
+            emit_json("members", f"{m['slug']}.json", _member_doc(doc_src))
         for a in clubdb.all_authors(conn):
             emit_json("authors", f"{a['slug']}.json", _author_doc(a))
         for a in clubdb.all_awards(conn):

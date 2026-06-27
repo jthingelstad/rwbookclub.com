@@ -99,6 +99,14 @@ oliver_cmds = discord.app_commands.Group(
     name="oliver", description="Ask Oliver, or help run the R/W Book Club."
 )
 
+# Identity/contact management lives under `/oliver contact …` — a nested subcommand group, both to
+# group it logically and to stay under Discord's 25-subcommand-per-group ceiling. Admin `link-*`
+# (link anyone) and member self-service `add-*`/`remove-*` (your own handles) both live here.
+contact_cmds = discord.app_commands.Group(
+    name="contact", description="Manage member contact handles — websites, emails, phones.",
+    parent=oliver_cmds,
+)
+
 
 # ── Autocompletes ────────────────────────────────────────────────────────────
 async def book_autocomplete(interaction: discord.Interaction, current: str):
@@ -635,7 +643,7 @@ async def release_notes_cmd(interaction: discord.Interaction, days: int,
         await interaction.followup.send("I drafted the notes but couldn't send the email.", ephemeral=True)
 
 
-@oliver_cmds.command(name="link-member", description="Link a Discord user to a club member (admin).")
+@contact_cmds.command(name="link-member", description="Link a Discord user to a club member (admin).")
 @discord.app_commands.describe(member="Club member", user="Discord user")
 @discord.app_commands.autocomplete(member=member_autocomplete)
 @admin_only
@@ -649,7 +657,7 @@ async def link_member_cmd(interaction: discord.Interaction, member: str, user: d
         f"Linked {user.mention} to {m['name']} (`{m['slug']}`).", ephemeral=True)
 
 
-@oliver_cmds.command(name="link-email", description="Link an email address to a club member (admin).")
+@contact_cmds.command(name="link-email", description="Link an email address to a club member (admin).")
 @discord.app_commands.describe(member="Club member", email="Email address")
 @discord.app_commands.autocomplete(member=member_autocomplete)
 @admin_only
@@ -670,7 +678,7 @@ async def link_email_cmd(interaction: discord.Interaction, member: str, email: s
         f"Linked `{email.strip().lower()}` to {m['name']} (`{m['slug']}`).{extra}", ephemeral=True)
 
 
-@oliver_cmds.command(name="link-sms", description="Link a phone number to a club member (admin).")
+@contact_cmds.command(name="link-sms", description="Link a phone number to a club member (admin).")
 @discord.app_commands.describe(member="Club member", number="Phone number")
 @discord.app_commands.autocomplete(member=member_autocomplete)
 @admin_only
@@ -686,6 +694,95 @@ async def link_sms_cmd(interaction: discord.Interaction, member: str, number: st
         return
     await interaction.response.send_message(
         f"Linked `{number.strip()}` to {m['name']} (`{m['slug']}`).", ephemeral=True)
+
+
+# ── Member self-service contact handles ──────────────────────────────────────
+# Members manage their OWN identities (no admin gate; the caller is resolved via their Discord link).
+# Websites are public (profile page → schedule a rebuild); emails/phones are private. Emails can be
+# added but never removed — they anchor mailing-list attribution (db.unlink_member_identity blocks it).
+_LINK_FIRST = ("I can only do that for linked club members — ask an admin to run "
+               "`/oliver link-member` to connect your Discord account first.")
+
+
+@contact_cmds.command(name="add-website", description="Add one of your website addresses (public, on your profile).")
+@discord.app_commands.describe(url="Your website URL, e.g. https://example.com")
+async def add_website_cmd(interaction: discord.Interaction, url: str) -> None:
+    member = _linked_member_for_user(interaction.user.id)
+    if not member:
+        await interaction.response.send_message(_LINK_FIRST, ephemeral=True)
+        return
+    try:
+        db.link_member_website(url, member["slug"], linked_by=str(interaction.user.id))
+    except ValueError as e:
+        await interaction.response.send_message(str(e), ephemeral=True)
+        return
+    schedule_publish()
+    await interaction.response.send_message(
+        "Added that website to your profile — it'll show once the site rebuilds.", ephemeral=True)
+
+
+@contact_cmds.command(name="add-email", description="Add one of your email addresses (private).")
+@discord.app_commands.describe(email="Email address")
+async def add_email_cmd(interaction: discord.Interaction, email: str) -> None:
+    member = _linked_member_for_user(interaction.user.id)
+    if not member:
+        await interaction.response.send_message(_LINK_FIRST, ephemeral=True)
+        return
+    try:
+        db.link_member_email(email, member["slug"], linked_by=str(interaction.user.id))
+    except ValueError as e:
+        await interaction.response.send_message(str(e), ephemeral=True)
+        return
+    rescored = await asyncio.to_thread(mail_archive.reattribute_archive, email)
+    extra = f" Re-attributed {rescored} archived message(s)." if rescored else ""
+    await interaction.response.send_message(
+        f"Added `{email.strip().lower()}` to your contact info.{extra}", ephemeral=True)
+
+
+@contact_cmds.command(name="add-phone", description="Add one of your phone numbers (private).")
+@discord.app_commands.describe(number="Phone number")
+async def add_phone_cmd(interaction: discord.Interaction, number: str) -> None:
+    member = _linked_member_for_user(interaction.user.id)
+    if not member:
+        await interaction.response.send_message(_LINK_FIRST, ephemeral=True)
+        return
+    try:
+        db.link_member_sms(number, member["slug"], linked_by=str(interaction.user.id))
+    except ValueError as e:
+        await interaction.response.send_message(str(e), ephemeral=True)
+        return
+    await interaction.response.send_message(
+        f"Added `{number.strip()}` to your contact info.", ephemeral=True)
+
+
+@contact_cmds.command(name="remove-website", description="Remove one of your website addresses.")
+@discord.app_commands.describe(url="The website URL to remove")
+async def remove_website_cmd(interaction: discord.Interaction, url: str) -> None:
+    member = _linked_member_for_user(interaction.user.id)
+    if not member:
+        await interaction.response.send_message(_LINK_FIRST, ephemeral=True)
+        return
+    if not await asyncio.to_thread(db.remove_member_website, url, member["slug"]):
+        await interaction.response.send_message(
+            "I couldn't find that website on your profile — check the exact URL with `/oliver whoami`.",
+            ephemeral=True)
+        return
+    schedule_publish()
+    await interaction.response.send_message(
+        "Removed that website — your profile updates once the site rebuilds.", ephemeral=True)
+
+
+@contact_cmds.command(name="remove-phone", description="Remove one of your phone numbers.")
+@discord.app_commands.describe(number="The phone number to remove")
+async def remove_phone_cmd(interaction: discord.Interaction, number: str) -> None:
+    member = _linked_member_for_user(interaction.user.id)
+    if not member:
+        await interaction.response.send_message(_LINK_FIRST, ephemeral=True)
+        return
+    removed = await asyncio.to_thread(db.remove_member_sms, number, member["slug"])
+    await interaction.response.send_message(
+        "Removed that number from your contact info." if removed
+        else "I couldn't find that number on your account.", ephemeral=True)
 
 
 @oliver_cmds.command(name="reattribute-mail",
@@ -706,8 +803,9 @@ async def identities_cmd(interaction: discord.Interaction) -> None:
     rows = db.list_member_identities()
     email_rows = db.list_member_emails()
     sms_rows = db.list_member_sms()
+    website_rows = db.list_member_websites()
     members = corpus_read.members()
-    if not rows and not email_rows and not sms_rows:
+    if not rows and not email_rows and not sms_rows and not website_rows:
         missing = ", ".join(sorted(m["name"] for m in members if m.get("isCurrent")))
         await interaction.response.send_message(
             f"No Discord identities linked yet. Current members not linked: {missing}.",
@@ -723,6 +821,8 @@ async def identities_cmd(interaction: discord.Interaction) -> None:
         lines.append(f"• {names.get(r['member_slug'], r['member_slug'])}: email `{r['email']}`")
     for r in sms_rows:
         lines.append(f"• {names.get(r['member_slug'], r['member_slug'])}: sms `{r['number']}`")
+    for r in website_rows:
+        lines.append(f"• {names.get(r['member_slug'], r['member_slug'])}: website `{r['url']}`")
     missing = [m["name"] for m in members if m.get("isCurrent") and m["slug"] not in linked_slugs]
     if missing:
         lines.append("\n**Current members without Discord:** " + ", ".join(sorted(missing)))

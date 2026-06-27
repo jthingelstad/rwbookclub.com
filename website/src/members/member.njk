@@ -25,11 +25,11 @@ eleventyComputed:
     <div class="member-header-text">
       <p class="kicker">Member</p>
       <h1>{{ member.name }}</h1>
-      {% if member.website %}
+      {% if member.websites and member.websites | length %}
         <p class="member-website">
-          <a href="{{ member.website }}" rel="external noopener">
-            {{ member.website | replace("https://", "") | replace("http://", "") | replace("www.", "") }}
-          </a>
+          {% for url in member.websites %}
+            <a href="{{ url }}" rel="external noopener">{{ url | replace("https://", "") | replace("http://", "") | replace("www.", "") }}</a>{% if not loop.last %} · {% endif %}
+          {% endfor %}
         </p>
       {% endif %}
       <p class="member-stats">Picked {{ member.pickedCount }} · Hosted {{ member.hostedCount }} meeting{% if member.hostedCount != 1 %}s{% endif %}</p>

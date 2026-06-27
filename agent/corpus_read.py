@@ -525,7 +525,7 @@ def member_history(name_or_slug: str) -> dict | None:
         "name": m.get("name"),
         "slug": m.get("slug"),
         "isCurrent": bool(m.get("isCurrent")),
-        "website": m.get("website"),
+        "websites": m.get("websites") or [],
         "pickedCount": len(picked),
         "picks": [{"title": b.get("title"), "year": b.get("year")} for b in picked],
         "hostedCount": len(hosted),

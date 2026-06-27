@@ -108,7 +108,7 @@ def run_import(*, write: bool = True) -> dict:
     at = _build_airtable_maps()
     warnings: list[str] = []
 
-    members = _corpus_json("members")          # slug -> {name, isCurrent, website}
+    members = _corpus_json("members")          # slug -> {name, isCurrent, websites[]}
     authors = _corpus_json("authors")          # slug -> {name, bio?}
     books = _corpus_json("books")              # slug -> full book record
     meetings = _corpus_json("meetings")        # stem -> meeting record (has meetingId)
@@ -118,17 +118,22 @@ def run_import(*, write: bool = True) -> dict:
     # Resolve integer ids for members/authors (corpus has none) via Airtable name maps.
     member_id_for_slug: dict[str, int] = {}
     member_rows = []
-    email_identity_rows = []   # member emails -> member_identities(surface='email')
+    email_identity_rows = []     # member emails -> member_identities(surface='email')
+    website_identity_rows = []   # member websites -> member_identities(surface='website')
     for slug, m in members.items():
         mid = at["member_name_to_id"].get(m["name"])
         if mid is None:
             warnings.append(f"member '{slug}' ({m['name']}) has no Airtable Member ID — skipped")
             continue
         member_id_for_slug[slug] = mid
-        member_rows.append((mid, slug, m["name"], 1 if m.get("isCurrent") else 0, m.get("website")))
+        member_rows.append((mid, slug, m["name"], 1 if m.get("isCurrent") else 0))
         contact = at["member_contact"].get(mid, {})
         if contact.get("email"):
             email_identity_rows.append(("email", contact["email"].strip().lower(), mid, 1, "airtable_import"))
+        # websites now live in member_identities (tolerate the legacy single-string corpus too)
+        member_websites = m.get("websites") or ([m["website"]] if m.get("website") else [])
+        for i, url in enumerate(member_websites):
+            website_identity_rows.append(("website", url, mid, 1 if i == 0 else 0, "airtable_import"))
 
     author_id_for_slug: dict[str, int] = {}
     author_rows = []
@@ -239,13 +244,13 @@ def run_import(*, write: bool = True) -> dict:
         return result
 
     with db.connect() as conn:
-        conn.execute("DELETE FROM member_identities WHERE surface = 'email'")  # FK to club_members
+        conn.execute("DELETE FROM member_identities WHERE surface IN ('email', 'website')")  # FK to club_members
         for t in reversed(clubdb.CLUB_TABLES):
             conn.execute(f"DELETE FROM {t}")
-        conn.executemany("INSERT INTO club_members(id,slug,name,is_current,website) VALUES (?,?,?,?,?)", member_rows)
+        conn.executemany("INSERT INTO club_members(id,slug,name,is_current) VALUES (?,?,?,?)", member_rows)
         conn.executemany(
             "INSERT OR REPLACE INTO member_identities(surface,identifier,member_id,is_primary,linked_by) "
-            "VALUES (?,?,?,?,?)", email_identity_rows)
+            "VALUES (?,?,?,?,?)", email_identity_rows + website_identity_rows)
         conn.executemany("INSERT INTO club_authors(id,slug,name,bio) VALUES (?,?,?,?)", author_rows)
         conn.executemany("INSERT INTO club_books(id,slug,title,subtitle,topic,fiction,publication_year,page_count,isbn13,ol_key,synopsis,subjects_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", book_rows)
         conn.executemany("INSERT INTO club_book_authors(book_id,author_id,ordinal) VALUES (?,?,?)", book_author_rows)
