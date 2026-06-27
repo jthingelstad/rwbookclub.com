@@ -29,7 +29,7 @@ _FIXTURE_SQL = (pathlib.Path(__file__).parent / "fixtures" / "club_seed.sql").re
 # Tables that FK into club_members / club_meetings — cleared before club_* so deleting club
 # rows can't trip a foreign-key constraint from a prior test's leftover rows.
 _FK_DEPENDENTS = (
-    "email_opens", "email_tracking", "member_contacts", "reading_statuses",
+    "member_contacts", "reading_statuses",
     "meeting_attendance", "roll_calls", "mail_message_fts", "mail_messages",
     "member_identities",
 )
@@ -64,9 +64,6 @@ def _no_publish(monkeypatch):
     monkeypatch.setattr(publish, "publish_site", lambda *a, **k: {"deployed": False})
 # Keep email tests and dispatch tests offline even when the host .env has a live token.
 os.environ["FASTMAIL_JMAP_TOKEN"] = ""
-os.environ["TINYLYTICS_SITE_ID"] = ""
-os.environ["TINYLYTICS_SITE_ID_NUMERIC"] = ""
-os.environ["TINYLYTICS_API_KEY"] = ""
 
 
 @pytest.fixture(autouse=True)
@@ -94,7 +91,7 @@ def fresh_db():
         "inbound_emails",
         "reading_statuses",
         "activity_events",
-        "email_opens", "email_tracking", "member_contacts",
+        "member_contacts",
         "mail_message_fts", "mail_messages", "mail_threads",
     ]
     with _db.connect() as conn:

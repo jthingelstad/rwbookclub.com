@@ -690,7 +690,7 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             subject = f"Reading check-in: {title}"
             sent = outbound.send(
                 to=[email["email"]], subject=subject, body=body,
-                track={"meeting_id": meeting_id, "member_id": member_id, "kind": "reading_checkin"},
+                contact={"meeting_id": meeting_id, "member_id": member_id, "kind": "reading_checkin"},
             )
             db.add_activity(
                 "email_sent",
@@ -749,7 +749,7 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 body = _roll_call_email_body(member.get("name") or member["slug"], status, note=note)
                 sent = outbound.send(
                     to=[email["email"]], subject=subject, body=body,
-                    track={"meeting_id": meeting_id, "member_id": member_id, "kind": "roll_call"},
+                    contact={"meeting_id": meeting_id, "member_id": member_id, "kind": "roll_call"},
                 )
                 db.add_activity(
                     "email_sent",

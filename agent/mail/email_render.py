@@ -1,14 +1,17 @@
-"""HTML email rendering and optional open tracking for Oliver."""
+"""HTML email rendering for Oliver, plus the per-member outbound contact log.
+
+No open tracking: Oliver does not record whether a member opens an email (no pixel, no
+external poll). `prepare_outbound`/`mark_outbound_*` only write the operational `member_contacts`
+row (we emailed X for roll-call/reading-checkin; status sent/failed) the campaign view reads.
+"""
 
 from __future__ import annotations
 
 import html
-import secrets
 
 import markdown as _markdown
 
 from agent import config, db
-from agent.mail import tinylytics
 
 
 def _render_markdown(text: str) -> str:
@@ -21,18 +24,6 @@ def _render_markdown(text: str) -> str:
     """
     escaped = html.escape(text or "")
     return _markdown.markdown(escaped, extensions=["nl2br", "sane_lists"])
-
-
-def enabled() -> bool:
-    return tinylytics.enabled()
-
-
-def tracking_url(token: str) -> str:
-    return tinylytics.pixel_url(token)
-
-
-def new_token() -> str:
-    return secrets.token_urlsafe(18)
 
 
 # Email CSS. Delivered as a <style> block (well-supported in Apple Mail, Gmail, and
@@ -55,47 +46,20 @@ _EMAIL_CSS = (
 )
 
 
-def text_to_html(text: str, *, tracking_url_value: str | None = None) -> str:
+def text_to_html(text: str) -> str:
     body = _render_markdown(text) or "<p></p>"
-    footer = ""
-    pixel = ""
-    if tracking_url_value:
-        footer = (
-            "<p style=\"font-size:12px;color:#666;margin-top:24px;\">"
-            "Oliver records whether this email was opened so the club can avoid unnecessary follow-ups."
-            "</p>"
-        )
-        pixel = (
-            f"<img src=\"{html.escape(tracking_url_value)}\" width=\"1\" height=\"1\" "
-            "alt=\"\" style=\"display:none;width:1px;height:1px;border:0;\" />"
-        )
     return (
         "<!doctype html><html><head><meta charset=\"utf-8\">"
         "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
         f"<style>{_EMAIL_CSS}</style></head>"
         "<body><div class=\"oliver-email\">"
-        f"{body}{footer}{pixel}</div></body></html>"
+        f"{body}</div></body></html>"
     )
-
-
-def tracked_html(*, text: str, contact_id: int, meeting_id: int,
-                 member_id: int, kind: str, subject: str) -> tuple[str | None, str | None]:
-    if not enabled():
-        return (text_to_html(text) if config.OLIVER_EMAIL_HTML_ENABLED else None, None)
-    token = new_token()
-    db.add_email_tracking(
-        token=token,
-        contact_id=contact_id,
-        meeting_id=meeting_id,
-        member_id=member_id,
-        kind=kind,
-        subject=subject,
-    )
-    return text_to_html(text, tracking_url_value=tracking_url(token)), token
 
 
 def prepare_outbound(*, text: str, meeting_id: int, member_id: int,
-                     kind: str, subject: str) -> tuple[int, str | None, str | None]:
+                     kind: str, subject: str) -> tuple[int, str | None]:
+    """Log the outbound contact in member_contacts and render the HTML body. No tracking."""
     contact_id = db.add_member_contact(
         meeting_id=meeting_id,
         member_id=member_id,
@@ -105,21 +69,12 @@ def prepare_outbound(*, text: str, meeting_id: int, member_id: int,
         status="sending",
         subject=subject,
     )
-    html_body, token = tracked_html(
-        text=text,
-        contact_id=contact_id,
-        meeting_id=meeting_id,
-        member_id=member_id,
-        kind=kind,
-        subject=subject,
-    )
-    return contact_id, html_body, token
+    html_body = text_to_html(text) if config.OLIVER_EMAIL_HTML_ENABLED else None
+    return contact_id, html_body
 
 
-def mark_outbound_sent(contact_id: int, token: str | None, email_id: str | None) -> None:
+def mark_outbound_sent(contact_id: int) -> None:
     db.update_member_contact_status(contact_id, "sent")
-    if token:
-        db.mark_email_tracking_sent(token, email_id)
 
 
 def mark_outbound_failed(contact_id: int) -> None:

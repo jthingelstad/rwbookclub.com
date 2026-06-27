@@ -29,7 +29,6 @@ def snapshot() -> dict:
         for r in (db.reading_status_for_meeting(meeting_id) if meeting_id is not None else [])
     }
     contacts = db.member_contacts_for_meeting(meeting_id) if meeting_id is not None else []
-    opens = db.email_open_summary(meeting_id) if meeting_id is not None else {}
     last_contact: dict[int, dict] = {}
     last_roll_call: dict[int, dict] = {}
     last_reading: dict[int, dict] = {}
@@ -41,7 +40,7 @@ def snapshot() -> dict:
             last_roll_call.setdefault(mid, contact)
         if contact["kind"] == "reading_checkin":
             last_reading.setdefault(mid, contact)
-            if contact["direction"] == "outbound" and contact["status"] in {"sent", "opened"}:
+            if contact["direction"] == "outbound" and contact["status"] == "sent":
                 reading_checkin_counts[mid] = reading_checkin_counts.get(mid, 0) + 1
 
     discord_linked = {r["member_slug"] for r in db.list_member_identities()}
@@ -78,7 +77,6 @@ def snapshot() -> dict:
             "lastContact": _compact_contact(last_contact.get(mid)),
             "lastRollCallContact": _compact_contact(last_roll_call.get(mid)),
             "lastReadingContact": _compact_contact(last_reading.get(mid)),
-            "lastEmailOpen": opens.get(mid),
             "readingCheckinCount": reading_checkin_counts.get(mid, 0),
         }
         if row["status"] == "pending":
@@ -155,12 +153,10 @@ def format_dashboard(data: dict | None = None) -> str:
     for member in data["members"]:
         contact = member.get("lastContact") or {}
         contact_text = f"; last {contact.get('kind')} {contact.get('createdAt')}" if contact else ""
-        open_row = member.get("lastEmailOpen")
-        open_text = f"; opened {open_row.get('opened_at')}" if open_row else ""
         reading = member["reading"].replace("_", " ")
         lines.append(
             f"• {member['member']}: attendance {member['attendance']}; "
-            f"reading {reading}; next {member['nextAction']}{contact_text}{open_text}"
+            f"reading {reading}; next {member['nextAction']}{contact_text}"
         )
     return "\n".join(lines)
 

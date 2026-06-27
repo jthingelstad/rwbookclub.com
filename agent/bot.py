@@ -26,7 +26,7 @@ import requests
 from discord.ext import tasks
 
 from agent import clubdb, commands, config, context as kb, db, oliver, publish
-from agent.mail import email_jmap, email_policy, mail_archive, outbound, tinylytics
+from agent.mail import email_jmap, email_policy, mail_archive, outbound
 from agent.club import meeting_rules
 
 # Split the streams so launchd's logs are useful: activity (DEBUG/INFO) → stdout (oliver.log),
@@ -230,7 +230,6 @@ async def on_ready() -> None:
 
     commands.start_scheduler()
     start_activity_logger()
-    start_tinylytics_poller()
     start_email_poller()
 
 
@@ -273,34 +272,6 @@ def start_email_poller() -> None:
         return
     if not poll_email.is_running():
         poll_email.start()
-
-
-def start_tinylytics_poller() -> None:
-    if not tinylytics.enabled():
-        log.info("Tinylytics email open sync disabled: configure TINYLYTICS_* variables")
-        return
-    if not poll_tinylytics.is_running():
-        poll_tinylytics.start()
-
-
-@tasks.loop(seconds=config.TINYLYTICS_SYNC_SECONDS)
-async def poll_tinylytics() -> None:
-    try:
-        synced = await asyncio.to_thread(tinylytics.sync_email_opens)
-    except Exception:
-        log.exception("Failed to sync Tinylytics email opens")
-        return
-    if synced:
-        db.add_activity(
-            "email_opened",
-            "Email opens synced",
-            f"Recorded {synced} Tinylytics email open(s).",
-        )
-
-
-@poll_tinylytics.before_loop
-async def before_poll_tinylytics() -> None:
-    await client.wait_until_ready()
 
 
 @tasks.loop(seconds=config.OLIVER_EMAIL_POLL_SECONDS)
