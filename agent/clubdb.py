@@ -110,7 +110,8 @@ CREATE INDEX IF NOT EXISTS idx_club_meeting_hosts_member ON club_meeting_hosts(m
 
 CREATE TABLE IF NOT EXISTS club_reviews (
     id                 INTEGER PRIMARY KEY,  -- Airtable Review ID
-    airtable_id        TEXT,                 -- Airtable record string (rec...), for traceability
+    airtable_id        TEXT,                 -- the review's STABLE PUBLIC id (the corpus `id`; see corpus_gen).
+                                             -- Originally an Airtable rec…; new reviews mint a rev_<uuid>. NOT vestigial.
     book_id            INTEGER NOT NULL REFERENCES club_books(id) ON DELETE CASCADE,
     member_id          INTEGER NOT NULL REFERENCES club_members(id) ON DELETE CASCADE,
     rating             INTEGER,

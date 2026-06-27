@@ -284,7 +284,7 @@ class TestMailArchive:
         counts = db.mail_archive_counts()
         assert counts["messages"] == 1
         assert counts["threads"] == 1
-        assert counts["addresses"] == 1
+        assert counts["attributed"] == 1  # resolved to jamie via member_identities
 
         rows = db.search_mail_archive("cities", member_slug="jamie")
         assert len(rows) == 1
@@ -295,11 +295,38 @@ class TestMailArchive:
         assert thread["thread"]["message_count"] == 1
         assert thread["messages"][0]["body_clean"] == "I nominate a book about cities."
 
-    def test_identity_claim_dedupes_pending(self, fresh_db):
+    def test_reattribution_picks_up_a_new_email_link(self, fresh_db):
+        """A message from an unlinked address is NULL-attributed until the address is linked
+        and reattribute runs — proving member_identities is the single source the archive follows."""
+        from agent.mail import mail_archive
         db = fresh_db
-        first = db.add_identity_claim(surface="email", identifier="old@example.test")
-        second = db.add_identity_claim(surface="email", identifier="old@example.test")
-        assert first == second
+        msg = {
+            "message_id": "<guest1@example.test>", "thread_id": "x-gm-thrid:g1",
+            "source": "historical_import", "from_email": "newaddr@example.test",
+            "from_name": "Someone Unknown", "member_slug": db.member_slug_for_email("newaddr@example.test"),
+            "subject": "hi", "subject_normalized": "hi", "sent_at": "2026-06-25T12:00:00+00:00",
+            "body_clean": "waterways and canals", "headers": {},
+        }
+        assert db.upsert_mail_message(msg)
+        assert db.mail_archive_counts()["attributed"] == 0       # nobody owns that address yet
+        db.link_member_email("newaddr@example.test", "jamie")     # link it (auto-reattribute is in the command)
+        changed = mail_archive.reattribute_archive("newaddr@example.test")
+        assert changed == 1
+        assert db.mail_archive_counts()["attributed"] == 1
+        assert db.search_mail_archive("canals", member_slug="jamie")[0]["message_id"] == "<guest1@example.test>"
+
+
+class TestSmsHandle:
+    def test_link_sms_and_list(self, fresh_db):
+        db = fresh_db
+        db.link_member_sms("+1 (612) 555-0100", "jamie")
+        assert db.sms_for_member("jamie") == ["+16125550100"]
+        assert {r["member_slug"] for r in db.list_member_sms()} == {"jamie"}
+
+    def test_link_sms_rejects_junk(self, fresh_db):
+        import pytest
+        with pytest.raises(ValueError):
+            fresh_db.link_member_sms("123", "jamie")
 
 
 class TestReadingStatus:

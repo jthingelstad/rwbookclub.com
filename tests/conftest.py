@@ -31,7 +31,7 @@ _FIXTURE_SQL = (pathlib.Path(__file__).parent / "fixtures" / "club_seed.sql").re
 _FK_DEPENDENTS = (
     "email_opens", "email_tracking", "member_contacts", "reading_statuses",
     "meeting_attendance", "roll_calls", "mail_message_fts", "mail_messages",
-    "mail_participant_addresses", "mail_participants", "identity_claims", "member_identities",
+    "member_identities",
 )
 
 
@@ -96,7 +96,6 @@ def fresh_db():
         "activity_events",
         "email_opens", "email_tracking", "member_contacts",
         "mail_message_fts", "mail_messages", "mail_threads",
-        "identity_claims", "mail_participant_addresses", "mail_participants",
     ]
     with _db.connect() as conn:
         for t in tables:

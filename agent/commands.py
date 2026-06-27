@@ -19,7 +19,7 @@ from discord.ext import tasks
 
 from agent import (clubdb, config, context as kb, corpus_read, corpus_write, db, oliver,
                    publish, scheduler)
-from agent.mail import email_jmap, outbound
+from agent.mail import email_jmap, mail_archive, outbound
 from agent.club import (meeting_campaign, meeting_emails, meeting_rules, openlibrary,
                         release_notes, reviews)
 
@@ -627,17 +627,51 @@ async def link_email_cmd(interaction: discord.Interaction, member: str, email: s
     except ValueError as e:
         await interaction.response.send_message(str(e), ephemeral=True)
         return
+    # Re-attribute any archived mail from this address to the member (history catches up).
+    rescored = await asyncio.to_thread(mail_archive.reattribute_archive, email)
+    extra = f" Re-attributed {rescored} archived message(s)." if rescored else ""
     await interaction.response.send_message(
-        f"Linked `{email.strip().lower()}` to {m['name']} (`{m['slug']}`).", ephemeral=True)
+        f"Linked `{email.strip().lower()}` to {m['name']} (`{m['slug']}`).{extra}", ephemeral=True)
 
 
-@oliver_cmds.command(name="identities", description="Show Discord and email identity links (admin).")
+@oliver_cmds.command(name="link-sms", description="Link a phone number to a club member (admin).")
+@discord.app_commands.describe(member="Club member", number="Phone number")
+@discord.app_commands.autocomplete(member=member_autocomplete)
+@admin_only
+async def link_sms_cmd(interaction: discord.Interaction, member: str, number: str) -> None:
+    m = corpus_read.find_member(member)
+    if not m:
+        await interaction.response.send_message("I couldn't find that member.", ephemeral=True)
+        return
+    try:
+        db.link_member_sms(number, m["slug"], linked_by=str(interaction.user.id))
+    except ValueError as e:
+        await interaction.response.send_message(str(e), ephemeral=True)
+        return
+    await interaction.response.send_message(
+        f"Linked `{number.strip()}` to {m['name']} (`{m['slug']}`).", ephemeral=True)
+
+
+@oliver_cmds.command(name="reattribute-mail",
+                     description="Re-resolve archived mail senders to members (admin).")
+@admin_only
+async def reattribute_mail_cmd(interaction: discord.Interaction) -> None:
+    await interaction.response.defer(ephemeral=True)
+    changed = await asyncio.to_thread(mail_archive.reattribute_archive)
+    await interaction.followup.send(
+        f"Re-attributed {changed} archived message(s) to their current member links."
+        if changed else "Archive attribution already up to date — nothing changed.",
+        ephemeral=True)
+
+
+@oliver_cmds.command(name="identities", description="Show Discord, email, and SMS identity links (admin).")
 @admin_only
 async def identities_cmd(interaction: discord.Interaction) -> None:
     rows = db.list_member_identities()
     email_rows = db.list_member_emails()
+    sms_rows = db.list_member_sms()
     members = corpus_read.members()
-    if not rows and not email_rows:
+    if not rows and not email_rows and not sms_rows:
         missing = ", ".join(sorted(m["name"] for m in members if m.get("isCurrent")))
         await interaction.response.send_message(
             f"No Discord identities linked yet. Current members not linked: {missing}.",
@@ -651,6 +685,8 @@ async def identities_cmd(interaction: discord.Interaction) -> None:
         lines.append(f"• {names.get(r['member_slug'], r['member_slug'])}: Discord <@{r['discord_user_id']}>")
     for r in email_rows:
         lines.append(f"• {names.get(r['member_slug'], r['member_slug'])}: email `{r['email']}`")
+    for r in sms_rows:
+        lines.append(f"• {names.get(r['member_slug'], r['member_slug'])}: sms `{r['number']}`")
     missing = [m["name"] for m in members if m.get("isCurrent") and m["slug"] not in linked_slugs]
     if missing:
         lines.append("\n**Current members without Discord:** " + ", ".join(sorted(missing)))
