@@ -29,12 +29,12 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from agent import clubdb, db  # noqa: E402
-from corpus.paths import DATA_DIR, slugify  # noqa: E402
+from corpus.paths import DATA_DIR  # noqa: E402
 
 # The corpus is a private, on-disk artifact; DATA_DIR honors OLIVER_CORPUS_DIR so a test run
 # regenerates into a temp dir instead of the developer's real corpus/data.
 DEFAULT_OUT = DATA_DIR
-ENTITY_DIRS = ["books", "meetings", "members", "authors", "awards", "reviews"]
+ENTITY_DIRS = ["books", "meetings", "members", "authors", "reviews", "lists"]
 
 
 def _write_json(path: Path, obj: dict) -> None:
@@ -117,15 +117,20 @@ def _author_doc(a: dict) -> dict:
     return doc
 
 
-def _award_doc(a: dict) -> dict:
-    return {
-        "name": a["name"],
-        "year": a["year"],
-        "award": a["award_category"],
-        "notes": a["notes"],
-        "books": a["book_slugs"],
-        "voters": a["voter_slugs"],
+def _list_doc(lst: dict) -> dict:
+    # Public list record: ordered books with optional per-book notes. `owner` is the member slug
+    # (null for club lists); `description` is omitted when empty.
+    doc = {
+        "name": lst["name"],
+        "scope": lst["scope"],
+        "owner": lst.get("owner_slug"),
+        "books": [
+            {"book": e["book_slug"], **({"note": e["note"]} if e.get("note") else {})}
+            for e in lst["entries"]
+        ],
     }
+    _add(doc, "description", lst.get("description"))
+    return doc
 
 
 def _review_text(r: dict) -> str:
@@ -186,9 +191,8 @@ def generate(out_root: Path = DEFAULT_OUT) -> dict:
             emit_json("members", f"{m['slug']}.json", _member_doc(doc_src))
         for a in clubdb.all_authors(conn):
             emit_json("authors", f"{a['slug']}.json", _author_doc(a))
-        for a in clubdb.all_awards(conn):
-            stem = f"{a['year'] or 'na'}-{slugify(a['name'] or 'award')}"
-            emit_json("awards", f"{stem}.json", _award_doc(a))
+        for lst in clubdb.all_lists(conn):
+            emit_json("lists", f"{lst['slug']}.json", _list_doc(lst))
         for r in clubdb.all_reviews(conn):
             name = f"{r['book_slug']}--{r['member_slug']}.md"
             (out_root / "reviews" / name).write_text(_review_text(r))
@@ -228,6 +232,18 @@ def write_review_file(conn, review_id: int, out_root: Path = DEFAULT_OUT) -> Pat
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(_review_text(r))
     return path
+
+
+def write_list_file(conn, list_id: int, out_root: Path = DEFAULT_OUT) -> Path:
+    lst = next(x for x in clubdb.all_lists(conn) if x["id"] == list_id)
+    path = Path(out_root) / "lists" / f"{lst['slug']}.json"
+    _write_json(path, _list_doc(lst))
+    return path
+
+
+def remove_list_file(slug: str, out_root: Path = DEFAULT_OUT) -> None:
+    """Delete a list's corpus file on list deletion (full regen would also prune it)."""
+    (Path(out_root) / "lists" / f"{slug}.json").unlink(missing_ok=True)
 
 
 def main() -> None:

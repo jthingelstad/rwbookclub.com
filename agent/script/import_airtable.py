@@ -112,7 +112,6 @@ def run_import(*, write: bool = True) -> dict:
     authors = _corpus_json("authors")          # slug -> {name, bio?}
     books = _corpus_json("books")              # slug -> full book record
     meetings = _corpus_json("meetings")        # stem -> meeting record (has meetingId)
-    awards = _corpus_json("awards")            # stem -> award record
     reviews = _corpus_reviews()                # list of frontmatter dicts (+ _body)
 
     # Resolve integer ids for members/authors (corpus has none) via Airtable name maps.
@@ -214,29 +213,13 @@ def run_import(*, write: bool = True) -> dict:
                             1 if r.get("wouldRecommend") else 0, r.get("favoriteQuote"),
                             r.get("_body") or None, r.get("createdAt")))
 
-    award_rows = []
-    award_book_rows = []
-    award_voter_rows = []
-    for i, (stem, aw) in enumerate(sorted(awards.items()), start=1):
-        aid = i  # minted
-        award_rows.append((aid, aw.get("name"), aw.get("year"), aw.get("award"), aw.get("notes")))
-        for bslug in aw.get("books") or []:
-            bid = book_id_for_slug.get(bslug)
-            if bid is not None:
-                award_book_rows.append((aid, bid))
-        for vslug in aw.get("voters") or []:
-            mid = member_id_for_slug.get(vslug)
-            if mid is not None:
-                award_voter_rows.append((aid, mid))
-
     result = {
         "rows": {
             "club_members": len(member_rows), "club_authors": len(author_rows),
             "club_books": len(book_rows), "club_book_authors": len(book_author_rows),
             "club_book_pickers": len(book_picker_rows), "club_meetings": len(meeting_rows),
             "club_meeting_books": len(meeting_book_rows), "club_meeting_hosts": len(meeting_host_rows),
-            "club_reviews": len(review_rows), "club_awards": len(award_rows),
-            "club_award_books": len(award_book_rows), "club_award_voters": len(award_voter_rows),
+            "club_reviews": len(review_rows),
         },
         "warnings": warnings,
     }
@@ -259,9 +242,6 @@ def run_import(*, write: bool = True) -> dict:
         conn.executemany("INSERT INTO club_meeting_books(meeting_id,book_id,ordinal) VALUES (?,?,?)", meeting_book_rows)
         conn.executemany("INSERT INTO club_meeting_hosts(meeting_id,member_id,ordinal) VALUES (?,?,?)", meeting_host_rows)
         conn.executemany("INSERT INTO club_reviews(id,book_id,member_id,rating,dnf,discussion_quality,would_recommend,favorite_quote,body,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)", review_rows)
-        conn.executemany("INSERT INTO club_awards(id,name,year,award_category,notes) VALUES (?,?,?,?,?)", award_rows)
-        conn.executemany("INSERT INTO club_award_books(award_id,book_id) VALUES (?,?)", award_book_rows)
-        conn.executemany("INSERT INTO club_award_voters(award_id,member_id) VALUES (?,?)", award_voter_rows)
     return result
 
 

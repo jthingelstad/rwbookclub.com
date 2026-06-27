@@ -1,7 +1,7 @@
 """Read/query layer over the normalized corpus (generated from SQLite, gitignored) for Oliver's tools.
 
 The corpus is normalized: book files are intrinsic + picker (member slugs); meetings
-own date + book refs; reviews/awards reference by slug. This module mirrors the
+own date + book refs; reviews/lists reference by slug. This module mirrors the
 website's build-time joins — it enriches books with their meeting date, picker names,
 placeholder, etc. — so the query functions return the same shapes as before. Reads
 fresh from disk each call (the corpus is small).
@@ -51,8 +51,8 @@ def authors() -> list[dict]:
     return _load_json_dir("authors")
 
 
-def awards() -> list[dict]:
-    return _load_json_dir("awards")
+def lists() -> list[dict]:
+    return _load_json_dir("lists")
 
 
 def reviews() -> list[dict]:
@@ -290,6 +290,23 @@ def find_member(name_or_slug: str) -> dict | None:
     return None
 
 
+def find_list(name_or_slug: str, *, owner_slug: str | None = None) -> dict | None:
+    """A list by slug or (case-insensitive) name. If `owner_slug` is given, only that member's
+    lists are considered (so a member resolves their own list by name)."""
+    key = _norm(name_or_slug)
+    candidates = [
+        x for x in lists()
+        if owner_slug is None or x.get("owner") == owner_slug
+    ]
+    for x in candidates:
+        if _norm(x.get("slug")) == key or _norm(x.get("name")) == key:
+            return x
+    for x in candidates:
+        if key and (key in _norm(x.get("name")) or key in _norm(x.get("slug"))):
+            return x
+    return None
+
+
 def find_author(name_or_slug: str) -> dict | None:
     key = _norm(name_or_slug)
     for a in authors():
@@ -335,15 +352,6 @@ def get_author(name_or_slug: str) -> dict | None:
     }
 
 
-def awards_for_book(book_slug: str) -> list[dict]:
-    return [
-        {"name": a.get("name"), "year": a.get("year"),
-         "award": a.get("award"), "notes": a.get("notes")}
-        for a in awards()
-        if book_slug in (a.get("books") or [])
-    ]
-
-
 def _reviews_for(*, book_slug: str | None = None, member_slug: str | None = None) -> list[dict]:
     titles = {b["slug"]: b.get("title") for b in _load_json_dir("books")}
     names = {m["slug"]: m.get("name") for m in members()}
@@ -377,7 +385,7 @@ def get_book(slug_or_title: str) -> dict | None:
     brief["meetingNotes"] = b.get("meetingNotes")
     brief["host"] = b.get("meetingHostNames")  # who hosted the meeting (≠ pickedBy)
     brief["reviews"] = _reviews_for(book_slug=b.get("slug"))
-    brief["awards"] = awards_for_book(b.get("slug"))  # the club's own awards
+    brief["lists"] = lists_for_book(b.get("slug"))  # club + member lists featuring this book
     # External enrichment (Open Library / Wikidata) — editions, reader ratings,
     # series, literary awards, and external links.
     brief["ratingsAverage"] = b.get("ratingsAverage")
@@ -513,6 +521,34 @@ def _hosted_meetings_for(member_slug: str) -> list[dict]:
     return out
 
 
+def lists_for_member(member_slug: str) -> list[dict]:
+    """A member's book lists with entry book slugs resolved to titles, for display + Oliver."""
+    titles = _book_titles_by_slug()
+    out = []
+    for x in lists():
+        if x.get("owner") != member_slug:
+            continue
+        out.append({
+            "name": x.get("name"), "slug": x.get("slug"), "description": x.get("description"),
+            "books": [{"title": titles.get(e.get("book"), e.get("book")), "note": e.get("note")}
+                      for e in (x.get("books") or [])],
+        })
+    return out
+
+
+def lists_for_book(book_slug: str) -> list[dict]:
+    """The club + member lists that feature this book (with the per-list note, if any)."""
+    out = []
+    for x in lists():
+        for e in x.get("books") or []:
+            if e.get("book") == book_slug:
+                out.append({"name": x.get("name"), "slug": x.get("slug"),
+                            "scope": x.get("scope"), "owner": x.get("owner"),
+                            "note": e.get("note")})
+                break
+    return out
+
+
 def member_history(name_or_slug: str) -> dict | None:
     m = find_member(name_or_slug)
     if not m:
@@ -531,6 +567,7 @@ def member_history(name_or_slug: str) -> dict | None:
         "hostedCount": len(hosted),
         "hosted": hosted,
         "reviews": _reviews_for(member_slug=m.get("slug")),
+        "lists": lists_for_member(m.get("slug")),
     }
 
 

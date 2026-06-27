@@ -21,8 +21,8 @@ from discord.ext import tasks
 from agent import (clubdb, config, context as kb, corpus_read, corpus_write, db, oliver,
                    publish, scheduler)
 from agent.mail import email_jmap, mail_archive, outbound
-from agent.club import (meeting_campaign, meeting_emails, meeting_rules, openlibrary,
-                        release_notes, reviews)
+from agent.club import (lists as lists_writer, meeting_campaign, meeting_emails, meeting_rules,
+                        openlibrary, release_notes, reviews)
 
 log = logging.getLogger("oliver.commands")
 
@@ -126,6 +126,9 @@ library_cmds = discord.app_commands.Group(
 admin_cmds = discord.app_commands.Group(
     name="admin", description="Operate Oliver — stats, feedback, proposals, scheduler (admin).",
     parent=oliver_cmds)
+list_cmds = discord.app_commands.Group(
+    name="list", description="Make and curate book lists (yours, or club lists for admins).",
+    parent=oliver_cmds)
 
 
 # ── Autocompletes ────────────────────────────────────────────────────────────
@@ -143,6 +146,25 @@ async def member_autocomplete(interaction: discord.Interaction, current: str):
         name = m.get("name") or ""
         if not cur or cur in name.lower():
             out.append(discord.app_commands.Choice(name=name, value=m.get("slug")))
+        if len(out) >= 25:
+            break
+    return out
+
+
+async def list_autocomplete(interaction: discord.Interaction, current: str):
+    """Lists the caller may edit — their own, plus club lists if they're an admin."""
+    cur = current.strip().lower()
+    slug = db.member_slug_for_user(str(interaction.user.id))
+    admin = _is_admin(interaction)
+    out = []
+    for x in corpus_read.lists():
+        if not (admin or x.get("owner") == slug):
+            continue
+        label = x.get("name") or x.get("slug")
+        if x.get("scope") == "club":
+            label = f"{label} (club)"
+        if not cur or cur in label.lower() or cur in (x.get("slug") or ""):
+            out.append(discord.app_commands.Choice(name=label[:100], value=x.get("slug")))
         if len(out) >= 25:
             break
     return out
@@ -816,6 +838,119 @@ async def remove_phone_cmd(interaction: discord.Interaction, number: str) -> Non
     await interaction.response.send_message(
         "Removed that number from your contact info." if removed
         else "I couldn't find that number on your account.", ephemeral=True)
+
+
+# ── Book lists ───────────────────────────────────────────────────────────────
+# Member self-service for your own lists; admins also curate club lists. Each write rebuilds the
+# site (lists are public). Authorization (own list vs club list) is enforced in agent/club/lists.py.
+def _actor(interaction: discord.Interaction) -> tuple[str | None, bool]:
+    return db.member_slug_for_user(str(interaction.user.id)), _is_admin(interaction)
+
+
+@list_cmds.command(name="create", description="Create one of your own book lists.")
+@discord.app_commands.describe(name="List name", description="A short description of the list")
+async def list_create_cmd(interaction: discord.Interaction, name: str,
+                          description: str | None = None) -> None:
+    member = _linked_member_for_user(interaction.user.id)
+    if not member:
+        await interaction.response.send_message(_LINK_FIRST, ephemeral=True)
+        return
+    try:
+        res = await asyncio.to_thread(lists_writer.create_list, name, description,
+                                      owner_slug=member["slug"], scope="member")
+    except lists_writer.ListError as e:
+        await interaction.response.send_message(str(e), ephemeral=True)
+        return
+    schedule_publish()
+    await interaction.response.send_message(
+        f"📋 Created your list **{res['name']}** (`/lists/{res['slug']}/`). Add books with "
+        "`/oliver list add-book`.", ephemeral=True)
+
+
+@list_cmds.command(name="create-club", description="Create a club-wide list (admin).")
+@discord.app_commands.describe(name="List name", description="A short description of the list")
+@admin_only
+async def list_create_club_cmd(interaction: discord.Interaction, name: str,
+                               description: str | None = None) -> None:
+    try:
+        res = await asyncio.to_thread(lists_writer.create_list, name, description, scope="club")
+    except lists_writer.ListError as e:
+        await interaction.response.send_message(str(e), ephemeral=True)
+        return
+    schedule_publish()
+    await interaction.response.send_message(
+        f"📋 Created club list **{res['name']}** (`/lists/{res['slug']}/`, featured in the site nav).",
+        ephemeral=True)
+
+
+@list_cmds.command(name="add-book", description="Add a book to one of your lists (or a club list, admin).")
+@discord.app_commands.describe(list="Which list", book="The book", note="Optional one-line note")
+@discord.app_commands.autocomplete(list=list_autocomplete, book=book_autocomplete)
+async def list_add_book_cmd(interaction: discord.Interaction, list: str, book: str,
+                            note: str | None = None) -> None:
+    actor_slug, is_admin = _actor(interaction)
+    try:
+        res = await asyncio.to_thread(lists_writer.add_book, list, book, note,
+                                      actor_slug=actor_slug, is_admin=is_admin)
+    except lists_writer.ListError as e:
+        await interaction.response.send_message(str(e), ephemeral=True)
+        return
+    schedule_publish()
+    verb = "Added" if res["added"] else "Updated the note for"
+    await interaction.response.send_message(
+        f"📋 {verb} *{res['book']}* on **{res['name']}**.", ephemeral=True)
+
+
+@list_cmds.command(name="remove-book", description="Remove a book from a list.")
+@discord.app_commands.describe(list="Which list", book="The book to remove")
+@discord.app_commands.autocomplete(list=list_autocomplete, book=book_autocomplete)
+async def list_remove_book_cmd(interaction: discord.Interaction, list: str, book: str) -> None:
+    actor_slug, is_admin = _actor(interaction)
+    try:
+        res = await asyncio.to_thread(lists_writer.remove_book, list, book,
+                                      actor_slug=actor_slug, is_admin=is_admin)
+    except lists_writer.ListError as e:
+        await interaction.response.send_message(str(e), ephemeral=True)
+        return
+    schedule_publish()
+    await interaction.response.send_message(
+        f"📋 Removed *{res['book']}* from **{res['name']}**." if res["removed"]
+        else f"*{res['book']}* wasn't on **{res['name']}**.", ephemeral=True)
+
+
+@list_cmds.command(name="edit", description="Rename a list or change its description.")
+@discord.app_commands.describe(list="Which list", name="New name (optional)",
+                               description="New description (optional)")
+@discord.app_commands.autocomplete(list=list_autocomplete)
+async def list_edit_cmd(interaction: discord.Interaction, list: str, name: str | None = None,
+                        description: str | None = None) -> None:
+    if name is None and description is None:
+        await interaction.response.send_message("Give a new name or description to change.", ephemeral=True)
+        return
+    actor_slug, is_admin = _actor(interaction)
+    try:
+        res = await asyncio.to_thread(lists_writer.edit_list, list, name=name, description=description,
+                                      actor_slug=actor_slug, is_admin=is_admin)
+    except lists_writer.ListError as e:
+        await interaction.response.send_message(str(e), ephemeral=True)
+        return
+    schedule_publish()
+    await interaction.response.send_message(f"📋 Updated **{res['name']}**.", ephemeral=True)
+
+
+@list_cmds.command(name="delete", description="Delete a list.")
+@discord.app_commands.describe(list="Which list to delete")
+@discord.app_commands.autocomplete(list=list_autocomplete)
+async def list_delete_cmd(interaction: discord.Interaction, list: str) -> None:
+    actor_slug, is_admin = _actor(interaction)
+    try:
+        res = await asyncio.to_thread(lists_writer.delete_list, list,
+                                      actor_slug=actor_slug, is_admin=is_admin)
+    except lists_writer.ListError as e:
+        await interaction.response.send_message(str(e), ephemeral=True)
+        return
+    schedule_publish()
+    await interaction.response.send_message(f"🗑️ Deleted **{res['name']}**.", ephemeral=True)
 
 
 @admin_cmds.command(name="reattribute-mail",

@@ -1,14 +1,14 @@
 """Authoritative club record — the relational source of truth (class A, in SQLite).
 
 This is the inversion: the club's books / meetings / members / authors / reviews /
-awards live here under integer primary keys and real foreign keys. The corpus
+lists live here under integer primary keys and real foreign keys. The corpus
 (``corpus/data/*``, gitignored) and the 11ty website are *generated* from these tables (see
 ``agent.corpus_gen``); Airtable is retired after the one-time import (see
 ``agent.script.import_airtable``).
 
 Identity is an integer surrogate key everywhere — never a slug. The integer ids are
 Airtable's own autonumbers (Book ID / Meeting ID / Member ID / Author ID / Review ID);
-awards have no Airtable autonumber so they mint one. ``slug`` is kept only as the
+lists have no Airtable autonumber so they mint one. ``slug`` is kept only as the
 generated corpus filename stem (a ``UNIQUE`` output column), never as identity.
 
 These tables are additive and created idempotently (CREATE TABLE IF NOT EXISTS),
@@ -123,25 +123,28 @@ CREATE TABLE IF NOT EXISTS club_reviews (
 CREATE INDEX IF NOT EXISTS idx_club_reviews_book ON club_reviews(book_id);
 CREATE INDEX IF NOT EXISTS idx_club_reviews_member ON club_reviews(member_id);
 
-CREATE TABLE IF NOT EXISTS club_awards (
-    id             INTEGER PRIMARY KEY AUTOINCREMENT,  -- minted (no Airtable autonumber)
-    name           TEXT,
-    year           INTEGER,
-    award_category TEXT,                    -- the Airtable single-select 'Award'
-    notes          TEXT
+-- Book lists — named, described collections of books. Member-owned by default; club lists
+-- (owner_id NULL, scope='club') are admin-curated. Public: rendered on member profiles and on
+-- /lists/<slug>/ pages. Replaced the old club_awards feature.
+CREATE TABLE IF NOT EXISTS club_lists (
+    id          INTEGER PRIMARY KEY,         -- minted via _next_id
+    slug        TEXT NOT NULL UNIQUE,        -- corpus filename stem; globally unique
+    name        TEXT NOT NULL,
+    scope       TEXT NOT NULL,               -- 'member' | 'club'
+    owner_id    INTEGER REFERENCES club_members(id) ON DELETE CASCADE,  -- NULL for club lists
+    description TEXT,
+    created_at  TEXT
 );
+CREATE INDEX IF NOT EXISTS idx_club_lists_owner ON club_lists(owner_id);
 
-CREATE TABLE IF NOT EXISTS club_award_books (
-    award_id INTEGER NOT NULL REFERENCES club_awards(id) ON DELETE CASCADE,
-    book_id  INTEGER NOT NULL REFERENCES club_books(id) ON DELETE CASCADE,
-    PRIMARY KEY (award_id, book_id)
+CREATE TABLE IF NOT EXISTS club_list_books (
+    list_id INTEGER NOT NULL REFERENCES club_lists(id) ON DELETE CASCADE,
+    book_id INTEGER NOT NULL REFERENCES club_books(id) ON DELETE CASCADE,
+    ordinal INTEGER NOT NULL DEFAULT 0,
+    note    TEXT,                            -- optional per-book blurb
+    PRIMARY KEY (list_id, book_id)
 );
-
-CREATE TABLE IF NOT EXISTS club_award_voters (
-    award_id  INTEGER NOT NULL REFERENCES club_awards(id) ON DELETE CASCADE,
-    member_id INTEGER NOT NULL REFERENCES club_members(id) ON DELETE CASCADE,
-    PRIMARY KEY (award_id, member_id)
-);
+CREATE INDEX IF NOT EXISTS idx_club_list_books_book ON club_list_books(book_id);
 
 -- ── External enrichment (the clarity line) ───────────────────────────────────
 -- 1:1 sidecars owned exclusively by the enrichment loop (agent.enrich). The core
@@ -194,7 +197,7 @@ CREATE TABLE IF NOT EXISTS club_author_enrichment (
 CLUB_TABLES = [
     "club_members", "club_authors", "club_books", "club_book_authors",
     "club_meetings", "club_meeting_books", "club_book_pickers", "club_meeting_hosts",
-    "club_reviews", "club_awards", "club_award_books", "club_award_voters",
+    "club_reviews", "club_lists", "club_list_books",
     # Enrichment sidecars last → reversed() deletes them before their parent tables.
     "club_book_enrichment", "club_author_enrichment",
 ]
@@ -258,6 +261,47 @@ def _migrate_club(conn: sqlite3.Connection) -> None:
                 "VALUES (?, ?, ?)",
                 (r["meeting_id"], p["member_id"], ordinal),
             )
+
+    # 4. One-time: retire club_awards. Migrate each award's book(s) into a "Books of the Year"
+    #    CLUB list (note = year), then drop the three award tables. club_lists is created by
+    #    CLUB_SCHEMA above; guarded on club_awards still existing → idempotent.
+    if conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='club_awards'"
+    ).fetchone():
+        awards = conn.execute(
+            "SELECT a.year, ab.book_id FROM club_awards a "
+            "JOIN club_award_books ab ON ab.award_id = a.id ORDER BY a.year, ab.book_id"
+        ).fetchall()
+        if awards and not conn.execute(
+            "SELECT 1 FROM club_lists WHERE slug = 'books-of-the-year'"
+        ).fetchone():
+            lid = _next_id(conn, "club_lists")
+            conn.execute(
+                "INSERT INTO club_lists (id, slug, name, scope, owner_id, description, created_at) "
+                "VALUES (?, 'books-of-the-year', 'Books of the Year', 'club', NULL, ?, ?)",
+                (lid, "The club's Book of the Year picks.",
+                 datetime.datetime.now(datetime.timezone.utc).isoformat()),
+            )
+            for ordinal, a in enumerate(awards):
+                conn.execute(
+                    "INSERT OR IGNORE INTO club_list_books (list_id, book_id, ordinal, note) "
+                    "VALUES (?, ?, ?, ?)",
+                    (lid, a["book_id"], ordinal, str(a["year"]) if a["year"] else None),
+                )
+        conn.commit()
+        conn.execute("PRAGMA foreign_keys=OFF")
+        try:
+            conn.executescript(
+                "DROP TABLE IF EXISTS club_award_voters;\n"
+                "DROP TABLE IF EXISTS club_award_books;\n"
+                "DROP TABLE IF EXISTS club_awards;\n"
+            )
+            conn.commit()
+        finally:
+            conn.execute("PRAGMA foreign_keys=ON")
+        dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
+        if dangling:
+            raise RuntimeError(f"awards->lists migration left dangling refs: {[tuple(r) for r in dangling]}")
 
 
 def ensure_schema() -> None:
@@ -384,24 +428,32 @@ def all_reviews(conn: sqlite3.Connection) -> list[dict]:
     )
 
 
-def all_awards(conn: sqlite3.Connection) -> list[dict]:
-    awards = _rows(conn, "SELECT * FROM club_awards ORDER BY year, id")
-    books_by_award: dict[int, list[str]] = {}
+def all_lists(conn: sqlite3.Connection) -> list[dict]:
+    """Every book list with owner slug + ordered entries (book slug + optional note), for corpus gen."""
+    lists = _rows(
+        conn,
+        "SELECT l.*, m.slug AS owner_slug FROM club_lists l "
+        "LEFT JOIN club_members m ON m.id = l.owner_id ORDER BY l.id",
+    )
+    entries_by_list: dict[int, list[dict]] = {}
     for r in conn.execute(
-        "SELECT ab.award_id, b.slug FROM club_award_books ab "
-        "JOIN club_books b ON b.id = ab.book_id ORDER BY ab.award_id, b.slug"
+        "SELECT lb.list_id, b.slug AS book_slug, lb.note FROM club_list_books lb "
+        "JOIN club_books b ON b.id = lb.book_id ORDER BY lb.list_id, lb.ordinal, b.slug"
     ):
-        books_by_award.setdefault(r["award_id"], []).append(r["slug"])
-    voters_by_award: dict[int, list[str]] = {}
-    for r in conn.execute(
-        "SELECT av.award_id, m.slug FROM club_award_voters av "
-        "JOIN club_members m ON m.id = av.member_id ORDER BY av.award_id, m.slug"
-    ):
-        voters_by_award.setdefault(r["award_id"], []).append(r["slug"])
-    for a in awards:
-        a["book_slugs"] = books_by_award.get(a["id"], [])
-        a["voter_slugs"] = voters_by_award.get(a["id"], [])
-    return awards
+        entries_by_list.setdefault(r["list_id"], []).append(
+            {"book_slug": r["book_slug"], "note": r["note"]})
+    for lst in lists:
+        lst["entries"] = entries_by_list.get(lst["id"], [])
+    return lists
+
+
+def list_by_slug(conn: sqlite3.Connection, slug: str) -> dict | None:
+    """One list row with owner slug projected, or None — for authorization + single-file regen."""
+    row = conn.execute(
+        "SELECT l.*, m.slug AS owner_slug FROM club_lists l "
+        "LEFT JOIN club_members m ON m.id = l.owner_id WHERE l.slug = ?", (slug,),
+    ).fetchone()
+    return dict(row) if row else None
 
 
 # ── Writes (Oliver manages the DB; corpus is regenerated after) ──────────────
@@ -542,6 +594,68 @@ def upsert_review(conn: sqlite3.Connection, *, book_id: int, member_id: int,
          1 if would_recommend else 0, favorite_quote, body, created_at),
     )
     return {"id": rid, "created_at": created_at, "existed": bool(existing)}
+
+
+def _unique_list_slug(conn: sqlite3.Connection, base: str) -> str:
+    """A globally-unique club_lists slug from `base`, with a -2/-3… suffix on collision."""
+    root = slugify(base) or "list"
+    slug, n = root, 2
+    while conn.execute("SELECT 1 FROM club_lists WHERE slug = ?", (slug,)).fetchone():
+        slug, n = f"{root}-{n}", n + 1
+    return slug
+
+
+def create_list(conn: sqlite3.Connection, *, name: str, scope: str,
+                owner_id: int | None, description: str | None = None) -> dict:
+    """Create a list. Member-list slugs are owner-prefixed to avoid cross-member collisions; club
+    lists slug from the name. Returns {id, slug}."""
+    base = name
+    if scope == "member" and owner_id is not None:
+        owner = conn.execute("SELECT slug FROM club_members WHERE id = ?", (owner_id,)).fetchone()
+        base = f"{owner['slug']}-{name}" if owner else name
+    slug = _unique_list_slug(conn, base)
+    lid = _next_id(conn, "club_lists")
+    conn.execute(
+        "INSERT INTO club_lists (id, slug, name, scope, owner_id, description, created_at) "
+        "VALUES (?,?,?,?,?,?,?)",
+        (lid, slug, name, scope, owner_id, description, datetime.now(timezone.utc).isoformat()),
+    )
+    return {"id": lid, "slug": slug}
+
+
+def update_list(conn: sqlite3.Connection, list_id: int, *, name: str | None = None,
+                description: str | None = None) -> None:
+    """Update a list's name/description. The slug (URL/filename identity) is intentionally stable."""
+    if name is not None:
+        conn.execute("UPDATE club_lists SET name = ? WHERE id = ?", (name, list_id))
+    if description is not None:
+        conn.execute("UPDATE club_lists SET description = ? WHERE id = ?", (description, list_id))
+
+
+def delete_list(conn: sqlite3.Connection, list_id: int) -> None:
+    conn.execute("DELETE FROM club_lists WHERE id = ?", (list_id,))  # CASCADE clears club_list_books
+
+
+def set_list_book(conn: sqlite3.Connection, list_id: int, book_id: int,
+                  note: str | None = None) -> bool:
+    """Add a book to a list (appended at the end) or update its note if already present.
+    Returns True if newly added, False if it was an in-place note update."""
+    if conn.execute("SELECT 1 FROM club_list_books WHERE list_id = ? AND book_id = ?",
+                    (list_id, book_id)).fetchone():
+        conn.execute("UPDATE club_list_books SET note = ? WHERE list_id = ? AND book_id = ?",
+                     (note, list_id, book_id))
+        return False
+    n = conn.execute("SELECT COUNT(*) AS c FROM club_list_books WHERE list_id = ?",
+                     (list_id,)).fetchone()["c"]
+    conn.execute("INSERT INTO club_list_books (list_id, book_id, ordinal, note) VALUES (?,?,?,?)",
+                 (list_id, book_id, n, note))
+    return True
+
+
+def remove_list_book(conn: sqlite3.Connection, list_id: int, book_id: int) -> bool:
+    cur = conn.execute("DELETE FROM club_list_books WHERE list_id = ? AND book_id = ?",
+                       (list_id, book_id))
+    return cur.rowcount > 0
 
 
 def set_book_picker(conn: sqlite3.Connection, book_id: int, member_id: int) -> None:

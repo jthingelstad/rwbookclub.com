@@ -144,8 +144,10 @@ TOOLS = [
         },
     },
     {
-        "name": "club_awards",
-        "description": "All awards the club has bestowed (Book of the Year, etc.) with book and year.",
+        "name": "club_lists",
+        "description": "The club's curated book lists (e.g. 'Books of the Year', 'Our Favorite "
+                       "Books') — each with a description and its books. For a member's own lists, "
+                       "use member_history instead.",
         "input_schema": {"type": "object", "properties": {}},
     },
     {
@@ -492,8 +494,8 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             return _dump(cr.upcoming_meetings())
         if name == "get_author":
             return _dump(cr.get_author(tool_input["author"]) or {"error": "no such author"})
-        if name == "club_awards":
-            return _dump(cr.awards())
+        if name == "club_lists":
+            return _dump([x for x in cr.lists() if x.get("scope") == "club"])
         if name == "club_stats":
             return _dump(cr.club_stats())
         if name == "pending_reviews":

@@ -37,7 +37,7 @@ agent/
   its own conversation thread + rolling summary, and messages are answered through a
   per-channel queue so group chat stays in order.
 - **Tools** (`tools.py`): `find_books`, `search_books`, `get_book`, `member_history`,
-  `upcoming_meetings`, `club_stats`, `pending_reviews` (read the corpus), club-awareness
+  `upcoming_meetings`, `club_stats`, `pending_reviews`, `club_lists` (read the corpus), club-awareness
   tools (`current_club_state`, `current_meeting_status`, `identity_status`,
   `recent_feedback`, `recent_channel_context`), relationship tools (`related_books`,
   `compare_books`, `review_summary`), email (`send_email`, `email_status`), proposal staging
@@ -150,7 +150,10 @@ and `/oliver whoami`.
   `remove-website`/`remove-phone`); admins link anyone (`link-member`/`link-email`/`link-sms`) and
   `list` all links. Email can be added but never removed.
 - **`/oliver memory`** (admin) — `search [subject|query]`, `edit id: note:`, `forget id:`.
-- **`/oliver library`** (admin) — `add-book title:`, `schedule book: date: picker:`.
+- **`/oliver list`** — members manage their own book lists: `create name: description:`,
+  `add-book list: book: [note:]`, `remove-book list: book:`, `edit list: [name] [description]`,
+  `delete list:`. `create-club` (admin) makes a club-wide list. Lists render on member profiles
+  and at `/lists/<slug>/`; club lists appear in the site's **Lists** nav hub.
 - **`/oliver admin`** — `stats`, `feedback`, `proposals`, `resolve id: decision:<accept|dismiss>`,
   `release-notes [to]`, `reattribute-mail`, `tick` (run the scheduler now).
 
@@ -192,8 +195,6 @@ Intents) — without it `on_message` gets empty content.
 
 ## What's next (later phases)
 
-- **Awards facilitation** (deferred from Phase 5): a way to record awards to the corpus, and
-  maybe a Discord voting flow. The corpus, site rendering, and a sample record already exist.
 - **Presence tuning**: optional unprompted chime-ins and finer name-matching — once addressed-only
   presence has run for a while.
 - **Semantic retrieval**: embeddings over reviews, meeting notes, and related materials.

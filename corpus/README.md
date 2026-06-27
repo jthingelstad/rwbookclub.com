@@ -20,7 +20,7 @@ corpus/
     ├── meetings/<date>--<id>.json   # 184 (first-class)
     ├── authors/<slug>.json
     ├── reviews/<book-slug>--<member-slug>.md   # YAML frontmatter + prose body
-    └── awards/<year>-<slug>.json
+    └── lists/<slug>.json       # member + club book lists (ordered entries + notes)
 ```
 
 **Normalized — each fact is stored once.** Book files hold intrinsic fields plus

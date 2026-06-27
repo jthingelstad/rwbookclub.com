@@ -34,20 +34,6 @@ eleventyComputed:
           {%- endfor %}
         </p>
       {% endif %}
-      {% set bookAwards = awards | awardsForBook(book.slug) %}
-      {% if bookAwards.length %}
-        <ul class="award-badges">
-          {% for a in bookAwards %}
-            <li class="award-badge" title="{{ a.year }}">
-              <span class="award-badge-icon" aria-hidden="true">★</span>
-              <span class="award-badge-text">
-                <span class="award-badge-name">{{ a.award }}</span>
-                <span class="award-badge-year">{{ a.year }}</span>
-              </span>
-            </li>
-          {% endfor %}
-        </ul>
-      {% endif %}
     </div>
   </header>
 

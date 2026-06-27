@@ -2,7 +2,7 @@
 
 Since relationships are slug references in text (not enforced by a DB), this asserts
 every reference resolves: meeting.books, book.picker, review.book/member,
-award.books/voters, and each book author has an authors/ entry. Exits non-zero on any
+list.books/owner, and each book author has an authors/ entry. Exits non-zero on any
 dangling reference. Run locally or in CI:  python -m corpus.validate
 """
 
@@ -54,13 +54,14 @@ def validate_data_dir(data_dir: Path = DATA_DIR) -> list[str]:
         if fm.get("member") not in member_slugs:
             errors.append(f"reviews/{p.stem}: member '{fm.get('member')}' is not a member")
 
-    for stem, a in _load_dir(data_dir, "awards").items():
-        for bs in a.get("books") or []:
+    for stem, lst in _load_dir(data_dir, "lists").items():
+        for entry in lst.get("books") or []:
+            bs = entry.get("book") if isinstance(entry, dict) else entry
             if bs not in book_slugs:
-                errors.append(f"awards/{stem}: book '{bs}' does not exist")
-        for v in a.get("voters") or []:
-            if v not in member_slugs:
-                errors.append(f"awards/{stem}: voter '{v}' is not a member")
+                errors.append(f"lists/{stem}: book '{bs}' does not exist")
+        owner = lst.get("owner")
+        if owner is not None and owner not in member_slugs:
+            errors.append(f"lists/{stem}: owner '{owner}' is not a member")
 
     return errors
 

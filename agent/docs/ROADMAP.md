@@ -16,7 +16,7 @@ member**, not a foreign bot.
 
 | Class | Examples | Home |
 |---|---|---|
-| **A — Canonical club knowledge** | books, authors, meetings, members, reviews, awards | **SQLite** `club_*` tables (authoritative); the corpus in `corpus/data/` is generated from them (private/gitignored), read by Oliver + the website build |
+| **A — Canonical club knowledge** | books, authors, meetings, members, reviews, lists | **SQLite** `club_*` tables (authoritative); the corpus in `corpus/data/` is generated from them (private/gitignored), read by Oliver + the website build |
 | **B — Oliver's private memory/state** | conversation summaries, member taste notes, Discord identity links, reminders, usage/cost, the mail archive | **SQLite** on Oliver's host (gitignored, backed up) |
 | **C — write flow** | a review, a scheduled meeting | Discord form → DB upsert under FKs → corpus regenerated → local build + deploy to `gh-pages` |
 
@@ -44,7 +44,7 @@ conversation history, rolling summaries, and usage logging. SQLite class-B state
 holds durable memories with provenance, reminders, conversation summaries,
 feedback, usage logs, scheduler dedup, and private Discord identity links. Tools:
 read/authority (`find_books`, `search_books`, `get_book`, `member_history`,
-`get_author`, `club_awards`, `upcoming_meetings`, `club_stats`, `pending_reviews`)
+`get_author`, `club_lists`, `upcoming_meetings`, `club_stats`, `pending_reviews`)
 plus awareness and local-state tools (`current_club_state`, `current_meeting_status`,
 `identity_status`, `recent_feedback`, `recent_channel_context`), richer corpus relationship
 tools (`related_books`, `compare_books`, `review_summary`), proposal-staging tools
@@ -89,8 +89,8 @@ lock). The persona was deepened to read like a long-time member
 both the speaker's remembered tastes and club-scoped lore, so replies personalize. Admin memory
 commands (`/oliver memory search`, `edit`, `forget`) provide a repair path for bad durable
 notes. Milestone/anniversary celebration shipped in Phase 4's scheduler.
-Awards facilitation (a write path + possible voting flow) is **deferred** — the corpus, site
-rendering, and a sample record already exist, so it's a self-contained later slice.
+Awards were **superseded by book lists** (Phase 7) — `club_awards` was retired and the one
+record (2016 Book of the Year) migrated into a "Books of the Year" club list.
 
 **Phase 6 — SQLite inversion + corpus enrichment.** ✅ **Done** (2026-06-26; see
 `docs/archive/MIGRATION-*`). SQLite became authoritative (`club_*` tables, integer PKs + FKs);
@@ -101,7 +101,16 @@ to `gh-pages`. Enrichment added: external book/author data (Open Library + Wikid
 archive stays **tool-accessed** (`search_mail_archive`/`get_mail_thread`/`search_discussion`),
 deliberately not folded into the corpus, keeping private message bodies out of it.
 
-**What's next (candidates).** Awards facilitation (above); the "book cloud" capture stream
+**Phase 7 — Book lists.** ✅ **Done.** Replaced `club_awards` with a member/club book-list system
+(`club_lists` + `club_list_books`, ordered entries with optional per-book notes). Members create and
+manage their own lists ("my favorites"); admins curate club lists ("our favorite books"). Each list
+has a description. Managed via Discord: `/oliver list create | create-club | add-book | remove-book |
+edit | delete`. Lists render on member profiles and on their own `/lists/<slug>/` pages; club lists
+get a **Lists** nav hub at `/lists/`. Read surface: the `club_lists` tool + member lists via
+`member_history`. The one legacy award (2016 Book of the Year) migrated into a "Books of the Year"
+club list. (The separate enrichment-driven literary-awards field on books is unrelated and stays.)
+
+**What's next (candidates).** The "book cloud" capture stream
 (`agent/team/work/2026-06-26-build-book-cloud.md`, slice 1a ready); backfilling the 3
 picker-less / host-less book-meetings (Love Sense, Complexity, Being Mortal) once the names are known.
 

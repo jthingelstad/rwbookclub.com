@@ -69,10 +69,10 @@ module.exports = function (eleventyConfig) {
       .sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
   });
 
-  // Awards for a given book slug
-  eleventyConfig.addFilter("awardsForBook", (awards, bookSlug) => {
-    if (!Array.isArray(awards)) return [];
-    return awards.filter((a) => Array.isArray(a.books) && a.books.includes(bookSlug));
+  // Lists owned by a given member slug
+  eleventyConfig.addFilter("listsByMember", (lists, memberSlug) => {
+    if (!Array.isArray(lists)) return [];
+    return lists.filter((l) => l.owner === memberSlug);
   });
 
   // Reviews authored by a given member slug

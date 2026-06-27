@@ -1,0 +1,27 @@
+---
+layout: layouts/base.njk
+title: "Lists"
+permalink: /lists/
+---
+
+<article class="lists-hub">
+  <a class="back" href="/">← Reading journey</a>
+
+  <h1>Lists</h1>
+
+  <p class="lede">Curated book lists from the R/W Book Club.</p>
+
+  {% if clubLists.length %}
+    <ul class="list-index">
+      {% for l in clubLists %}
+        <li>
+          <a href="/lists/{{ l.slug }}/">{{ l.name }}</a>
+          {% if l.description %}<span class="list-index-desc">{{ l.description }}</span>{% endif %}
+          <span class="pick-count">{{ l.entries.length }} book{% if l.entries.length != 1 %}s{% endif %}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty">No club lists yet.</p>
+  {% endif %}
+</article>

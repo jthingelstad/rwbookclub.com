@@ -666,62 +666,43 @@ body.shelf .page {
   background: transparent;
 }
 
-/* ─── Awards ─────────────────────────────────────────────────────────── */
+/* ─── Lists ──────────────────────────────────────────────────────────── */
 
-.award-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 1rem 0 0;
+.list-description {
+  font-size: var(--type-small);
+  color: var(--ink-soft);
+  max-width: 42rem;
+}
+
+/* Index of lists — used on the /lists/ hub and on member profiles */
+.list-index {
+  list-style: none;
+  margin: 0;
   padding: 0;
 }
-.award-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.4rem 0.75rem 0.4rem 0.55rem;
-  background: var(--bg-alt);
-  border: 1px solid var(--accent);
-  border-radius: 2px;
-  color: var(--accent-ink);
+.list-index li {
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--rule);
 }
-.award-badge-icon {
-  font-size: 1rem;
-  line-height: 1;
-  color: var(--accent);
+.list-index li:first-child {
+  border-top: 1px solid var(--rule);
 }
-.award-badge-text {
-  display: inline-flex;
-  flex-direction: column;
-  line-height: 1.1;
-}
-.award-badge-name {
-  font-size: 0.82rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-}
-.award-badge-year {
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  margin-top: 0.1rem;
+.list-index-desc {
+  display: block;
+  font-size: var(--type-small);
+  color: var(--ink-soft);
+  margin-top: 0.2rem;
 }
 
-.entry-award {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  margin: 0.45rem 0 0;
+/* Per-book note on a list detail page */
+.list-note {
   font-size: var(--type-small);
-  color: var(--accent-ink);
-  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+  margin: 0.3rem 0 0;
 }
-.entry-award::before {
-  content: "★";
-  color: var(--accent);
-  font-size: 0.9rem;
-  line-height: 1;
+
+.member-lists {
+  margin-top: var(--gap-lg);
 }
 
 /* ─── Kudos (Tinylytics) ─────────────────────────────────────────────── */

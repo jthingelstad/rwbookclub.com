@@ -68,6 +68,22 @@ eleventyComputed:
     {% endif %}
   </section>
 
+  {% set memberLists = lists | listsByMember(member.slug) %}
+  {% if memberLists.length %}
+    <section class="member-lists">
+      <h2>Lists ({{ memberLists.length }})</h2>
+      <ul class="list-index">
+        {% for l in memberLists %}
+          <li>
+            <a href="/lists/{{ l.slug }}/">{{ l.name }}</a>
+            {% if l.description %}<span class="list-index-desc">{{ l.description }}</span>{% endif %}
+            <span class="pick-count">{{ l.entries.length }} book{% if l.entries.length != 1 %}s{% endif %}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
   {% set memberReviews = reviews | reviewsByMember(member.slug) %}
   {% if memberReviews.length %}
     <section class="member-reviews">
