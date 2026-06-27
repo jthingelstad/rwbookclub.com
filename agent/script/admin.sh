@@ -8,6 +8,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 AGENT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$AGENT_DIR/.." && pwd)"
 LOG_DIR="$AGENT_DIR/logs"
+DB="$AGENT_DIR/oliver.db"
+BACKUP_DIR="$AGENT_DIR/backups"
+KEEP_RESTART_BACKUPS=10
 
 resolve_venv() {
     if [ -n "${OLIVER_VENV:-}" ] && [ -x "$OLIVER_VENV/bin/python" ]; then
@@ -33,6 +36,58 @@ require_venv() {
         exit 1
     fi
     echo "$VENV"
+}
+
+# Take a consistent snapshot of the SQLite DB, then VACUUM it. Run while Oliver is stopped
+# (no open connections), so VACUUM gets its exclusive lock and the snapshot is clean. The DB is
+# in WAL mode, so a plain cp is unsafe — sqlite3's online .backup reads through the WAL correctly.
+# Best-effort: a backup failure warns and skips the vacuum (never mutate the DB without a copy),
+# and never aborts the restart it's part of.
+backup_and_vacuum() {
+    if [ ! -f "$DB" ]; then
+        echo "==> No database at $DB; skipping backup + vacuum."
+        return 0
+    fi
+    if ! VENV="$(resolve_venv)"; then
+        echo "==> Warning: no venv found; skipping DB backup + vacuum." >&2
+        return 0
+    fi
+    mkdir -p "$BACKUP_DIR"
+    local stamp backup
+    stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+    backup="$BACKUP_DIR/oliver-restart-$stamp.db"
+    echo "==> Backing up database -> backups/$(basename "$backup")"
+    if "$VENV/bin/python" - "$DB" "$backup" <<'PY'
+import sqlite3, sys
+src, dst = sys.argv[1], sys.argv[2]
+with sqlite3.connect(src) as s, sqlite3.connect(dst) as d:
+    s.backup(d)  # consistent online snapshot; safe with WAL
+PY
+    then
+        echo "    backup ok ($(du -h "$backup" | cut -f1 | tr -d ' '))"
+    else
+        echo "    Warning: backup failed; leaving the database untouched (no vacuum)." >&2
+        rm -f "$backup"
+        return 0
+    fi
+    # Rotate: keep the most recent restart backups, drop older ones (migration snapshots,
+    # named differently, are left alone).
+    ls -1t "$BACKUP_DIR"/oliver-restart-*.db 2>/dev/null | tail -n "+$((KEEP_RESTART_BACKUPS + 1))" | while read -r old; do
+        echo "    pruning old backup backups/$(basename "$old")"
+        rm -f "$old"
+    done
+    echo "==> Vacuuming database..."
+    if "$VENV/bin/python" - "$DB" <<'PY'
+import sqlite3, sys
+con = sqlite3.connect(sys.argv[1])
+con.execute("VACUUM")
+con.close()
+PY
+    then
+        echo "    vacuum ok"
+    else
+        echo "    Warning: vacuum failed (the backup is still good)." >&2
+    fi
 }
 
 status() {
@@ -64,6 +119,7 @@ start_bot() {
 
 restart_bot() {
     stop_bot
+    backup_and_vacuum
     start_bot
 }
 
@@ -117,6 +173,7 @@ PLIST
 upgrade_bot() {
     VENV="$(require_venv)"
     stop_bot
+    backup_and_vacuum
 
     echo "==> Pulling latest from origin..."
     (cd "$REPO_ROOT" && git pull origin main)
@@ -139,11 +196,12 @@ case "${1:-}" in
     start)    start_bot ;;
     restart)  restart_bot ;;
     upgrade)  upgrade_bot ;;
+    backup)   backup_and_vacuum ;;
     install)  install_bot ;;
     status)   status ;;
     tail)     tail_logs ;;
     *)
-        echo "Usage: $0 {start|stop|restart|upgrade|install|status|tail}"
+        echo "Usage: $0 {start|stop|restart|upgrade|backup|install|status|tail}"
         exit 1
         ;;
 esac
