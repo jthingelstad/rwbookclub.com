@@ -482,3 +482,39 @@ class TestDispatchHappyPaths:
         result = json.loads(dispatch("search_discussion", {}, {}))
         assert "error" in result
         assert "KeyError" in result["error"]
+
+    def test_record_timeline_event_writes_and_reads_back(self, fresh_db):
+        from agent.tools import dispatch
+
+        saved = json.loads(dispatch("record_timeline_event", {
+            "category": "social", "kind": "dinner", "date": "2019-05-01",
+            "summary": "The club had dinner at Nick's.", "member": "nick",
+        }, {"speaker_user_id": "u1"}))
+        assert saved["saved"] is True and saved["kind"] == "dinner"
+
+        rows = json.loads(dispatch("club_timeline", {"category": "social"}, {}))
+        assert rows[0]["kind"] == "dinner"
+        assert rows[0]["member"] == "nick"
+        assert rows[0]["date"] == "2019-05-01"
+
+    def test_record_timeline_event_rejects_bad_kind_for_category(self, fresh_db):
+        from agent.tools import dispatch
+
+        result = json.loads(dispatch("record_timeline_event", {
+            "category": "social", "kind": "book_picked",  # book_picked is a selection kind
+            "date": "2019-05-01", "summary": "wrong category",
+        }, {}))
+        assert "error" in result
+        assert fresh_db.timeline(category="social") == []
+
+    def test_club_timeline_scopes_to_member(self, fresh_db):
+        from agent import clubdb
+        from agent.tools import dispatch
+
+        jamie = clubdb.lookup_member_id("jamie")
+        fresh_db.record_event(actor="member", kind="member_away", member_id=jamie,
+                              detail="vacation", occurred_at="2024-07-01")
+        fresh_db.record_event(actor="oliver", kind="website_launched", category="club",
+                              detail="new site", occurred_at="2010-01-01")
+        rows = json.loads(dispatch("club_timeline", {"member": "jamie"}, {}))
+        assert len(rows) == 1 and rows[0]["kind"] == "member_away"

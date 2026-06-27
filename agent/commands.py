@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
+import json
 import logging
 from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -883,6 +884,81 @@ async def oliver_schedule(interaction: discord.Interaction, book: str, date: str
         fallback=f"🗓️ Scheduled **{res['book']}** for {res['date']}, picked by {res['picker']}.",
     )
     await interaction.followup.send(ack, ephemeral=True)
+
+
+@oliver_cmds.command(name="log-event", description="Record a club timeline event (admin).")
+@discord.app_commands.describe(
+    category="Event category",
+    kind="Event kind, e.g. dinner, book_picked, member_away, member_milestone, meeting_held",
+    date="When it happened (YYYY-MM-DD)", summary="One factual sentence",
+    member="Optional member the event is about (omit for club-wide)")
+@discord.app_commands.choices(category=[
+    discord.app_commands.Choice(name=c, value=c)
+    for c in ("meeting", "selection", "social", "member_life", "club", "reading")
+])
+@discord.app_commands.autocomplete(member=member_autocomplete)
+@admin_only
+async def oliver_log_event(interaction: discord.Interaction,
+                           category: discord.app_commands.Choice[str], kind: str,
+                           date: str, summary: str, member: str | None = None) -> None:
+    cat = category.value
+    allowed = db.CHRONICLE_KINDS.get(cat) or ()
+    if kind not in allowed:
+        await interaction.response.send_message(
+            f"`{kind}` isn't a valid kind for **{cat}**. Allowed: {', '.join(allowed)}.",
+            ephemeral=True)
+        return
+    member_slug = None
+    member_id = None
+    if member:
+        m = corpus_read.find_member(member)
+        if not m:
+            await interaction.response.send_message("I couldn't find that member.", ephemeral=True)
+            return
+        member_slug = m["slug"]
+        member_id = clubdb.lookup_member_id(member_slug)
+    eid = await asyncio.to_thread(
+        db.record_event, actor="admin", surface="discord", kind=kind, category=cat,
+        member_id=member_id,
+        detail={"summary": summary, "members": [member_slug] if member_slug else []},
+        occurred_at=(date or "")[:10] or None,
+    )
+    who = f" for {member_slug}" if member_slug else " (club-wide)"
+    await interaction.response.send_message(
+        f"🗓️ Logged **{cat}/{kind}** on {date}{who} (#{eid}).", ephemeral=True)
+
+
+@oliver_cmds.command(name="timeline", description="Show recent club timeline events.")
+@discord.app_commands.describe(member="Optional member to scope to", category="Optional category")
+@discord.app_commands.autocomplete(member=member_autocomplete)
+@discord.app_commands.choices(category=[
+    discord.app_commands.Choice(name=c, value=c)
+    for c in ("meeting", "selection", "social", "member_life", "club", "reading", "meeting_ops")
+])
+async def oliver_timeline(interaction: discord.Interaction, member: str | None = None,
+                          category: discord.app_commands.Choice[str] | None = None) -> None:
+    member_id = None
+    if member:
+        m = corpus_read.find_member(member)
+        if not m:
+            await interaction.response.send_message("I couldn't find that member.", ephemeral=True)
+            return
+        member_id = clubdb.lookup_member_id(m["slug"])
+    rows = await asyncio.to_thread(
+        db.timeline, category=(category.value if category else None), member_id=member_id, limit=20)
+    if not rows:
+        await interaction.response.send_message("No timeline events recorded yet.", ephemeral=True)
+        return
+    lines = ["**Club timeline** (most recent):"]
+    for r in rows:
+        detail = r.get("detail") or ""
+        try:
+            summary = json.loads(detail).get("summary") if detail.startswith("{") else detail
+        except (json.JSONDecodeError, AttributeError):
+            summary = detail
+        who = f" [{r['member_slug']}]" if r.get("member_slug") else ""
+        lines.append(f"• {(r.get('occurred_at') or '')[:10]} ({r['kind']}){who}: {summary}")
+    await interaction.response.send_message("\n".join(lines)[:config.MAX_DISCORD_LEN], ephemeral=True)
 
 
 @oliver_cmds.command(name="feedback", description="Recent 👍/👎 feedback on Oliver's replies (admin).")

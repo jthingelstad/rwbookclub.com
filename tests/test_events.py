@@ -129,6 +129,70 @@ class TestTimeline:
         assert ev["category"] == "meeting"
 
 
+class TestChronicle:
+    """Phase 2: chronicle kinds, the category override, and the timeline read."""
+
+    def test_chronicle_kind_derives_its_category(self, fresh_db):
+        from agent import clubdb
+        jamie = clubdb.lookup_member_id("jamie")
+        fresh_db.record_event(actor="member", kind="member_away", member_id=jamie,
+                              detail="on vacation in July", occurred_at="2024-07-01")
+        ev = fresh_db.timeline(member_id=jamie)[0]
+        assert ev["kind"] == "member_away" and ev["category"] == "member_life"
+
+    def test_category_override_for_freeform_note(self, fresh_db):
+        # kind='note' is 'other' in the map; the override pins it to the admin's chosen category.
+        eid = fresh_db.record_event(actor="admin", kind="note", category="club",
+                                    detail="website redesigned", occurred_at="2010-05-01")
+        assert eid > 0
+        assert fresh_db.timeline(category="club")[0]["detail"] == "website redesigned"
+
+    def test_timeline_filters_and_orders_newest_first(self, fresh_db):
+        from agent import clubdb
+        jamie = clubdb.lookup_member_id("jamie")
+        fresh_db.record_event(actor="oliver", kind="dinner", category="social",
+                              detail="club dinner", occurred_at="2019-03-01")
+        fresh_db.record_event(actor="member", kind="member_milestone", member_id=jamie,
+                              detail="new job", occurred_at="2021-09-01")
+        all_rows = fresh_db.timeline()
+        assert all_rows[0]["occurred_at"][:10] == "2021-09-01"  # newest first
+        assert {r["category"] for r in fresh_db.timeline(category="social")} == {"social"}
+        assert all(r["member_slug"] == "jamie" for r in fresh_db.timeline(member_id=jamie))
+        assert fresh_db.timeline(since="2020-01-01")[0]["kind"] == "member_milestone"
+        assert {r["kind"] for r in fresh_db.timeline(until="2020-01-01")} == {"dinner"}
+
+    def test_event_source_exists(self, fresh_db):
+        assert not fresh_db.event_source_exists("mail:t1#0")
+        fresh_db.record_event(actor="oliver", kind="book_picked", category="selection",
+                              detail="picked Sapiens", occurred_at="2018-04-01", source="mail:t1#0")
+        assert fresh_db.event_source_exists("mail:t1#0")
+        assert not fresh_db.event_source_exists("mail:t1#1")
+
+
+def _seed_mail_thread(db, thread_id, subject, messages):
+    """Insert one mail thread + its messages (messages = [(from_name, sent_at, body)])."""
+    with db.connect() as conn:
+        first, last = messages[0][1], messages[-1][1]
+        conn.execute(
+            "INSERT INTO mail_threads (thread_id, subject_normalized, first_sent_at, last_sent_at, "
+            "message_count) VALUES (?,?,?,?,?)", (thread_id, subject, first, last, len(messages)))
+        for i, (who, when, body) in enumerate(messages):
+            conn.execute(
+                "INSERT INTO mail_messages (message_id, thread_id, source, from_name, subject, "
+                "sent_at, body_clean) VALUES (?,?,?,?,?,?,?)",
+                (f"{thread_id}-{i}", thread_id, "test", who, subject, when, body))
+
+
+class TestMailThreadListing:
+    def test_list_mail_threads_oldest_first(self, fresh_db):
+        _seed_mail_thread(fresh_db, "t-late", "Later", [("Jamie", "2020-06-01 10:00:00", "hi")])
+        _seed_mail_thread(fresh_db, "t-early", "Earlier", [("Tom", "2016-01-01 10:00:00", "yo")])
+        threads = fresh_db.list_mail_threads()
+        assert [t["thread_id"] for t in threads] == ["t-early", "t-late"]
+        assert threads[0]["subject"] == "Earlier" and threads[0]["message_count"] == 1
+        assert len(fresh_db.list_mail_threads(limit=1)) == 1
+
+
 class TestMigration:
     def test_migration_seeds_projection_and_backfills_events(self, fresh_db):
         from agent import clubdb

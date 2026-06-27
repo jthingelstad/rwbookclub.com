@@ -415,6 +415,54 @@ TOOLS = [
             "required": ["thread_id"],
         },
     },
+    {
+        "name": "club_timeline",
+        "description": "Read the club's historical TIMELINE — the structured log of what has "
+                       "happened (and is scheduled) in the club's life: meetings, book "
+                       "nominations/votes/picks, dinners and hosting, members joining/leaving, "
+                       "shared milestones, and club/tooling moments. Use it for 'when did…', "
+                       "'what's the history of…', 'what has <member> been part of…' questions. "
+                       "This is the curated event spine, distinct from raw chat (search_discussion) "
+                       "and raw email (search_mail_archive). Newest first.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "member": {"type": "string", "description": "Optional member slug or name to scope to."},
+                "category": {"type": "string",
+                             "enum": ["meeting", "selection", "social", "member_life", "club", "reading", "meeting_ops"],
+                             "description": "Optional category filter."},
+                "since": {"type": "string", "description": "Optional earliest date (YYYY-MM-DD)."},
+                "until": {"type": "string", "description": "Optional latest date (YYYY-MM-DD)."},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 100},
+            },
+        },
+    },
+    {
+        "name": "record_timeline_event",
+        "description": "Record ONE durable club event onto the timeline, when a member tells you "
+                       "something worth preserving in the club's history — a meeting being set, a "
+                       "book picked, a dinner planned, someone hosting, a member joining/leaving, or "
+                       "a clearly-shared milestone (new job, a move, travel that affects attendance). "
+                       "This is the shared chronicle, NOT your private notes (use `remember` for "
+                       "those). Only record operational facts and shared milestones — never anything "
+                       "sensitive (health, finances, relationships, conflict). Record only what the "
+                       "member actually stated; don't infer or embellish.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "category": {"type": "string",
+                             "enum": ["meeting", "selection", "social", "member_life", "club", "reading"]},
+                "kind": {"type": "string",
+                         "description": "Event kind within the category, e.g. book_picked, dinner, "
+                                        "hosting, member_away, member_milestone, meeting_held."},
+                "date": {"type": "string", "description": "When it happened/will happen (YYYY-MM-DD)."},
+                "summary": {"type": "string", "description": "One factual sentence describing the event."},
+                "member": {"type": "string",
+                           "description": "Optional member slug/name the event is about; omit for club-wide."},
+            },
+            "required": ["category", "kind", "date", "summary"],
+        },
+    },
 ]
 
 
@@ -518,6 +566,60 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             for msg in thread["messages"]:
                 msg["body_clean"] = (msg.get("body_clean") or "")[:1000]
             return _dump(thread)
+        if name == "club_timeline":
+            limit = max(1, min(int(tool_input.get("limit", 30)), 100))
+            member_id = None
+            if tool_input.get("member"):
+                m = cr.find_member(tool_input["member"])
+                member_id = clubdb.lookup_member_id(m["slug"]) if m else None
+                if member_id is None:
+                    return _dump({"error": f"no such member: {tool_input['member']}"})
+            rows = db.timeline(
+                category=tool_input.get("category"),
+                member_id=member_id,
+                since=tool_input.get("since"),
+                until=tool_input.get("until"),
+                limit=limit,
+            )
+            out = [
+                {"date": (r.get("occurred_at") or "")[:10], "category": r["category"],
+                 "kind": r["kind"], "member": r.get("member_slug"),
+                 "detail": (r.get("detail") or "")[:500], "source": r.get("source")}
+                for r in rows
+            ]
+            return _dump(out)
+        if name == "record_timeline_event":
+            category = tool_input.get("category")
+            kind = tool_input.get("kind")
+            if kind not in (db.CHRONICLE_KINDS.get(category) or ()):
+                return _dump({"error": f"kind {kind!r} is not valid for category {category!r}; "
+                                       f"allowed: {db.CHRONICLE_KINDS.get(category)}"})
+            member_id = None
+            member_slug = None
+            if tool_input.get("member"):
+                m = cr.find_member(tool_input["member"])
+                if not m:
+                    return _dump({"error": f"no such member: {tool_input['member']}"})
+                member_slug = m["slug"]
+                member_id = clubdb.lookup_member_id(member_slug)
+            surface = "email" if str(ctx.get("speaker_user_id") or "").startswith("email:") else "discord"
+            eid = db.record_event(
+                actor="oliver",
+                surface=surface,
+                kind=kind,
+                category=category,
+                member_id=member_id,
+                detail={"summary": tool_input.get("summary"),
+                        "members": [member_slug] if member_slug else []},
+                occurred_at=tool_input.get("date"),
+            )
+            db.add_activity(
+                "timeline_event",
+                "Timeline event recorded",
+                f"Category: {category}\nKind: {kind}\nDate: {tool_input.get('date')}\n"
+                f"Member: {member_slug or '(club-wide)'}\nSummary: {tool_input.get('summary')}",
+            )
+            return _dump({"saved": True, "id": eid, "category": category, "kind": kind})
         if name == "record_availability":
             member_slug = ctx.get("member_slug")
             if not member_slug:

@@ -188,6 +188,7 @@ CREATE INDEX IF NOT EXISTS idx_events_meeting_member ON events(meeting_id, membe
 CREATE INDEX IF NOT EXISTS idx_events_meeting_kind ON events(meeting_id, kind, created_at);
 CREATE INDEX IF NOT EXISTS idx_events_category ON events(category, occurred_at);
 CREATE INDEX IF NOT EXISTS idx_events_occurred ON events(occurred_at);
+CREATE INDEX IF NOT EXISTS idx_events_source   ON events(source);
 
 -- Current per-member status for a meeting, projected from the meeting_ops events. Sparse:
 -- a missing row means 'unknown' for that member.
@@ -1311,15 +1312,45 @@ def feedback_stats() -> dict:
 # projection over the meeting_ops member events. record_event writes both atomically.
 READING_STATUSES = {"not_started", "started", "on_track", "behind", "finished", "paused"}
 
-# kind → category. Phase 1 populates meeting_ops + the meeting_scheduled hook; the other categories
-# are the chronicle vocabulary the archive-mining phase will fill.
+# kind → category. Phase 1 populates meeting_ops + the meeting_scheduled hook; the Phase 2 chronicle
+# kinds (the archive miner + the live recording surface) fill the rest of the taxonomy. A `record_event`
+# caller may also pass `category=` explicitly to override this map (used by the free-form admin log).
 _KIND_CATEGORY = {
+    # ── Phase 1: meeting operations ──
     "attendance_requested": "meeting_ops", "attendance_reported": "meeting_ops",
     "reading_requested": "meeting_ops", "reading_reported": "meeting_ops",
     "roll_call_opened": "meeting_ops", "roll_call_closed": "meeting_ops",
     "attendance_alert_sent": "meeting_ops", "week_reminder_sent": "meeting_ops",
     "briefing_sent": "meeting_ops", "email_reply": "meeting_ops",
-    "meeting_scheduled": "meeting",
+    # ── meeting lifecycle (Phase 1 hook + Phase 2 chronicle) ──
+    "meeting_scheduled": "meeting", "meeting_rescheduled": "meeting",
+    "meeting_canceled": "meeting", "meeting_held": "meeting", "location_set": "meeting",
+    # ── book selection ──
+    "book_nominated": "selection", "poll_opened": "selection",
+    "vote_cast": "selection", "book_picked": "selection",
+    # ── in-person social ──
+    "dinner": "social", "spouses_event": "social", "hosting": "social",
+    # ── member life (operational + shared milestones only) ──
+    "member_joined": "member_life", "member_left": "member_life",
+    "member_away": "member_life", "member_milestone": "member_life",
+    # ── club / tooling milestones ──
+    "website_launched": "club", "tooling_change": "club", "mailing_list_flurry": "club",
+    # ── reading / discussion ──
+    "book_discussed": "reading", "strong_opinion": "reading",
+    "dnf": "reading", "award_given": "reading",
+    # ── free-form admin / Oliver note (category supplied explicitly) ──
+    "note": "other",
+}
+
+# The chronicle vocabulary the miner + live recording surface may emit, grouped by category, for prompt
+# construction + caller-side validation. (meeting_ops kinds are written only by Phase 1 plumbing.)
+CHRONICLE_KINDS: dict[str, tuple[str, ...]] = {
+    "meeting": ("meeting_scheduled", "meeting_rescheduled", "meeting_canceled", "meeting_held", "location_set"),
+    "selection": ("book_nominated", "poll_opened", "vote_cast", "book_picked"),
+    "social": ("dinner", "spouses_event", "hosting"),
+    "member_life": ("member_joined", "member_left", "member_away", "member_milestone"),
+    "club": ("website_launched", "tooling_change", "mailing_list_flurry"),
+    "reading": ("book_discussed", "strong_opinion", "dnf", "award_given"),
 }
 # member kinds whose event updates the meeting_member_status projection (require both ids)
 _PROJECTION_KINDS = {
@@ -1360,12 +1391,15 @@ def _bump_projection(conn, kind: str, meeting_id: int, member_id: int, detail, n
 def record_event(*, actor: str, kind: str, member_id: int | None = None,
                  meeting_id: int | None = None, detail: str | None = None,
                  surface: str | None = None, occurred_at: str | None = None,
-                 source: str | None = None) -> int:
+                 source: str | None = None, category: str | None = None) -> int:
     """Append one event to the club timeline; if it's a meeting_ops member event, update the
-    meeting_member_status projection in the same transaction. Returns the new event id."""
+    meeting_member_status projection in the same transaction. Returns the new event id.
+
+    `category` is normally derived from `kind`; pass it explicitly to override (the free-form
+    admin/Oliver log uses kind='note' with a chosen category)."""
     if kind in _PROJECTION_KINDS and (member_id is None or meeting_id is None):
         raise ValueError(f"{kind} requires both member_id and meeting_id")
-    category = _KIND_CATEGORY.get(kind, "other")
+    category = category or _KIND_CATEGORY.get(kind, "other")
     if detail is not None and not isinstance(detail, str):
         detail = json.dumps(detail, ensure_ascii=False, default=str)
     now = _now()
@@ -1509,6 +1543,46 @@ def has_group_event(meeting_id: int, kind: str) -> bool:
         return conn.execute(
             "SELECT 1 FROM events WHERE meeting_id = ? AND member_id IS NULL AND kind = ? LIMIT 1",
             (meeting_id, kind)).fetchone() is not None
+
+
+def event_source_exists(source: str) -> bool:
+    """Whether any event already carries this provenance string — the idempotency guard for the
+    archive miner's loader (source = 'mail:<thread_id>#<n>'), so re-loads don't duplicate."""
+    with connect() as conn:
+        return conn.execute(
+            "SELECT 1 FROM events WHERE source = ? LIMIT 1", (source,)).fetchone() is not None
+
+
+def timeline(*, category: str | None = None, member_id: int | None = None,
+             since: str | None = None, until: str | None = None, limit: int = 50) -> list[dict]:
+    """The club-wide timeline (any member, any/no meeting), newest first — the general read behind
+    the `club_timeline` tool. Filter by category, member, and/or an occurred_at date window."""
+    sql = "SELECT e.*, m.slug AS member_slug, m.name AS member_name FROM events e " \
+          "LEFT JOIN club_members m ON m.id = e.member_id WHERE 1=1"
+    args: list = []
+    if category is not None:
+        sql += " AND e.category = ?"; args.append(category)
+    if member_id is not None:
+        sql += " AND e.member_id = ?"; args.append(member_id)
+    if since is not None:
+        sql += " AND e.occurred_at >= ?"; args.append(since)
+    if until is not None:
+        sql += " AND e.occurred_at <= ?"; args.append(until)
+    sql += " ORDER BY e.occurred_at DESC, e.id DESC LIMIT ?"; args.append(limit)
+    with connect() as conn:
+        return [dict(r) for r in conn.execute(sql, args)]
+
+
+def list_mail_threads(*, limit: int | None = None) -> list[dict]:
+    """Every archived mail thread, oldest-first — the spine the archive miner walks. Returns
+    {thread_id, subject, first_sent_at, last_sent_at, message_count}."""
+    sql = ("SELECT thread_id, subject_normalized AS subject, first_sent_at, last_sent_at, "
+           "message_count FROM mail_threads ORDER BY first_sent_at ASC, thread_id ASC")
+    args: list = []
+    if limit is not None:
+        sql += " LIMIT ?"; args.append(limit)
+    with connect() as conn:
+        return [dict(r) for r in conn.execute(sql, args)]
 
 
 # ── Oliver action proposals ─────────────────────────────────────────────────
