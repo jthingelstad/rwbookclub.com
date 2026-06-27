@@ -58,7 +58,9 @@ agent/
   attend. He can open roll call with buttons, record explicit self-reported availability, show
   status, email roll-call prompts to linked member addresses, and flag quorum/picker trouble.
   Replies from linked email addresses update the same attendance tracker as Discord. He does
-  **not** cancel, reschedule, or change reading order.
+  **not** cancel, reschedule, or change reading order. Attendance/reading state lives in the
+  event-sourced `events` log + `meeting_member_status` projection (see `docs/ERD.md` §2), so once a
+  member's attendance or reading is confirmed Oliver stops asking.
 - **Proactive scheduler** (`scheduler.py` + `commands.py`): a daily loop posts
   upcoming-meeting reminders, starts roll call 14 days before the next meeting, flags
   unresolved attendance trouble within 3 days, posts review nudges, and milestone/anniversary
@@ -71,11 +73,12 @@ agent/
   `OLIVER_EMAIL_ADDRESS`, polls only `Inbox/Oliver` for unread mail, replies through the normal
   `oliver.answer` path, stores sent messages in `Sent/Oliver`, marks handled inbound mail seen,
   and dedupes processed inbound email ids in SQLite. Oliver does not track email opens (no pixel) —
-  member privacy. Per-member sends are logged operationally in `member_contacts` (sent/failed) for
-  the campaign dashboard; nothing records whether a member read an email.
+  member privacy. Per-member sends are recorded as `attendance_requested`/`reading_requested` events
+  (bumping the projection's ask counts) for the campaign dashboard; nothing records whether a member
+  read an email.
 - **Meeting campaign** (`meeting_campaign.py` + `/oliver meeting-dashboard`): combines the
-  current book/date, days remaining, roll call, picker requirement, reading status, last member
-  contact, email opens, and recommended next actions into one dashboard/tool snapshot.
+  current book/date, days remaining, roll call, picker requirement, reading status, per-member ask
+  counts + last-asked timestamps, and recommended next actions into one dashboard/tool snapshot.
 - **Activity log** (`db.py` + `bot.py`): startup, email, reading-progress, roll-call, reminder,
   and scheduler activity is queued in SQLite and posted to `#oliver-log` through
   `DISCORD_OLIVER_LOG_WEBHOOK_URL`. Startup no longer posts to `#ask-oliver`.

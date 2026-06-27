@@ -6,16 +6,6 @@ from datetime import date
 
 
 def _campaign(days: int, *, count: int = 0, last_contact: str | None = None) -> dict:
-    contact = None
-    if last_contact:
-        contact = {
-            "kind": "reading_checkin",
-            "surface": "email",
-            "direction": "outbound",
-            "status": "sent",
-            "subject": "Reading check-in",
-            "createdAt": last_contact,
-        }
     member = {
         "member": "Jamie",
         "memberSlug": "jamie",
@@ -23,7 +13,7 @@ def _campaign(days: int, *, count: int = 0, last_contact: str | None = None) -> 
         "reading": "unknown",
         "readingOk": False,
         "readingCheckinCount": count,
-        "lastReadingContact": contact,
+        "readingLastAskedAt": last_contact,
     }
     return {
         "daysUntilMeeting": days,

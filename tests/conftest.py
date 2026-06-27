@@ -29,8 +29,8 @@ _FIXTURE_SQL = (pathlib.Path(__file__).parent / "fixtures" / "club_seed.sql").re
 # Tables that FK into club_members / club_meetings — cleared before club_* so deleting club
 # rows can't trip a foreign-key constraint from a prior test's leftover rows.
 _FK_DEPENDENTS = (
-    "member_contacts", "reading_statuses",
-    "meeting_attendance", "roll_calls", "mail_message_fts", "mail_messages",
+    "events", "meeting_member_status",
+    "mail_message_fts", "mail_messages",
     "member_identities",
 )
 
@@ -87,11 +87,9 @@ def fresh_db():
     tables = [
         "memories", "conversations", "channel_summaries", "reminders",
         "usage_log", "notifications_sent", "responses", "feedback",
-        "member_identities", "meeting_attendance", "roll_calls", "proposals",
+        "member_identities", "events", "meeting_member_status", "proposals",
         "inbound_emails",
-        "reading_statuses",
         "activity_events",
-        "member_contacts",
         "mail_message_fts", "mail_messages", "mail_threads",
     ]
     with _db.connect() as conn:

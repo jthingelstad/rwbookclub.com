@@ -24,25 +24,10 @@ def snapshot() -> dict:
     meeting_status = meeting_rules.meeting_status()
     meeting = meeting_status["meeting"]
     meeting_id = meeting["meetingId"]
-    reading_rows = {
+    status_rows = {
         r["member_id"]: r
-        for r in (db.reading_status_for_meeting(meeting_id) if meeting_id is not None else [])
+        for r in (db.meeting_member_status_for_meeting(meeting_id) if meeting_id is not None else [])
     }
-    contacts = db.member_contacts_for_meeting(meeting_id) if meeting_id is not None else []
-    last_contact: dict[int, dict] = {}
-    last_roll_call: dict[int, dict] = {}
-    last_reading: dict[int, dict] = {}
-    reading_checkin_counts: dict[int, int] = {}
-    for contact in contacts:
-        mid = contact["member_id"]
-        last_contact.setdefault(mid, contact)
-        if contact["kind"] == "roll_call":
-            last_roll_call.setdefault(mid, contact)
-        if contact["kind"] == "reading_checkin":
-            last_reading.setdefault(mid, contact)
-            if contact["direction"] == "outbound" and contact["status"] == "sent":
-                reading_checkin_counts[mid] = reading_checkin_counts.get(mid, 0) + 1
-
     discord_linked = {r["member_slug"] for r in db.list_member_identities()}
     email_linked = {r["member_slug"] for r in db.list_member_emails()}
     members_by_slug = {
@@ -58,8 +43,8 @@ def snapshot() -> dict:
         slug = row["memberSlug"]
         mid = row["memberId"]
         member = members_by_slug.get(slug, {"name": row["member"], "slug": slug})
-        reading = reading_rows.get(mid)
-        reading_status = reading.get("status") if reading else "unknown"
+        srow = status_rows.get(mid)
+        reading_status = srow["reading"] if srow else "unknown"
         reading_ok = reading_status in READING_OK
         combined = {
             "member": member.get("name"),
@@ -68,16 +53,15 @@ def snapshot() -> dict:
             "attendance": row["status"],
             "reading": reading_status,
             "readingOk": reading_ok,
-            "readingProgress": reading.get("progress") if reading else None,
-            "page": reading.get("page") if reading else None,
-            "percent": reading.get("percent") if reading else None,
+            "readingProgress": srow.get("reading_progress") if srow else None,
+            "page": srow.get("reading_page") if srow else None,
+            "percent": srow.get("reading_percent") if srow else None,
             "isPicker": row["isPicker"],
             "discordLinked": slug in discord_linked,
             "emailLinked": slug in email_linked,
-            "lastContact": _compact_contact(last_contact.get(mid)),
-            "lastRollCallContact": _compact_contact(last_roll_call.get(mid)),
-            "lastReadingContact": _compact_contact(last_reading.get(mid)),
-            "readingCheckinCount": reading_checkin_counts.get(mid, 0),
+            "lastAskedAt": srow.get("last_asked_at") if srow else None,
+            "readingLastAskedAt": srow.get("reading_last_asked_at") if srow else None,
+            "readingCheckinCount": (srow.get("reading_asks") if srow else 0) or 0,
         }
         if row["status"] == "pending":
             combined["nextAction"] = "roll_call"
@@ -151,8 +135,8 @@ def format_dashboard(data: dict | None = None) -> str:
 
     lines.append("\n**Members:**")
     for member in data["members"]:
-        contact = member.get("lastContact") or {}
-        contact_text = f"; last {contact.get('kind')} {contact.get('createdAt')}" if contact else ""
+        last = member.get("lastAskedAt")
+        contact_text = f"; last asked {str(last)[:10]}" if last else ""
         reading = member["reading"].replace("_", " ")
         lines.append(
             f"• {member['member']}: attendance {member['attendance']}; "
@@ -183,8 +167,7 @@ def reading_checkin_candidates(data: dict | None = None, *, today: date | None =
         if days > threshold:
             continue
         if count > 0:
-            last = member.get("lastReadingContact")
-            age = _contact_age_days(last, today=today)
+            age = _age_days(member.get("readingLastAskedAt"), today=today)
             if age is not None and age < MIN_DAYS_BETWEEN_READING_CHECKINS:
                 continue
         candidates.append({
@@ -239,27 +222,14 @@ def _recommended_actions(*, meeting_status: dict, needs_roll_call: list[dict],
     return actions
 
 
-def _compact_contact(contact: dict | None) -> dict | None:
-    if not contact:
-        return None
-    return {
-        "kind": contact["kind"],
-        "surface": contact["surface"],
-        "direction": contact["direction"],
-        "status": contact["status"],
-        "subject": contact.get("subject"),
-        "createdAt": contact["created_at"],
-    }
-
-
-def _contact_age_days(contact: dict | None, *, today: date) -> int | None:
-    if not contact or not contact.get("createdAt"):
+def _age_days(timestamp: str | None, *, today: date) -> int | None:
+    if not timestamp:
         return None
     try:
-        created = date.fromisoformat(str(contact["createdAt"])[:10])
+        when = date.fromisoformat(str(timestamp)[:10])
     except ValueError:
         return None
-    return (today - created).days
+    return (today - when).days
 
 
 def _days_until(meeting_date: str) -> int | None:

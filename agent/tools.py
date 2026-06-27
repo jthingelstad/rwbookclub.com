@@ -528,17 +528,12 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             meeting_id = meeting["meetingId"]
             if meeting_id is None or member_id is None:
                 return _dump({"error": "no scheduled meeting to record availability against"})
-            db.upsert_roll_call(
-                meeting_id=meeting_id,
-                channel_id=ctx.get("channel_id"),
-                opened_by="oliver",
-            )
-            db.set_attendance(
-                meeting_id=meeting_id,
-                member_id=member_id,
-                status=status,
-                updated_by_user_id=ctx.get("speaker_user_id"),
-                source=("email" if str(ctx.get("speaker_user_id") or "").startswith("email:") else "chat"),
+            db.record_attendance_report(
+                meeting_id,
+                member_id,
+                status,
+                surface=("email" if str(ctx.get("speaker_user_id") or "").startswith("email:") else "discord"),
+                updated_by=ctx.get("speaker_user_id"),
             )
             db.add_activity(
                 "roll_call_update",
@@ -624,14 +619,14 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             meeting_id = meeting["meetingId"]
             if meeting_id is None or member_id is None:
                 return _dump({"error": "no scheduled meeting to record reading status against"})
-            db.set_reading_status(
-                meeting_id=meeting_id,
-                member_id=member_id,
-                status=tool_input["status"],
+            db.record_reading_report(
+                meeting_id,
+                member_id,
+                tool_input["status"],
                 progress=tool_input.get("progress"),
                 page=tool_input.get("page"),
                 percent=tool_input.get("percent"),
-                source=("email" if str(ctx.get("speaker_user_id") or "").startswith("email:") else "discord"),
+                surface=("email" if str(ctx.get("speaker_user_id") or "").startswith("email:") else "discord"),
                 updated_by=ctx.get("speaker_user_id"),
             )
             db.add_activity(
@@ -663,8 +658,8 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 return _dump({"error": "no scheduled meeting to check in against"})
             book = meeting.get("book") or {}
             title = book.get("title") or "the current book"
-            existing = db.reading_status_for_member(meeting_id, member_id)
-            if existing and existing["status"] == "finished":
+            existing = db.meeting_member_status(meeting_id, member_id)
+            if existing and existing["reading"] == "finished":
                 db.add_activity(
                     "reading_checkin_skipped",
                     "Reading check-in skipped",
@@ -688,10 +683,8 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 f"{extra}"
             )
             subject = f"Reading check-in: {title}"
-            sent = outbound.send(
-                to=[email["email"]], subject=subject, body=body,
-                contact={"meeting_id": meeting_id, "member_id": member_id, "kind": "reading_checkin"},
-            )
+            sent = outbound.send(to=[email["email"]], subject=subject, body=body)
+            db.record_reading_request(meeting_id, member_id, surface="email")
             db.add_activity(
                 "email_sent",
                 "Reading check-in email sent",
@@ -747,21 +740,20 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                     continue
                 subject = _roll_call_subject(status)
                 body = _roll_call_email_body(member.get("name") or member["slug"], status, note=note)
-                sent = outbound.send(
-                    to=[email["email"]], subject=subject, body=body,
-                    contact={"meeting_id": meeting_id, "member_id": member_id, "kind": "roll_call"},
-                )
+                sent = outbound.send(to=[email["email"]], subject=subject, body=body)
+                db.record_attendance_request(meeting_id, member_id, actor="oliver", surface="email")
                 db.add_activity(
                     "email_sent",
                     "Roll-call email sent",
                     f"Member: {member['slug']}\nTo: {email['email']}\nSubject: {subject}\nEmail ID: {sent.get('emailId')}",
                 )
                 sent_rows.append({"member": member["slug"], **sent})
-            if sent_rows:
-                db.upsert_roll_call(
-                    meeting_id=meeting_id,
-                    channel_id=ctx.get("channel_id"),
-                    opened_by="email-tool",
+            if sent_rows and not db.has_open_roll_call(meeting_id):
+                db.record_group_event(
+                    meeting_id,
+                    "roll_call_opened",
+                    actor="oliver",
+                    detail={"channel_id": ctx.get("channel_id"), "opened_by": "email-tool"},
                 )
             return _dump({
                 "sent": sent_rows,
@@ -781,7 +773,7 @@ def _reading_status_snapshot(meeting: dict) -> dict:
     meeting_id = meeting.get("meetingId")
     rows = {
         r["member_slug"]: r
-        for r in (db.reading_status_for_meeting(meeting_id) if meeting_id is not None else [])
+        for r in (db.meeting_member_status_for_meeting(meeting_id) if meeting_id is not None else [])
     }
     members = [m for m in cr.members() if m.get("isCurrent")]
     statuses = []
@@ -790,12 +782,11 @@ def _reading_status_snapshot(meeting: dict) -> dict:
         statuses.append({
             "member": member.get("name"),
             "memberSlug": member["slug"],
-            "status": row.get("status") if row else "unknown",
-            "progress": row.get("progress") if row else None,
-            "page": row.get("page") if row else None,
-            "percent": row.get("percent") if row else None,
-            "source": row.get("source") if row else None,
-            "updatedAt": row.get("updated_at") if row else None,
+            "status": row["reading"] if row else "unknown",
+            "progress": row.get("reading_progress") if row else None,
+            "page": row.get("reading_page") if row else None,
+            "percent": row.get("reading_percent") if row else None,
+            "updatedAt": row.get("reading_answered_at") if row else None,
         })
     return {
         "meeting": meeting,

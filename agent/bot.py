@@ -343,29 +343,25 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
     recorded_availability: str | None = None
     meeting = meeting_rules.next_meeting() if (member_slug and member_id is not None) else None
     meeting_id = meeting["meetingId"] if meeting else None
-    if member_slug and member_id is not None and meeting_id is not None:
-        db.add_member_contact(
-            meeting_id=meeting_id,
-            member_id=member_id,
+    if member_slug and member_id is not None:
+        db.record_event(
+            actor="member",
             kind="email_reply",
+            member_id=member_id,
+            meeting_id=meeting_id,
             surface="email",
-            direction="inbound",
-            status="received",
-            subject=msg.subject or None,
+            detail=msg.subject or None,
+            source=f"email:{msg.thread_id or msg.from_email.lower()}",
         )
+    if member_slug and member_id is not None and meeting_id is not None:
         recorded_availability = _roll_call_status_from_email(msg.subject, msg.text)
         if recorded_availability:
-            db.upsert_roll_call(
-                meeting_id=meeting_id,
-                channel_id=f"email:{msg.thread_id or msg.from_email.lower()}",
-                opened_by="email-reply",
-            )
-            db.set_attendance(
-                meeting_id=meeting_id,
-                member_id=member_id,
-                status=recorded_availability,
-                updated_by_user_id=f"email:{msg.from_email.lower()}",
-                source="email",
+            db.record_attendance_report(
+                meeting_id,
+                member_id,
+                recorded_availability,
+                surface="email",
+                updated_by=f"email:{msg.from_email.lower()}",
             )
             db.add_activity(
                 "roll_call_update",

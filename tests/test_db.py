@@ -145,28 +145,26 @@ class TestRollCall:
         db = fresh_db
         mid = clubdb.meeting_id_for_book_slug("a-world-appears")
         jamie, tom = clubdb.lookup_member_id("jamie"), clubdb.lookup_member_id("tom")
-        db.upsert_roll_call(
-            meeting_id=mid, channel_id="ch1", message_id="msg1", opened_by="admin"
+        db.record_group_event(
+            mid, "roll_call_opened",
+            detail={"channel_id": "ch1", "message_id": "msg1", "opened_by": "admin"},
         )
-        row = db.get_roll_call(mid)
+        row = db.current_roll_call(mid)
         assert row["status"] == "open"
         assert row["message_id"] == "msg1"
+        assert db.has_open_roll_call(mid)
 
-        db.set_attendance(
-            meeting_id=mid, member_id=jamie, status="yes",
-            updated_by_user_id="u1", source="button",
-        )
-        db.set_attendance(
-            meeting_id=mid, member_id=tom, status="no",
-            updated_by_user_id="u2", source="chat",
-        )
-        attendance = db.attendance_for_meeting(mid)
-        assert {r["member_slug"]: r["status"] for r in attendance} == {
+        db.record_attendance_report(mid, jamie, "yes", surface="discord", updated_by="u1")
+        db.record_attendance_report(mid, tom, "no", surface="discord", updated_by="u2")
+        attendance = db.meeting_member_status_for_meeting(mid)
+        assert {r["member_slug"]: r["attendance"] for r in attendance} == {
             "jamie": "yes",
             "tom": "no",
         }
-        assert db.close_roll_call(mid)
-        assert db.get_roll_call(mid)["status"] == "closed"
+
+        db.record_group_event(mid, "roll_call_closed", actor="admin")
+        assert db.current_roll_call(mid)["status"] == "closed"
+        assert not db.has_open_roll_call(mid)
 
 
 class TestSearchConversations:
@@ -335,20 +333,22 @@ class TestReadingStatus:
         db = fresh_db
         mid = clubdb.meeting_id_for_book_slug("a-world-appears")
         jamie = clubdb.lookup_member_id("jamie")
-        db.set_reading_status(
-            meeting_id=mid,
-            member_id=jamie,
-            status="on_track",
+        db.record_reading_report(
+            mid,
+            jamie,
+            "on_track",
             progress="halfway",
             page=120,
             percent=50,
-            source="email",
+            surface="email",
             updated_by="email:jamie@thingelstad.com",
         )
-        row = db.reading_status_for_member(mid, jamie)
-        assert row["status"] == "on_track"
-        assert row["progress"] == "halfway"
-        rows = db.reading_status_for_meeting(mid)
+        row = db.meeting_member_status(mid, jamie)
+        assert row["reading"] == "on_track"
+        assert row["reading_progress"] == "halfway"
+        assert row["reading_page"] == 120
+        assert row["reading_percent"] == 50
+        rows = db.meeting_member_status_for_meeting(mid)
         assert rows[0]["member_slug"] == "jamie"
 
     def test_reading_status_validates_values(self, fresh_db):
@@ -357,9 +357,9 @@ class TestReadingStatus:
 
         # Validation fires before any DB write, so the ids are irrelevant here.
         with pytest.raises(ValueError):
-            db.set_reading_status(meeting_id=1, member_id=1, status="unknown")
+            db.record_reading_report(1, 1, "unknown")
         with pytest.raises(ValueError):
-            db.set_reading_status(meeting_id=1, member_id=1, status="started", percent=101)
+            db.record_reading_report(1, 1, "started", percent=101)
 
 
 class TestActivityEvents:
@@ -394,52 +394,3 @@ class TestInboundEmails:
         assert db.mark_email_processing(email_id="m1", from_email="jamie@example.test")
 
 
-class TestMemberContacts:
-    def test_member_contact_round_trip(self, fresh_db):
-        from agent import clubdb
-        db = fresh_db
-        mid = clubdb.meeting_id_for_book_slug("a-world-appears")
-        jamie = clubdb.lookup_member_id("jamie")
-        cid = db.add_member_contact(
-            meeting_id=mid,
-            member_id=jamie,
-            kind="reading_checkin",
-            surface="email",
-            direction="outbound",
-            status="sending",
-            subject="Reading check-in",
-        )
-        db.update_member_contact_status(cid, "sent")
-        contacts = db.member_contacts_for_meeting(mid)
-        assert contacts[0]["status"] == "sent"
-        assert contacts[0]["member_slug"] == "jamie"
-
-    def test_contacts_sort_by_created_at_not_insert_order(self, fresh_db):
-        from agent import clubdb
-        db = fresh_db
-        mid = clubdb.meeting_id_for_book_slug("a-world-appears")
-        jamie = clubdb.lookup_member_id("jamie")
-        db.add_member_contact(
-            meeting_id=mid,
-            member_id=jamie,
-            kind="email_reply",
-            surface="email",
-            direction="inbound",
-            status="received",
-            subject="latest",
-        )
-        with db.connect() as conn:
-            conn.execute(
-                "UPDATE member_contacts SET created_at = '2026-06-16 12:00:00' "
-                "WHERE subject = 'latest'"
-            )
-            conn.execute(
-                "INSERT INTO member_contacts "
-                "(meeting_id, member_id, kind, surface, direction, status, subject, created_at) "
-                "VALUES (?, ?, 'email_reply', 'email', "
-                "'inbound', 'received', 'recovered older', '2026-06-09 16:00:00')",
-                (mid, jamie),
-            )
-
-        contacts = db.member_contacts_for_meeting(mid)
-        assert [c["subject"] for c in contacts] == ["latest", "recovered older"]
