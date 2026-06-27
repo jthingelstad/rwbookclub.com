@@ -13,11 +13,18 @@ from datetime import date
 from agent import corpus_read, db
 from agent.club import meeting_rules
 
+# Dashboard display: a confirmed attendee counts as "reading on track" at on_track/finished. The
+# autonomous outreach cadence (outreach_plan) is stricter — it only stops at `finished` — so this is
+# used for the snapshot/dashboard only, not the cadence.
 READING_OK = {"finished", "on_track"}
-ROLL_CALL_START_DAYS = 14
-MAX_READING_CHECKINS = 3
-READING_CHECKIN_THRESHOLDS = (14, 7, 2)
-MIN_DAYS_BETWEEN_READING_CHECKINS = 2
+
+# Autonomous meeting-prep cadence (outreach_plan): start two weeks out, pace per member off the event
+# log. Never reach out more than once every MIN days (the guard rail). Oliver decides each send; the
+# only forced one is the first contact (kickoff). Give up on a member who never responds after
+# GIVE_UP asks rather than pestering them up to the meeting.
+OUTREACH_START_DAYS = 14
+MIN_DAYS_BETWEEN_OUTREACH = 3
+GIVE_UP_AFTER_ASKS = 3
 
 
 def snapshot() -> dict:
@@ -61,6 +68,7 @@ def snapshot() -> dict:
             "emailLinked": slug in email_linked,
             "lastAskedAt": srow.get("last_asked_at") if srow else None,
             "readingLastAskedAt": srow.get("reading_last_asked_at") if srow else None,
+            "attendanceAsks": (srow.get("attendance_asks") if srow else 0) or 0,
             "readingCheckinCount": (srow.get("reading_asks") if srow else 0) or 0,
         }
         if row["status"] == "pending":
@@ -145,38 +153,70 @@ def format_dashboard(data: dict | None = None) -> str:
     return "\n".join(lines)
 
 
-def reading_checkin_candidates(data: dict | None = None, *, today: date | None = None) -> list[dict]:
-    """Confirmed attendees due for a reading nudge under the campaign rules.
+def _outreach_kind(member: dict) -> str | None:
+    """What Oliver still needs to collect from this member, or None if nothing.
 
-    Rule: after a member confirms attendance, Oliver may ask for reading status
-    no more than three times before the meeting. The three windows are: first
-    eligible at 14 days, second at 7 days, final at 2 days, with at least two
-    days between automated asks.
+    Roll call first (attendance unknown/unsure), then reading until `finished`. A declined member
+    ('no') and a confirmed-and-finished member are both done.
+    """
+    attendance = member.get("attendance")
+    if attendance in ("pending", "unsure"):
+        return "attendance"
+    if attendance == "yes" and member.get("reading") != "finished":
+        return "reading"
+    return None
+
+
+def outreach_plan(data: dict | None = None, *, today: date | None = None) -> list[dict]:
+    """The per-member meeting-prep outreach that's eligible today.
+
+    Starting OUTREACH_START_DAYS before the meeting, each current member with a linked email and an
+    open need (see _outreach_kind) is a candidate once the MIN_DAYS_BETWEEN_OUTREACH floor since their
+    last ask has cleared — Oliver never contacts a member more often than that. Oliver decides each
+    send (oliver.decide_outreach) EXCEPT the very first contact, which is forced (`mustReach`) so the
+    conversation always starts. Members who've never responded to a kind are dropped after
+    GIVE_UP_AFTER_ASKS tries — Oliver gives up rather than pestering someone who's gone quiet.
     """
     data = data or snapshot()
     today = today or date.today()
     days = data.get("daysUntilMeeting")
-    if days is None or days < 0 or days > ROLL_CALL_START_DAYS:
+    if days is None or days < 0 or days > OUTREACH_START_DAYS:
         return []
-    candidates = []
-    for member in data["needsReading"]:
-        count = int(member.get("readingCheckinCount") or 0)
-        if count >= MAX_READING_CHECKINS:
+    plan: list[dict] = []
+    for member in data["members"]:
+        if not member.get("emailLinked"):
+            continue  # email-only cadence — unreachable members are skipped
+        kind = _outreach_kind(member)
+        if kind is None:
             continue
-        threshold = READING_CHECKIN_THRESHOLDS[count]
-        if days > threshold:
+        asks = int((member.get("attendanceAsks") if kind == "attendance"
+                    else member.get("readingCheckinCount")) or 0)
+        # "Responded to this kind" = they've answered roll call / reported any reading. A member who
+        # never responds is given up on after GIVE_UP_AFTER_ASKS, so we don't pester the silent.
+        responded = (member.get("attendance") != "pending") if kind == "attendance" \
+            else (member.get("reading") != "unknown")
+        if not responded and asks >= GIVE_UP_AFTER_ASKS:
             continue
-        if count > 0:
-            age = _age_days(member.get("readingLastAskedAt"), today=today)
-            if age is not None and age < MIN_DAYS_BETWEEN_READING_CHECKINS:
-                continue
-        candidates.append({
-            **member,
-            "checkinNumber": count + 1,
-            "maxCheckins": MAX_READING_CHECKINS,
-            "reason": f"reading check-in {count + 1} of {MAX_READING_CHECKINS}",
+        since = _age_days(member.get("lastAskedAt"), today=today)
+        if since is not None and since < MIN_DAYS_BETWEEN_OUTREACH:
+            continue  # the guard rail — too soon since the last outreach
+        # Force only the first contact (never asked AND never responded) — the kickoff. Everything
+        # after that is Oliver's judgment, so an already-engaged member is never force-pinged.
+        must_reach = since is None and not responded
+        plan.append({
+            "memberSlug": member["memberSlug"],
+            "memberId": member["memberId"],
+            "member": member["member"],
+            "kind": kind,
+            "attendance": member["attendance"],
+            "reading": member["reading"],
+            "readingProgress": member.get("readingProgress"),
+            "daysSinceLastAsk": since,
+            "asksSoFar": asks,
+            "daysUntilMeeting": days,
+            "mustReach": must_reach,
         })
-    return candidates
+    return plan
 
 
 def _recommended_actions(*, meeting_status: dict, needs_roll_call: list[dict],

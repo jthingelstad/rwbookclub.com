@@ -579,6 +579,49 @@ def complete(system: str, user: str, *, model: str = OPUS_MODEL, max_tokens: int
     return _text_of(resp.content).strip()
 
 
+def decide_outreach(facts: dict) -> bool:
+    """Oliver's per-member judgment for the autonomous meeting-prep cadence: email this member now,
+    or wait? Called only when the member is already eligible (past the 3-day floor) and not a forced
+    send, so it's purely "is now a good moment?". Oliver weighs how close the meeting is, how long
+    since he last reached out, how many times he's asked, and (for reading) their last reported
+    progress. Answers REACH or WAIT; **fails open to REACH** on any error or unparseable reply, so
+    collection never silently stalls (still bounded by the floor). Synchronous; call via to_thread.
+    """
+    member = facts.get("member") or "the member"
+    since = facts.get("daysSinceLastAsk")
+    asks = facts.get("asksSoFar") or 0
+    if facts.get("kind") == "attendance":
+        goal = "whether they can attend the meeting (roll call)"
+        state = f"Their attendance so far: {facts.get('attendance')}."
+    else:
+        progress = f" ({facts.get('readingProgress')})" if facts.get("readingProgress") else ""
+        goal = "how far along they are in the book (reading check-in)"
+        state = f"Their last reading status: {facts.get('reading')}{progress}."
+    since_text = ("you haven't reached out yet" if since is None
+                 else f"you last emailed them {since} day(s) ago")
+    system = (
+        "You are Oliver, the book club's sixth member, pacing your own meeting-prep outreach. Decide "
+        "whether to email this ONE member right now or wait a little longer. You want the information "
+        "before the meeting, but you don't want to pester: give someone who's clearly on track or was "
+        "just contacted more room, and follow up with someone who's gone quiet or is running out of "
+        "time. Answer with exactly one word: REACH or WAIT."
+    )
+    user = (
+        f"Member: {member}\n"
+        f"You're trying to learn: {goal}\n"
+        f"{state}\n"
+        f"The meeting is in {facts.get('daysUntilMeeting')} day(s).\n"
+        f"You've emailed them about this {asks} time(s) so far; {since_text}.\n"
+        "Reach out now? Answer REACH or WAIT."
+    )
+    try:
+        reply = complete(system, user, model=MODEL, thinking=False, max_tokens=16)
+    except Exception:  # noqa: BLE001 — a decision error must never stall collection
+        log.warning("decide_outreach failed; defaulting to REACH", exc_info=True)
+        return True
+    return "WAIT" not in reply.strip().upper()
+
+
 def _maybe_summarize(channel_id: str, client: anthropic.Anthropic) -> None:
     summary, last_id = db.get_summary(channel_id)
     tail = db.messages_after(channel_id, last_id)

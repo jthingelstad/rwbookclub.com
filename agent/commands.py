@@ -337,13 +337,50 @@ async def _send_reading_checkin_email_to_member(member: dict, meeting: dict,
     return sent
 
 
-def _should_start_scheduled_roll_call(status: dict, roll_call: dict | None) -> bool:
-    """Whether the scheduler should post a fresh Discord roll call."""
-    if status.get("recommendation") == "ready":
-        return False
-    if roll_call and roll_call.get("status") == "open" and roll_call.get("message_id"):
-        return False
-    return True
+# Oliver runs meeting prep once a day, at this local hour, so the per-member evaluation (and its
+# decision calls) happen on a daily cadence rather than on every hourly scheduler tick.
+MEETING_OUTREACH_HOUR = 9  # America/Chicago
+
+
+async def _run_meeting_outreach(meeting: dict, status: dict) -> int:
+    """Autonomous per-member meeting prep: roll call until attendance is answered, then reading
+    check-ins until finished — email only, no admin needed.
+
+    `meeting_campaign.outreach_plan` applies the hard rails (2-week window, the 3-day floor, and the
+    ceiling/kickoff that sets `mustReach`); for the discretionary middle cases Oliver decides via
+    `oliver.decide_outreach`. Reuses the existing per-member senders, which compose the email and
+    record the `attendance_request` / `reading_request` event. Returns the number of emails sent.
+    """
+    campaign = await asyncio.to_thread(meeting_campaign.snapshot)
+    plan = meeting_campaign.outreach_plan(campaign, today=_club_now().date())
+    posted = 0
+    for cand in plan:
+        slug = cand["memberSlug"]
+        member = corpus_read.find_member(slug)
+        if not member or not db.email_for_member(slug):
+            continue
+        reach = cand["mustReach"] or await asyncio.to_thread(oliver.decide_outreach, cand)
+        if not reach:
+            continue
+        try:
+            if cand["kind"] == "attendance":
+                sent = await _send_roll_call_email_to_member(member, status)
+            else:
+                sent = await _send_reading_checkin_email_to_member(
+                    member, meeting, note="Automated reading check-in.")
+        except Exception:
+            log.exception("meeting outreach (%s) failed for %s", cand["kind"], slug)
+            continue
+        if sent:
+            db.add_activity(
+                "meeting_outreach",
+                f"Meeting {cand['kind']} outreach sent",
+                f"Member: {slug}\nKind: {cand['kind']}\n"
+                f"Reason: {'forced' if cand['mustReach'] else 'Oliver chose to reach out'}\n"
+                f"Meeting: {meeting['meetingKey']}",
+            )
+            posted += 1
+    return posted
 
 
 async def _email_roll_call(interaction: discord.Interaction) -> None:
@@ -1199,47 +1236,15 @@ async def run_scheduler() -> int:
         if meeting_date:
             days = (meeting_date.date() - now.date()).days
             meeting_id = meeting["meetingId"]
-            roll_call = await asyncio.to_thread(db.current_roll_call, meeting_id) if meeting_id is not None else None
-            if (
-                0 <= days <= meeting_campaign.ROLL_CALL_START_DAYS
-                and meeting_id is not None
-                and not db.has_open_roll_call(meeting_id)
-                and _should_start_scheduled_roll_call(status, roll_call)
-            ):
-                sent = await main.send(await _roll_call_announcement(status), view=AttendanceView())
-                db.record_group_event(
-                    meeting_id,
-                    "roll_call_opened",
-                    actor="oliver",
-                    detail={
-                        "channel_id": str(sent.channel.id),
-                        "message_id": str(sent.id),
-                        "opened_by": "scheduler",
-                    },
-                )
-                db.add_activity(
-                    "roll_call_started",
-                    "Roll call started in Discord",
-                    f"Meeting: {meeting['meetingKey']}\nChannel: {sent.channel.id}",
-                )
-                posted += 1
-                if email_jmap.enabled():
-                    attendance = _attendance_by_member(status)
-                    current = sorted(
-                        [m for m in corpus_read.members() if m.get("isCurrent")],
-                        key=lambda m: m.get("name") or m["slug"],
-                    )
-                    for member in current:
-                        if attendance.get(member["slug"], "pending") != "pending":
-                            continue
-                        if not db.email_for_member(member["slug"]):
-                            continue
-                        try:
-                            sent_email = await _send_roll_call_email_to_member(member, status)
-                            if sent_email:
-                                posted += 1
-                        except Exception:
-                            log.exception("scheduled roll-call email failed for %s", member["slug"])
+
+            # Autonomous per-member meeting prep (roll call → reading check-ins): email only,
+            # evaluated once a day at MEETING_OUTREACH_HOUR. Oliver paces itself off the event log,
+            # so no admin command is needed to collect attendance + reading for a meeting.
+            if (email_jmap.enabled() and meeting_id is not None
+                    and 0 <= days <= meeting_campaign.OUTREACH_START_DAYS
+                    and now.hour == MEETING_OUTREACH_HOUR):
+                posted += await _run_meeting_outreach(meeting, status)
+
             status = await asyncio.to_thread(meeting_rules.meeting_status)
             if (0 <= days <= 3 and status["recommendation"] != "ready"
                     and meeting_id is not None
@@ -1271,33 +1276,6 @@ async def run_scheduler() -> int:
                     f"Meeting: {meeting['meetingKey']}\nRecommendation: {status['recommendation']}",
                 )
                 posted += 1
-
-            if email_jmap.enabled():
-                campaign = await asyncio.to_thread(meeting_campaign.snapshot)
-                candidates = meeting_campaign.reading_checkin_candidates(
-                    campaign, today=now.date()
-                )
-                for candidate in candidates:
-                    slug = candidate["memberSlug"]
-                    member = corpus_read.find_member(slug)
-                    if not member or not db.email_for_member(slug):
-                        continue
-                    try:
-                        sent_email = await _send_reading_checkin_email_to_member(
-                            member,
-                            meeting,
-                            note=f"Automated check-in {candidate['checkinNumber']} of {candidate['maxCheckins']}.",
-                        )
-                    except Exception:
-                        log.exception("scheduled reading-checkin email failed for %s", slug)
-                        continue
-                    if sent_email:
-                        db.add_activity(
-                            "reading_checkin_scheduled",
-                            "Scheduled reading check-in sent",
-                            f"Member: {slug}\nMeeting: {meeting['meetingKey']}\nCheck-in: {candidate['checkinNumber']} of {candidate['maxCheckins']}",
-                        )
-                        posted += 1
 
             # Club-wide cadence emails (OFF unless CLUB_EMAIL_CADENCE_ENABLED): the
             # 1-week reminder and the 2-day discussion-topics email, each once per meeting.
