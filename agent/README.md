@@ -13,7 +13,7 @@ agent/
 ├── clubdb.py       # the authoritative club_* tables + read/write helpers
 ├── corpus_gen.py   # generate the (private, gitignored) corpus from the DB
 ├── corpus_read.py  # query/join layer over the generated corpus
-├── corpus_write.py # /oliver add-book & schedule → DB upsert + corpus regen
+├── corpus_write.py # /oliver library add-book/schedule → DB upsert + corpus regen
 ├── publish.py      # local build + deploy of the site to the gh-pages branch
 ├── scheduler.py    # pure due_notifications (reminders / nudges / milestones)
 ├── context.py      # compact club overview for the cached system prompt
@@ -43,16 +43,17 @@ agent/
   `compare_books`, `review_summary`), email (`send_email`, `email_status`), proposal staging
   (`propose_action`, `open_proposals`), plus `remember`, `recall`, `set_reminder`, and explicit
   self-reported `record_availability` (SQLite).
-- **Reviews** (`/oliver review`): members log reviews via a Discord form that writes
+- **Reviews** (`/oliver reading review`): members log reviews via a Discord form that writes
   `club_reviews` (DB-backed) and regenerates the corpus review file — see below. Review
   identity comes from the private Discord-user → member map, not mutable display names.
-- **Operations** (admin, `/oliver`): `add-book` (Open Library → book file + cover), `schedule`
-  (book + date + picker → a meeting), `roll-call start/remind/close`, `link-member`,
-  `identities`, `stats`, `tick`, `feedback`, and memory maintenance. Writes go through
-  `corpus_write.py` and validate the corpus before commit.
+- **Operations** (admin), organized into `/oliver` subcommand groups: `/oliver library add-book`
+  (Open Library → book file + cover) and `schedule` (book + date + picker → a meeting);
+  `/oliver meeting roll-call`/`dashboard`/`check-in`; `/oliver contact` identity links; `/oliver admin`
+  (stats, feedback, proposals, tick); `/oliver memory` maintenance. Writes go through `corpus_write.py`
+  and validate the corpus before commit.
 - **Feedback** (any member): react 👍 or 👎 to any of Oliver's replies. The bot logs the
   reaction (user, message, question that prompted it) to SQLite and confirms with ✅. Use
-  `/oliver feedback` (admin) for a quick summary plus the most recent 👍/👎 with context.
+  `/oliver admin feedback` for a quick summary plus the most recent 👍/👎 with context.
 - **Meeting roll call** (`meeting_rules.py` + `commands.py`): Oliver knows the club's standing
   mechanics — last Tuesday of the month, quorum is 3 of 5 current members, and the picker must
   attend. He can open roll call with buttons, record explicit self-reported availability, show
@@ -76,15 +77,15 @@ agent/
   member privacy. Per-member sends are recorded as `attendance_requested`/`reading_requested` events
   (bumping the projection's ask counts) for the campaign dashboard; nothing records whether a member
   read an email.
-- **Meeting campaign** (`meeting_campaign.py` + `/oliver meeting-dashboard`): combines the
+- **Meeting campaign** (`meeting_campaign.py` + `/oliver meeting dashboard`): combines the
   current book/date, days remaining, roll call, picker requirement, reading status, per-member ask
   counts + last-asked timestamps, and recommended next actions into one dashboard/tool snapshot.
 - **Activity log** (`db.py` + `bot.py`): startup, email, reading-progress, roll-call, reminder,
   and scheduler activity is queued in SQLite and posted to `#oliver-log` through
   `DISCORD_OLIVER_LOG_WEBHOOK_URL`. Startup no longer posts to `#ask-oliver`.
-- **Reading progress** (`db.py` + `tools.py` + `/oliver reading-status`): tracks each current
+- **Reading progress** (`db.py` + `tools.py` + `/oliver reading status`): tracks each current
   member's status for the next scheduled book from the corpus. Updates can come from linked
-  Discord users or linked email addresses; `/oliver reading-checkin` emails a member for an update.
+  Discord users or linked email addresses; `/oliver meeting check-in` emails a member for an update.
   Oliver skips members already marked `finished`.
 - **Memory** (`db.py`): durable notes with provenance, per-channel conversation log + rolling
   summary, reminders, usage log, feedback, and private identity links. Survives restarts.
@@ -132,24 +133,30 @@ that doesn't belong in the public corpus. On the deployment host, point `OLIVER_
 at durable storage and back it up (litestream or a periodic dump, matching the Weekly
 Thing pattern). Backup wiring is a deployment step, not in the repo.
 
-Admins can inspect and repair private state in Discord:
+### Command structure
 
-- `/oliver link-member member:<slug> user:<Discord user>` links a stable Discord identity
-- `/oliver link-email member:<slug> email:<address>` links a stable email identity
-- `/oliver identities` shows current identity links
-- `/oliver reading-status [status] [progress] [page] [percent]` shows or updates the next-book tracker
-- `/oliver reading-checkin member:<slug>` emails a member for a next-book progress update
-- `/oliver memories [subject] [query]` searches durable memories
-- `/oliver edit-memory` and `/oliver forget` curate incorrect or stale memories
-- `/oliver roll-call status` shows the current attendance/quorum/picker check
-- `/oliver roll-call start|remind|email|close` runs the attendance flow in Discord or email.
-  Email roll call targets pending members only.
-- `/oliver meeting-dashboard` shows readiness, last contact/open state, and next actions
-- `/oliver proposals` and `/oliver resolve-proposal` review staged Oliver suggestions
+`/oliver` is organized into subcommand groups by purpose (Discord's 2-level nesting:
+`/oliver <group> <subcommand> [options]`). Two quick commands stay top-level: `/oliver ping`
+and `/oliver whoami`.
 
-## Reviews (`/oliver review`)
+- **`/oliver reading`** (members) — `status [status|progress|page|percent]` shows everyone / updates
+  yours; `review book:<…>` logs a review (form).
+- **`/oliver meeting`** (admin) — `dashboard` readiness; `roll-call action:<status|start|remind|email|close>`
+  runs attendance (email roll call targets pending members only); `check-in member:<slug>` emails a
+  reading nudge.
+- **`/oliver timeline`** — `show [member|category]` (members) views the club event log; `log date:
+  category: text: [member]` (admin) records an event.
+- **`/oliver contact`** — members manage their own handles (`add-website`/`add-email`/`add-phone`,
+  `remove-website`/`remove-phone`); admins link anyone (`link-member`/`link-email`/`link-sms`) and
+  `list` all links. Email can be added but never removed.
+- **`/oliver memory`** (admin) — `search [subject|query]`, `edit id: note:`, `forget id:`.
+- **`/oliver library`** (admin) — `add-book title:`, `schedule book: date: picker:`.
+- **`/oliver admin`** — `stats`, `feedback`, `proposals`, `resolve id: decision:<accept|dismiss>`,
+  `release-notes [to]`, `reattribute-mail`, `tick` (run the scheduler now).
 
-Members log book reviews with the `/oliver review` command: pick the book (autocomplete), fill the
+## Reviews (`/oliver reading review`)
+
+Members log book reviews with the `/oliver reading review` command: pick the book (autocomplete), fill the
 form (rating 1–5 or DNF, the review, recommend?, discussion quality, favorite quote), and
 submit. Oliver upserts the review into `club_reviews` (the authoritative DB) and regenerates the
 corpus review file (`corpus/data/reviews/<book>--<member>.md`); the command then schedules a

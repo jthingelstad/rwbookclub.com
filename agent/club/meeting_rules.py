@@ -222,7 +222,7 @@ def summarize_club_state() -> dict:
 
 
 # ── Roll-call email text ─────────────────────────────────────────────────────
-# Shared by both senders — the `/oliver roll-call` command path (commands.py) and the
+# Shared by both senders — the `/oliver meeting roll-call` command path (commands.py) and the
 # request_roll_call_update tool (tools.py) — so subject/body wording can't drift between
 # the two copies. Pure text; lives here (not in club/meeting_emails, which imports oliver)
 # to stay free of the oliver→tools import cycle.

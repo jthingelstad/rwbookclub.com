@@ -1,6 +1,6 @@
 """Write a member's book review into the authoritative club record (SQLite).
 
-The single review writer, called by the /review modal (and any future front-end).
+The single review writer, called by the /oliver reading review modal (and any future front-end).
 Validates the form fields, resolves book/member ids, upserts ``club_reviews``, then
 regenerates the corpus review file (``reviews/<book>--<member>.md``) from the DB.
 Updating an existing review preserves its id and createdAt. The site is rebuilt +

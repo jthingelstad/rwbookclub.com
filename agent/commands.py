@@ -107,6 +107,26 @@ contact_cmds = discord.app_commands.Group(
     parent=oliver_cmds,
 )
 
+# Domain subcommand groups, so `/oliver` reads as a handful of purposes rather than a flat list.
+# discord.py nests these under oliver_cmds automatically (parent=), within Discord's 2-level limit:
+# `/oliver <group> <subcommand> [options]`.
+reading_cmds = discord.app_commands.Group(
+    name="reading", description="Your reading progress and reviews.", parent=oliver_cmds)
+meeting_cmds = discord.app_commands.Group(
+    name="meeting", description="Run the next meeting — roll call, reading check-ins, readiness.",
+    parent=oliver_cmds)
+timeline_cmds = discord.app_commands.Group(
+    name="timeline", description="The club's event timeline — view it or record an event.",
+    parent=oliver_cmds)
+memory_cmds = discord.app_commands.Group(
+    name="memory", description="Oliver's durable memory (admin).", parent=oliver_cmds)
+library_cmds = discord.app_commands.Group(
+    name="library", description="Club reading data — add books, schedule reads (admin).",
+    parent=oliver_cmds)
+admin_cmds = discord.app_commands.Group(
+    name="admin", description="Operate Oliver — stats, feedback, proposals, scheduler (admin).",
+    parent=oliver_cmds)
+
 
 # ── Autocompletes ────────────────────────────────────────────────────────────
 async def book_autocomplete(interaction: discord.Interaction, current: str):
@@ -501,7 +521,7 @@ async def record_attendance_response(interaction: discord.Interaction, status: s
 
 # ── Modals ───────────────────────────────────────────────────────────────────
 class ReviewModal(discord.ui.Modal):
-    """The /oliver review form — five inputs, one submit, upserted to the club_* DB (the corpus is then regenerated + redeployed)."""
+    """The /oliver reading review form — five inputs, one submit, upserted to the club_* DB (the corpus is then regenerated + redeployed)."""
 
     def __init__(self, slug: str, title: str, member_slug: str,
                  existing: dict | None = None) -> None:
@@ -568,7 +588,7 @@ async def oliver_ping(interaction: discord.Interaction) -> None:
     await interaction.response.send_message("🟢 Oliver is awake.", ephemeral=True)
 
 
-@oliver_cmds.command(name="stats", description="Report corpus stats (admin).")
+@admin_cmds.command(name="stats", description="Report corpus stats (admin).")
 @admin_only
 async def oliver_stats(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(
@@ -576,7 +596,7 @@ async def oliver_stats(interaction: discord.Interaction) -> None:
     )
 
 
-@oliver_cmds.command(name="release-notes",
+@admin_cmds.command(name="release-notes",
                      description="Draft & send release notes from recent changes (admin).")
 @discord.app_commands.describe(days="Look back this many days for changes (1-90)",
                                to="Where to send — yourself (default) or the club mailing list")
@@ -701,7 +721,7 @@ async def link_sms_cmd(interaction: discord.Interaction, member: str, number: st
 # Websites are public (profile page → schedule a rebuild); emails/phones are private. Emails can be
 # added but never removed — they anchor mailing-list attribution (db.unlink_member_identity blocks it).
 _LINK_FIRST = ("I can only do that for linked club members — ask an admin to run "
-               "`/oliver link-member` to connect your Discord account first.")
+               "`/oliver contact link-member` to connect your Discord account first.")
 
 
 @contact_cmds.command(name="add-website", description="Add one of your website addresses (public, on your profile).")
@@ -785,7 +805,7 @@ async def remove_phone_cmd(interaction: discord.Interaction, number: str) -> Non
         else "I couldn't find that number on your account.", ephemeral=True)
 
 
-@oliver_cmds.command(name="reattribute-mail",
+@admin_cmds.command(name="reattribute-mail",
                      description="Re-resolve archived mail senders to members (admin).")
 @admin_only
 async def reattribute_mail_cmd(interaction: discord.Interaction) -> None:
@@ -797,7 +817,7 @@ async def reattribute_mail_cmd(interaction: discord.Interaction) -> None:
         ephemeral=True)
 
 
-@oliver_cmds.command(name="identities", description="Show Discord, email, and SMS identity links (admin).")
+@contact_cmds.command(name="list", description="Show Discord, email, and SMS identity links (admin).")
 @admin_only
 async def identities_cmd(interaction: discord.Interaction) -> None:
     rows = db.list_member_identities()
@@ -845,7 +865,7 @@ async def whoami_cmd(interaction: discord.Interaction) -> None:
         "I don't have your Discord account linked to a club member yet.", ephemeral=True)
 
 
-@oliver_cmds.command(name="reading-status", description="Show or update your reading progress for the next book.")
+@reading_cmds.command(name="status", description="Show or update your reading progress for the next book.")
 @discord.app_commands.describe(
     status="Optional status: not_started, started, on_track, behind, finished, paused",
     progress="Optional short note, e.g. 'chapter 6' or 'halfway'",
@@ -893,7 +913,7 @@ async def reading_status_cmd(interaction: discord.Interaction, status: str | Non
     await interaction.response.send_message(_reading_status_text(), ephemeral=True)
 
 
-@oliver_cmds.command(name="reading-checkin", description="Email a reading-status check-in to a member (admin).")
+@meeting_cmds.command(name="check-in", description="Email a reading-status check-in to a member (admin).")
 @discord.app_commands.describe(member="Club member", note="Optional extra sentence")
 @discord.app_commands.autocomplete(member=member_autocomplete)
 @admin_only
@@ -940,14 +960,14 @@ async def reading_checkin_cmd(interaction: discord.Interaction, member: str,
         ephemeral=True)
 
 
-@oliver_cmds.command(name="review", description="Log your review of a book the club has read.")
+@reading_cmds.command(name="review", description="Log your review of a book the club has read.")
 @discord.app_commands.describe(book="The book you're reviewing")
 @discord.app_commands.autocomplete(book=book_autocomplete)
 async def review_cmd(interaction: discord.Interaction, book: str) -> None:
     member = _linked_member_for_user(interaction.user.id)
     if not member:
         await interaction.response.send_message(
-            "I can only log reviews from linked club members — ask an admin to run `/oliver link-member`.",
+            "I can only log reviews from linked club members — ask an admin to run `/oliver contact link-member`.",
             ephemeral=True)
         return
     b = corpus_read.find_book(book)
@@ -964,7 +984,7 @@ async def review_cmd(interaction: discord.Interaction, book: str) -> None:
     await interaction.response.send_modal(ReviewModal(b["slug"], b["title"], member["slug"], existing))
 
 
-@oliver_cmds.command(name="add-book", description="Add a book to the corpus (admin) — fetches metadata from Open Library.")
+@library_cmds.command(name="add-book", description="Add a book to the corpus (admin) — fetches metadata from Open Library.")
 @discord.app_commands.describe(title="Book title", isbn="ISBN (optional, more precise)")
 @admin_only
 async def oliver_add_book(interaction: discord.Interaction, title: str, isbn: str | None = None) -> None:
@@ -993,12 +1013,12 @@ async def oliver_add_book(interaction: discord.Interaction, title: str, isbn: st
     )
     # Keep the exact file path + next step deterministic (don't let the LLM mangle it).
     await interaction.followup.send(
-        f"{ack}\n\nEdit `corpus/data/books/{res['slug']}.json` if anything's off, then `/oliver schedule` it.",
+        f"{ack}\n\nEdit `corpus/data/books/{res['slug']}.json` if anything's off, then `/oliver library schedule` it.",
         ephemeral=True,
     )
 
 
-@oliver_cmds.command(name="schedule", description="Schedule the next read — book + date + picker (admin).")
+@library_cmds.command(name="schedule", description="Schedule the next read — book + date + picker (admin).")
 @discord.app_commands.describe(book="The book", date="Meeting date (YYYY-MM-DD)", picker="Who picked it")
 @discord.app_commands.autocomplete(book=book_autocomplete, picker=member_autocomplete)
 @admin_only
@@ -1023,7 +1043,7 @@ async def oliver_schedule(interaction: discord.Interaction, book: str, date: str
     await interaction.followup.send(ack, ephemeral=True)
 
 
-@oliver_cmds.command(name="log-event", description="Record a club timeline event (admin).")
+@timeline_cmds.command(name="log", description="Record a club timeline event (admin).")
 @discord.app_commands.describe(
     category="Event category",
     kind="Event kind, e.g. dinner, book_picked, member_away, member_milestone, meeting_held",
@@ -1065,7 +1085,7 @@ async def oliver_log_event(interaction: discord.Interaction,
         f"🗓️ Logged **{cat}/{kind}** on {date}{who} (#{eid}).", ephemeral=True)
 
 
-@oliver_cmds.command(name="timeline", description="Show recent club timeline events.")
+@timeline_cmds.command(name="show", description="Show recent club timeline events.")
 @discord.app_commands.describe(member="Optional member to scope to", category="Optional category")
 @discord.app_commands.autocomplete(member=member_autocomplete)
 @discord.app_commands.choices(category=[
@@ -1098,7 +1118,7 @@ async def oliver_timeline(interaction: discord.Interaction, member: str | None =
     await interaction.response.send_message("\n".join(lines)[:config.MAX_DISCORD_LEN], ephemeral=True)
 
 
-@oliver_cmds.command(name="feedback", description="Recent 👍/👎 feedback on Oliver's replies (admin).")
+@admin_cmds.command(name="feedback", description="Recent 👍/👎 feedback on Oliver's replies (admin).")
 @admin_only
 async def oliver_feedback(interaction: discord.Interaction) -> None:
     stats = await asyncio.to_thread(db.feedback_stats)
@@ -1121,7 +1141,7 @@ async def oliver_feedback(interaction: discord.Interaction) -> None:
     await interaction.response.send_message("\n".join(lines), ephemeral=True)
 
 
-@oliver_cmds.command(name="roll-call", description="Start, check, remind, or close meeting roll call.")
+@meeting_cmds.command(name="roll-call", description="Start, check, remind, or close meeting roll call.")
 @discord.app_commands.describe(action="What to do with the current meeting roll call")
 @discord.app_commands.choices(action=[
     discord.app_commands.Choice(name="status", value="status"),
@@ -1181,14 +1201,14 @@ async def roll_call_cmd(interaction: discord.Interaction,
         log.exception("Failed to record roll-call message")
 
 
-@oliver_cmds.command(name="meeting-dashboard", description="Show the next meeting readiness dashboard (admin).")
+@meeting_cmds.command(name="dashboard", description="Show the next meeting readiness dashboard (admin).")
 @admin_only
 async def meeting_dashboard_cmd(interaction: discord.Interaction) -> None:
     text = await asyncio.to_thread(meeting_campaign.format_dashboard)
     await interaction.response.send_message(text[:config.MAX_DISCORD_LEN], ephemeral=True)
 
 
-@oliver_cmds.command(name="proposals", description="Show Oliver's pending action proposals (admin).")
+@admin_cmds.command(name="proposals", description="Show Oliver's pending action proposals (admin).")
 @admin_only
 async def proposals_cmd(interaction: discord.Interaction) -> None:
     rows = await asyncio.to_thread(db.list_proposals, limit=10)
@@ -1201,7 +1221,7 @@ async def proposals_cmd(interaction: discord.Interaction) -> None:
     await interaction.response.send_message("\n".join(lines)[:config.MAX_DISCORD_LEN], ephemeral=True)
 
 
-@oliver_cmds.command(name="resolve-proposal", description="Accept or dismiss an Oliver proposal (admin).")
+@admin_cmds.command(name="resolve", description="Accept or dismiss an Oliver proposal (admin).")
 @discord.app_commands.describe(proposal_id="Proposal id from /oliver proposals",
                                decision="Accept or dismiss")
 @discord.app_commands.choices(decision=[
@@ -1219,7 +1239,7 @@ async def resolve_proposal_cmd(interaction: discord.Interaction, proposal_id: in
         ephemeral=True)
 
 
-@oliver_cmds.command(name="memories", description="Search Oliver's durable memories (admin).")
+@memory_cmds.command(name="search", description="Search Oliver's durable memories (admin).")
 @discord.app_commands.describe(subject="Optional member slug or topic", query="Optional text search")
 @admin_only
 async def memories_cmd(interaction: discord.Interaction, subject: str | None = None,
@@ -1237,8 +1257,8 @@ async def memories_cmd(interaction: discord.Interaction, subject: str | None = N
     await interaction.response.send_message("\n".join(lines)[:config.MAX_DISCORD_LEN], ephemeral=True)
 
 
-@oliver_cmds.command(name="edit-memory", description="Edit one of Oliver's memories (admin).")
-@discord.app_commands.describe(memory_id="Memory id from /oliver memories", note="Replacement note")
+@memory_cmds.command(name="edit", description="Edit one of Oliver's memories (admin).")
+@discord.app_commands.describe(memory_id="Memory id from /oliver memory search", note="Replacement note")
 @admin_only
 async def edit_memory_cmd(interaction: discord.Interaction, memory_id: int, note: str) -> None:
     ok = await asyncio.to_thread(db.update_memory, memory_id, note)
@@ -1246,8 +1266,8 @@ async def edit_memory_cmd(interaction: discord.Interaction, memory_id: int, note
         "Updated memory." if ok else "No active memory with that id.", ephemeral=True)
 
 
-@oliver_cmds.command(name="forget", description="Delete one of Oliver's memories (admin).")
-@discord.app_commands.describe(memory_id="Memory id from /oliver memories")
+@memory_cmds.command(name="forget", description="Delete one of Oliver's memories (admin).")
+@discord.app_commands.describe(memory_id="Memory id from /oliver memory search")
 @admin_only
 async def forget_cmd(interaction: discord.Interaction, memory_id: int) -> None:
     ok = await asyncio.to_thread(db.delete_memory, memory_id)
@@ -1255,7 +1275,7 @@ async def forget_cmd(interaction: discord.Interaction, memory_id: int) -> None:
         "Forgot that memory." if ok else "No active memory with that id.", ephemeral=True)
 
 
-@oliver_cmds.command(name="tick", description="Run the proactive scheduler now (admin).")
+@admin_cmds.command(name="tick", description="Run the proactive scheduler now (admin).")
 @admin_only
 async def oliver_tick(interaction: discord.Interaction) -> None:
     await interaction.response.defer(ephemeral=True)

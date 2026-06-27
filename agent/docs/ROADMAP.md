@@ -58,8 +58,8 @@ the private Discord-user → member identity map, upserts `club_reviews`
 deployed by the publish step. Submitting the modal is the confirmation.
 
 **Phase 4 — Meetings & operations.** ✅ **Done.**
-`/oliver add-book` (fetches metadata + cover from Open Library, writes a book file) and
-`/oliver schedule` (book + date + picker → writes a placeholder meeting + sets the book's
+`/oliver library add-book` (fetches metadata + cover from Open Library, writes a book file) and
+`/oliver library schedule` (book + date + picker → writes a placeholder meeting + sets the book's
 picker), admin-gated, via `agent/corpus_write.py`; writes go to the `club_*` DB, regenerate
 the corpus, validate it, and create missing author records for new books. An in-process
 `discord.ext.tasks` loop (`agent/scheduler.py`, pure `due_notifications`) posts proactive
@@ -76,7 +76,7 @@ availability via chat, automatic roll-call posting within 10 days, and an attend
 within 3 days when quorum or picker attendance is not confirmed.
 
 For club operations Oliver should not perform directly, he can now stage proposals in SQLite
-for admin review (`/oliver proposals`, `/oliver resolve-proposal`) instead of pretending a
+for admin review (`/oliver admin proposals`, `/oliver admin resolve`) instead of pretending a
 suggested action is already approved.
 
 **Phase 5 — "6th member" polish.** ✅ **Done.**
@@ -87,7 +87,7 @@ channel keeps its own conversation thread + rolling summary serialized through a
 lock). The persona was deepened to read like a long-time member
 (real opinions, group-channel etiquette, no help-desk tone) and `_question_block` now injects
 both the speaker's remembered tastes and club-scoped lore, so replies personalize. Admin memory
-commands (`/oliver memories`, `edit-memory`, `forget`) provide a repair path for bad durable
+commands (`/oliver memory search`, `edit`, `forget`) provide a repair path for bad durable
 notes. Milestone/anniversary celebration shipped in Phase 4's scheduler.
 Awards facilitation (a write path + possible voting flow) is **deferred** — the corpus, site
 rendering, and a sample record already exist, so it's a self-contained later slice.

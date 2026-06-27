@@ -84,9 +84,9 @@ def due_notifications(now: datetime, already_sent: set[str]) -> list[Notificatio
                 facts={
                     "occasion": "the club recently finished this book",
                     "book": recent["title"],
-                    "how to log a review": "the /oliver review command",
+                    "how to log a review": "the /oliver reading review command",
                 },
-                fallback=f"📚 We just read **{recent['title']}** — log your take any time with `/oliver review`.",
+                fallback=f"📚 We just read **{recent['title']}** — log your take any time with `/oliver reading review`.",
             ))
 
     # 3. Milestone — books read at an exact multiple of 25.

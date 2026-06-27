@@ -12,7 +12,7 @@
 > (the person) + `member_identities` (their handles: `surface ∈ {discord, email, sms}`). The archive
 > attributes each message via `mail_messages.member_id` (FK → `club_members`, resolved through
 > `member_identities` + a corpus name fallback) — the only column the read paths use. Unresolved
-> senders keep `member_id` NULL (no claim is filed); link the member later (`/oliver link-email`) and
+> senders keep `member_id` NULL (no claim is filed); link the member later (`/oliver contact link-email`) and
 > `mail_archive.reattribute_archive()` updates their history. Treat every `mail_participants` /
 > `mail_participant_addresses` / `identity_claims` mention below as historical.
 
