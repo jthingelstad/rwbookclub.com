@@ -598,18 +598,31 @@ async def oliver_stats(interaction: discord.Interaction) -> None:
 
 @admin_cmds.command(name="release-notes",
                      description="Draft & send release notes from recent changes (admin).")
-@discord.app_commands.describe(days="Look back this many days for changes (1-90)",
-                               to="Where to send — yourself (default) or the club mailing list")
+@discord.app_commands.describe(
+    days="Look back this many days (1-90; default 7). Ignored if 'since' is set.",
+    since="Or scope to changes since this git commit (hash or ref).",
+    to="Where to send — yourself (default) or the club mailing list")
 @discord.app_commands.choices(to=[
     discord.app_commands.Choice(name="me", value="me"),
     discord.app_commands.Choice(name="list", value="list"),
 ])
 @admin_only
-async def release_notes_cmd(interaction: discord.Interaction, days: int,
+async def release_notes_cmd(interaction: discord.Interaction, days: int | None = None,
+                            since: str | None = None,
                             to: discord.app_commands.Choice[str] | None = None) -> None:
-    if not 1 <= days <= 90:
-        await interaction.response.send_message("Pick a window between 1 and 90 days.", ephemeral=True)
-        return
+    if since:
+        resolved = release_notes.resolve_commit(since)
+        if not resolved:
+            await interaction.response.send_message(
+                f"I couldn't find a commit matching `{since}`.", ephemeral=True)
+            return
+        days_arg, since_arg, scope = None, resolved, f"since `{resolved}`"
+    else:
+        d = days if days is not None else 7
+        if not 1 <= d <= 90:
+            await interaction.response.send_message("Pick a window between 1 and 90 days.", ephemeral=True)
+            return
+        days_arg, since_arg, scope = d, None, f"the last {d} days"
     if not email_jmap.enabled():
         await interaction.response.send_message(
             "Email isn't configured (no FASTMAIL_JMAP_TOKEN), so I can't send release notes.",
@@ -619,25 +632,25 @@ async def release_notes_cmd(interaction: discord.Interaction, days: int,
     target = to.value if to else "me"
     await interaction.response.defer(ephemeral=True)
     try:
-        email = await asyncio.to_thread(release_notes.release_notes_email, days)
+        email = await asyncio.to_thread(
+            release_notes.release_notes_email, days=days_arg, since_commit=since_arg)
     except Exception:
         log.exception("release-notes generation failed")
         db.add_activity("warning", "Release notes failed",
-                        f"Days: {days}\nGenerating the release-notes email raised an exception.")
+                        f"Scope: {scope}\nGenerating the release-notes email raised an exception.")
         await interaction.followup.send("Something went wrong drafting the release notes.", ephemeral=True)
         return
     if email is None:
-        await interaction.followup.send(f"No changes in the last {days} days — nothing to announce.",
-                                        ephemeral=True)
+        await interaction.followup.send(f"No changes {scope} — nothing to announce.", ephemeral=True)
         return
 
     try:
         if target == "list":
             await _send_club_email(email["subject"], email["body"])
             db.add_activity("release_notes_sent", "Release notes sent",
-                            f"Days: {days}\nTo: club mailing list\nSubject: {email['subject']}")
+                            f"Scope: {scope}\nTo: club mailing list\nSubject: {email['subject']}")
             await interaction.followup.send(
-                f"📣 Sent release notes (last {days} days) to the club list and mirrored to the main "
+                f"📣 Sent release notes ({scope}) to the club list and mirrored to the main "
                 f"channel.\nSubject: *{email['subject']}*", ephemeral=True)
         else:
             slug = db.member_slug_for_user(str(interaction.user.id))
@@ -650,10 +663,10 @@ async def release_notes_cmd(interaction: discord.Interaction, days: int,
             sent = await asyncio.to_thread(
                 outbound.send, to=[rec["email"]], subject=email["subject"], body=email["body"])
             db.add_activity("release_notes_sent", "Release notes sent",
-                            f"Days: {days}\nTo: {rec['email']} (admin)\nSubject: {email['subject']}\n"
+                            f"Scope: {scope}\nTo: {rec['email']} (admin)\nSubject: {email['subject']}\n"
                             f"Email ID: {sent.get('emailId')}")
             await interaction.followup.send(
-                f"📝 Emailed the {days}-day release-notes draft to `{rec['email']}` "
+                f"📝 Emailed the release-notes draft ({scope}) to `{rec['email']}` "
                 f"(`{sent.get('emailId')}`).\nSubject: *{email['subject']}*\n"
                 "Review it, then re-run with `to:list` to send it to the club.", ephemeral=True)
     except Exception:

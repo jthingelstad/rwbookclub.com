@@ -12,9 +12,12 @@ capability docs (ROADMAP — the de-facto changelog — and which docs changed i
 The grounding rule in the prompt is strict: describe only what's in the material, never
 invent a capability.
 
+Scope is either a day window (`--days`, default 7) or everything since a commit (`--since <hash>`).
+
 Build-time preview / test:
-    python -m agent.club.release_notes --days 7              # print the draft
-    python -m agent.club.release_notes --days 7 --send a@b   # also deliver it to that address
+    python -m agent.club.release_notes --days 7               # print the draft
+    python -m agent.club.release_notes --since 8cebec8        # scope to commits since that hash
+    python -m agent.club.release_notes --days 7 --send a@b    # also deliver it to that address
 """
 
 from __future__ import annotations
@@ -53,20 +56,36 @@ def _extract_subject(text: str) -> str:
     return ""
 
 
-def recent_changes(days: int) -> dict:
-    """Gather the git + docs source material for the last `days` days."""
-    since = f"--since={days} days ago"
-    total = [ln for ln in publish.git_output(["log", since, "--oneline"]).splitlines() if ln]
+def resolve_commit(ref: str) -> str | None:
+    """The short hash for a commit-ish, or None if it doesn't resolve (used to validate `since:`)."""
+    return publish.git_output(
+        ["rev-parse", "--verify", "--short", f"{ref}^{{commit}}"]).strip() or None
+
+
+def recent_changes(*, days: int | None = None, since_commit: str | None = None) -> dict:
+    """Gather the git + docs source material, scoped EITHER to the last `days` days OR to everything
+    since `since_commit` (a commit-ish). Pass one; days defaults to 7 if neither is given."""
+    if since_commit:
+        rev = [f"{since_commit}..HEAD"]
+        info = publish.git_output(
+            ["log", "-1", "--date=short", "--pretty=format:%h %ad %s", since_commit]).strip()
+        window = f"since commit {info}" if info else f"since commit {since_commit}"
+    else:
+        days = days or 7
+        rev = [f"--since={days} days ago"]
+        window = f"the last {days} days"
+
+    total = [ln for ln in publish.git_output(["log", *rev, "--oneline"]).splitlines() if ln]
     count = len(total)
 
-    merges = publish.git_output(["log", since, "--merges", "--pretty=format:- %h %s"]).strip()
+    merges = publish.git_output(["log", *rev, "--merges", "--pretty=format:- %h %s"]).strip()
     commits = publish.git_output([
-        "log", since, "-n", str(_COMMIT_CAP), "--no-merges", "--stat", "--date=short",
+        "log", *rev, "-n", str(_COMMIT_CAP), "--no-merges", "--stat", "--date=short",
         "--pretty=format:%n### %h %ad %s%n%b",
     ]).strip()
 
     doc_lines = publish.git_output(
-        ["log", since, "--name-only", "--pretty=format:", "--", "*.md"]
+        ["log", *rev, "--name-only", "--pretty=format:", "--", "*.md"]
     ).splitlines()
     changed_docs = sorted({ln.strip() for ln in doc_lines if ln.strip().endswith(".md")})
 
@@ -76,7 +95,9 @@ def recent_changes(days: int) -> dict:
         roadmap = ""
 
     return {
+        "window": window,
         "days": days,
+        "since_commit": since_commit,
         "count": count,
         "truncated": count > _COMMIT_CAP,
         "merges": merges,
@@ -87,7 +108,7 @@ def recent_changes(days: int) -> dict:
 
 
 def release_notes_prompt(material: dict) -> str:
-    days = material["days"]
+    window = material["window"]
     trunc = (
         f"\n(NOTE: {material['count']} commits landed in this window; only the {_COMMIT_CAP} "
         "most recent are shown in full below. Say so if it matters.)"
@@ -96,7 +117,7 @@ def release_notes_prompt(material: dict) -> str:
     docs = "\n".join(f"- {d}" for d in material["changed_docs"]) or "(no docs changed)"
     return (
         "Write a short email to the R/W Book Club announcing the new capabilities YOU — Oliver — "
-        f"have gained over the last {days} days. This is you, in first person, telling the club "
+        f"have gained. This batch covers {window}. This is you, in first person, telling the club "
         "what you can now do and what changed under the hood.\n\n"
         "VOICE: first person throughout (\"I can now…\", \"I rebuilt…\", \"I learned…\"). "
         "Technically strong and specific — name the actual mechanism, don't be hand-wavey. Share "
@@ -107,6 +128,9 @@ def release_notes_prompt(material: dict) -> str:
         "GROUNDING (important): describe ONLY changes that appear in the material below. Do not "
         "invent features, numbers, or capabilities. If something is unclear, leave it out. Where "
         "a change is internal plumbing, it's fine — explain it honestly and make it interesting.\n\n"
+        "OPEN: before the first section (no header), write ONE short framing sentence so a reader "
+        f"knows immediately what this is and the window it covers — that it's your under-the-hood "
+        f"update for {window}. Don't dive straight into the story.\n\n"
         "STRUCTURE — exactly three '## ' sections, in this order:\n\n"
         "## The story\n"
         "A short narrative (2-4 sentences, prose) of what's genuinely interesting in this batch — "
@@ -116,19 +140,21 @@ def release_notes_prompt(material: dict) -> str:
         "touch their experience. Lead each bullet with the capability, then a sentence on why it's "
         "good. Keep it to what a member cares about.\n\n"
         "## Release Notes\n"
-        "A bulleted list going into real, specific detail on what changed — the agent-construction "
-        "level. This is for the technically-minded; be precise about mechanisms, tradeoffs, and "
-        "fixes. More detail here than you'd think to include; this crowd will enjoy it.\n\n"
+        "A terse changelog — MANY short, specific entries, one concrete fact per bullet (what "
+        "changed, named precisely), NOT paragraphs. Same factual texture as Features but more of "
+        "them and lower-level: prefer a dozen one-line facts over three explanations. Each bullet "
+        "is a fact, not a story; no prose lead-in, just the list.\n\n"
+        "CLOSE: after the last section (no header), end with one short, warm sign-off sentence in "
+        "your voice — wrap up and/or point them to #ask-oliver. Do NOT add your name or a signature "
+        "block; a signature is appended automatically right after your sign-off.\n\n"
         "FORMAT: this renders as an HTML email, so use markdown — a '## ' header for each section, "
         "bulleted lists, *italics* for things like file or feature names, and **bold** sparingly on "
         "a key phrase. Separate every paragraph and bullet group with a fully blank line, and leave "
-        "a blank line after each '## ' header. Do NOT use '---' or horizontal rules. Do NOT sign off "
-        "— a signature is added automatically.\n\n"
+        "a blank line after each '## ' header. Do NOT use '---' or horizontal rules.\n\n"
         "OUTPUT: first write a single-line subject — fun, fitting, and a little bit clever for this "
         "audience — between <subject> and </subject>. Then write the ENTIRE email between <email> "
         "and </email> tags, with NOTHING outside the two tag pairs (no preamble, no notes).\n\n"
-        "=== SOURCE MATERIAL (last "
-        f"{days} days) ==={trunc}\n\n"
+        f"=== SOURCE MATERIAL ({window}) ==={trunc}\n\n"
         "--- Shipped features (merge commits) ---\n"
         f"{material['merges'] or '(none)'}\n\n"
         "--- Commits in detail (subject, body, files changed) ---\n"
@@ -140,27 +166,29 @@ def release_notes_prompt(material: dict) -> str:
     )
 
 
-def release_notes_email(days: int) -> dict | None:
-    """Build the release-notes email. Returns {subject, body} (body unsigned), or None if
+def release_notes_email(*, days: int | None = None, since_commit: str | None = None) -> dict | None:
+    """Build the release-notes email. Returns {subject, body, window} (body unsigned), or None if
     there were no changes in the window (caller should report that plainly)."""
-    material = recent_changes(days)
+    material = recent_changes(days=days, since_commit=since_commit)
     if material["count"] == 0:
         return None
     out = oliver.generate(release_notes_prompt(material))
     body = _extract_email(out)
     subject = _extract_subject(out) or f"Under my hood: what changed — {_friendly_date(date.today().isoformat())}"
-    return {"subject": subject, "body": body}
+    return {"subject": subject, "body": body, "window": material["window"]}
 
 
 def _main() -> None:
     parser = argparse.ArgumentParser(description="Preview (and optionally send) Oliver's release-notes email.")
-    parser.add_argument("--days", type=int, default=7, help="look back this many days")
+    parser.add_argument("--days", type=int, default=None, help="look back this many days (default 7)")
+    parser.add_argument("--since", metavar="COMMIT", help="scope to changes since this commit-ish (overrides --days)")
     parser.add_argument("--send", metavar="EMAIL", help="also deliver the draft to this address")
     args = parser.parse_args()
 
-    email = release_notes_email(args.days)
+    email = release_notes_email(days=args.days, since_commit=args.since)
     if email is None:
-        print(f"No changes in the last {args.days} days — nothing to announce.")
+        scope = f"since {args.since}" if args.since else f"the last {args.days or 7} days"
+        print(f"No changes {scope} — nothing to announce.")
         return
     print(f"Subject: {email['subject']}\n")
     print(outbound.finalize(email["body"]))  # show exactly what would be sent (incl. signature)
