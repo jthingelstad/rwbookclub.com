@@ -216,31 +216,6 @@ CREATE TABLE IF NOT EXISTS member_contacts (
 CREATE INDEX IF NOT EXISTS idx_member_contacts_meeting ON member_contacts(meeting_id, member_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_member_contacts_member ON member_contacts(member_id);
 
-CREATE TABLE IF NOT EXISTS email_tracking (
-    token       TEXT PRIMARY KEY,
-    contact_id  INTEGER,
-    meeting_id  INTEGER REFERENCES club_meetings(id),
-    member_id   INTEGER REFERENCES club_members(id),
-    kind        TEXT,
-    subject     TEXT,
-    email_id    TEXT,
-    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY(contact_id) REFERENCES member_contacts(id)
-);
-CREATE INDEX IF NOT EXISTS idx_email_tracking_meeting ON email_tracking(meeting_id, member_id);
-CREATE INDEX IF NOT EXISTS idx_email_tracking_member ON email_tracking(member_id);
-CREATE INDEX IF NOT EXISTS idx_email_tracking_contact ON email_tracking(contact_id);
-
-CREATE TABLE IF NOT EXISTS email_opens (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    token       TEXT NOT NULL,
-    opened_at   TEXT NOT NULL DEFAULT (datetime('now')),
-    remote_addr TEXT,
-    user_agent  TEXT,
-    FOREIGN KEY(token) REFERENCES email_tracking(token)
-);
-CREATE INDEX IF NOT EXISTS idx_email_opens_token ON email_opens(token, opened_at);
-
 -- The mail archive attributes each message to a member via mail_messages.member_id
 -- (FK → club_members, resolved through member_identities). There is no separate participant
 -- identity store — club_members + member_identities is the single source of truth.
@@ -622,6 +597,32 @@ def migrate_drop_legacy_identity(conn: sqlite3.Connection) -> None:
         raise RuntimeError(f"legacy-identity drop left dangling references: {[tuple(r) for r in dangling]}")
 
 
+def migrate_drop_email_tracking(conn: sqlite3.Connection) -> None:
+    """One-time: remove the email open-tracking system for member privacy.
+
+    Drops `email_opens` (the open log) and `email_tracking` (the per-email token table) — Oliver
+    no longer records whether members open emails (no pixel, no external poll). The operational
+    `member_contacts` outreach log is unaffected (it was the only inbound FK target and stays).
+    Guarded on `email_tracking` still existing; idempotent.
+    """
+    if not _table_exists(conn, "email_tracking"):
+        return
+
+    conn.commit()
+    conn.execute("PRAGMA foreign_keys=OFF")
+    try:
+        conn.executescript("""
+        DROP TABLE IF EXISTS email_opens;
+        DROP TABLE IF EXISTS email_tracking;
+        """)
+        conn.commit()
+    finally:
+        conn.execute("PRAGMA foreign_keys=ON")
+    dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
+    if dangling:
+        raise RuntimeError(f"email-tracking drop left dangling references: {[tuple(r) for r in dangling]}")
+
+
 def _ensure_member_indexes(conn: sqlite3.Connection) -> None:
     """Indexes on member_id columns that only exist once the table is in its new shape
     (fresh DB via _SCHEMA, or existing DB via migrate_identity_to_fk). Safe + idempotent."""
@@ -637,6 +638,7 @@ def _ensure_schema() -> None:
         migrate_ops_to_fk(conn)
         migrate_identity_to_fk(conn)
         migrate_drop_legacy_identity(conn)
+        migrate_drop_email_tracking(conn)
         _ensure_member_indexes(conn)
 
 
@@ -1539,71 +1541,3 @@ def member_contacts_for_meeting(meeting_id: int, *, limit: int = 200) -> list[di
     return [dict(r) for r in rows]
 
 
-def add_email_tracking(*, token: str, contact_id: int | None = None,
-                       meeting_id: int | None = None, member_id: int | None = None,
-                       kind: str | None = None, subject: str | None = None,
-                       email_id: str | None = None) -> None:
-    with connect() as conn:
-        conn.execute(
-            "INSERT INTO email_tracking "
-            "(token, contact_id, meeting_id, member_id, kind, subject, email_id) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (token, contact_id, meeting_id, member_id, kind, subject, email_id),
-        )
-
-
-def mark_email_tracking_sent(token: str, email_id: str | None) -> None:
-    with connect() as conn:
-        conn.execute(
-            "UPDATE email_tracking SET email_id = ? WHERE token = ?",
-            (email_id, token),
-        )
-
-
-def record_email_open(token: str, *, remote_addr: str | None = None,
-                      user_agent: str | None = None) -> dict | None:
-    with connect() as conn:
-        row = conn.execute(
-            "SELECT et.*, m.slug AS member_slug, m.name AS member_name "
-            "FROM email_tracking et LEFT JOIN club_members m ON m.id = et.member_id "
-            "WHERE et.token = ?",
-            (token,),
-        ).fetchone()
-        if not row:
-            return None
-        conn.execute(
-            "INSERT INTO email_opens (token, remote_addr, user_agent) VALUES (?, ?, ?)",
-            (token, remote_addr, user_agent),
-        )
-        if row["contact_id"]:
-            conn.execute(
-                "UPDATE member_contacts SET status = 'opened' WHERE id = ?",
-                (row["contact_id"],),
-            )
-        return dict(row)
-
-
-def email_open_summary(meeting_id: int) -> dict[int, dict]:
-    """Per-member email-open summary for a meeting, keyed by integer member_id."""
-    with connect() as conn:
-        rows = conn.execute(
-            "SELECT et.member_id, MAX(eo.opened_at) AS opened_at, COUNT(eo.id) AS open_count "
-            "FROM email_tracking et JOIN email_opens eo ON eo.token = et.token "
-            "WHERE et.meeting_id = ? AND et.member_id IS NOT NULL "
-            "GROUP BY et.member_id",
-            (meeting_id,),
-        ).fetchall()
-    return {r["member_id"]: dict(r) for r in rows}
-
-
-def tracked_emails_without_open(*, limit: int = 200) -> list[dict]:
-    with connect() as conn:
-        rows = conn.execute(
-            "SELECT et.*, m.slug AS member_slug, m.name AS member_name FROM email_tracking et "
-            "LEFT JOIN email_opens eo ON eo.token = et.token "
-            "LEFT JOIN club_members m ON m.id = et.member_id "
-            "WHERE eo.id IS NULL "
-            "ORDER BY et.created_at DESC LIMIT ?",
-            (limit,),
-        ).fetchall()
-    return [dict(r) for r in rows]

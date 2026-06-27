@@ -70,10 +70,9 @@ agent/
   plus plain-text alternative mail from
   `OLIVER_EMAIL_ADDRESS`, polls only `Inbox/Oliver` for unread mail, replies through the normal
   `oliver.answer` path, stores sent messages in `Sent/Oliver`, marks handled inbound mail seen,
-  and dedupes processed inbound email ids in SQLite. If `TINYLYTICS_SITE_ID`,
-  `TINYLYTICS_SITE_ID_NUMERIC`, and `TINYLYTICS_API_KEY` are configured, operational emails
-  include a Tinylytics open pixel and a visible disclosure note; Oliver polls Tinylytics and
-  records observed opens in SQLite.
+  and dedupes processed inbound email ids in SQLite. Oliver does not track email opens (no pixel) —
+  member privacy. Per-member sends are logged operationally in `member_contacts` (sent/failed) for
+  the campaign dashboard; nothing records whether a member read an email.
 - **Meeting campaign** (`meeting_campaign.py` + `/oliver meeting-dashboard`): combines the
   current book/date, days remaining, roll call, picker requirement, reading status, last member
   contact, email opens, and recommended next actions into one dashboard/tool snapshot.
@@ -121,9 +120,6 @@ Run from the **repo root** so the `agent` and `corpus` packages resolve.
 | `OLIVER_EMAIL_SENT_PARENT` / `OLIVER_EMAIL_SENT_FOLDER` | Optional — defaults to `Sent` / `Oliver`; sent mail is moved here |
 | `OLIVER_EMAIL_POLL_SECONDS` | Optional — defaults to `120` |
 | `OLIVER_EMAIL_HTML_ENABLED` | Optional — defaults to `1`; sends HTML plus plain-text alternative mail |
-| `TINYLYTICS_SITE_ID` / `TINYLYTICS_SITE_ID_NUMERIC` | Optional — Tinylytics site identifiers for email open pixels/API reads |
-| `TINYLYTICS_API_KEY` | Optional — read-only Tinylytics API key for syncing observed email opens |
-| `TINYLYTICS_SYNC_SECONDS` | Optional — defaults to `600`; Tinylytics email-open polling interval |
 | `DISCORD_OLIVER_LOG_WEBHOOK_URL` | Optional — webhook for `#oliver-log` operational activity |
 
 ## Memory & backup

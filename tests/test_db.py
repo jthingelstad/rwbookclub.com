@@ -395,7 +395,7 @@ class TestInboundEmails:
 
 
 class TestMemberContacts:
-    def test_contact_and_email_open_round_trip(self, fresh_db):
+    def test_member_contact_round_trip(self, fresh_db):
         from agent import clubdb
         db = fresh_db
         mid = clubdb.meeting_id_for_book_slug("a-world-appears")
@@ -406,23 +406,13 @@ class TestMemberContacts:
             kind="reading_checkin",
             surface="email",
             direction="outbound",
-            status="sent",
+            status="sending",
             subject="Reading check-in",
         )
-        db.add_email_tracking(
-            token="tok1",
-            contact_id=cid,
-            meeting_id=mid,
-            member_id=jamie,
-            kind="reading_checkin",
-            subject="Reading check-in",
-        )
-        row = db.record_email_open("tok1", remote_addr="127.0.0.1", user_agent="test")
-        assert row["member_slug"] == "jamie"
+        db.update_member_contact_status(cid, "sent")
         contacts = db.member_contacts_for_meeting(mid)
-        assert contacts[0]["status"] == "opened"
-        summary = db.email_open_summary(mid)
-        assert summary[jamie]["open_count"] == 1
+        assert contacts[0]["status"] == "sent"
+        assert contacts[0]["member_slug"] == "jamie"
 
     def test_contacts_sort_by_created_at_not_insert_order(self, fresh_db):
         from agent import clubdb

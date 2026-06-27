@@ -2,14 +2,15 @@
 
 Every email Oliver sends routes through send(): it appends his contextual signature
 (unless sign=False), lets email_jmap render the markdown body into a formatted HTML part
-(email_tracking.text_to_html), and submits via JMAP. For per-member tracked mail
-(open-pixel + contact record) pass `track={meeting_id, member_id, kind}`; the contact
-row is marked sent/failed here too. Omit `track` for list / personal / reply mail.
+(email_render.text_to_html), and submits via JMAP. For per-member mail pass
+`contact={meeting_id, member_id, kind}` to log the outbound contact in member_contacts
+(marked sent/failed here); there is no open tracking. Omit `contact` for list / personal /
+reply mail.
 """
 
 from __future__ import annotations
 
-from agent.mail import email_jmap, email_tracking, signature
+from agent.mail import email_jmap, email_render, signature
 
 
 def finalize(body: str, *, sign: bool = True) -> str:
@@ -19,21 +20,25 @@ def finalize(body: str, *, sign: bool = True) -> str:
     return body
 
 
-def send(*, to, subject: str, body: str, sign: bool = True, track: dict | None = None,
+def send(*, to, subject: str, body: str, sign: bool = True, contact: dict | None = None,
          cc=None, in_reply_to: str | None = None, references=None) -> dict:
-    """Append signature → render HTML → send. Returns the JMAP send result."""
+    """Append signature → render HTML → send. Returns the JMAP send result.
+
+    Pass `contact={meeting_id, member_id, kind}` to log the send in member_contacts
+    (sent/failed). No open tracking is performed.
+    """
     body = finalize(body, sign=sign)
-    if track is not None:
-        contact_id, html_body, token = email_tracking.prepare_outbound(
-            text=body, subject=subject, **track)
+    if contact is not None:
+        contact_id, html_body = email_render.prepare_outbound(
+            text=body, subject=subject, **contact)
         try:
             sent = email_jmap.send_email(
                 to=to, subject=subject, body=body, html_body=html_body,
                 cc=cc, in_reply_to=in_reply_to, references=references)
         except Exception:
-            email_tracking.mark_outbound_failed(contact_id)
+            email_render.mark_outbound_failed(contact_id)
             raise
-        email_tracking.mark_outbound_sent(contact_id, token, sent.get("emailId"))
+        email_render.mark_outbound_sent(contact_id)
         return sent
     return email_jmap.send_email(
         to=to, subject=subject, body=body, cc=cc,

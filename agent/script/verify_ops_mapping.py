@@ -1,7 +1,7 @@
 """Phase 3 safety gate: prove every operational row remaps onto a real club FK.
 
-The ops tables (meeting_attendance, roll_calls, reading_statuses, member_contacts,
-email_tracking) are keyed today by loose text: ``meeting_key`` (a book slug) and
+The ops tables (meeting_attendance, roll_calls, reading_statuses, member_contacts)
+are keyed today by loose text: ``meeting_key`` (a book slug) and
 ``member_slug``. The authoritative seam fix replaces those with integer FKs
 (``meeting_id`` → club_meetings, ``member_id`` → club_members). Before that rebuild can
 run, EVERY existing ops row must resolve — a single orphan would silently drop attendance
@@ -30,7 +30,6 @@ OPS_TABLES = [
     ("roll_calls", False),
     ("reading_statuses", True),
     ("member_contacts", True),
-    ("email_tracking", True),   # both columns nullable
 ]
 
 

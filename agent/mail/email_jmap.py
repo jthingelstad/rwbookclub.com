@@ -16,7 +16,7 @@ from typing import Any
 import requests
 
 from agent import config
-from agent.mail import email_tracking
+from agent.mail import email_render
 
 log = logging.getLogger("oliver.email")
 
@@ -255,7 +255,7 @@ class JMAPClient:
         create_id = "oliverDraft"
         submit_id = "oliverSend"
         if html_body is None and config.OLIVER_EMAIL_HTML_ENABLED:
-            html_body = email_tracking.text_to_html(body)
+            html_body = email_render.text_to_html(body)
         if html_body:
             body_structure = {
                 "type": "multipart/alternative",

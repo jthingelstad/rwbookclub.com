@@ -61,16 +61,3 @@ OLIVER_EMAIL_SENT_FOLDER = os.environ.get("OLIVER_EMAIL_SENT_FOLDER", "Oliver")
 OLIVER_EMAIL_POLL_SECONDS = int(os.environ.get("OLIVER_EMAIL_POLL_SECONDS") or 120)
 OLIVER_EMAIL_MAX_PER_POLL = int(os.environ.get("OLIVER_EMAIL_MAX_PER_POLL") or 5)
 OLIVER_EMAIL_HTML_ENABLED = os.environ.get("OLIVER_EMAIL_HTML_ENABLED", "1") not in {"0", "false", "False"}
-
-# Tinylytics can receive Oliver's email tracking pixels publicly, then Oliver
-# polls its read-only API to reconcile opens back into SQLite.
-TINYLYTICS_SITE_ID = os.environ.get("TINYLYTICS_SITE_ID")
-TINYLYTICS_SITE_ID_NUMERIC = os.environ.get("TINYLYTICS_SITE_ID_NUMERIC")
-TINYLYTICS_API_KEY = os.environ.get("TINYLYTICS_API_KEY")
-TINYLYTICS_API_BASE_URL = os.environ.get(
-    "TINYLYTICS_API_BASE_URL", "https://tinylytics.app/api/v1"
-).rstrip("/")
-TINYLYTICS_PIXEL_BASE_URL = os.environ.get(
-    "TINYLYTICS_PIXEL_BASE_URL", "https://tinylytics.app/pixel"
-).rstrip("/")
-TINYLYTICS_SYNC_SECONDS = int(os.environ.get("TINYLYTICS_SYNC_SECONDS") or 600)

@@ -284,7 +284,7 @@ async def _send_roll_call_email_to_member(member: dict, status: dict) -> dict | 
         to=[email["email"]],
         subject=subject,
         body=body,
-        track={"meeting_id": meeting_id, "member_id": member_id, "kind": "roll_call"},
+        contact={"meeting_id": meeting_id, "member_id": member_id, "kind": "roll_call"},
     )
     db.add_activity(
         "email_sent",
@@ -327,7 +327,7 @@ async def _send_reading_checkin_email_to_member(member: dict, meeting: dict,
         to=[email["email"]],
         subject=subject,
         body=body,
-        track={"meeting_id": meeting_id, "member_id": member_id, "kind": "reading_checkin"},
+        contact={"meeting_id": meeting_id, "member_id": member_id, "kind": "reading_checkin"},
     )
     db.add_activity(
         "email_sent",
