@@ -539,24 +539,30 @@ def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -
         return fallback
 
 
-def complete(system: str, user: str, *, model: str = OPUS_MODEL,
-             max_tokens: int = 4096, effort: str = "medium", timeout: float = 600.0) -> str:
+def complete(system: str, user: str, *, model: str = OPUS_MODEL, max_tokens: int = 4096,
+             effort: str | None = "medium", thinking: bool = True, timeout: float = 600.0) -> str:
     """A raw, tool-less, stateless completion against a caller-supplied system prompt.
 
     Neither `compose` (Sonnet, 400-token cap, charter system prompt) nor `generate` (full tool
     loop) fits an offline batch extractor like the archive miner, which needs its own system
     prompt and no tools. This is that primitive: one prompt in, text out, on Opus by default.
-    Synchronous; call via asyncio.to_thread. Raises on API error (the caller decides how to
-    degrade) — unlike compose, there is no fallback here.
+
+    `thinking=False` omits adaptive thinking (mechanical extraction needs none — cheaper/faster,
+    and keeps the request valid on models that don't take the thinking/effort params); `effort`
+    is only sent when truthy. Synchronous; call via asyncio.to_thread. Raises on API error (the
+    caller decides how to degrade) — unlike compose, there is no fallback here.
     """
-    resp = _get_client().with_options(timeout=timeout).messages.create(
-        model=model,
-        max_tokens=max_tokens,
-        system=system,
-        thinking={"type": "adaptive"},
-        output_config={"effort": effort},
-        messages=[{"role": "user", "content": user}],
-    )
+    kwargs: dict = {
+        "model": model,
+        "max_tokens": max_tokens,
+        "system": system,
+        "messages": [{"role": "user", "content": user}],
+    }
+    if thinking:
+        kwargs["thinking"] = {"type": "adaptive"}
+        if effort:
+            kwargs["output_config"] = {"effort": effort}
+    resp = _get_client().with_options(timeout=timeout).messages.create(**kwargs)
     return _text_of(resp.content).strip()
 
 

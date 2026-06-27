@@ -8,15 +8,22 @@ thread, and appends them as *candidates* to a review file. A human reviews that 
 not-yet-inserted candidates. Provenance (`source = "mail:<thread_id>#<n>"`) makes every mined
 event auditable and removable, and makes the loader idempotent.
 
+Extraction defaults to Sonnet (constrained extraction — Opus is overkill); override with --model.
+
 Usage (from the repo root, with ANTHROPIC_API_KEY in the env / shared .env):
 
     # Mine — append candidates to agent/logs/mined_events.jsonl (resumable; skips done threads):
-    python -m agent.script.mine_archive_events --limit 20        # first 20 threads (smoke test)
-    python -m agent.script.mine_archive_events                   # the whole archive
+    python -m agent.script.mine_archive_events --sample 30 --out /tmp/calib.jsonl  # calibration sample
+    python -m agent.script.mine_archive_events                   # the whole archive (Sonnet)
+    python -m agent.script.mine_archive_events --model claude-haiku-4-5            # cheaper model
     python -m agent.script.mine_archive_events --thread <id>     # one specific thread
     python -m agent.script.mine_archive_events --force           # re-mine threads already done
 
-    # Review: open agent/logs/mined_events.jsonl, set "approve": true on the events to keep
+    # Review: --stats summarizes counts + lists every privacy-sensitive (member_life/social) event;
+    #         --approve bulk-sets approve:true on whole safe categories (sensitive ones refused).
+    python -m agent.script.mine_archive_events --stats
+    python -m agent.script.mine_archive_events --approve meeting,selection,reading,club
+    #         then hand-edit the file: set "approve": true on the member_life/social keepers
     #         (delete or leave approve:false to reject). Fix dates/slugs/summaries as needed.
 
     # Load — insert approved candidates into the timeline (idempotent; safe to re-run):
@@ -87,13 +94,36 @@ def _system_prompt(roster: list[dict]) -> str:
         "- PRIVACY: record only club-operational events (meetings scheduled/held/moved, book "
         "nominations/polls/votes/picks, hosting, dinners and spouses events, members joining or "
         "leaving) and clearly-shared, celebratory personal MILESTONES a member announced to the "
-        "group (a new job, a move, a new child, or a planned vacation/travel that affects their "
-        "attendance — use member_away for the latter). Do NOT record anything sensitive: "
-        "health/medical, finances, relationship or family trouble, job loss, or anything a member "
-        "would not want preserved in a shared club history. When in doubt, leave it out.\n"
-        "- Prefer fewer, higher-signal events; a typical thread yields 0–3. A scheduling thread that "
-        "settled a meeting date yields one meeting_scheduled (or meeting_rescheduled); if nothing "
-        "durable came of it, return [].\n"
+        "group (a new job, a move, a new child, or planned travel that affects their attendance — "
+        "use member_away for the latter). Do NOT record anything sensitive: health/medical "
+        "(illness, COVID, surgery, a procedure, recovery), finances, relationship or family "
+        "trouble, job loss, or anything a member would not want preserved in a shared club "
+        "history. When in doubt, leave it out.\n"
+        "- member_away is ONLY for a member proactively announcing they will miss UPCOMING "
+        "meeting(s) or be away for a stretch — a forward-looking heads-up (\"Tom will be away "
+        "Feb 8–28\"). Do NOT create a member_away for a routine same-day \"can't make it tonight\" "
+        "no-show — that is low-signal and already implied by the meeting. When you do record one, "
+        "give only the absence and dates — NEVER a medical/health or otherwise personal reason "
+        "(include a reason only if plainly non-sensitive, e.g. travel, and keep it minimal).\n"
+        "- A member's death or serious illness is sensitive — do not record it; leave such "
+        "memorial/health threads for a human to handle.\n"
+        "- A meeting_held summary describes the MEETING — its date, the book discussed, and the "
+        "location/format. Do NOT list who attended or was absent, and leave its member_slugs empty "
+        "([]); attendance is not a timeline event.\n"
+        "- For one meeting, record EITHER meeting_scheduled (the thread only shows it being planned) "
+        "OR meeting_held (the thread shows it happened) — never both for the same meeting; if it "
+        "happened, record meeting_held.\n"
+        "- Granularity is PER MEMBER PER ROUND, not per book. A pickers thread where four members "
+        "each pick a book yields four book_picked events (one per member). But if ONE member "
+        "nominates or picks several books in a single message, that is ONE event for that member "
+        "listing those books — never one event per book.\n"
+        "- These ARE durable even when the surrounding thread is mostly logistics — keep them: a "
+        "member proactively announcing upcoming travel/absence (member_away), and a decision to drop "
+        "or swap a book mid-read (dnf). Don't discard a whole thread as chatter if it contains one "
+        "of these.\n"
+        "- Otherwise skip pure logistics chatter (\"what time works?\", \"see you there\") that "
+        "settles nothing durable; many threads correctly yield []. Don't pad — but do keep every "
+        "distinct pick, nomination, meeting, and decision.\n"
         "- Output the JSON array only — no prose, no markdown fences."
     )
 
@@ -179,8 +209,8 @@ def _done_threads(progress_path: pathlib.Path) -> set[str]:
     return {line.strip() for line in progress_path.read_text().splitlines() if line.strip()}
 
 
-def mine(*, limit: int | None, force: bool, thread_id: str | None,
-         out_path: pathlib.Path, model: str, effort: str) -> dict:
+def mine(*, limit: int | None, force: bool, thread_id: str | None, sample: int | None,
+         out_path: pathlib.Path, model: str, thinking: bool = False) -> dict:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     progress_path = out_path.with_suffix(out_path.suffix + ".threads")
 
@@ -192,13 +222,20 @@ def mine(*, limit: int | None, force: bool, thread_id: str | None,
         threads = [{"thread_id": thread_id}]
     else:
         threads = db.list_mail_threads()
+    if sample is not None and sample > 0 and len(threads) > sample:
+        # Evenly-spaced sample across the whole (oldest-first) archive — spans years + thread
+        # sizes, so a calibration run isn't biased to the earliest threads. Deterministic, so two
+        # model runs at the same --sample compare the identical threads.
+        stride = len(threads) // sample
+        threads = threads[::stride][:sample]
     done = set() if force else _done_threads(progress_path)
     todo = [t for t in threads if t["thread_id"] not in done]
     if limit is not None:
         todo = todo[:limit]
 
     print(f"mining {len(todo)} thread(s) "
-          f"(skipping {len(threads) - len(todo)} already done / over-limit); model={model} effort={effort}")
+          f"(skipping {len(threads) - len(todo)} already done / over-limit); "
+          f"model={model} thinking={thinking}")
     stats = {"threads": 0, "events": 0, "empty": 0, "errors": 0}
     for i, t in enumerate(todo, 1):
         tid = t["thread_id"]
@@ -208,7 +245,7 @@ def mine(*, limit: int | None, force: bool, thread_id: str | None,
             _append_line(progress_path, tid)
             continue
         try:
-            reply = oliver.complete(system, _thread_prompt(full), model=model, effort=effort)
+            reply = oliver.complete(system, _thread_prompt(full), model=model, thinking=thinking)
         except Exception as e:  # noqa: BLE001 — one bad thread shouldn't abort a 543-thread run
             stats["errors"] += 1
             print(f"  [{i}/{len(todo)}] {tid}: ERROR {type(e).__name__}: {e} — leaving for a re-run")
@@ -275,29 +312,119 @@ def load(*, out_path: pathlib.Path) -> dict:
     return stats
 
 
+def _read_rows(out_path: pathlib.Path) -> list[dict]:
+    rows = []
+    for line in out_path.read_text().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return rows
+
+
+# Categories that may carry personal information — always reviewed by hand, never bulk-approved.
+SENSITIVE_CATEGORIES = {"member_life", "social"}
+
+
+def stats(*, out_path: pathlib.Path) -> dict:
+    """Summarize the review file so a few hundred candidates are scannable: counts by category,
+    kind, and year, plus the full text of every privacy-sensitive (member_life/social) event."""
+    if not out_path.exists():
+        print(f"no review file at {out_path} — run the miner first.")
+        return {}
+    rows = _read_rows(out_path)
+    by_cat: dict[str, int] = {}
+    by_kind: dict[str, int] = {}
+    by_year: dict[str, int] = {}
+    approved = 0
+    for r in rows:
+        by_cat[r.get("category")] = by_cat.get(r.get("category"), 0) + 1
+        by_kind[r.get("kind")] = by_kind.get(r.get("kind"), 0) + 1
+        by_year[(r.get("occurred_at") or "????")[:4]] = by_year.get((r.get("occurred_at") or "????")[:4], 0) + 1
+        approved += bool(r.get("approve"))
+    print(f"{len(rows)} candidate event(s) in {out_path}  ({approved} approved)\n")
+    print("by category:")
+    for c, n in sorted(by_cat.items(), key=lambda kv: -kv[1]):
+        print(f"  {c:12} {n}")
+    print("\nby kind:")
+    for k, n in sorted(by_kind.items(), key=lambda kv: -kv[1]):
+        print(f"  {k:22} {n}")
+    print("\nby year:")
+    for y, n in sorted(by_year.items()):
+        print(f"  {y}  {n}")
+    sensitive = [r for r in rows if r.get("category") in SENSITIVE_CATEGORIES]
+    print(f"\n── {len(sensitive)} privacy-sensitive event(s) (member_life/social) — review each by hand ──")
+    for r in sensitive:
+        mark = "✓" if r.get("approve") else " "
+        members = ", ".join(r.get("member_slugs") or []) or "—"
+        print(f"  [{mark}] {(r.get('occurred_at') or '')[:10]} {r.get('kind'):16} ({members}) {r.get('summary')}")
+    return {"total": len(rows), "approved": approved, "sensitive": len(sensitive)}
+
+
+def approve(*, out_path: pathlib.Path, categories: set[str]) -> dict:
+    """Bulk-set approve:true on every candidate in the named categories, then rewrite the file.
+    Refuses the privacy-sensitive categories — those must be approved individually by hand-editing."""
+    blocked = categories & SENSITIVE_CATEGORIES
+    if blocked:
+        print(f"refusing to bulk-approve {sorted(blocked)} — review member_life/social by hand "
+              "(edit the file directly).")
+        categories = categories - SENSITIVE_CATEGORIES
+    if not categories:
+        return {"approved": 0}
+    rows = _read_rows(out_path)
+    n = 0
+    for r in rows:
+        if r.get("category") in categories and not r.get("approve"):
+            r["approve"] = True
+            n += 1
+    out_path.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n")
+    print(f"approved {n} candidate(s) in categories {sorted(categories)}.")
+    return {"approved": n}
+
+
 def _append_line(path: pathlib.Path, text: str) -> None:
     with path.open("a", encoding="utf-8") as f:
         f.write(text + "\n")
 
 
+DEFAULT_MODEL = "claude-sonnet-4-6"  # mining is constrained extraction — no need for Opus
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Mine the email archive into Oliver's club timeline.")
-    p.add_argument("--load", action="store_true",
-                   help="Insert approved candidates from the review file (instead of mining).")
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument("--load", action="store_true",
+                      help="Insert approved candidates from the review file (instead of mining).")
+    mode.add_argument("--stats", action="store_true",
+                      help="Summarize the review file (counts + sensitive events) without changing it.")
+    mode.add_argument("--approve", metavar="CATS",
+                      help="Bulk-approve candidates in these comma-separated categories "
+                           "(member_life/social are refused — review those by hand).")
     p.add_argument("--limit", type=int, default=None, help="Max threads to mine this run.")
+    p.add_argument("--sample", type=int, default=None,
+                   help="Mine an evenly-spaced sample of N threads across the archive (for calibration).")
     p.add_argument("--thread", default=None, help="Mine a single thread id.")
     p.add_argument("--force", action="store_true", help="Re-mine threads already marked done.")
     p.add_argument("--out", type=pathlib.Path, default=OUT_PATH, help="Review file path.")
-    p.add_argument("--model", default=oliver.OPUS_MODEL, help="Model id for extraction.")
-    p.add_argument("--effort", default="medium", choices=["low", "medium", "high", "xhigh", "max"],
-                   help="Reasoning effort for extraction.")
+    p.add_argument("--model", default=DEFAULT_MODEL, help="Model id for extraction.")
+    p.add_argument("--thinking", action="store_true",
+                   help="Enable adaptive thinking (off by default — extraction is mechanical).")
     args = p.parse_args(argv)
 
     if args.load:
         load(out_path=args.out)
         return 0
-    mine(limit=args.limit, force=args.force, thread_id=args.thread,
-         out_path=args.out, model=args.model, effort=args.effort)
+    if args.stats:
+        stats(out_path=args.out)
+        return 0
+    if args.approve:
+        approve(out_path=args.out, categories={c.strip() for c in args.approve.split(",") if c.strip()})
+        return 0
+    mine(limit=args.limit, force=args.force, thread_id=args.thread, sample=args.sample,
+         out_path=args.out, model=args.model, thinking=args.thinking)
     return 0
 
 

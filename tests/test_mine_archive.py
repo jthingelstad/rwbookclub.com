@@ -48,7 +48,7 @@ def test_mine_writes_candidates_and_skips_unknown_kinds(tmp_path, fresh_db, monk
     monkeypatch.setattr(oliver, "complete", lambda *a, **k: _REPLY)
     out = tmp_path / "mined.jsonl"
 
-    stats = m.mine(limit=None, force=False, thread_id=None, out_path=out, model="x", effort="low")
+    stats = m.mine(limit=None, force=False, thread_id=None, sample=None, out_path=out, model="x")
     assert stats["threads"] == 1 and stats["events"] == 2  # bogus kind dropped
 
     rows = [json.loads(line) for line in out.read_text().splitlines()]
@@ -68,8 +68,8 @@ def test_mine_is_resumable(tmp_path, fresh_db, monkeypatch):
     calls = []
     monkeypatch.setattr(oliver, "complete", lambda *a, **k: calls.append(1) or "[]")
     out = tmp_path / "mined.jsonl"
-    m.mine(limit=None, force=False, thread_id=None, out_path=out, model="x", effort="low")
-    m.mine(limit=None, force=False, thread_id=None, out_path=out, model="x", effort="low")
+    m.mine(limit=None, force=False, thread_id=None, sample=None, out_path=out, model="x")
+    m.mine(limit=None, force=False, thread_id=None, sample=None, out_path=out, model="x")
     assert len(calls) == 1  # second run skips the already-done thread
 
 
@@ -105,6 +105,48 @@ def test_load_only_inserts_approved_and_is_idempotent(tmp_path, fresh_db):
     again = m.load(out_path=out)
     assert again["inserted"] == 0 and again["skipped"] == 1
     assert len(fresh_db.timeline(category="selection")) == 1
+
+
+def _review_file(tmp_path):
+    out = tmp_path / "mined.jsonl"
+    rows = [
+        {"approve": False, "source": "mail:t1#0", "category": "selection", "kind": "book_picked",
+         "occurred_at": "2018-04-10", "member_slugs": ["jamie"], "summary": "Jamie picked X."},
+        {"approve": False, "source": "mail:t1#1", "category": "social", "kind": "dinner",
+         "occurred_at": "2018-04-25", "member_slugs": [], "summary": "Club dinner."},
+        {"approve": False, "source": "mail:t2#0", "category": "member_life", "kind": "member_away",
+         "occurred_at": "2019-07-01", "member_slugs": ["tom"], "summary": "Tom on vacation."},
+    ]
+    out.write_text("\n".join(json.dumps(r) for r in rows))
+    return out
+
+
+def test_approve_bulk_sets_safe_categories_only(tmp_path, fresh_db):
+    from agent.script import mine_archive_events as m
+    out = _review_file(tmp_path)
+    # Ask to approve selection + member_life; member_life must be refused as privacy-sensitive.
+    result = m.approve(out_path=out, categories={"selection", "member_life"})
+    assert result["approved"] == 1
+    rows = {r["source"]: r for r in (json.loads(x) for x in out.read_text().splitlines())}
+    assert rows["mail:t1#0"]["approve"] is True       # selection approved
+    assert rows["mail:t2#0"]["approve"] is False      # member_life left for hand review
+    assert rows["mail:t1#1"]["approve"] is False      # social not requested
+
+
+def test_approve_refuses_sensitive_outright(tmp_path, fresh_db):
+    from agent.script import mine_archive_events as m
+    out = _review_file(tmp_path)
+    assert m.approve(out_path=out, categories={"social"})["approved"] == 0
+    assert all(not json.loads(x)["approve"] for x in out.read_text().splitlines())
+
+
+def test_stats_summarizes_without_mutating(tmp_path, fresh_db):
+    from agent.script import mine_archive_events as m
+    out = _review_file(tmp_path)
+    before = out.read_text()
+    s = m.stats(out_path=out)
+    assert s == {"total": 3, "approved": 0, "sensitive": 2}  # social + member_life
+    assert out.read_text() == before  # stats never edits the file
 
 
 def test_load_multi_member_event_is_group_scoped(tmp_path, fresh_db):
