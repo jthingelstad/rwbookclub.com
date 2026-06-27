@@ -1,10 +1,20 @@
 # Oliver Email Archive and Unified Conversation Architecture
 
-> **STATUS: implemented (historical design note).** The mail archive is live (~2,446 `mail_messages`,
+> **STATUS: implemented (historical design note).** The mail archive is live (~2,448 `mail_messages`,
 > all member-linked) and reachable via the `search_mail_archive` / `get_mail_thread` tools. Since
 > this was written, the ops tables (`meeting_attendance`, `reading_statuses`, etc.) were moved from
 > `(meeting_key, member_slug)` text keys to integer `meeting_id` / `member_id` FKs — read the keying
 > details below as historical.
+>
+> **UPDATE (2026-06-27): member identity consolidated.** The parallel identity surfaces this note
+> describes — the `mail_participants` / `mail_participant_addresses` person store and the
+> `identity_claims` review queue — were **removed**. There is now ONE identity model: `club_members`
+> (the person) + `member_identities` (their handles: `surface ∈ {discord, email, sms}`). The archive
+> attributes each message via `mail_messages.member_id` (FK → `club_members`, resolved through
+> `member_identities` + a corpus name fallback) — the only column the read paths use. Unresolved
+> senders keep `member_id` NULL (no claim is filed); link the member later (`/oliver link-email`) and
+> `mail_archive.reattribute_archive()` updates their history. Treat every `mail_participants` /
+> `mail_participant_addresses` / `identity_claims` mention below as historical.
 
 This document describes the target architecture for giving Oliver durable access to the R/W Book Club mailing-list archive while keeping Discord and email tied to one member identity and one operational meeting state.
 

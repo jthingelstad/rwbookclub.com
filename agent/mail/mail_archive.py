@@ -128,6 +128,24 @@ def member_slug_for_sender(from_email: str | None, from_name: str | None = None)
     return None
 
 
+def reattribute_archive(email: str | None = None) -> int:
+    """Re-resolve each archived message's sender → member and update mail_messages.member_id.
+
+    The archive's member attribution is a write-time snapshot; run this after a member's
+    email is linked/changed so their historical mail catches up. Scope to one address (fast)
+    or sweep all. Uses the same resolver as the write path (member_identities + name fallback),
+    so name-fallback attributions are preserved. Returns the number of messages changed.
+    """
+    changed = 0
+    for m in db.mail_senders_for_reattribution(email):
+        slug = member_slug_for_sender(m["from_email"], m["from_name"])
+        if db.set_mail_message_member(m["message_id"], slug):
+            changed += 1
+    if changed:
+        db.rebuild_mail_thread_stats()
+    return changed
+
+
 def _parsed_date(value: str | None) -> str | None:
     if not value:
         return None
@@ -408,17 +426,9 @@ def import_mbox(path: str | Path, *, write: bool = False) -> ImportReport:
                 report.inserted += 1
             else:
                 report.updated += 1
-            if not normalized.get("member_slug") and normalized.get("from_email"):
-                db.add_identity_claim(
-                    surface="email",
-                    identifier=normalized["from_email"],
-                    display_name=normalized.get("from_name"),
-                    evidence={
-                        "source": "mail_archive_import",
-                        "message_id": normalized["message_id"],
-                        "subject": normalized.get("subject"),
-                    },
-                )
+            # Unresolved senders (no member match) simply keep member_id NULL — from_email /
+            # from_name are retained on the message. Link the member later (/oliver link-email)
+            # and reattribute_archive picks their history up.
         else:
             report.skipped += 1
     if write:

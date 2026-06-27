@@ -37,11 +37,12 @@ CREATE TABLE IF NOT EXISTS memories (
 );
 CREATE INDEX IF NOT EXISTS idx_memories_subject ON memories(subject);
 
--- One identity map for every way we recognize / reach a member: Discord ids AND email
--- addresses (the single email store). Keyed by member_id FK — slug is never stored here.
+-- One identity map for every way we recognize / reach a member: Discord ids, email
+-- addresses, and phone numbers (the single handle store). Keyed by member_id FK — slug is
+-- never stored here. club_members is the person; member_identities holds their handles.
 CREATE TABLE IF NOT EXISTS member_identities (
-    surface     TEXT NOT NULL,               -- 'discord' | 'email'
-    identifier  TEXT NOT NULL,               -- discord user id | normalized email address
+    surface     TEXT NOT NULL,               -- 'discord' | 'email' | 'sms'
+    identifier  TEXT NOT NULL,               -- discord user id | normalized email | E.164-ish phone
     member_id   INTEGER NOT NULL REFERENCES club_members(id),
     is_primary  INTEGER NOT NULL DEFAULT 0,  -- canonical handle/address per (member, surface)
     linked_by   TEXT,
@@ -143,6 +144,7 @@ CREATE TABLE IF NOT EXISTS meeting_attendance (
     PRIMARY KEY (meeting_id, member_id)
 );
 CREATE INDEX IF NOT EXISTS idx_attendance_meeting ON meeting_attendance(meeting_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_member ON meeting_attendance(member_id);
 
 CREATE TABLE IF NOT EXISTS proposals (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -184,6 +186,7 @@ CREATE TABLE IF NOT EXISTS reading_statuses (
     PRIMARY KEY (meeting_id, member_id)
 );
 CREATE INDEX IF NOT EXISTS idx_reading_statuses_meeting ON reading_statuses(meeting_id, updated_at);
+CREATE INDEX IF NOT EXISTS idx_reading_statuses_member ON reading_statuses(member_id);
 
 CREATE TABLE IF NOT EXISTS activity_events (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -211,6 +214,7 @@ CREATE TABLE IF NOT EXISTS member_contacts (
     created_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_member_contacts_meeting ON member_contacts(meeting_id, member_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_member_contacts_member ON member_contacts(member_id);
 
 CREATE TABLE IF NOT EXISTS email_tracking (
     token       TEXT PRIMARY KEY,
@@ -224,6 +228,8 @@ CREATE TABLE IF NOT EXISTS email_tracking (
     FOREIGN KEY(contact_id) REFERENCES member_contacts(id)
 );
 CREATE INDEX IF NOT EXISTS idx_email_tracking_meeting ON email_tracking(meeting_id, member_id);
+CREATE INDEX IF NOT EXISTS idx_email_tracking_member ON email_tracking(member_id);
+CREATE INDEX IF NOT EXISTS idx_email_tracking_contact ON email_tracking(contact_id);
 
 CREATE TABLE IF NOT EXISTS email_opens (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -235,47 +241,9 @@ CREATE TABLE IF NOT EXISTS email_opens (
 );
 CREATE INDEX IF NOT EXISTS idx_email_opens_token ON email_opens(token, opened_at);
 
-CREATE TABLE IF NOT EXISTS mail_participants (
-    id                INTEGER PRIMARY KEY AUTOINCREMENT,
-    display_name      TEXT,
-    member_id         INTEGER REFERENCES club_members(id),  -- NULL for lists/unknown senders
-    participant_type  TEXT NOT NULL DEFAULT 'person', -- person | list | system | unknown
-    notes             TEXT,
-    created_at        TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at        TEXT NOT NULL DEFAULT (datetime('now'))
-);
--- idx_mail_participants_member created post-migration (member_id may be added by migration)
-
-CREATE TABLE IF NOT EXISTS mail_participant_addresses (
-    email          TEXT PRIMARY KEY,
-    participant_id INTEGER NOT NULL,
-    display_name   TEXT,
-    source         TEXT NOT NULL,
-    confidence     REAL NOT NULL DEFAULT 1.0,
-    created_at     TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at     TEXT NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY(participant_id) REFERENCES mail_participants(id)
-);
-CREATE INDEX IF NOT EXISTS idx_mail_participant_addresses_participant
-    ON mail_participant_addresses(participant_id);
-
-CREATE TABLE IF NOT EXISTS identity_claims (
-    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-    surface             TEXT NOT NULL,
-    identifier          TEXT NOT NULL,
-    display_name        TEXT,
-    candidate_member_id INTEGER REFERENCES club_members(id),
-    confidence          REAL,
-    status              TEXT NOT NULL DEFAULT 'pending',
-    evidence_json       TEXT,
-    created_at          TEXT NOT NULL DEFAULT (datetime('now')),
-    resolved_at         TEXT,
-    resolved_by         TEXT
-);
-CREATE INDEX IF NOT EXISTS idx_identity_claims_status ON identity_claims(status, created_at);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_identity_claims_unique_pending
-    ON identity_claims(surface, identifier)
-    WHERE status = 'pending';
+-- The mail archive attributes each message to a member via mail_messages.member_id
+-- (FK → club_members, resolved through member_identities). There is no separate participant
+-- identity store — club_members + member_identities is the single source of truth.
 
 CREATE TABLE IF NOT EXISTS mail_threads (
     thread_id          TEXT PRIMARY KEY,
@@ -300,7 +268,6 @@ CREATE TABLE IF NOT EXISTS mail_messages (
     source                     TEXT NOT NULL,
     source_ref                 TEXT,
     list_id                    TEXT,
-    sender_participant_id      INTEGER,
     from_email                 TEXT,
     from_name                  TEXT,
     member_id                  INTEGER REFERENCES club_members(id),
@@ -317,7 +284,6 @@ CREATE TABLE IF NOT EXISTS mail_messages (
     headers_json               TEXT,
     imported_at                TEXT NOT NULL DEFAULT (datetime('now')),
     processed_inbound_email_id TEXT,
-    FOREIGN KEY(sender_participant_id) REFERENCES mail_participants(id),
     FOREIGN KEY(thread_id) REFERENCES mail_threads(thread_id)
 );
 CREATE INDEX IF NOT EXISTS idx_mail_messages_thread_sent ON mail_messages(thread_id, sent_at);
@@ -583,13 +549,84 @@ def migrate_identity_to_fk(conn: sqlite3.Connection) -> None:
         raise RuntimeError(f"identity migration left dangling references: {[tuple(r) for r in dangling]}")
 
 
+def migrate_drop_legacy_identity(conn: sqlite3.Connection) -> None:
+    """One-time: remove the redundant identity surfaces, converging on the single model
+    (club_members + member_identities).
+
+    - Drop the mail archive's parallel person store (mail_participants,
+      mail_participant_addresses) and mail_messages.sender_participant_id. Member attribution
+      already lives in mail_messages.member_id (FK → club_members), which is the only column
+      the read paths use; participants were write-only structural state.
+    - Drop identity_claims (a write-only staging table with no acceptance flow).
+    Guarded on mail_messages still having sender_participant_id; idempotent.
+    """
+    if "sender_participant_id" not in _columns(conn, "mail_messages"):
+        return  # already collapsed / fresh DB on the new schema
+
+    conn.commit()
+    conn.execute("PRAGMA foreign_keys=OFF")
+    try:
+        conn.executescript("""
+        CREATE TABLE mail_messages_new (
+            message_id                 TEXT PRIMARY KEY,
+            thread_id                  TEXT NOT NULL,
+            parent_message_id          TEXT,
+            source                     TEXT NOT NULL,
+            source_ref                 TEXT,
+            list_id                    TEXT,
+            from_email                 TEXT,
+            from_name                  TEXT,
+            member_id                  INTEGER REFERENCES club_members(id),
+            to_json                    TEXT,
+            cc_json                    TEXT,
+            reply_to_json              TEXT,
+            subject                    TEXT,
+            sent_at                    TEXT,
+            received_at                TEXT,
+            body_text                  TEXT,
+            body_clean                 TEXT,
+            body_html                  TEXT,
+            attachments_json           TEXT,
+            headers_json               TEXT,
+            imported_at                TEXT NOT NULL DEFAULT (datetime('now')),
+            processed_inbound_email_id TEXT,
+            FOREIGN KEY(thread_id) REFERENCES mail_threads(thread_id));
+        INSERT INTO mail_messages_new
+            (message_id, thread_id, parent_message_id, source, source_ref, list_id, from_email,
+             from_name, member_id, to_json, cc_json, reply_to_json, subject, sent_at, received_at,
+             body_text, body_clean, body_html, attachments_json, headers_json, imported_at,
+             processed_inbound_email_id)
+            SELECT message_id, thread_id, parent_message_id, source, source_ref, list_id, from_email,
+             from_name, member_id, to_json, cc_json, reply_to_json, subject, sent_at, received_at,
+             body_text, body_clean, body_html, attachments_json, headers_json, imported_at,
+             processed_inbound_email_id
+            FROM mail_messages;
+        DROP TABLE mail_messages;
+        ALTER TABLE mail_messages_new RENAME TO mail_messages;
+        CREATE INDEX IF NOT EXISTS idx_mail_messages_thread_sent ON mail_messages(thread_id, sent_at);
+        CREATE INDEX IF NOT EXISTS idx_mail_messages_member_sent ON mail_messages(member_id, sent_at);
+        CREATE INDEX IF NOT EXISTS idx_mail_messages_from_email ON mail_messages(from_email);
+        CREATE INDEX IF NOT EXISTS idx_mail_messages_sent_at ON mail_messages(sent_at);
+        CREATE INDEX IF NOT EXISTS idx_mail_messages_inbound_email
+            ON mail_messages(processed_inbound_email_id);
+
+        DROP TABLE IF EXISTS mail_participant_addresses;
+        DROP TABLE IF EXISTS mail_participants;
+        DROP TABLE IF EXISTS identity_claims;
+        """)
+        conn.commit()
+    finally:
+        conn.execute("PRAGMA foreign_keys=ON")
+    dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
+    if dangling:
+        raise RuntimeError(f"legacy-identity drop left dangling references: {[tuple(r) for r in dangling]}")
+
+
 def _ensure_member_indexes(conn: sqlite3.Connection) -> None:
     """Indexes on member_id columns that only exist once the table is in its new shape
     (fresh DB via _SCHEMA, or existing DB via migrate_identity_to_fk). Safe + idempotent."""
     if "member_id" in _columns(conn, "member_identities"):
         conn.execute("CREATE INDEX IF NOT EXISTS idx_member_identities_member ON member_identities(member_id, surface)")
-    if "member_id" in _columns(conn, "mail_participants"):
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_mail_participants_member ON mail_participants(member_id)")
 
 
 def _ensure_schema() -> None:
@@ -599,6 +636,7 @@ def _ensure_schema() -> None:
         _migrate(conn)
         migrate_ops_to_fk(conn)
         migrate_identity_to_fk(conn)
+        migrate_drop_legacy_identity(conn)
         _ensure_member_indexes(conn)
 
 
@@ -784,94 +822,49 @@ def list_member_emails() -> list[dict]:
     return [dict(r) for r in rows]
 
 
+def _normalize_phone(number: str) -> str:
+    """Keep a leading '+' and digits only — a loose E.164-ish normal form for dedup."""
+    number = number.strip()
+    digits = re.sub(r"[^\d]", "", number)
+    return ("+" + digits) if number.startswith("+") else digits
+
+
+def link_member_sms(number: str, member_slug: str, *, linked_by: str | None = None,
+                    is_primary: bool = False) -> None:
+    normalized = _normalize_phone(number)
+    if len(re.sub(r"\D", "", normalized)) < 7:
+        raise ValueError("phone number must have at least 7 digits")
+    link_identity("sms", normalized, member_slug, is_primary=is_primary, linked_by=linked_by)
+
+
+def sms_for_member(member_slug: str) -> list[str]:
+    """All of a member's phone numbers, primary first."""
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT mi.identifier AS number FROM member_identities mi "
+            "JOIN club_members m ON m.id = mi.member_id "
+            "WHERE mi.surface = 'sms' AND m.slug = ? ORDER BY mi.is_primary DESC, mi.identifier",
+            (member_slug,),
+        ).fetchall()
+    return [r["number"] for r in rows]
+
+
+def list_member_sms() -> list[dict]:
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT mi.identifier AS number, m.slug AS member_slug, mi.is_primary, "
+            "mi.linked_by, mi.created_at, mi.updated_at "
+            "FROM member_identities mi JOIN club_members m ON m.id = mi.member_id "
+            "WHERE mi.surface = 'sms' ORDER BY m.slug, mi.identifier"
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
 # ── Mail archive ─────────────────────────────────────────────────────────────
 def _json_or_none(value) -> str | None:
     if value is None:
         return None
     return json.dumps(value, ensure_ascii=False, default=str)
-
-
-def _upsert_mail_participant(conn: sqlite3.Connection, *, email: str | None,
-                             display_name: str | None = None,
-                             member_slug: str | None = None,
-                             source: str = "historical_import",
-                             participant_type: str = "person",
-                             confidence: float = 1.0) -> int | None:
-    """Resolve/create the archive participant for a sender. member_slug (when the sender is
-    a known member) is stored as member_id; member-ness/current-ness derives from that FK,
-    so there's no separate membership_status and addresses don't re-store the member."""
-    normalized_email = _normalize_email(email) if email else None
-    member_id = _member_id_for_slug(conn, member_slug)
-    participant_id: int | None = None
-    if normalized_email:
-        row = conn.execute(
-            "SELECT participant_id FROM mail_participant_addresses WHERE email = ?",
-            (normalized_email,),
-        ).fetchone()
-        if row:
-            participant_id = int(row["participant_id"])
-    if participant_id is None and member_id is not None:
-        row = conn.execute(
-            "SELECT id FROM mail_participants WHERE member_id = ? ORDER BY updated_at DESC LIMIT 1",
-            (member_id,),
-        ).fetchone()
-        if row:
-            participant_id = int(row["id"])
-    now = _now()
-    if participant_id is None:
-        cur = conn.execute(
-            "INSERT INTO mail_participants (display_name, member_id, participant_type, updated_at) "
-            "VALUES (?, ?, ?, ?)",
-            (display_name, member_id, participant_type, now),
-        )
-        participant_id = int(cur.lastrowid)
-    else:
-        conn.execute(
-            "UPDATE mail_participants SET "
-            "display_name = COALESCE(?, display_name), "
-            "member_id = COALESCE(?, member_id), "
-            "participant_type = COALESCE(?, participant_type), "
-            "updated_at = ? WHERE id = ?",
-            (display_name, member_id, participant_type, now, participant_id),
-        )
-    if normalized_email:
-        conn.execute(
-            "INSERT INTO mail_participant_addresses "
-            "(email, participant_id, display_name, source, confidence, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?) "
-            "ON CONFLICT(email) DO UPDATE SET "
-            "participant_id=excluded.participant_id, "
-            "display_name=COALESCE(excluded.display_name, mail_participant_addresses.display_name), "
-            "source=excluded.source, confidence=excluded.confidence, updated_at=excluded.updated_at",
-            (normalized_email, participant_id, display_name, source, confidence, now),
-        )
-    return participant_id
-
-
-def add_identity_claim(*, surface: str, identifier: str,
-                       display_name: str | None = None,
-                       candidate_member_slug: str | None = None,
-                       confidence: float | None = None,
-                       evidence: dict | None = None) -> int:
-    with connect() as conn:
-        candidate_member_id = _member_id_for_slug(conn, candidate_member_slug)
-        cur = conn.execute(
-            "INSERT OR IGNORE INTO identity_claims "
-            "(surface, identifier, display_name, candidate_member_id, confidence, evidence_json) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (
-                surface, identifier, display_name, candidate_member_id,
-                confidence, _json_or_none(evidence),
-            ),
-        )
-        if cur.lastrowid:
-            return int(cur.lastrowid)
-        row = conn.execute(
-            "SELECT id FROM identity_claims WHERE surface = ? AND identifier = ? "
-            "AND status = 'pending'",
-            (surface, identifier),
-        ).fetchone()
-        return int(row["id"]) if row else 0
 
 
 def upsert_mail_message(message: dict) -> bool:
@@ -890,13 +883,6 @@ def upsert_mail_message(message: dict) -> bool:
             "SELECT 1 FROM mail_messages WHERE message_id = ?",
             (message_id,),
         ).fetchone() is not None
-        participant_id = _upsert_mail_participant(
-            conn,
-            email=from_email,
-            display_name=message.get("from_name"),
-            member_slug=member_slug,
-            source=message.get("source") or "historical_import",
-        )
         conn.execute(
             "INSERT INTO mail_threads "
             "(thread_id, list_id, subject_normalized, first_sent_at, last_sent_at, updated_at) "
@@ -912,7 +898,7 @@ def upsert_mail_message(message: dict) -> bool:
         )
         cols = [
             "message_id", "thread_id", "parent_message_id", "source", "source_ref",
-            "list_id", "sender_participant_id", "from_email", "from_name",
+            "list_id", "from_email", "from_name",
             "member_id", "to_json", "cc_json", "reply_to_json", "subject",
             "sent_at", "received_at", "body_text", "body_clean", "body_html",
             "attachments_json", "headers_json", "processed_inbound_email_id",
@@ -924,7 +910,6 @@ def upsert_mail_message(message: dict) -> bool:
             "source": message.get("source") or "historical_import",
             "source_ref": message.get("source_ref"),
             "list_id": message.get("list_id"),
-            "sender_participant_id": participant_id,
             "from_email": from_email,
             "from_name": message.get("from_name"),
             "member_id": member_id,
@@ -1004,9 +989,34 @@ def mail_archive_counts() -> dict:
         return {
             "messages": conn.execute("SELECT COUNT(*) c FROM mail_messages").fetchone()["c"],
             "threads": conn.execute("SELECT COUNT(*) c FROM mail_threads").fetchone()["c"],
-            "participants": conn.execute("SELECT COUNT(*) c FROM mail_participants").fetchone()["c"],
-            "addresses": conn.execute("SELECT COUNT(*) c FROM mail_participant_addresses").fetchone()["c"],
+            "attributed": conn.execute(
+                "SELECT COUNT(*) c FROM mail_messages WHERE member_id IS NOT NULL").fetchone()["c"],
         }
+
+
+def mail_senders_for_reattribution(email: str | None = None) -> list[dict]:
+    """Archived messages' (message_id, from_email, from_name, member_id) for re-resolving the
+    sender → member link. Scope to one normalized address when given (cheap, indexed)."""
+    sql = ("SELECT message_id, from_email, from_name, member_id FROM mail_messages "
+           "WHERE from_email IS NOT NULL")
+    args: list = []
+    if email:
+        sql += " AND from_email = ?"
+        args.append(_normalize_email(email))
+    with connect() as conn:
+        return [dict(r) for r in conn.execute(sql, args)]
+
+
+def set_mail_message_member(message_id: str, member_slug: str | None) -> bool:
+    """Point a message at a member (by slug → id), or NULL it. Returns True if it changed."""
+    with connect() as conn:
+        member_id = _member_id_for_slug(conn, member_slug)
+        cur = conn.execute(
+            "UPDATE mail_messages SET member_id = ? WHERE message_id = ? "
+            "AND member_id IS NOT ?",
+            (member_id, message_id, member_id),
+        )
+        return cur.rowcount > 0
 
 
 def _fts_query(query: str) -> str:
