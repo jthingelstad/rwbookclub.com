@@ -31,7 +31,7 @@ Thing pattern (process supervisor, SQLite backup, host `.env`).
 **Phase 1 — Git as the source of truth.** ✅ Done at the time — **later superseded by the
 SQLite inversion (Phase 6); SQLite is now authoritative and the corpus is generated/gitignored.**
 Migrated the corpus from Airtable fetch-artifact to per-entity text files
-(`corpus/data/{books,members,meetings,authors,reviews,awards}/`), records as JSON
+(`corpus/data/{books,members,meetings,authors,reviews,lists}/`), records as JSON
 and reviews as Markdown+frontmatter, each keyed by its Airtable `rec…` id;
 meetings are now first-class. Website data layer globs + aggregates them
 (byte-identical output, verified). Covers come from Open Library (`corpus/images.py`,

@@ -47,7 +47,7 @@ Python commands run from the repo root. Copy `.env.example` to `.env` and fill i
 
 ## How it's built
 
-The club's data lives in **SQLite** (`agent/oliver.db`, the `club_*` tables — the source of truth). From it, `agent/corpus_gen.py` regenerates the **corpus**: per-entity text files in `corpus/data/` (`books/`, `members/`, `meetings/`, `authors/`, `reviews/`, `awards/`) — JSON records, Markdown reviews. The corpus and the machine-generated cover/portrait images are **gitignored, on-disk-only** (private, so they can hold sensitive context for Oliver). **Eleventy** (in `website/`) globs the corpus at build time.
+The club's data lives in **SQLite** (`agent/oliver.db`, the `club_*` tables — the source of truth). From it, `agent/corpus_gen.py` regenerates the **corpus**: per-entity text files in `corpus/data/` (`books/`, `members/`, `meetings/`, `authors/`, `reviews/`, `lists/`) — JSON records, Markdown reviews. The corpus and the machine-generated cover/portrait images are **gitignored, on-disk-only** (private, so they can hold sensitive context for Oliver). **Eleventy** (in `website/`) globs the corpus at build time.
 
 **Build + deploy are local** (CI has no DB, so it can't build the real site): `python -m agent.publish` (`npm run deploy`) regenerates the corpus, builds, and force-pushes `website/_site` to the **`gh-pages` branch**, which GitHub Pages serves. Oliver runs it automatically after data writes; developers run it after template changes. `main` is pure source — Oliver never commits to it.
 
