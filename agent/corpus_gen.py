@@ -179,12 +179,13 @@ def generate(out_root: Path = DEFAULT_OUT) -> dict:
         for m in clubdb.all_meetings(conn):
             stem = f"{(m['date'] or 'undated')[:10]}--{m['id']}"
             emit_json("meetings", f"{stem}.json", _meeting_doc(m))
-        websites_by_id: dict[int, list[str]] = {}
+        websites_by_id: dict[int, list[dict]] = {}
         for r in conn.execute(
-            "SELECT member_id, identifier FROM member_identities WHERE surface = 'website' "
+            "SELECT member_id, identifier, label FROM member_identities WHERE surface = 'website' "
             "ORDER BY is_primary DESC, created_at, identifier"
         ):
-            websites_by_id.setdefault(r["member_id"], []).append(r["identifier"])
+            websites_by_id.setdefault(r["member_id"], []).append(
+                {"url": r["identifier"], "label": r["label"]})
         for m in clubdb.all_members(conn):
             doc_src = dict(m)
             doc_src["websites"] = websites_by_id.get(m["id"], [])

@@ -27,8 +27,8 @@ eleventyComputed:
       <h1>{{ member.name }}</h1>
       {% if member.websites and member.websites | length %}
         <p class="member-website">
-          {% for url in member.websites %}
-            <a href="{{ url }}" rel="external noopener">{{ url | replace("https://", "") | replace("http://", "") | replace("www.", "") }}</a>{% if not loop.last %} · {% endif %}
+          {% for w in member.websites %}
+            <a href="{{ w.url }}" rel="external noopener">{{ w.label or (w.url | replace("https://", "") | replace("http://", "") | replace("www.", "")) }}</a>{% if not loop.last %} · {% endif %}
           {% endfor %}
         </p>
       {% endif %}

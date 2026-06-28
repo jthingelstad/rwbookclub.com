@@ -190,7 +190,8 @@ async def profile_action(request: web.Request) -> web.Response:
     published = False
     try:
         if op == "add-website" and val:
-            await asyncio.to_thread(db.link_member_website, val, slug, linked_by="webapp")
+            await asyncio.to_thread(db.link_member_website, val, slug,
+                                    linked_by="webapp", label=(form.get("label") or "").strip() or None)
             published = True
         elif op == "remove-website" and val:
             await asyncio.to_thread(db.remove_member_website, val, slug)

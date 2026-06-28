@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS member_identities (
     identifier  TEXT NOT NULL,               -- discord id | normalized email | E.164-ish phone | url
     member_id   INTEGER NOT NULL REFERENCES club_members(id),
     is_primary  INTEGER NOT NULL DEFAULT 0,  -- canonical handle/address per (member, surface)
+    label       TEXT,                        -- display name for website rows (e.g. 'Blog'); NULL otherwise
     linked_by   TEXT,
     created_at  TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
@@ -308,6 +309,10 @@ def _columns(conn: sqlite3.Connection, table: str) -> set[str]:
 
 def _migrate(conn: sqlite3.Connection) -> None:
     """Small additive migrations for long-lived Oliver SQLite files."""
+    # Website rows carry a display label (e.g. "Blog") shown on the public profile.
+    if "label" not in _columns(conn, "member_identities"):
+        conn.execute("ALTER TABLE member_identities ADD COLUMN label TEXT")
+
     memory_cols = _columns(conn, "memories")
     additions = {
         "source_user_id": "TEXT",
@@ -824,17 +829,18 @@ def _member_id_for_slug(conn: sqlite3.Connection, slug: str | None) -> int | Non
 
 
 def link_identity(surface: str, identifier: str, member_slug: str, *,
-                  is_primary: bool = False, linked_by: str | None = None) -> None:
+                  is_primary: bool = False, linked_by: str | None = None,
+                  label: str | None = None) -> None:
     with connect() as conn:
         mid = _member_id_for_slug(conn, member_slug)
         if mid is None:
             raise ValueError(f"no club member with slug {member_slug!r}")
         conn.execute(
-            "INSERT INTO member_identities (surface, identifier, member_id, is_primary, linked_by, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(surface, identifier) DO UPDATE SET "
-            "member_id=excluded.member_id, is_primary=excluded.is_primary, "
-            "linked_by=excluded.linked_by, updated_at=excluded.updated_at",
-            (surface, identifier, mid, 1 if is_primary else 0, linked_by, _now()),
+            "INSERT INTO member_identities (surface, identifier, member_id, is_primary, linked_by, label, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(surface, identifier) DO UPDATE SET "
+            "member_id=excluded.member_id, is_primary=excluded.is_primary, linked_by=excluded.linked_by, "
+            "label=COALESCE(excluded.label, member_identities.label), updated_at=excluded.updated_at",
+            (surface, identifier, mid, 1 if is_primary else 0, linked_by, (label or "").strip() or None, _now()),
         )
 
 
@@ -842,12 +848,13 @@ def member_handles(member_slug: str, surface: str) -> list[dict]:
     """A member's handles for a surface with their primary flag, primary-first."""
     with connect() as conn:
         rows = conn.execute(
-            "SELECT mi.identifier, mi.is_primary FROM member_identities mi "
+            "SELECT mi.identifier, mi.is_primary, mi.label FROM member_identities mi "
             "JOIN club_members m ON m.id = mi.member_id "
             "WHERE m.slug = ? AND mi.surface = ? ORDER BY mi.is_primary DESC, mi.identifier",
             (member_slug, surface),
         ).fetchall()
-    return [{"identifier": r["identifier"], "is_primary": bool(r["is_primary"])} for r in rows]
+    return [{"identifier": r["identifier"], "is_primary": bool(r["is_primary"]), "label": r["label"]}
+            for r in rows]
 
 
 def set_primary_identity(member_slug: str, surface: str, identifier: str) -> bool:
@@ -1016,12 +1023,12 @@ def _normalize_url(url: str) -> str:
 
 
 def link_member_website(url: str, member_slug: str, *, linked_by: str | None = None,
-                        is_primary: bool = False) -> None:
+                        is_primary: bool = False, label: str | None = None) -> None:
     url = _normalize_url(url)
     host = url.split("://", 1)[-1].split("/", 1)[0]
     if not url or "." not in host:
         raise ValueError("website must look like a URL, e.g. https://example.com")
-    link_identity("website", url, member_slug, is_primary=is_primary, linked_by=linked_by)
+    link_identity("website", url, member_slug, is_primary=is_primary, linked_by=linked_by, label=label)
 
 
 def websites_for_member(member_slug: str) -> list[str]:
