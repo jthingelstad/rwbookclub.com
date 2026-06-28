@@ -36,6 +36,17 @@ def _is_ajax(request: web.Request) -> bool:
     return request.headers.get("X-Requested-With") == "fetch"
 
 
+# Chat clients fetch a shared URL to build a link preview. They must NOT spend the single-use
+# token — only the human's tap should. Match the common unfurlers' user agents.
+_PREVIEW_BOTS = ("discordbot", "facebookexternalhit", "slackbot", "telegrambot", "whatsapp",
+                 "applebot", "twitterbot", "linkedinbot", "embedly", "preview", "bot/")
+
+
+def _is_link_preview(request: web.Request) -> bool:
+    ua = request.headers.get("User-Agent", "").lower()
+    return any(b in ua for b in _PREVIEW_BOTS)
+
+
 # ── Middleware: activity + auth + admin gate + CSRF ──────────────────────────
 @web.middleware
 async def _mw(request: web.Request, handler):
@@ -79,6 +90,9 @@ async def entry(request: web.Request) -> web.Response:
     """GET /webapp — token exchange (?t=) → session cookie + redirect; otherwise the home dashboard."""
     token = request.query.get("t")
     if token:
+        if _is_link_preview(request):
+            # A chat client unfurling the link — answer without spending the single-use token.
+            return web.Response(text="Open this link to manage your R/W Book Club data.")
         member = await asyncio.to_thread(sessions.consume_token, token)
         if member is None:
             return render("expired.html", request, status=401)

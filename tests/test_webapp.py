@@ -132,6 +132,13 @@ def test_routes_end_to_end(monkeypatch):
         try:
             await webapp.ensure_running()
             async with aiohttp.ClientSession() as s:
+                # a chat link-preview bot must NOT spend the single-use token
+                botua = {"User-Agent": "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discord.com)"}
+                ptok = webapp.mint_token(jamie, is_admin=False)
+                async with s.get(f"{base}/webapp?t={ptok}", headers=botua, allow_redirects=False) as r:
+                    assert r.status == 200  # neutral page, not a redirect — token untouched
+                async with s.get(f"{base}/webapp?t={ptok}", allow_redirects=False) as r:
+                    assert r.status == 302  # the real tap still exchanges it
                 # token exchange → 302 + Set-Cookie
                 tok = webapp.mint_token(jamie, is_admin=False)
                 async with s.get(f"{base}/webapp?t={tok}", allow_redirects=False) as r:

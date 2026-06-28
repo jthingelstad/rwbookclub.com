@@ -540,8 +540,10 @@ async def oliver_webapp(interaction: discord.Interaction) -> None:
     token = await asyncio.to_thread(
         webapp.mint_token, member_id, is_admin=_is_admin(interaction))
     url = f"{config.WEBAPP_BASE_URL}/webapp?t={token}"
+    # Angle brackets suppress Discord's link unfurl, so its preview bot won't pre-fetch (and burn)
+    # the single-use token before you tap it. The server also ignores preview bots as a backstop.
     await interaction.response.send_message(
-        f"🔧 Your private link (good for ~15 minutes, just for you):\n{url}", ephemeral=True)
+        f"🔧 Your private link (good for ~15 minutes, just for you):\n<{url}>", ephemeral=True)
 
 
 @admin_cmds.command(name="stats", description="Report corpus stats (admin).")
