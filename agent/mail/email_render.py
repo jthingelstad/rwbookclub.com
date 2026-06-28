@@ -9,18 +9,38 @@ from __future__ import annotations
 import html
 
 import markdown as _markdown
+from markdown.extensions import Extension as _Extension
+from markdown.postprocessors import RawHtmlPostprocessor as _RawHtmlPostprocessor
+
+
+class _EscapeRawHtmlPostprocessor(_RawHtmlPostprocessor):
+    """Escape any raw HTML the model emitted instead of passing it through — so `<finished>`
+    becomes the literal text `&lt;finished&gt;` and a stray `<script>` can never be live HTML."""
+
+    def run(self, text: str) -> str:
+        for i in range(self.md.htmlStash.html_counter):
+            raw = self.md.htmlStash.rawHtmlBlocks[i]
+            text = text.replace(self.md.htmlStash.get_placeholder(i), html.escape(str(raw)))
+        return text
+
+
+class _EscapeRawHtmlExtension(_Extension):
+    def extendMarkdown(self, md) -> None:  # noqa: N802 (markdown API name)
+        md.postprocessors.register(_EscapeRawHtmlPostprocessor(md), "raw_html", 30)
 
 
 def _render_markdown(text: str) -> str:
     """Render Oliver's markdown body to email-safe HTML.
 
-    The text is html-escaped first so any literal angle brackets stay literal (and no raw
-    HTML from the model is ever emitted); markdown syntax (*italic*, **bold**, lists) is
-    untouched by escaping and renders normally. `nl2br` keeps single newlines as breaks,
-    matching how Oliver writes email paragraphs.
+    Markdown does its own escaping: angle brackets in a `code span` come out as a proper
+    `<code>&lt;…&gt;</code>` (NOT double-escaped to a visible `&amp;lt;`), bare angle brackets
+    in prose stay literal, and the _EscapeRawHtml extension neutralizes any raw HTML the model
+    emits (no live tags). Pre-escaping the text here would double-escape code spans, so don't —
+    let the renderer handle it. `nl2br` keeps single newlines as breaks, matching how Oliver
+    writes email paragraphs.
     """
-    escaped = html.escape(text or "")
-    return _markdown.markdown(escaped, extensions=["nl2br", "sane_lists"])
+    return _markdown.markdown(
+        text or "", extensions=["nl2br", "sane_lists", _EscapeRawHtmlExtension()])
 
 
 # Email CSS. Delivered as a <style> block (well-supported in Apple Mail, Gmail, and
