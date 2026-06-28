@@ -112,6 +112,19 @@ def test_topics_constant():
     assert "Technology" in clubdb.TOPICS and len(clubdb.TOPICS) == 11
 
 
+def test_create_bookless_meeting_and_set_books():
+    with db.connect() as conn:
+        mid = clubdb.create_meeting(conn, date_iso="2026-09-01", book_id=None, types=["Social"])
+        assert next(m for m in clubdb.all_meetings(conn) if m["id"] == mid)["book_slugs"] == []
+        b1 = clubdb.book_id_for_slug(conn, "heart-of-darkness")
+        b2 = clubdb.book_id_for_slug(conn, "enshittification")
+        clubdb.set_meeting_books(conn, mid, [b1, b2])  # two books, ordered
+        got = next(m for m in clubdb.all_meetings(conn) if m["id"] == mid)["book_slugs"]
+        assert got == ["heart-of-darkness", "enshittification"]
+        clubdb.set_meeting_books(conn, mid, [])        # back to bookless
+        assert next(m for m in clubdb.all_meetings(conn) if m["id"] == mid)["book_slugs"] == []
+
+
 # ── End-to-end route smoke (in-process server, real templates) ───────────────
 def test_routes_end_to_end(monkeypatch):
     monkeypatch.setattr(config, "WEBAPP_PORT", 8798)
@@ -168,6 +181,15 @@ def test_routes_end_to_end(monkeypatch):
                     async with s.get(base + path, headers=ahdr) as r:
                         assert r.status == 200, path
                         assert needle in await r.text(), path
+                # admin can create a two-book meeting and a bookless meeting
+                acsrf = sessions.read_session(admin_val)["csrf"]
+                async with s.post(base + "/webapp/admin/meetings/add", headers=ahdr, allow_redirects=False,
+                                  data=[("csrf", acsrf), ("date", "2026-10-01"),
+                                        ("books", "heart-of-darkness"), ("books", "enshittification")]) as r:
+                    assert r.status == 302
+                async with s.post(base + "/webapp/admin/meetings/add", headers=ahdr, allow_redirects=False,
+                                  data=[("csrf", acsrf), ("date", "2026-10-02")]) as r:
+                    assert r.status == 302
                 # no session at all → 401-ish (expired page)
                 async with s.get(base + "/webapp/ratings", allow_redirects=False) as r:
                     assert r.status == 401
@@ -193,7 +215,10 @@ def test_routes_end_to_end(monkeypatch):
         bid = clubdb.book_id_for_slug(conn, "heart-of-darkness")
         row = conn.execute("SELECT rating FROM club_reviews WHERE book_id=? AND member_id=?",
                            (bid, _jamie_id())).fetchone()
+        meetings = {m["date"]: m for m in clubdb.all_meetings(conn)}
     assert row["rating"] == 4
+    assert meetings["2026-10-01"]["book_slugs"] == ["heart-of-darkness", "enshittification"]
+    assert meetings["2026-10-02"]["book_slugs"] == []  # bookless meeting created
 
 
 # ── On-demand lifecycle (in-process) ─────────────────────────────────────────

@@ -730,19 +730,32 @@ TOPICS = [
 ]
 
 
-def create_meeting(conn: sqlite3.Connection, *, date_iso: str, book_id: int,
+def create_meeting(conn: sqlite3.Connection, *, date_iso: str, book_id: int | None = None,
                    types: list[str] | None = None, placeholder: bool = True) -> int:
+    """Create a meeting. `book_id` is optional — a bookless social/picking meeting has none; use
+    set_meeting_books for two or more."""
     mid = _next_id(conn, "club_meetings")
     conn.execute(
         "INSERT INTO club_meetings(id, date, type_json, location, notes, placeholder) "
         "VALUES (?, ?, ?, NULL, NULL, ?)",
         (mid, date_iso, json.dumps(types or ["Book"]), 1 if placeholder else 0),
     )
-    conn.execute(
-        "INSERT INTO club_meeting_books(meeting_id, book_id, ordinal) VALUES (?, ?, 0)",
-        (mid, book_id),
-    )
+    if book_id is not None:
+        conn.execute(
+            "INSERT INTO club_meeting_books(meeting_id, book_id, ordinal) VALUES (?, ?, 0)",
+            (mid, book_id),
+        )
     return mid
+
+
+def set_meeting_books(conn: sqlite3.Connection, meeting_id: int, book_ids: list[int]) -> None:
+    """Replace a meeting's attached books (ordered). Pass [] for a bookless meeting, or 2+ for a
+    multi-book meeting. Mirrors set_meeting_hosts."""
+    conn.execute("DELETE FROM club_meeting_books WHERE meeting_id = ?", (meeting_id,))
+    conn.executemany(
+        "INSERT INTO club_meeting_books(meeting_id, book_id, ordinal) VALUES (?, ?, ?)",
+        [(meeting_id, bid, i) for i, bid in enumerate(book_ids)],
+    )
 
 
 def book_id_for_slug(conn: sqlite3.Connection, slug: str) -> int | None:

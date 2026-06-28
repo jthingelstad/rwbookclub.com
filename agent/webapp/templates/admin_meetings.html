@@ -7,11 +7,14 @@
   <h2>Schedule a meeting</h2>
   <form method="post" action="/webapp/admin/meetings/add" class="card">
     <input type="hidden" name="csrf" value="{{ csrf }}">
-    <label>Book</label>
-    <select name="book">{% for b in books %}<option value="{{ b.slug }}">{{ b.title }}</option>{% endfor %}</select>
     <label>Date (YYYY-MM-DD)</label><input type="text" name="date" placeholder="2026-07-15">
-    <label>Picker</label>
-    <select name="picker">{% for m in members %}{% if m.current %}<option value="{{ m.slug }}">{{ m.name }}</option>{% endif %}{% endfor %}</select>
+    <label>Book(s) <span class="muted">— optional: leave empty for a social/picking meeting, or pick 2+ for a multi-book meeting</span></label>
+    <select name="books" multiple size="5">{% for b in books %}<option value="{{ b.slug }}">{{ b.title }}</option>{% endfor %}</select>
+    <label>Picker <span class="muted">(optional — who chose the book[s])</span></label>
+    <select name="picker"><option value="">—</option>{% for m in members %}{% if m.current %}<option value="{{ m.slug }}">{{ m.name }}</option>{% endif %}{% endfor %}</select>
+    <label>Host(s) <span class="muted">(optional)</span></label>
+    <select name="hosts" multiple size="4">{% for m in members %}{% if m.current %}<option value="{{ m.slug }}">{{ m.name }}</option>{% endif %}{% endfor %}</select>
+    <p class="muted">Hold ⌘/Ctrl to select multiple.</p>
     <p style="margin-top:.8rem"><button class="primary">Schedule</button></p>
   </form>
 
