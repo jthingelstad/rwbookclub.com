@@ -24,6 +24,7 @@
     button.primary, a.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
     button.danger { color: #b3261e; border-color: #e0a0a0; }
     input[type=text], input[type=url], input[type=email], input[type=tel], input[type=number],
+    input[type=date], input[type=time], input[type=search],
     textarea, select { font: inherit; padding: .5rem; border: 1px solid #bbb; border-radius: 7px; width: 100%; }
     textarea { min-height: 8rem; }
     label { display: block; margin: .8rem 0 .25rem; font-weight: 600; font-size: .9rem; }
@@ -38,6 +39,12 @@
     .dnf { font-size: .8rem; padding: .2rem .5rem; }
     .dnf.active { background: #444; color: #fff; border-color: #444; }
     .filter { margin: .5rem 0 1rem; }
+    .toast { position: fixed; bottom: 1.2rem; left: 50%; transform: translateX(-50%) translateY(1rem);
+             background: #1a1a1a; color: #fff; padding: .55rem 1rem; border-radius: 8px; font-size: .9rem;
+             box-shadow: 0 4px 16px rgba(0,0,0,.18); opacity: 0; pointer-events: none;
+             transition: opacity .18s, transform .18s; z-index: 50; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.err { background: #b3261e; }
   </style>
 </head>
 <body>
@@ -60,8 +67,16 @@
     {% if error %}<p class="err">{{ error }}</p>{% endif %}
     {% block content %}{% endblock %}
   </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script>
     const CSRF = {{ csrf|tojson }};
+    let _toastTimer;
+    function toast(msg, ok = true) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = 'toast show' + (ok ? '' : ' err');
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => { t.className = 'toast'; }, 2200);
+    }
     async function post(url, data) {
       const body = new URLSearchParams(Object.assign({ csrf: CSRF }, data || {}));
       return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded',
@@ -71,8 +86,10 @@
     if (pb) pb.addEventListener('click', async () => {
       pb.textContent = 'Publishing…'; pb.disabled = true;
       try { const r = await post('/webapp/publish'); const j = await r.json();
-        pb.textContent = j.published ? 'Published ✓' : 'Up to date';
-      } catch (e) { pb.textContent = 'Publish failed'; }
+        if (r.ok) { pb.textContent = j.published ? 'Published ✓' : 'Up to date';
+                    toast(j.published ? 'Published to the live site ✓' : 'Already up to date'); }
+        else { pb.textContent = 'Publish failed'; toast(j.error || 'Publish failed', false); }
+      } catch (e) { pb.textContent = 'Publish failed'; toast('Publish failed — network error', false); }
       setTimeout(() => { pb.textContent = 'Publish'; pb.disabled = false; }, 4000);
     });
     {% block script %}{% endblock %}

@@ -35,16 +35,21 @@
     const d = document.querySelector('.dnf[data-slug="' + CSS.escape(slug) + '"]');
     d.classList.toggle('active', !!dnf);
   }
-  document.getElementById('grid').addEventListener('click', async (e) => {
+  async function save(params, onOk) {
+    try {
+      const r = await post('/webapp/ratings/set', params);
+      if (r.ok) { onOk(); toast('Saved ✓'); }
+      else { const j = await r.json().catch(() => ({})); toast(j.error || 'Could not save', false); }
+    } catch (e) { toast('Could not save — network error', false); }
+  }
+  document.getElementById('grid').addEventListener('click', (e) => {
     const star = e.target.closest('.star'); const dnfBtn = e.target.closest('.dnf');
     if (star) {
       const slug = star.parentElement.dataset.slug, v = +star.dataset.v;
-      const r = await post('/webapp/ratings/set', { book_slug: slug, rating: v });
-      if (r.ok) paint(slug, v, false);
+      save({ book_slug: slug, rating: v }, () => paint(slug, v, false));
     } else if (dnfBtn) {
       const slug = dnfBtn.dataset.slug, makeDnf = !dnfBtn.classList.contains('active');
-      const r = await post('/webapp/ratings/set', { book_slug: slug, dnf: makeDnf ? '1' : '' });
-      if (r.ok) paint(slug, null, makeDnf);
+      save({ book_slug: slug, dnf: makeDnf ? '1' : '' }, () => paint(slug, null, makeDnf));
     }
   });
 {% endblock %}

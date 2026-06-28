@@ -4,22 +4,21 @@
 {% block content %}
   <p class="muted"><a href="/webapp/reviews">← all books</a></p>
   <h1>{{ book.title }}</h1>
-  {% set cur_rating = "DNF" if existing.get('dnf') else (existing.get('rating') or "") %}
+  {% set is_dnf = existing.get('dnf') %}
+  {% set cur_rating = existing.get('rating') or 0 %}
   <form method="post" action="/webapp/reviews">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <input type="hidden" name="book_slug" value="{{ book.slug }}">
+    <input type="hidden" name="rating" id="ratingInput" value="{{ 'DNF' if is_dnf else (cur_rating or '') }}">
     <label>Rating</label>
-    <select name="rating">
-      <option value="">—</option>
-      {% for n in [1,2,3,4,5] %}<option value="{{ n }}" {{ 'selected' if cur_rating == n }}>{{ n }} / 5</option>{% endfor %}
-      <option value="DNF" {{ 'selected' if cur_rating == 'DNF' }}>Did not finish</option>
-    </select>
-    <label>Would you recommend it?</label>
-    <select name="recommend">
-      <option value="">—</option>
-      <option value="yes" {{ 'selected' if existing.get('wouldRecommend') }}>Yes</option>
-      <option value="no" {{ '' }}>No</option>
-    </select>
+    <div class="row" style="gap:1rem">
+      <span class="stars" id="starWidget">
+        {% for i in range(1, 6) %}<span class="star {{ 'on' if (not is_dnf and cur_rating and i <= cur_rating) else 'off' }}" data-v="{{ i }}">★</span>{% endfor %}
+      </span>
+      <button type="button" class="dnf {{ 'active' if is_dnf }}" id="dnfBtn">DNF</button>
+      <button type="button" id="clearRating" style="border:none; background:none; color:var(--soft); font-size:.85rem; padding:.2rem">clear</button>
+    </div>
+    <label class="row" style="margin-top:1rem; font-weight:600"><input type="checkbox" name="recommend" value="1" style="width:auto" {{ 'checked' if existing.get('wouldRecommend') }}> &nbsp;I'd recommend this book</label>
     <label>Discussion quality (1–5, optional)</label>
     <select name="discussion">
       <option value="">—</option>
@@ -31,4 +30,27 @@
     <textarea name="body" placeholder="What did you think?">{{ existing.get('body') or existing.get('review') or '' }}</textarea>
     <p style="margin-top:1rem"><button class="primary" type="submit">Save review</button></p>
   </form>
+{% endblock %}
+{% block script %}
+  const ratingInput = document.getElementById('ratingInput');
+  const starWidget = document.getElementById('starWidget');
+  const dnfBtn = document.getElementById('dnfBtn');
+  function paintStars(rating) {
+    starWidget.querySelectorAll('.star').forEach(s =>
+      s.className = 'star ' + (rating && +s.dataset.v <= rating ? 'on' : 'off'));
+  }
+  starWidget.addEventListener('click', (e) => {
+    const star = e.target.closest('.star'); if (!star) return;
+    const v = +star.dataset.v;
+    ratingInput.value = v; dnfBtn.classList.remove('active'); paintStars(v);
+  });
+  dnfBtn.addEventListener('click', () => {
+    const makeDnf = !dnfBtn.classList.contains('active');
+    dnfBtn.classList.toggle('active', makeDnf);
+    ratingInput.value = makeDnf ? 'DNF' : '';
+    paintStars(0);
+  });
+  document.getElementById('clearRating').addEventListener('click', () => {
+    ratingInput.value = ''; dnfBtn.classList.remove('active'); paintStars(0);
+  });
 {% endblock %}
