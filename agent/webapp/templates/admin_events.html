@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% set nav = "events" %}
+{% block title %}Events (admin){% endblock %}
+{% block content %}
+  <h1>Club events</h1>
+  <p class="muted">The event log behind the club timeline — meeting ops, selections, social, member life.
+    Newest first. Read-only.</p>
+
+  <form method="get" action="/webapp/admin/events" class="card">
+    <div class="row" style="gap:.5rem; flex-wrap:wrap; align-items:flex-end">
+      <div style="flex:1; min-width:9rem">
+        <label style="margin:0 0 .2rem">Category</label>
+        <select name="category">
+          <option value="">All</option>
+          {% for c in categories %}<option value="{{ c }}" {{ 'selected' if c == f.category }}>{{ c }}</option>{% endfor %}
+        </select>
+      </div>
+      <div style="flex:1; min-width:9rem">
+        <label style="margin:0 0 .2rem">Member</label>
+        <select name="member">
+          <option value="">Anyone / club-wide</option>
+          {% for m in members %}<option value="{{ m.slug }}" {{ 'selected' if m.slug == f.member }}>{{ m.name }}{{ '' if m.current else ' (former)' }}</option>{% endfor %}
+        </select>
+      </div>
+      <div style="min-width:8rem">
+        <label style="margin:0 0 .2rem">From</label>
+        <input type="date" name="since" value="{{ f.since }}">
+      </div>
+      <div style="min-width:8rem">
+        <label style="margin:0 0 .2rem">To</label>
+        <input type="date" name="until" value="{{ f.until }}">
+      </div>
+      <div style="width:5.5rem">
+        <label style="margin:0 0 .2rem">Limit</label>
+        <input type="number" name="limit" value="{{ f.limit }}" min="1" max="1000">
+      </div>
+      <div><button class="primary">Apply</button>
+        <a class="btn" href="/webapp/admin/events">Clear</a></div>
+    </div>
+  </form>
+
+  <p class="muted">{{ events|length }} event{{ '' if events|length == 1 else 's' }}{% if events|length == f.limit %} (limit reached — narrow the filters){% endif %}.</p>
+  <input class="filter" type="text" id="textfilter" placeholder="Filter loaded rows by kind/detail/member…" autocomplete="off">
+  <table>
+    <thead><tr><th>When</th><th>Category</th><th>Kind</th><th>Who</th><th>Detail</th></tr></thead>
+    <tbody id="rows">
+      {% for e in events %}
+      <tr data-q="{{ (e.kind ~ ' ' ~ (e.detail or '') ~ ' ' ~ (e.member_name or ''))|lower }}">
+        <td style="white-space:nowrap" class="muted">{{ e.occurred_at }}</td>
+        <td>{{ e.category }}</td>
+        <td>{{ e.kind }}</td>
+        <td>{{ e.member_name or '—' }}{% if e.actor and e.actor != 'oliver' %} <span class="muted">· {{ e.actor }}</span>{% endif %}</td>
+        <td class="muted" style="word-break:break-word">{{ e.detail or '' }}{% if e.surface %} <span style="font-size:.75rem">[{{ e.surface }}]</span>{% endif %}</td>
+      </tr>
+      {% else %}<tr><td colspan="5" class="muted">No events match these filters.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
+{% block script %}
+  const tf = document.getElementById('textfilter');
+  tf.addEventListener('input', () => {
+    const q = tf.value.toLowerCase();
+    document.querySelectorAll('#rows tr').forEach(tr => {
+      if (!tr.dataset.q) return;
+      tr.style.display = tr.dataset.q.includes(q) ? '' : 'none';
+    });
+  });
+{% endblock %}

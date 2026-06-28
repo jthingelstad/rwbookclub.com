@@ -361,6 +361,39 @@ async def member_save(request: web.Request) -> web.Response:
     raise web.HTTPFound(f"/webapp/admin/members/{slug}")
 
 
+# ── Club events (read-only, filterable) ──────────────────────────────────────
+def _event_categories() -> list[str]:
+    with db.connect() as conn:
+        return [r["category"] for r in conn.execute(
+            "SELECT DISTINCT category FROM events ORDER BY category")]
+
+
+def _load_events(category: str, member_slug: str, since: str, until: str, limit: int) -> list[dict]:
+    member_id = None
+    if member_slug:
+        with db.connect() as conn:
+            member_id = clubdb.member_id_for_slug(conn, member_slug)
+    return db.timeline(category=category or None, member_id=member_id,
+                       since=since or None, until=until or None, limit=limit)
+
+
+async def events_page(request: web.Request) -> web.Response:
+    q = request.query
+    category, member = q.get("category", ""), q.get("member", "")
+    since, until = q.get("since", ""), q.get("until", "")
+    try:
+        limit = min(max(int(q.get("limit") or 200), 1), 1000)
+    except ValueError:
+        limit = 200
+    events = await asyncio.to_thread(_load_events, category, member, since, until, limit)
+    categories = await asyncio.to_thread(_event_categories)
+    members = await asyncio.to_thread(_members)
+    members = sorted(members, key=lambda m: m["name"].lower())
+    return render("admin_events.html", request, events=events, categories=categories,
+                  members=members, f={"category": category, "member": member,
+                                      "since": since, "until": until, "limit": limit})
+
+
 # ── Club lists ───────────────────────────────────────────────────────────────
 async def lists_page(request: web.Request) -> web.Response:
     all_lists = await asyncio.to_thread(cr.lists)
@@ -385,4 +418,5 @@ def add_routes(app: web.Application) -> None:
         web.get("/webapp/admin/members/{slug}", member_edit),
         web.post("/webapp/admin/members/{slug}", member_save),
         web.get("/webapp/admin/lists", lists_page),
+        web.get("/webapp/admin/events", events_page),
     ])

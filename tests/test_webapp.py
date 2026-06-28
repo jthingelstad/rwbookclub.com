@@ -112,6 +112,27 @@ def test_topics_constant():
     assert "Technology" in clubdb.TOPICS and len(clubdb.TOPICS) == 11
 
 
+def test_events_view_filters():
+    from agent.webapp import routes_admin
+    jamie = _jamie_id()
+    db.record_event(actor="admin", kind="note", category="social", member_id=jamie,
+                    detail="game night", occurred_at="2026-05-01 12:00:00")
+    db.record_event(actor="admin", kind="note", category="club",
+                    detail="anniversary", occurred_at="2026-05-02 12:00:00")
+    # category filter
+    social = routes_admin._load_events("social", "", "", "", 100)
+    assert social and all(e["category"] == "social" for e in social)
+    # member filter resolves slug → id; club-wide event is excluded
+    mine = routes_admin._load_events("", "jamie", "", "", 100)
+    assert all(e["member_id"] == jamie for e in mine)
+    assert any(e["detail"] == "game night" for e in mine)
+    # date window
+    windowed = routes_admin._load_events("", "", "2026-05-02", "2026-05-03", 100)
+    assert all("2026-05-02" <= e["occurred_at"][:10] <= "2026-05-03" for e in windowed)
+    # categories list reflects real data
+    assert "social" in routes_admin._event_categories()
+
+
 def test_meeting_save_pairs_books_and_pickers():
     from agent.webapp import routes_admin
     with db.connect() as conn:
