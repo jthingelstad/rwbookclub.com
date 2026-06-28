@@ -111,7 +111,7 @@ contact_cmds = discord.app_commands.Group(
 # discord.py nests these under oliver_cmds automatically (parent=), within Discord's 2-level limit:
 # `/oliver <group> <subcommand> [options]`.
 reading_cmds = discord.app_commands.Group(
-    name="reading", description="Your reading progress and reviews.", parent=oliver_cmds)
+    name="reading", description="Your reading progress for the next book.", parent=oliver_cmds)
 meeting_cmds = discord.app_commands.Group(
     name="meeting", description="Run the next meeting — roll call, reading check-ins, readiness.",
     parent=oliver_cmds)

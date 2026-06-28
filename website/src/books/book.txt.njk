@@ -32,6 +32,10 @@ eleventyExcludeFromCollections: true
 {%- if book.isbn13 %}
 - **ISBN-13:** {{ book.isbn13 }}
 {%- endif %}
+{%- set clubR = reviews | clubRating(book.slug) %}
+{%- if clubR %}
+- **Club rating:** {{ clubR.avg }}/5 (from {{ clubR.count }} member{% if clubR.count != 1 %}s{% endif %})
+{%- endif %}
 {%- if book.olKey %}
 - **Open Library:** https://openlibrary.org{{ book.olKey }}
 {%- endif %}

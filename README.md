@@ -2,7 +2,7 @@
 
 A monorepo for the **R/W Book Club**, a group of technically minded readers who have been meeting in the Minneapolis-Saint Paul area since April 2003. The "R/W" stands for *Read / Write* — the members read, but they also write.
 
-The club reads about eight books per year, mostly non-fiction (~88%), and members rotate picking the next book and hosting the discussion. This repo holds everything the club runs on — the public website, the shared knowledge corpus, and Oliver, the club's Discord agent.
+The club reads about eight books per year, mostly non-fiction (~88%), and members rotate picking the next book and hosting the discussion. This repo holds everything the club runs on — the public website, the shared knowledge corpus, Oliver (the club's Discord agent), and a private members' web app that Oliver serves for self-service editing.
 
 ## Layout
 
@@ -52,5 +52,7 @@ The club's data lives in **SQLite** (`agent/oliver.db`, the `club_*` tables — 
 **Build + deploy are local** (CI has no DB, so it can't build the real site): `python -m agent.publish` (`npm run deploy`) regenerates the corpus, builds, and force-pushes `website/_site` to the **`gh-pages` branch**, which GitHub Pages serves. Oliver runs it automatically after data writes; developers run it after template changes. `main` is pure source — Oliver never commits to it.
 
 **Oliver** (`agent/`) is a separate long-running process — a discord.py bot that answers questions in the club's `#ask-oliver` channel via Claude, using the corpus as context. It runs on its own host, not in GitHub Actions. See [`agent/README.md`](agent/README.md).
+
+**The members' web app** (`agent/webapp/`) runs *inside* Oliver's process — a small aiohttp app reached over Tailscale Funnel, authed by a Discord-minted one-time link (`/oliver webapp`). Members rate/review books, manage lists, and edit their profile there; admins edit books, meetings, hosts/pickers, and members. It writes the same DB through the same writers Oliver uses. This is where "structured, deliberate editing" lives — Discord stays for conversation, attendance, and reading status.
 
 See [`CLAUDE.md`](CLAUDE.md) for the data schema and conventions, [`corpus/README.md`](corpus/README.md) for the data layer, and [`agent/docs/ROADMAP.md`](agent/docs/ROADMAP.md) for where Oliver is headed.

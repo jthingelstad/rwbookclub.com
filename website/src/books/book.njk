@@ -63,6 +63,13 @@ eleventyComputed:
     {% if book.series %}
       <div class="meta-row"><dt>Series</dt><dd>{{ book.series }}</dd></div>
     {% endif %}
+    {% set clubR = reviews | clubRating(book.slug) %}
+    {% if clubR %}
+      <div class="meta-row">
+        <dt>Club rating</dt>
+        <dd>{{ clubR.avg }} / 5 <span class="meta-sub">({{ clubR.count }} member{% if clubR.count != 1 %}s{% endif %})</span></dd>
+      </div>
+    {% endif %}
     {% if book.ratingsAverage %}
       <div class="meta-row">
         <dt>Reader rating</dt>

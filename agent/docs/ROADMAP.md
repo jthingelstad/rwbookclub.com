@@ -18,7 +18,7 @@ member**, not a foreign bot.
 |---|---|---|
 | **A — Canonical club knowledge** | books, authors, meetings, members, reviews, lists | **SQLite** `club_*` tables (authoritative); the corpus in `corpus/data/` is generated from them (private/gitignored), read by Oliver + the website build |
 | **B — Oliver's private memory/state** | conversation summaries, member taste notes, Discord identity links, reminders, usage/cost, the mail archive | **SQLite** on Oliver's host (gitignored, backed up) |
-| **C — write flow** | a review, a scheduled meeting | Discord form → DB upsert under FKs → corpus regenerated → local build + deploy to `gh-pages` |
+| **C — write flow** | a review, a scheduled meeting | web app (or admin Discord cmd) → DB upsert under FKs → corpus regenerated → local build + deploy to `gh-pages` |
 
 Consequences: the DB is the single source of truth; the static site is built + deployed
 locally from the DB-generated corpus (CI only runs tests). Oliver is a **self-hosted Claude
@@ -104,8 +104,9 @@ deliberately not folded into the corpus, keeping private message bodies out of i
 **Phase 7 — Book lists.** ✅ **Done.** Replaced `club_awards` with a member/club book-list system
 (`club_lists` + `club_list_books`, ordered entries with optional per-book notes). Members create and
 manage their own lists ("my favorites"); admins curate club lists ("our favorite books"). Each list
-has a description. Managed via Discord: `/oliver list create | create-club | add-book | remove-book |
-edit | delete`. Lists render on member profiles and on their own `/lists/<slug>/` pages; club lists
+has a description. Originally managed via a `/oliver list` Discord group — **now managed in the web
+app** (Lists tab; the Discord group was retired in Phase 8). Lists render on member profiles and on
+their own `/lists/<slug>/` pages; club lists
 get a **Lists** nav hub at `/lists/`. Read surface: the `club_lists` tool + member lists via
 `member_history`. The one legacy award (2016 Book of the Year) migrated into a "Books of the Year"
 club list. (The separate enrichment-driven literary-awards field on books is unrelated and stays.)

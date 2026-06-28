@@ -74,6 +74,18 @@ module.exports = function (eleventyConfig) {
       .sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
   });
 
+  // The club's OWN average rating for a book (member ratings, excluding DNF / no-rating).
+  // Distinct from the Open Library aggregate (book.ratingsAverage).
+  eleventyConfig.addFilter("clubRating", (reviews, bookSlug) => {
+    if (!Array.isArray(reviews)) return null;
+    const rs = reviews.filter(
+      (r) => r.book === bookSlug && !r.dnf && typeof r.rating === "number" && r.rating >= 1
+    );
+    if (!rs.length) return null;
+    const avg = rs.reduce((a, r) => a + r.rating, 0) / rs.length;
+    return { avg: Math.round(avg * 10) / 10, count: rs.length };
+  });
+
   // Lists owned by a given member slug
   eleventyConfig.addFilter("listsByMember", (lists, memberSlug) => {
     if (!Array.isArray(lists)) return [];
@@ -84,19 +96,6 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addFilter("reviewsByMember", (reviews, memberSlug) => {
     if (!Array.isArray(reviews)) return [];
     return reviews.filter((r) => r.member === memberSlug);
-  });
-
-  // Books a member has not yet reviewed (any kind of review counts, including
-  // DNF). `books` is already sorted most-recent-first.
-  eleventyConfig.addFilter("unreviewedFor", (books, memberSlug, reviews) => {
-    if (!Array.isArray(books)) return [];
-    const reviewed = new Set();
-    if (Array.isArray(reviews)) {
-      for (const r of reviews) {
-        if (r.member === memberSlug && r.book) reviewed.add(r.book);
-      }
-    }
-    return books.filter((b) => b.meetingDate && !b.placeholder && !reviewed.has(b.slug));
   });
 
   // RFC-822 / RFC-2822 date for the RSS feed

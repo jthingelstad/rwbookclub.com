@@ -34,11 +34,12 @@ permalink: /about/
 
   <h2>How this site is built</h2>
   <p>
-    Everything we've read lives as plain text files in a Git repository — one
-    file per book, meeting, member, and author. A small Python pipeline downloads
-    and resizes the cover art, and hands the result to
+    Everything we've read lives in a database that the club's assistant, Oliver,
+    keeps current — one record per book, meeting, member, and author. A small
+    Python pipeline turns that into per-page content, fetches and resizes the
+    cover art, and hands the result to
     <a href="https://www.11ty.dev/" rel="external noopener">Eleventy</a>, which
-    renders these pages. The whole thing rebuilds and deploys to GitHub Pages
-    on every push.
+    renders these pages. Oliver rebuilds and publishes the site to GitHub Pages
+    whenever the club's record changes.
   </p>
 </article>

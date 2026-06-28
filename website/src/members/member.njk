@@ -109,21 +109,6 @@ eleventyComputed:
     </section>
   {% endif %}
 
-  {% set todoBooks = books | unreviewedFor(member.slug, reviews) | limit(15) %}
-  {% if todoBooks.length %}
-    <section class="member-todo">
-      <h2>To review</h2>
-      <p class="member-todo-lede">The {{ todoBooks.length }} most recent book{% if todoBooks.length != 1 %}s{% endif %} you haven't reviewed yet.</p>
-      <ol class="member-todo-list">
-        {% for b in todoBooks %}
-          <li class="member-todo-row">
-            <a class="member-todo-title" href="/books/{{ b.slug }}/">{{ b.title }}</a>
-            {% if b.meetingDate %}
-              <span class="member-todo-date">{{ b.meetingDate | monthYear }}</span>
-            {% endif %}
-          </li>
-        {% endfor %}
-      </ol>
-    </section>
-  {% endif %}
+  {# "To review" was a personal task list — it now lives in the member web app's Reviews tab
+     (authenticated), not on this public profile. #}
 </article>
