@@ -45,6 +45,8 @@
              transition: opacity .18s, transform .18s; z-index: 50; }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     .toast.err { background: #b3261e; }
+    tr.dragging { opacity: .45; }
+    td.drag:active { cursor: grabbing; }
   </style>
 </head>
 <body>
@@ -92,6 +94,39 @@
         else { pb.textContent = 'Publish failed'; toast(j.error || 'Publish failed', false); }
       } catch (e) { pb.textContent = 'Publish failed'; toast('Publish failed — network error', false); }
       setTimeout(() => { pb.textContent = 'Publish'; pb.disabled = false; }, 4000);
+    });
+    // List drag-to-reorder + inline note editing (member Lists + admin Club lists). No-op elsewhere.
+    document.querySelectorAll('table[data-list-table]').forEach(tbl => {
+      const listSlug = tbl.dataset.list, ret = tbl.dataset.ret || '';
+      const bodyOf = (tr) => tr.parentElement;
+      let dragRow = null;
+      tbl.querySelectorAll('td.drag[draggable]').forEach(h => {
+        const tr = h.closest('tr');
+        h.addEventListener('dragstart', (e) => { dragRow = tr; tr.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move'; });
+        h.addEventListener('dragend', () => { if (dragRow) dragRow.classList.remove('dragging');
+          const moved = dragRow; dragRow = null; if (moved) persist(); });
+      });
+      tbl.addEventListener('dragover', (e) => {
+        if (!dragRow) return; e.preventDefault();
+        const rows = [...bodyOf(dragRow).querySelectorAll('tr:not(.dragging)')];
+        const after = rows.find(r => { const b = r.getBoundingClientRect(); return e.clientY < b.top + b.height / 2; });
+        if (after) bodyOf(dragRow).insertBefore(dragRow, after); else bodyOf(dragRow).appendChild(dragRow);
+      });
+      async function persist() {
+        const order = [...tbl.querySelectorAll('tr[data-slug]')].map(r => r.dataset.slug).join(',');
+        try { const r = await post('/webapp/lists/act', { op: 'reorder', list: listSlug, order, return: ret });
+          toast(r.ok ? 'Order saved ✓' : 'Could not save order', r.ok);
+        } catch (e) { toast('Could not save order', false); }
+      }
+      tbl.querySelectorAll('.note-input').forEach(inp => {
+        inp.addEventListener('change', async () => {
+          try { const r = await post('/webapp/lists/act',
+              { op: 'set-note', list: listSlug, book: inp.dataset.slug, note: inp.value, return: ret });
+            toast(r.ok ? 'Note saved ✓' : 'Could not save note', r.ok);
+          } catch (e) { toast('Could not save note', false); }
+        });
+      });
     });
     {% block script %}{% endblock %}
   </script>

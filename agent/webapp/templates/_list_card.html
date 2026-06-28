@@ -14,24 +14,17 @@
         <button class="danger">Delete</button></form>
     </div>
     {% if lst.description %}<p class="muted">{{ lst.description }}</p>{% endif %}
-    <table>
+    <table data-list-table data-list="{{ lst.slug }}" data-ret="{{ ret }}">
       {% for e in lst.books %}
-      <tr><td>{{ titles.get(e.book, e.book) }}{% if e.note %} <span class="muted">— {{ e.note }}</span>{% endif %}</td>
-        <td style="text-align:right; white-space:nowrap">
-          {% if not loop.first %}
-          <form method="post" action="/webapp/lists/act" style="display:inline">
-            <input type="hidden" name="csrf" value="{{ csrf }}">{% if ret %}<input type="hidden" name="return" value="{{ ret }}">{% endif %}
-            <input type="hidden" name="op" value="move-up">
-            <input type="hidden" name="list" value="{{ lst.slug }}"><input type="hidden" name="book" value="{{ e.book }}">
-            <button title="Move up">↑</button></form>
-          {% endif %}
-          {% if not loop.last %}
-          <form method="post" action="/webapp/lists/act" style="display:inline">
-            <input type="hidden" name="csrf" value="{{ csrf }}">{% if ret %}<input type="hidden" name="return" value="{{ ret }}">{% endif %}
-            <input type="hidden" name="op" value="move-down">
-            <input type="hidden" name="list" value="{{ lst.slug }}"><input type="hidden" name="book" value="{{ e.book }}">
-            <button title="Move down">↓</button></form>
-          {% endif %}
+      <tr data-slug="{{ e.book }}">
+        <td class="drag" draggable="true" title="Drag to reorder" style="width:1.2rem; cursor:grab; color:#aaa; user-select:none">⠿</td>
+        <td>
+          <div>{{ titles.get(e.book, e.book) }}</div>
+          <input type="text" class="note-input" data-slug="{{ e.book }}" value="{{ e.note or '' }}"
+                 placeholder="add a note…" autocomplete="off"
+                 style="margin-top:.2rem; font-size:.85rem; padding:.25rem .4rem; color:var(--soft)">
+        </td>
+        <td style="text-align:right; white-space:nowrap; vertical-align:top">
           <form method="post" action="/webapp/lists/act" style="display:inline">
             <input type="hidden" name="csrf" value="{{ csrf }}">{% if ret %}<input type="hidden" name="return" value="{{ ret }}">{% endif %}
             <input type="hidden" name="op" value="remove-book">

@@ -730,6 +730,27 @@ def move_list_book(conn: sqlite3.Connection, list_id: int, book_id: int, *, up: 
     return True
 
 
+def reorder_list_books(conn: sqlite3.Connection, list_id: int,
+                       ordered_book_ids: list[int]) -> bool:
+    """Set list ordinals to match `ordered_book_ids` (0..n). Book ids not in the list are
+    ignored; any list books absent from the order keep their prior relative order at the end
+    — so a partial/stale order from the client can't drop rows. Returns True."""
+    existing = [r["book_id"] for r in conn.execute(
+        "SELECT book_id FROM club_list_books WHERE list_id = ? ORDER BY ordinal", (list_id,))]
+    existing_set = set(existing)
+    seq: list[int] = []
+    for bid in ordered_book_ids:
+        if bid in existing_set and bid not in seq:
+            seq.append(bid)
+    for bid in existing:                 # append any the client didn't mention
+        if bid not in seq:
+            seq.append(bid)
+    for ordinal, bid in enumerate(seq):
+        conn.execute("UPDATE club_list_books SET ordinal = ? WHERE list_id = ? AND book_id = ?",
+                     (ordinal, list_id, bid))
+    return True
+
+
 def set_book_picker(conn: sqlite3.Connection, book_id: int, member_id: int) -> None:
     conn.execute("DELETE FROM club_book_pickers WHERE book_id = ?", (book_id,))
     conn.execute(

@@ -68,17 +68,41 @@ def _member_ratings(member_slug: str) -> dict[str, dict]:
                 if r["member_slug"] == member_slug}
 
 
+def _book_dates() -> dict[str, str]:
+    """Map book slug → the date it was most recently discussed (its meeting date).
+    Drives reverse-chronological ordering and the year filter on Ratings/Reviews."""
+    with db.connect() as conn:
+        return {r["slug"]: r["date"] for r in conn.execute(
+            "SELECT b.slug AS slug, MAX(m.date) AS date FROM club_meeting_books mb "
+            "JOIN club_books b ON b.id = mb.book_id "
+            "JOIN club_meetings m ON m.id = mb.meeting_id "
+            "WHERE m.date IS NOT NULL GROUP BY b.id")}
+
+
+def _by_discussed_desc(books: list[dict], dates: dict[str, str]) -> list[dict]:
+    """Annotate each book with its discussed date/year and sort newest-first (undated last)."""
+    rows = []
+    for b in books:
+        d = dates.get(b["slug"])
+        rows.append({**b, "date": d, "year": (d or "")[:4] or None})
+    rows.sort(key=lambda r: (r["date"] or ""), reverse=True)
+    return rows
+
+
 # ── Ratings — bulk grid ──────────────────────────────────────────────────────
 async def ratings_page(request: web.Request) -> web.Response:
     slug = request["session"]["slug"]
     books = await asyncio.to_thread(_load_books)
     mine = await asyncio.to_thread(_member_ratings, slug)
+    dates = await asyncio.to_thread(_book_dates)
     rows = [{
         "slug": b["slug"], "title": b["title"],
         "rating": (mine.get(b["slug"]) or {}).get("rating"),
         "dnf": bool((mine.get(b["slug"]) or {}).get("dnf")),
     } for b in books]
-    return render("ratings.html", request, books=rows)
+    rows = _by_discussed_desc(rows, dates)  # most-recently-discussed first
+    years = sorted({r["year"] for r in rows if r["year"]}, reverse=True)
+    return render("ratings.html", request, books=rows, years=years)
 
 
 def _do_set_rating(book_slug: str, member_id: int, *, rating, dnf) -> bool:
@@ -116,8 +140,11 @@ async def reviews_page(request: web.Request) -> web.Response:
     slug = request["session"]["slug"]
     books = await asyncio.to_thread(_load_books)
     mine = await asyncio.to_thread(_member_ratings, slug)
+    dates = await asyncio.to_thread(_book_dates)
+    books = _by_discussed_desc(books, dates)  # most-recently-discussed first
     reviewed = {s for s, r in mine.items() if (r.get("body") or r.get("rating") or r.get("dnf"))}
-    return render("reviews_index.html", request, books=books, reviewed=reviewed)
+    years = sorted({b["year"] for b in books if b["year"]}, reverse=True)
+    return render("reviews_index.html", request, books=books, reviewed=reviewed, years=years)
 
 
 async def review_compose(request: web.Request) -> web.Response:
@@ -175,12 +202,14 @@ async def lists_create(request: web.Request) -> web.Response:
 
 
 async def lists_action(request: web.Request) -> web.Response:
-    """POST /webapp/lists/act — add-book / remove-book / edit / delete, dispatched by `op`."""
+    """POST /webapp/lists/act — add-book / remove-book / edit / delete / set-note / reorder,
+    dispatched by `op`. AJAX callers (drag-reorder, inline note) get JSON; forms get a redirect."""
     form = _form(request)
     session = request["session"]
     actor, is_admin = session["slug"], bool(session.get("a"))
     op = form.get("op")
     ref = form.get("list", "")
+    err = None
     try:
         if op == "add-book":
             await asyncio.to_thread(lists_writer.add_book, ref, form.get("book", ""),
@@ -196,9 +225,18 @@ async def lists_action(request: web.Request) -> web.Response:
         elif op in ("move-up", "move-down"):
             await asyncio.to_thread(lists_writer.move_book, ref, form.get("book", ""),
                                     up=(op == "move-up"), actor_slug=actor, is_admin=is_admin)
-    except lists_writer.ListError:
-        pass
-    state.mark_dirty()
+        elif op == "set-note":
+            await asyncio.to_thread(lists_writer.set_note, ref, form.get("book", ""),
+                                    form.get("note"), actor_slug=actor, is_admin=is_admin)
+        elif op == "reorder":
+            slugs = [s for s in (form.get("order") or "").split(",") if s]
+            await asyncio.to_thread(lists_writer.reorder, ref, slugs, actor_slug=actor, is_admin=is_admin)
+    except lists_writer.ListError as e:
+        err = str(e)
+    if err is None:
+        state.mark_dirty()
+    if request.headers.get("X-Requested-With") == "fetch":
+        return web.json_response({"ok": err is None, "error": err}, status=200 if err is None else 400)
     raise web.HTTPFound(_safe_return(form, "/webapp/lists"))
 
 

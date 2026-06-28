@@ -130,6 +130,35 @@ def test_writer_add_remove_book_with_note():
     assert cr.find_list(lst["slug"])["books"] == []
 
 
+def test_writer_reorder_books():
+    lst = lw.create_list("Ranked", "r", owner_slug="jamie", scope="member")
+    lw.add_book(lst["slug"], "Heart of Darkness", None, actor_slug="jamie", is_admin=False)
+    lw.add_book(lst["slug"], "Enshittification", None, actor_slug="jamie", is_admin=False)
+    order = [b["book"] for b in cr.find_list(lst["slug"])["books"]]
+
+    lw.reorder(lst["slug"], list(reversed(order)), actor_slug="jamie", is_admin=False)
+    assert [b["book"] for b in cr.find_list(lst["slug"])["books"]] == list(reversed(order))
+
+    # a stale/partial order must not drop the unmentioned book
+    lw.reorder(lst["slug"], [order[0]], actor_slug="jamie", is_admin=False)
+    after = [b["book"] for b in cr.find_list(lst["slug"])["books"]]
+    assert set(after) == set(order) and after[0] == order[0]
+
+
+def test_writer_set_note():
+    lst = lw.create_list("Noted", "n", owner_slug="jamie", scope="member")
+    lw.add_book(lst["slug"], "Heart of Darkness", "first", actor_slug="jamie", is_admin=False)
+
+    lw.set_note(lst["slug"], "Heart of Darkness", "updated", actor_slug="jamie", is_admin=False)
+    assert cr.find_list(lst["slug"])["books"] == [{"book": "heart-of-darkness", "note": "updated"}]
+
+    lw.set_note(lst["slug"], "Heart of Darkness", "", actor_slug="jamie", is_admin=False)
+    assert cr.find_list(lst["slug"])["books"] == [{"book": "heart-of-darkness"}]
+
+    with pytest.raises(lw.ListError):
+        lw.set_note(lst["slug"], "Enshittification", "x", actor_slug="jamie", is_admin=False)
+
+
 def test_writer_edit_and_delete():
     lst = lw.create_list("Temp", "temp desc", owner_slug="jamie", scope="member")
     lw.edit_list(lst["slug"], description="new desc", actor_slug="jamie", is_admin=False)

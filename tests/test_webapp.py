@@ -131,6 +131,34 @@ def test_create_and_retire_member():
         assert next(m for m in clubdb.all_members(conn) if m["slug"] == "test-person")["is_current"] == 0
 
 
+def test_rename_member_keeps_slug():
+    with db.connect() as conn:
+        res = clubdb.create_member(conn, "Rename Me")
+        slug = res["slug"]
+        assert clubdb.rename_member(conn, slug, "Renamed") is True
+        m = next(m for m in clubdb.all_members(conn) if m["slug"] == slug)
+        assert m["name"] == "Renamed" and m["slug"] == slug  # slug is identity; must not move
+
+
+def test_reorder_list_books_keeps_unmentioned():
+    with db.connect() as conn:
+        jamie = _jamie_id()
+        lst = clubdb.create_list(conn, name="Reorder Test", scope="member", owner_id=jamie)
+        b1 = clubdb.book_id_for_slug(conn, "heart-of-darkness")
+        b2 = clubdb.book_id_for_slug(conn, "enshittification")
+        clubdb.set_list_book(conn, lst["id"], b1)
+        clubdb.set_list_book(conn, lst["id"], b2)
+        clubdb.reorder_list_books(conn, lst["id"], [b2, b1])
+        order = [r["book_id"] for r in conn.execute(
+            "SELECT book_id FROM club_list_books WHERE list_id=? ORDER BY ordinal", (lst["id"],))]
+        assert order == [b2, b1]
+        # a stale order with only one id keeps the other at the end (no row dropped)
+        clubdb.reorder_list_books(conn, lst["id"], [b1])
+        order2 = [r["book_id"] for r in conn.execute(
+            "SELECT book_id FROM club_list_books WHERE list_id=? ORDER BY ordinal", (lst["id"],))]
+        assert order2 == [b1, b2]
+
+
 def test_move_list_book_preserves_notes():
     with db.connect() as conn:
         jamie = _jamie_id()
