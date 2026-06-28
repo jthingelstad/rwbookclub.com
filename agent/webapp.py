@@ -26,7 +26,17 @@ from agent import config, db
 log = logging.getLogger("oliver.webapp")
 
 _TOKEN_TTL = timedelta(minutes=15)
+# The server runs only during active use: a Discord `/oliver webapp` (or any request) starts it,
+# and it shuts itself down after _IDLE_TIMEOUT with no requests, so there's nothing listening — and
+# no DB access possible — when no one is editing.
+_IDLE_TIMEOUT = timedelta(minutes=15)
+_CHECK_INTERVAL = 60  # seconds between idle checks
+
+_lock = asyncio.Lock()
 _runner: web.AppRunner | None = None
+_site: web.TCPSite | None = None
+_idle_task: asyncio.Task | None = None
+_last_activity: datetime | None = None
 
 
 def _now() -> datetime:
@@ -125,6 +135,14 @@ def _render_page(member: dict, token: str) -> str:
 
 
 # ── Routes ───────────────────────────────────────────────────────────────────
+@web.middleware
+async def _activity_mw(request: web.Request, handler):
+    """Every request bumps the idle clock, so an active session keeps the server alive."""
+    global _last_activity
+    _last_activity = _now()
+    return await handler(request)
+
+
 async def healthz(request: web.Request) -> web.Response:
     return web.Response(text="ok\n")
 
@@ -152,21 +170,52 @@ async def webapp_ping(request: web.Request) -> web.Response:
     return web.json_response({"ok": True, "at": at})
 
 
-# ── Lifecycle ────────────────────────────────────────────────────────────────
-async def start_webapp() -> None:
-    """Start the loopback aiohttp server on the bot's event loop (idempotent)."""
-    global _runner
+# ── Lifecycle (on-demand: start when used, stop when idle) ───────────────────
+async def ensure_running() -> None:
+    """Start the loopback server if it isn't already, and (re)arm the idle clock.
+
+    Called by `/oliver webapp` before handing out a link, and idempotent — concurrent callers
+    coalesce under the lock. While down there is nothing listening, so no access is possible.
+    """
+    global _runner, _site, _idle_task, _last_activity
+    async with _lock:
+        _last_activity = _now()
+        if _runner is not None:
+            return
+        app = web.Application(middlewares=[_activity_mw])
+        app.add_routes([
+            web.get("/healthz", healthz),
+            web.get("/webapp", webapp_page),
+            web.post("/webapp/ping", webapp_ping),
+        ])
+        runner = web.AppRunner(app)
+        await runner.setup()
+        site = web.TCPSite(runner, "127.0.0.1", config.WEBAPP_PORT)
+        await site.start()
+        _runner, _site = runner, site  # module-globals keep them alive (else GC'd)
+        _idle_task = asyncio.create_task(_idle_watcher())
+        log.info("webapp started on 127.0.0.1:%d (public: %s); idle shutoff after %d min",
+                 config.WEBAPP_PORT, config.WEBAPP_BASE_URL, _IDLE_TIMEOUT.total_seconds() // 60)
+
+
+async def _idle_watcher() -> None:
+    """Stop the server after _IDLE_TIMEOUT with no requests. Runs until it shuts the server down."""
+    while True:
+        await asyncio.sleep(_CHECK_INTERVAL)
+        async with _lock:
+            if _runner is None:
+                return
+            if _last_activity is None or _now() - _last_activity >= _IDLE_TIMEOUT:
+                await _do_stop()
+                return
+
+
+async def _do_stop() -> None:
+    """Tear down the server. Caller must hold _lock."""
+    global _runner, _site
+    if _site is not None:
+        await _site.stop()
     if _runner is not None:
-        return
-    app = web.Application()
-    app.add_routes([
-        web.get("/healthz", healthz),
-        web.get("/webapp", webapp_page),
-        web.post("/webapp/ping", webapp_ping),
-    ])
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, "127.0.0.1", config.WEBAPP_PORT)
-    await site.start()
-    _runner = runner  # module-global keeps the runner alive (else GC'd)
-    log.info("webapp listening on 127.0.0.1:%d (public: %s)", config.WEBAPP_PORT, config.WEBAPP_BASE_URL)
+        await _runner.cleanup()
+    _runner = _site = None
+    log.info("webapp stopped (idle); no listener until the next /oliver webapp")

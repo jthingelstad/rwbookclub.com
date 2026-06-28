@@ -621,6 +621,7 @@ async def oliver_webapp(interaction: discord.Interaction) -> None:
         await interaction.response.send_message(
             "I couldn't resolve your member record — ask an admin to check your link.", ephemeral=True)
         return
+    await webapp.ensure_running()  # spin the server up on demand (it idles off when unused)
     token = await asyncio.to_thread(
         webapp.mint_token, member_id, is_admin=_is_admin(interaction))
     url = f"{config.WEBAPP_BASE_URL}/webapp?t={token}"
