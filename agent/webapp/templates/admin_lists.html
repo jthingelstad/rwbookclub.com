@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_list_card.html" import list_card %}
+{% set nav = "club-lists" %}
+{% block title %}Club lists (admin){% endblock %}
+{% block content %}
+  <h1>Club lists</h1>
+  <p class="muted">Shared lists that belong to the club (not a single member). These show on the
+    public site under <a href="/lists/">Lists</a>.</p>
+  {% set ret = "/webapp/admin/lists" %}
+  {% for lst in lists %}{{ list_card(lst, books, titles, csrf, ret=ret) }}{% else %}<p class="muted">No club lists yet.</p>{% endfor %}
+
+  <h2>New club list</h2>
+  <form method="post" action="/webapp/lists/create" class="card">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="scope" value="club">
+    <input type="hidden" name="return" value="{{ ret }}">
+    <label>Name</label><input type="text" name="name" required>
+    <label>Description</label><input type="text" name="description">
+    <p style="margin-top:.8rem"><button class="primary">Create club list</button></p>
+  </form>
+{% endblock %}

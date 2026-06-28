@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% set nav = "members" %}
+{% block title %}Edit {{ member.name }}{% endblock %}
+{% set act = "/webapp/admin/members/" ~ member.slug %}
+{% macro handle_list(items, surface, removable) %}
+  <table>
+    {% for h in items %}
+    <tr>
+      <td>{{ h.identifier }}{% if h.is_primary %} <span class="badge-default">default</span>{% endif %}</td>
+      <td style="text-align:right; white-space:nowrap">
+        {% if not h.is_primary and items|length > 1 %}
+        <form method="post" action="{{ act }}" style="display:inline">
+          <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="primary-{{ surface }}">
+          <input type="hidden" name="value" value="{{ h.identifier }}"><button>Make default</button></form>
+        {% endif %}
+        {% if removable %}
+        <form method="post" action="{{ act }}" style="display:inline">
+          <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="remove-{{ surface }}">
+          <input type="hidden" name="value" value="{{ h.identifier }}"><button>Remove</button></form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}<tr><td class="muted">None yet.</td></tr>
+    {% endfor %}
+  </table>
+{% endmacro %}
+{% block content %}
+  <style>.badge-default { font-size:.7rem; text-transform:uppercase; letter-spacing:.05em;
+    background:#eef3ec; color:#1a7f37; padding:.1rem .45rem; border-radius:999px; margin-left:.3rem; }</style>
+  <p class="muted"><a href="/webapp/admin/members">← all members</a></p>
+  <h1>{{ member.name }}{% if not member.current %} <span class="muted">· former</span>{% endif %}</h1>
+
+  <div class="card">
+    <form method="post" action="{{ act }}" class="row" style="gap:.4rem">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="rename">
+      <input type="text" name="name" value="{{ member.name }}" style="flex:1"><button class="primary">Rename</button>
+    </form>
+    <p class="muted" style="margin:.5rem 0 0">The slug (<code>{{ member.slug }}</code>) stays fixed so links don't break.</p>
+    <form method="post" action="{{ act }}" style="margin-top:.6rem">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      {% if member.current %}
+        <input type="hidden" name="op" value="retire"><button>Retire (mark former)</button>
+      {% else %}
+        <input type="hidden" name="op" value="reactivate"><button class="primary">Reactivate</button>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Websites <span class="muted">(public — shown on their member page)</span></h2>
+    <table>
+      {% for w in websites %}
+      <tr>
+        <td><a href="{{ w.identifier }}" rel="external noopener">{{ w.label or w.identifier }}</a>
+          {% if w.label %}<span class="muted"> — {{ w.identifier }}</span>{% endif %}
+          {% if w.is_primary %} <span class="badge-default">default</span>{% endif %}</td>
+        <td style="text-align:right; white-space:nowrap">
+          {% if not w.is_primary and websites|length > 1 %}
+          <form method="post" action="{{ act }}" style="display:inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="primary-website">
+            <input type="hidden" name="value" value="{{ w.identifier }}"><button>Make default</button></form>
+          {% endif %}
+          <form method="post" action="{{ act }}" style="display:inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="remove-website">
+            <input type="hidden" name="value" value="{{ w.identifier }}"><button>Remove</button></form></td>
+      </tr>
+      {% else %}<tr><td class="muted">None yet.</td></tr>
+      {% endfor %}
+    </table>
+    <form method="post" action="{{ act }}" class="row" style="margin-top:.5rem; gap:.4rem">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="add-website">
+      <input type="text" name="label" placeholder="Name (e.g. Blog)" style="flex:1">
+      <input type="url" name="value" placeholder="https://example.com" style="flex:2"><button class="primary">Add</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Email <span class="muted">(private — Oliver emails the default)</span></h2>
+    {{ handle_list(emails, "email", false) }}
+    <form method="post" action="{{ act }}" class="row" style="margin-top:.4rem">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="add-email">
+      <input type="email" name="value" placeholder="you@example.com" style="flex:1"><button class="primary">Add</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Phone <span class="muted">(private)</span></h2>
+    {{ handle_list(phones, "phone", true) }}
+    <form method="post" action="{{ act }}" class="row" style="margin-top:.4rem">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="add-phone">
+      <input type="tel" name="value" placeholder="+1 555 123 4567" style="flex:1"><button class="primary">Add</button>
+    </form>
+  </div>
+{% endblock %}

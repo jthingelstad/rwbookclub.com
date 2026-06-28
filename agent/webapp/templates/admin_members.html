@@ -11,17 +11,9 @@
   <table>
     {% for m in members %}
     <tr>
-      <td>{{ m.name }}{% if not m.current %} <span class="muted">· former</span>{% endif %}</td>
+      <td><a href="/webapp/admin/members/{{ m.slug }}">{{ m.name }}</a>{% if not m.current %} <span class="muted">· former</span>{% endif %}</td>
       <td style="text-align:right">
-        <form method="post" action="/webapp/admin/members">
-          <input type="hidden" name="csrf" value="{{ csrf }}">
-          <input type="hidden" name="slug" value="{{ m.slug }}">
-          {% if m.current %}
-            <input type="hidden" name="op" value="retire"><button>Retire</button>
-          {% else %}
-            <input type="hidden" name="op" value="reactivate"><button class="primary">Reactivate</button>
-          {% endif %}
-        </form>
+        <a class="btn" href="/webapp/admin/members/{{ m.slug }}">Edit</a>
       </td>
     </tr>
     {% endfor %}

@@ -24,6 +24,37 @@ def _form(request: web.Request):
     return request.get("form") or {}
 
 
+def _safe_return(form, default: str) -> str:
+    """A redirect target from the form, restricted to in-app paths (no open redirect)."""
+    ret = (form.get("return") or "").strip()
+    return ret if ret.startswith("/webapp/") else default
+
+
+def apply_identity_op(slug: str, op: str, val: str, label: str | None = None) -> bool:
+    """Apply one profile identity mutation for `slug`. Shared by the member profile page
+    and the admin member editor. Returns True when the change is public (websites)."""
+    if op == "add-website" and val:
+        db.link_member_website(val, slug, linked_by="webapp", label=label)
+        return True
+    if op == "remove-website" and val:
+        db.remove_member_website(val, slug)
+        return True
+    if op == "add-email" and val:
+        db.link_member_email(val, slug, linked_by="webapp")
+    elif op == "add-phone" and val:
+        db.link_member_sms(val, slug, linked_by="webapp")
+    elif op == "remove-phone" and val:
+        db.remove_member_sms(val, slug)
+    elif op == "primary-website" and val:
+        db.set_primary_identity(slug, "website", val)
+        return True  # website order is public
+    elif op == "primary-email" and val:
+        db.set_primary_identity(slug, "email", val)
+    elif op == "primary-phone" and val:
+        db.set_primary_identity(slug, "sms", val)
+    return False
+
+
 def _load_books() -> list[dict]:
     with db.connect() as conn:
         books = clubdb.all_books(conn)
@@ -122,13 +153,11 @@ async def review_submit(request: web.Request) -> web.Response:
 # ── Lists ────────────────────────────────────────────────────────────────────
 async def lists_page(request: web.Request) -> web.Response:
     slug = request["session"]["slug"]
-    is_admin = bool(request["session"].get("a"))
     all_lists = await asyncio.to_thread(cr.lists)
     mine = [lst for lst in all_lists if lst.get("owner") == slug]
-    club = [lst for lst in all_lists if lst.get("scope") == "club"] if is_admin else []
     books = await asyncio.to_thread(_load_books)
     titles = {b["slug"]: b["title"] for b in books}
-    return render("lists.html", request, lists=mine, club_lists=club, books=books, titles=titles)
+    return render("lists.html", request, lists=mine, books=books, titles=titles)
 
 
 async def lists_create(request: web.Request) -> web.Response:
@@ -142,7 +171,7 @@ async def lists_create(request: web.Request) -> web.Response:
     except lists_writer.ListError:
         pass  # fall through to re-render; the page shows current state
     state.mark_dirty()
-    raise web.HTTPFound("/webapp/lists")
+    raise web.HTTPFound(_safe_return(form, "/webapp/lists"))
 
 
 async def lists_action(request: web.Request) -> web.Response:
@@ -170,7 +199,7 @@ async def lists_action(request: web.Request) -> web.Response:
     except lists_writer.ListError:
         pass
     state.mark_dirty()
-    raise web.HTTPFound("/webapp/lists")
+    raise web.HTTPFound(_safe_return(form, "/webapp/lists"))
 
 
 # ── Profile / contact ────────────────────────────────────────────────────────
@@ -187,30 +216,11 @@ async def profile_action(request: web.Request) -> web.Response:
     slug = request["session"]["slug"]
     op = form.get("op")
     val = (form.get("value") or "").strip()
-    published = False
+    label = (form.get("label") or "").strip() or None
     try:
-        if op == "add-website" and val:
-            await asyncio.to_thread(db.link_member_website, val, slug,
-                                    linked_by="webapp", label=(form.get("label") or "").strip() or None)
-            published = True
-        elif op == "remove-website" and val:
-            await asyncio.to_thread(db.remove_member_website, val, slug)
-            published = True
-        elif op == "add-email" and val:
-            await asyncio.to_thread(db.link_member_email, val, slug, linked_by="webapp")
-        elif op == "add-phone" and val:
-            await asyncio.to_thread(db.link_member_sms, val, slug, linked_by="webapp")
-        elif op == "remove-phone" and val:
-            await asyncio.to_thread(db.remove_member_sms, val, slug)
-        elif op == "primary-website" and val:
-            await asyncio.to_thread(db.set_primary_identity, slug, "website", val)
-            published = True  # website order is public
-        elif op == "primary-email" and val:
-            await asyncio.to_thread(db.set_primary_identity, slug, "email", val)
-        elif op == "primary-phone" and val:
-            await asyncio.to_thread(db.set_primary_identity, slug, "sms", val)
+        published = await asyncio.to_thread(apply_identity_op, slug, op, val, label)
     except ValueError:
-        pass  # bad input — re-render current state
+        published = False  # bad input — re-render current state
     if published:
         state.mark_dirty()  # websites are public
     raise web.HTTPFound("/webapp/profile")

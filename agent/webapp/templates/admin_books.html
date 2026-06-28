@@ -3,6 +3,15 @@
 {% block title %}Books (admin){% endblock %}
 {% block content %}
   <h1>Edit book data</h1>
+  <form method="post" action="/webapp/admin/books/add" class="card">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Add a book <span class="muted">— fetches metadata from Open Library</span></label>
+    <div class="row" style="gap:.4rem">
+      <input type="text" name="title" placeholder="Title" required style="flex:3">
+      <input type="text" name="isbn" placeholder="ISBN (optional)" style="flex:1">
+      <button class="primary">Add</button>
+    </div>
+  </form>
   <input class="filter" type="text" id="filter" placeholder="Filter books…" autocomplete="off">
   <table>
     <tbody id="list">

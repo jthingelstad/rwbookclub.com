@@ -1,0 +1,61 @@
+{# Shared list-card macros, used by the member Lists page and the admin Club-lists page.
+   Kept in a standalone partial (no {% extends %}) so it can be imported without rendering base.html.
+   `csrf` is threaded in explicitly since macros imported without context don't see globals. #}
+{% macro book_options(books) %}
+  {% for b in books %}<option value="{{ b.slug }}">{{ b.title }}</option>{% endfor %}
+{% endmacro %}
+{% macro list_card(lst, books, titles, csrf, ret="") %}
+  <div class="card">
+    <div class="row"><strong style="flex:1">{{ lst.name }}</strong>
+      <form method="post" action="/webapp/lists/act" onsubmit="return confirm('Delete this list?')">
+        <input type="hidden" name="csrf" value="{{ csrf }}">{% if ret %}<input type="hidden" name="return" value="{{ ret }}">{% endif %}
+        <input type="hidden" name="op" value="delete">
+        <input type="hidden" name="list" value="{{ lst.slug }}">
+        <button class="danger">Delete</button></form>
+    </div>
+    {% if lst.description %}<p class="muted">{{ lst.description }}</p>{% endif %}
+    <table>
+      {% for e in lst.books %}
+      <tr><td>{{ titles.get(e.book, e.book) }}{% if e.note %} <span class="muted">— {{ e.note }}</span>{% endif %}</td>
+        <td style="text-align:right; white-space:nowrap">
+          {% if not loop.first %}
+          <form method="post" action="/webapp/lists/act" style="display:inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}">{% if ret %}<input type="hidden" name="return" value="{{ ret }}">{% endif %}
+            <input type="hidden" name="op" value="move-up">
+            <input type="hidden" name="list" value="{{ lst.slug }}"><input type="hidden" name="book" value="{{ e.book }}">
+            <button title="Move up">↑</button></form>
+          {% endif %}
+          {% if not loop.last %}
+          <form method="post" action="/webapp/lists/act" style="display:inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}">{% if ret %}<input type="hidden" name="return" value="{{ ret }}">{% endif %}
+            <input type="hidden" name="op" value="move-down">
+            <input type="hidden" name="list" value="{{ lst.slug }}"><input type="hidden" name="book" value="{{ e.book }}">
+            <button title="Move down">↓</button></form>
+          {% endif %}
+          <form method="post" action="/webapp/lists/act" style="display:inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}">{% if ret %}<input type="hidden" name="return" value="{{ ret }}">{% endif %}
+            <input type="hidden" name="op" value="remove-book">
+            <input type="hidden" name="list" value="{{ lst.slug }}"><input type="hidden" name="book" value="{{ e.book }}">
+            <button>Remove</button></form></td></tr>
+      {% endfor %}
+    </table>
+    <form method="post" action="/webapp/lists/act" class="row" style="margin-top:.5rem">
+      <input type="hidden" name="csrf" value="{{ csrf }}">{% if ret %}<input type="hidden" name="return" value="{{ ret }}">{% endif %}
+      <input type="hidden" name="op" value="add-book">
+      <input type="hidden" name="list" value="{{ lst.slug }}">
+      <select name="book" style="flex:2">{{ book_options(books) }}</select>
+      <input type="text" name="note" placeholder="note (optional)" style="flex:2">
+      <button class="primary">Add</button>
+    </form>
+    <details style="margin-top:.5rem"><summary class="muted">Rename / edit description</summary>
+      <form method="post" action="/webapp/lists/act" style="margin-top:.5rem">
+        <input type="hidden" name="csrf" value="{{ csrf }}">{% if ret %}<input type="hidden" name="return" value="{{ ret }}">{% endif %}
+        <input type="hidden" name="op" value="edit">
+        <input type="hidden" name="list" value="{{ lst.slug }}">
+        <input type="text" name="name" value="{{ lst.name }}" placeholder="name">
+        <input type="text" name="description" value="{{ lst.description or '' }}" placeholder="description" style="margin-top:.4rem">
+        <button class="primary" style="margin-top:.4rem">Save</button>
+      </form>
+    </details>
+  </div>
+{% endmacro %}

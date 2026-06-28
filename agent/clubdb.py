@@ -419,6 +419,16 @@ def set_member_current(conn: sqlite3.Connection, member_slug: str, *, is_current
     return cur.rowcount > 0
 
 
+def rename_member(conn: sqlite3.Connection, member_slug: str, name: str) -> bool:
+    """Change a member's display name, keeping the slug stable (slugs are identity in
+    the corpus, so a rename must not move files). Returns True if a row changed."""
+    name = (name or "").strip()
+    if not name:
+        raise ValueError("a member needs a name")
+    cur = conn.execute("UPDATE club_members SET name = ? WHERE slug = ?", (name, member_slug))
+    return cur.rowcount > 0
+
+
 def all_authors(conn: sqlite3.Connection) -> list[dict]:
     """Every author with external enrichment LEFT JOINed in. Curated `bio` wins
     via COALESCE; net-new fields (dates/nationality/links/notable works) come from

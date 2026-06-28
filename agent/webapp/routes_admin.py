@@ -9,9 +9,12 @@ import json
 
 from aiohttp import web
 
-from agent import clubdb, corpus_gen, db
+from agent import clubdb, corpus_gen, corpus_write, db
+from agent import corpus_read as cr
+from agent.club import openlibrary
 from agent.webapp import state
 from agent.webapp.render import render
+from agent.webapp.routes_member import apply_identity_op
 from corpus.paths import DATA_DIR
 
 
@@ -27,10 +30,7 @@ def _members() -> list[dict]:
 
 # ── Book data ────────────────────────────────────────────────────────────────
 async def books_page(request: web.Request) -> web.Response:
-    with_conn = await asyncio.to_thread(lambda: [
-        {"slug": b["slug"], "title": b["title"], "topic": b.get("topic")}
-        for b in _all_books()])
-    return render("admin_books.html", request, books=sorted(with_conn, key=lambda b: b["title"].lower()))
+    return await _render_books(request)
 
 
 def _all_books() -> list[dict]:
@@ -108,6 +108,41 @@ async def book_save(request: web.Request) -> web.Response:
                       topics=clubdb.TOPICS, error=err)
     state.mark_dirty()
     raise web.HTTPFound("/webapp/admin/books")
+
+
+async def _render_books(request: web.Request, *, status: int = 200, error: str | None = None):
+    with_conn = await asyncio.to_thread(lambda: [
+        {"slug": b["slug"], "title": b["title"], "topic": b.get("topic")} for b in _all_books()])
+    return render("admin_books.html", request, status=status, error=error,
+                  books=sorted(with_conn, key=lambda b: b["title"].lower()))
+
+
+def _add_book(title: str, isbn: str | None) -> dict | None:
+    """Look the book up on Open Library and write it to the club record. Returns the
+    write result (with slug) or None if nothing matched."""
+    meta = openlibrary.lookup(title, isbn)
+    if not meta or not meta.get("title"):
+        return None
+    return corpus_write.write_book(meta)  # upsert + enrich + corpus files
+
+
+async def book_add(request: web.Request) -> web.Response:
+    form = _form(request)
+    title = (form.get("title") or "").strip()
+    isbn = (form.get("isbn") or "").strip() or None
+    if not title:
+        return await _render_books(request, status=400, error="A book needs a title.")
+    try:
+        res = await asyncio.to_thread(_add_book, title, isbn)
+    except Exception:
+        return await _render_books(request, status=500, error="Something went wrong adding that book.")
+    if res is None:
+        return await _render_books(
+            request, status=404,
+            error=f"Couldn't find “{title}” on Open Library — try an ISBN, or check the title.")
+    state.mark_dirty()
+    # Land on the edit page so the admin can refine the fetched metadata.
+    raise web.HTTPFound(f"/webapp/admin/books/{res['slug']}")
 
 
 # ── Meetings ─────────────────────────────────────────────────────────────────
@@ -247,9 +282,77 @@ async def member_action(request: web.Request) -> web.Response:
     raise web.HTTPFound("/webapp/admin/members")
 
 
+def _member_by_slug(slug: str) -> dict | None:
+    with db.connect() as conn:
+        row = conn.execute("SELECT slug, name, is_current FROM club_members WHERE slug = ?",
+                           (slug,)).fetchone()
+    return {"slug": row["slug"], "name": row["name"], "current": bool(row["is_current"])} if row else None
+
+
+def _member_identities(slug: str) -> dict:
+    return {
+        "websites": db.member_handles(slug, "website"),
+        "emails": db.member_handles(slug, "email"),
+        "phones": db.member_handles(slug, "sms"),
+    }
+
+
+async def member_edit(request: web.Request) -> web.Response:
+    slug = request.match_info["slug"]
+    member = await asyncio.to_thread(_member_by_slug, slug)
+    if member is None:
+        return web.Response(status=404, text="No such member.")
+    ids = await asyncio.to_thread(_member_identities, slug)
+    return render("admin_member.html", request, member=member, **ids)
+
+
+def _member_save(slug: str, op: str, form) -> bool:
+    """Apply one admin edit to `slug`. Returns True if the public site should rebuild."""
+    if op == "rename":
+        with db.connect() as conn:
+            clubdb.rename_member(conn, slug, form.get("name", ""))
+        return True  # display name is public
+    if op == "retire":
+        with db.connect() as conn:
+            clubdb.set_member_current(conn, slug, is_current=False)
+        return True
+    if op == "reactivate":
+        with db.connect() as conn:
+            clubdb.set_member_current(conn, slug, is_current=True)
+        return True
+    # Otherwise it's an identity op (website/email/phone), shared with the member profile page.
+    val = (form.get("value") or "").strip()
+    label = (form.get("label") or "").strip() or None
+    return apply_identity_op(slug, op or "", val, label)
+
+
+async def member_save(request: web.Request) -> web.Response:
+    slug = request.match_info["slug"]
+    form = _form(request)
+    if await asyncio.to_thread(_member_by_slug, slug) is None:
+        return web.Response(status=404, text="No such member.")
+    try:
+        published = await asyncio.to_thread(_member_save, slug, form.get("op", ""), form)
+    except ValueError:
+        published = False  # bad input — re-render current state
+    if published:
+        state.mark_dirty()
+    raise web.HTTPFound(f"/webapp/admin/members/{slug}")
+
+
+# ── Club lists ───────────────────────────────────────────────────────────────
+async def lists_page(request: web.Request) -> web.Response:
+    all_lists = await asyncio.to_thread(cr.lists)
+    club = [lst for lst in all_lists if lst.get("scope") == "club"]
+    books = await asyncio.to_thread(_sorted_books)
+    titles = {b["slug"]: b["title"] for b in books}
+    return render("admin_lists.html", request, lists=club, books=books, titles=titles)
+
+
 def add_routes(app: web.Application) -> None:
     app.add_routes([
         web.get("/webapp/admin/books", books_page),
+        web.post("/webapp/admin/books/add", book_add),
         web.get("/webapp/admin/books/{slug}", book_edit),
         web.post("/webapp/admin/books/{slug}", book_save),
         web.get("/webapp/admin/meetings", meetings_page),
@@ -258,4 +361,7 @@ def add_routes(app: web.Application) -> None:
         web.post("/webapp/admin/meetings/{id}", meeting_save),
         web.get("/webapp/admin/members", members_page),
         web.post("/webapp/admin/members", member_action),
+        web.get("/webapp/admin/members/{slug}", member_edit),
+        web.post("/webapp/admin/members/{slug}", member_save),
+        web.get("/webapp/admin/lists", lists_page),
     ])
