@@ -104,9 +104,13 @@ async def book_save(request: web.Request) -> web.Response:
 
 
 # ── Meetings ─────────────────────────────────────────────────────────────────
-async def meetings_page(request: web.Request) -> web.Response:
+def _all_meetings() -> list[dict]:
     with db.connect() as conn:
-        meetings = await asyncio.to_thread(clubdb.all_meetings, conn)
+        return clubdb.all_meetings(conn)
+
+
+async def meetings_page(request: web.Request) -> web.Response:
+    meetings = await asyncio.to_thread(_all_meetings)
     books = await asyncio.to_thread(lambda: sorted(
         ({"slug": b["slug"], "title": b["title"]} for b in _all_books()), key=lambda b: b["title"].lower()))
     members = await asyncio.to_thread(_members)

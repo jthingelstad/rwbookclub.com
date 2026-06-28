@@ -155,6 +155,19 @@ def test_routes_end_to_end(monkeypatch):
                 # admin route refused for a non-admin session
                 async with s.get(base + "/webapp/admin/books", headers=hdr) as r:
                     assert r.status == 403
+                # an ADMIN session can load every admin page (exercises the DB-in-thread paths)
+                admin_val = sessions.make_session(
+                    {"member_id": jamie, "slug": "jamie", "name": "Jamie", "is_admin": True})
+                ahdr = {"Cookie": f"{sessions.COOKIE_NAME}={admin_val}"}
+                with db.connect() as conn:
+                    mid = clubdb.all_meetings(conn)[0]["id"]
+                for path, needle in [("/webapp/admin/books", "Edit book data"),
+                                     ("/webapp/admin/books/heart-of-darkness", "Open Library key"),
+                                     ("/webapp/admin/meetings", "Schedule a meeting"),
+                                     (f"/webapp/admin/meetings/{mid}", "Host(s)")]:
+                    async with s.get(base + path, headers=ahdr) as r:
+                        assert r.status == 200, path
+                        assert needle in await r.text(), path
                 # no session at all → 401-ish (expired page)
                 async with s.get(base + "/webapp/ratings", allow_redirects=False) as r:
                     assert r.status == 401
