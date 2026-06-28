@@ -543,7 +543,9 @@ async def oliver_webapp(interaction: discord.Interaction) -> None:
     # Angle brackets suppress Discord's link unfurl, so its preview bot won't pre-fetch (and burn)
     # the single-use token before you tap it. The server also ignores preview bots as a backstop.
     await interaction.response.send_message(
-        f"🔧 Your private link (good for ~15 minutes, just for you):\n<{url}>", ephemeral=True)
+        f"🔧 Your private link (good for ~15 minutes, just for you):\n<{url}>\n"
+        "_Blank page? The editor sleeps after ~15 min idle (or a restart) — just run "
+        "`/oliver webapp` again to wake it._", ephemeral=True)
 
 
 @admin_cmds.command(name="stats", description="Report corpus stats (admin).")
