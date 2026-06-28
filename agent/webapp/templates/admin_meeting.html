@@ -1,29 +1,82 @@
 {% extends "base.html" %}
 {% set nav = "meetings" %}
 {% block title %}Edit meeting{% endblock %}
+{% macro member_options(members, selected) %}
+  <option value="">— none —</option>
+  {% for m in members %}<option value="{{ m.slug }}" {{ 'selected' if m.slug == selected }}>{{ m.name }}{{ '' if m.current else ' (former)' }}</option>{% endfor %}
+{% endmacro %}
 {% block content %}
   <p class="muted"><a href="/webapp/admin/meetings">← all meetings</a></p>
   <h1>Meeting {{ meeting.date or 'TBD' }}</h1>
-  <form method="post" action="/webapp/admin/meetings/{{ meeting.id }}">
+  <datalist id="books-dl">{% for b in books %}<option value="{{ b.title }}"></option>{% endfor %}</datalist>
+  <form method="post" action="/webapp/admin/meetings/{{ meeting.id }}" id="mform">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <label>Date</label><input type="date" name="date" value="{{ meeting.date or '' }}">
     <label>Start time <span class="muted">(local, America/Chicago)</span></label><input type="time" name="start_time" value="{{ meeting.start_time or '' }}">
-    <label>Book(s) <span class="muted">— none = social/picking meeting; 2+ = multi-book</span></label>
-    <select name="books" multiple size="5">
-      {% for b in books %}<option value="{{ b.slug }}" {{ 'selected' if b.slug in meeting.book_slugs }}>{{ b.title }}</option>{% endfor %}
-    </select>
-    <label>Type(s)</label>
+
+    <label>Book &amp; picker <span class="muted">— most meetings have one of each</span></label>
+    <div id="book-rows">
+      {% for slug in meeting.book_slugs or [''] %}
+      <div class="book-row row" style="gap:.4rem; margin-bottom:.4rem">
+        <input type="text" class="book-search" list="books-dl" placeholder="Search a book…" style="flex:2"
+               value="{{ titles.get(slug, '') if slug else '' }}">
+        <input type="hidden" name="books" class="book-slug" value="{{ slug }}">
+        <select name="pickers" class="picker-sel" style="flex:1">{{ member_options(members, (book_pickers.get(slug) or [''])[0]) }}</select>
+        <button type="button" class="rm-row" title="Remove this book">✕</button>
+      </div>
+      {% endfor %}
+    </div>
+    <button type="button" id="add-book">+ add another book</button>
+
+    <label style="margin-top:1.2rem">Host(s) <span class="muted">— usually one</span></label>
+    <div id="host-rows">
+      {% for slug in meeting.host_slugs or [''] %}
+      <div class="host-row row" style="gap:.4rem; margin-bottom:.4rem">
+        <select name="hosts" style="flex:1">{{ member_options(members, slug) }}</select>
+        <button type="button" class="rm-row" title="Remove this host">✕</button>
+      </div>
+      {% endfor %}
+    </div>
+    <button type="button" id="add-host">+ add another host</button>
+
+    <label style="margin-top:1.2rem">Type(s)</label>
     <select name="types" multiple size="3">
       {% for t in meeting_types %}<option value="{{ t }}" {{ 'selected' if t in meeting.type }}>{{ t }}</option>{% endfor %}
     </select>
+    <p class="muted">Hold ⌘/Ctrl to select multiple. Leave books empty for a social/picking meeting.</p>
     <label>Location</label><input type="text" name="location" value="{{ meeting.location or '' }}">
     <label>Notes</label><textarea name="notes">{{ meeting.notes or '' }}</textarea>
     <label class="row"><input type="checkbox" name="held" value="1" style="width:auto" {{ 'checked' if not meeting.placeholder }}> &nbsp;Held (not tentative)</label>
-    <label>Host(s)</label>
-    <select name="hosts" multiple size="6">
-      {% for m in members %}<option value="{{ m.slug }}" {{ 'selected' if m.slug in meeting.host_slugs }}>{{ m.name }}{{ '' if m.current else ' (former)' }}</option>{% endfor %}
-    </select>
-    <p class="muted">Hold ⌘/Ctrl to select multiple.</p>
     <p style="margin-top:1rem"><button class="primary" type="submit">Save meeting</button></p>
   </form>
+{% endblock %}
+{% block script %}
+  const T2S = {};
+  {% for b in books %}T2S[{{ b.title|tojson }}] = {{ b.slug|tojson }};
+  {% endfor %}
+  function resolve(input) { input.closest('.book-row').querySelector('.book-slug').value = T2S[input.value] || ''; }
+  function wire(input) { input.addEventListener('change', () => resolve(input)); }
+  document.querySelectorAll('.book-search').forEach(wire);
+  document.getElementById('add-book').addEventListener('click', () => {
+    const rows = document.getElementById('book-rows');
+    const row = rows.firstElementChild.cloneNode(true);
+    row.querySelector('.book-search').value = ''; row.querySelector('.book-slug').value = '';
+    row.querySelector('.picker-sel').value = '';
+    rows.appendChild(row); wire(row.querySelector('.book-search'));
+  });
+  document.getElementById('add-host').addEventListener('click', () => {
+    const rows = document.getElementById('host-rows');
+    const row = rows.firstElementChild.cloneNode(true); row.querySelector('select').value = '';
+    rows.appendChild(row);
+  });
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.rm-row'); if (!btn) return;
+    const container = btn.closest('#book-rows, #host-rows');
+    const row = btn.closest('.book-row, .host-row');
+    if (container.children.length > 1) row.remove();
+    else row.querySelectorAll('input, select').forEach(el => { el.value = ''; });
+  });
+  // Resolve any typed-but-unblurred title before submit.
+  document.getElementById('mform').addEventListener('submit', () =>
+    document.querySelectorAll('.book-search').forEach(resolve));
 {% endblock %}

@@ -5,18 +5,18 @@
   <h1>Meetings</h1>
 
   <h2>Schedule a meeting</h2>
-  <form method="post" action="/webapp/admin/meetings/add" class="card">
+  <datalist id="books-dl">{% for b in books %}<option value="{{ b.title }}"></option>{% endfor %}</datalist>
+  <form method="post" action="/webapp/admin/meetings/add" class="card" id="addform">
     <input type="hidden" name="csrf" value="{{ csrf }}">
-    <label>Date (YYYY-MM-DD)</label><input type="text" name="date" placeholder="2026-07-15">
-    <label>Book(s) <span class="muted">— optional: leave empty for a social/picking meeting, or pick 2+ for a multi-book meeting</span></label>
-    <select name="books" multiple size="5">{% for b in books %}<option value="{{ b.slug }}">{{ b.title }}</option>{% endfor %}</select>
-    <label>Type(s) <span class="muted">(optional — defaults to Book, or Social when bookless)</span></label>
-    <select name="types" multiple size="3">{% for t in meeting_types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}</select>
-    <label>Picker <span class="muted">(optional — who chose the book[s])</span></label>
+    <label>Date</label><input type="date" name="date">
+    <label>Book <span class="muted">— optional: leave empty for a social/picking meeting</span></label>
+    <input type="text" id="book-search" list="books-dl" placeholder="Search a book…" autocomplete="off">
+    <input type="hidden" name="books" id="book-slug">
+    <label>Picker <span class="muted">(who chose the book)</span></label>
     <select name="picker"><option value="">—</option>{% for m in members %}{% if m.current %}<option value="{{ m.slug }}">{{ m.name }}</option>{% endif %}{% endfor %}</select>
-    <label>Host(s) <span class="muted">(optional)</span></label>
-    <select name="hosts" multiple size="4">{% for m in members %}{% if m.current %}<option value="{{ m.slug }}">{{ m.name }}</option>{% endif %}{% endfor %}</select>
-    <p class="muted">Hold ⌘/Ctrl to select multiple.</p>
+    <label>Host <span class="muted">(who's running it)</span></label>
+    <select name="hosts"><option value="">—</option>{% for m in members %}{% if m.current %}<option value="{{ m.slug }}">{{ m.name }}</option>{% endif %}{% endfor %}</select>
+    <p class="muted">For the rare multi-book meeting, schedule it then add books on the edit page.</p>
     <p style="margin-top:.8rem"><button class="primary">Schedule</button></p>
   </form>
 
@@ -31,4 +31,13 @@
     </tr>
     {% endfor %}
   </table>
+{% endblock %}
+{% block script %}
+  const T2S = {};
+  {% for b in books %}T2S[{{ b.title|tojson }}] = {{ b.slug|tojson }};
+  {% endfor %}
+  const search = document.getElementById('book-search'), slug = document.getElementById('book-slug');
+  function resolve() { slug.value = T2S[search.value] || ''; }
+  search.addEventListener('change', resolve);
+  document.getElementById('addform').addEventListener('submit', resolve);
 {% endblock %}

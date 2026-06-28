@@ -112,6 +112,29 @@ def test_topics_constant():
     assert "Technology" in clubdb.TOPICS and len(clubdb.TOPICS) == 11
 
 
+def test_meeting_save_pairs_books_and_pickers():
+    from agent.webapp import routes_admin
+    with db.connect() as conn:
+        mid = clubdb.all_meetings(conn)[0]["id"]
+    # one book row → one picker; parallel arrays as the edit form posts them
+    form = {"date": "2026-07-01", "start_time": "18:00", "held": "1"}
+    routes_admin._save_meeting(mid, form, host_slugs=["jamie"],
+                               book_slugs=["heart-of-darkness"], picker_slugs=["erik"],
+                               types=["Book"])
+    with db.connect() as conn:
+        m = next(x for x in clubdb.all_meetings(conn) if x["id"] == mid)
+        bid = clubdb.book_id_for_slug(conn, "heart-of-darkness")
+        assert m["book_slugs"] == ["heart-of-darkness"] and m["host_slugs"] == ["jamie"]
+        assert clubdb.book_picker_slugs(conn, bid) == ["erik"]
+    # clearing the picker (explicit "— none —") removes it
+    routes_admin._save_meeting(mid, form, host_slugs=["jamie"],
+                               book_slugs=["heart-of-darkness"], picker_slugs=[""],
+                               types=["Book"])
+    with db.connect() as conn:
+        bid = clubdb.book_id_for_slug(conn, "heart-of-darkness")
+        assert clubdb.book_picker_slugs(conn, bid) == []
+
+
 def test_set_book_pickers_multi():
     with db.connect() as conn:
         bid = clubdb.book_id_for_slug(conn, "heart-of-darkness")

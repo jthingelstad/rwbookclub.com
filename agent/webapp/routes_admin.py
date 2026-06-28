@@ -209,6 +209,15 @@ def _sorted_books() -> list[dict]:
                   key=lambda b: b["title"].lower())
 
 
+def _meeting_book_pickers(book_slugs: list[str]) -> dict[str, list[str]]:
+    with db.connect() as conn:
+        out = {}
+        for slug in book_slugs:
+            bid = clubdb.book_id_for_slug(conn, slug)
+            out[slug] = clubdb.book_picker_slugs(conn, bid) if bid else []
+    return out
+
+
 async def meeting_edit(request: web.Request) -> web.Response:
     mid = int(request.match_info["id"])
     meeting = await asyncio.to_thread(_meeting_by_id, mid)
@@ -216,13 +225,17 @@ async def meeting_edit(request: web.Request) -> web.Response:
         return web.Response(status=404, text="No such meeting.")
     members = await asyncio.to_thread(_members)
     books = await asyncio.to_thread(_sorted_books)
+    pickers = await asyncio.to_thread(_meeting_book_pickers, meeting["book_slugs"])
+    titles = {b["slug"]: b["title"] for b in books}
     return render("admin_meeting.html", request, meeting=meeting, members=members, books=books,
-                  meeting_types=clubdb.MEETING_TYPES)
+                  titles=titles, book_pickers=pickers, meeting_types=clubdb.MEETING_TYPES)
 
 
 def _save_meeting(meeting_id: int, form, host_slugs: list[str], book_slugs: list[str],
-                  types: list[str]) -> None:
+                  picker_slugs: list[str], types: list[str]) -> None:
     types = [t for t in types if t in clubdb.MEETING_TYPES]
+    # books[i] is picked by pickers[i] — the edit form emits one of each per book row.
+    pairs = list(zip(book_slugs, picker_slugs + [""] * len(book_slugs)))
     with db.connect() as conn:
         clubdb.update_meeting(
             conn, meeting_id,
@@ -236,7 +249,14 @@ def _save_meeting(meeting_id: int, form, host_slugs: list[str], book_slugs: list
         # The edit form is the source of truth for books + hosts — set both (empty clears).
         host_ids = [h for h in (clubdb.member_id_for_slug(conn, s) for s in host_slugs if s) if h]
         clubdb.set_meeting_hosts(conn, meeting_id, host_ids)
-        book_ids = [b for b in (clubdb.book_id_for_slug(conn, s) for s in book_slugs if s) if b]
+        book_ids = []
+        for bslug, pslug in pairs:
+            bid = clubdb.book_id_for_slug(conn, bslug) if bslug else None
+            if bid is None:
+                continue
+            book_ids.append(bid)
+            pid = clubdb.member_id_for_slug(conn, pslug) if pslug else None
+            clubdb.set_book_pickers(conn, bid, [pid] if pid else [])
         clubdb.set_meeting_books(conn, meeting_id, book_ids)
         for bid in book_ids:
             corpus_gen.write_book_file(conn, bid, DATA_DIR)
@@ -248,8 +268,9 @@ async def meeting_save(request: web.Request) -> web.Response:
     form = _form(request)
     host_slugs = form.getall("hosts", []) if hasattr(form, "getall") else []
     book_slugs = form.getall("books", []) if hasattr(form, "getall") else []
+    picker_slugs = form.getall("pickers", []) if hasattr(form, "getall") else []
     types = form.getall("types", []) if hasattr(form, "getall") else []
-    await asyncio.to_thread(_save_meeting, mid, form, host_slugs, book_slugs, types)
+    await asyncio.to_thread(_save_meeting, mid, form, host_slugs, book_slugs, picker_slugs, types)
     state.mark_dirty()
     raise web.HTTPFound("/webapp/admin/meetings")
 
