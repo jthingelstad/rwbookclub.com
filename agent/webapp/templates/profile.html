@@ -1,16 +1,24 @@
 {% extends "base.html" %}
 {% set nav = "profile" %}
 {% block title %}Profile{% endblock %}
-{% macro handle_list(items, op_remove, removable) %}
+{% macro handle_list(items, surface, removable) %}
   <table>
-    {% for v in items %}
-    <tr><td>{{ v }}</td><td style="text-align:right">
-      {% if removable %}
-      <form method="post" action="/webapp/profile/act">
-        <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="{{ op_remove }}">
-        <input type="hidden" name="value" value="{{ v }}"><button>Remove</button></form>
-      {% endif %}
-    </td></tr>
+    {% for h in items %}
+    <tr>
+      <td>{{ h.identifier }}{% if h.is_primary %} <span class="muted">· primary</span>{% endif %}</td>
+      <td style="text-align:right; white-space:nowrap">
+        {% if not h.is_primary and items|length > 1 %}
+        <form method="post" action="/webapp/profile/act" style="display:inline">
+          <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="primary-{{ surface }}">
+          <input type="hidden" name="value" value="{{ h.identifier }}"><button>Make primary</button></form>
+        {% endif %}
+        {% if removable %}
+        <form method="post" action="/webapp/profile/act" style="display:inline">
+          <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="remove-{{ surface }}">
+          <input type="hidden" name="value" value="{{ h.identifier }}"><button>Remove</button></form>
+        {% endif %}
+      </td>
+    </tr>
     {% else %}<tr><td class="muted">None yet.</td></tr>
     {% endfor %}
   </table>
@@ -26,19 +34,19 @@
 
   <div class="card">
     <h2 style="margin-top:0">Websites <span class="muted">(public — shown on your member page)</span></h2>
-    {{ handle_list(websites, "remove-website", true) }}
+    {{ handle_list(websites, "website", true) }}
     {{ add_form("add-website", "https://example.com", "url") }}
   </div>
 
   <div class="card">
     <h2 style="margin-top:0">Email <span class="muted">(private; can be added, not removed)</span></h2>
-    {{ handle_list(emails, "", false) }}
+    {{ handle_list(emails, "email", false) }}
     {{ add_form("add-email", "you@example.com", "email") }}
   </div>
 
   <div class="card">
     <h2 style="margin-top:0">Phone <span class="muted">(private)</span></h2>
-    {{ handle_list(phones, "remove-phone", true) }}
+    {{ handle_list(phones, "phone", true) }}
     {{ add_form("add-phone", "+1 555 123 4567", "tel") }}
   </div>
 {% endblock %}

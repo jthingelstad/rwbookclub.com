@@ -10,6 +10,8 @@
     <label>Date (YYYY-MM-DD)</label><input type="text" name="date" placeholder="2026-07-15">
     <label>Book(s) <span class="muted">— optional: leave empty for a social/picking meeting, or pick 2+ for a multi-book meeting</span></label>
     <select name="books" multiple size="5">{% for b in books %}<option value="{{ b.slug }}">{{ b.title }}</option>{% endfor %}</select>
+    <label>Type(s) <span class="muted">(optional — defaults to Book, or Social when bookless)</span></label>
+    <select name="types" multiple size="3">{% for t in meeting_types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}</select>
     <label>Picker <span class="muted">(optional — who chose the book[s])</span></label>
     <select name="picker"><option value="">—</option>{% for m in members %}{% if m.current %}<option value="{{ m.slug }}">{{ m.name }}</option>{% endif %}{% endfor %}</select>
     <label>Host(s) <span class="muted">(optional)</span></label>

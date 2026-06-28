@@ -46,8 +46,10 @@ def _load_book_core(slug: str) -> dict | None:
         authors = [r["name"] for r in conn.execute(
             "SELECT a.name FROM club_book_authors ba JOIN club_authors a ON a.id = ba.author_id "
             "WHERE ba.book_id = ? ORDER BY ba.ordinal", (row["id"],))]
+        pickers = clubdb.book_picker_slugs(conn, row["id"])
     d = dict(row)
     d["authors"] = authors
+    d["pickers"] = pickers
     d["subjects"] = json.loads(row["subjects_json"]) if row["subjects_json"] else []
     return d
 
@@ -57,10 +59,11 @@ async def book_edit(request: web.Request) -> web.Response:
     book = await asyncio.to_thread(_load_book_core, slug)
     if book is None:
         return web.Response(status=404, text="No such book.")
-    return render("admin_book.html", request, book=book, topics=clubdb.TOPICS)
+    members = await asyncio.to_thread(_members)
+    return render("admin_book.html", request, book=book, topics=clubdb.TOPICS, members=members)
 
 
-def _save_book(slug: str, form) -> str | None:
+def _save_book(slug: str, form, picker_slugs: list[str]) -> str | None:
     core = _load_book_core(slug)
     if core is None:
         return "no such book"
@@ -88,13 +91,17 @@ def _save_book(slug: str, form) -> str | None:
     }
     with db.connect() as conn:
         res = clubdb.upsert_book(conn, meta)
+        picker_ids = [p for p in (clubdb.member_id_for_slug(conn, s) for s in picker_slugs if s) if p]
+        clubdb.set_book_pickers(conn, res["id"], picker_ids)
         corpus_gen.write_book_file(conn, res["id"], DATA_DIR)
     return None
 
 
 async def book_save(request: web.Request) -> web.Response:
     slug = request.match_info["slug"]
-    err = await asyncio.to_thread(_save_book, slug, _form(request))
+    form = _form(request)
+    pickers = form.getall("pickers", []) if hasattr(form, "getall") else []
+    err = await asyncio.to_thread(_save_book, slug, form, pickers)
     if err:
         book = await asyncio.to_thread(_load_book_core, slug)
         return render("admin_book.html", request, status=400, book=book or {"slug": slug},
@@ -115,18 +122,21 @@ async def meetings_page(request: web.Request) -> web.Response:
         ({"slug": b["slug"], "title": b["title"]} for b in _all_books()), key=lambda b: b["title"].lower()))
     members = await asyncio.to_thread(_members)
     meetings = sorted(meetings, key=lambda m: (m.get("date") or ""), reverse=True)
-    return render("admin_meetings.html", request, meetings=meetings, books=books, members=members)
+    return render("admin_meetings.html", request, meetings=meetings, books=books,
+                  members=members, meeting_types=clubdb.MEETING_TYPES)
 
 
 def _add_meeting(date: str, book_slugs: list[str], picker_slug: str | None,
-                 host_slugs: list[str]) -> bool:
+                 host_slugs: list[str], types: list[str]) -> bool:
     day = (date or "").strip()[:10]
     if len(day) != 10:
         return False
+    types = [t for t in types if t in clubdb.MEETING_TYPES]
     with db.connect() as conn:
         book_ids = [b for b in (clubdb.book_id_for_slug(conn, s) for s in book_slugs if s) if b]
+        use_types = types or (["Book"] if book_ids else ["Social"])
         mid = clubdb.create_meeting(conn, date_iso=day, book_id=None,
-                                    types=["Book"] if book_ids else ["Social"], placeholder=True)
+                                    types=use_types, placeholder=True)
         if book_ids:
             clubdb.set_meeting_books(conn, mid, book_ids)
         if picker_slug:
@@ -146,8 +156,9 @@ async def meeting_add(request: web.Request) -> web.Response:
     form = _form(request)
     books = form.getall("books", []) if hasattr(form, "getall") else []
     hosts = form.getall("hosts", []) if hasattr(form, "getall") else []
+    types = form.getall("types", []) if hasattr(form, "getall") else []
     created = await asyncio.to_thread(_add_meeting, form.get("date", ""), books,
-                                      form.get("picker") or None, hosts)
+                                      form.get("picker") or None, hosts, types)
     if created:
         state.mark_dirty()
     raise web.HTTPFound("/webapp/admin/meetings")
@@ -170,10 +181,13 @@ async def meeting_edit(request: web.Request) -> web.Response:
         return web.Response(status=404, text="No such meeting.")
     members = await asyncio.to_thread(_members)
     books = await asyncio.to_thread(_sorted_books)
-    return render("admin_meeting.html", request, meeting=meeting, members=members, books=books)
+    return render("admin_meeting.html", request, meeting=meeting, members=members, books=books,
+                  meeting_types=clubdb.MEETING_TYPES)
 
 
-def _save_meeting(meeting_id: int, form, host_slugs: list[str], book_slugs: list[str]) -> None:
+def _save_meeting(meeting_id: int, form, host_slugs: list[str], book_slugs: list[str],
+                  types: list[str]) -> None:
+    types = [t for t in types if t in clubdb.MEETING_TYPES]
     with db.connect() as conn:
         clubdb.update_meeting(
             conn, meeting_id,
@@ -181,6 +195,7 @@ def _save_meeting(meeting_id: int, form, host_slugs: list[str], book_slugs: list
             start_time=(form.get("start_time") or "").strip() or None,
             location=(form.get("location") or "").strip() or None,
             notes=(form.get("notes") or "").strip() or None,
+            types=types or None,
             placeholder=False if form.get("held") in ("1", "true", "on") else None,
         )
         # The edit form is the source of truth for books + hosts — set both (empty clears).
@@ -198,9 +213,38 @@ async def meeting_save(request: web.Request) -> web.Response:
     form = _form(request)
     host_slugs = form.getall("hosts", []) if hasattr(form, "getall") else []
     book_slugs = form.getall("books", []) if hasattr(form, "getall") else []
-    await asyncio.to_thread(_save_meeting, mid, form, host_slugs, book_slugs)
+    types = form.getall("types", []) if hasattr(form, "getall") else []
+    await asyncio.to_thread(_save_meeting, mid, form, host_slugs, book_slugs, types)
     state.mark_dirty()
     raise web.HTTPFound("/webapp/admin/meetings")
+
+
+# ── Members ──────────────────────────────────────────────────────────────────
+async def members_page(request: web.Request) -> web.Response:
+    members = await asyncio.to_thread(_members)
+    members = sorted(members, key=lambda m: ((not m["current"]), m["name"].lower()))
+    return render("admin_members.html", request, members=members)
+
+
+def _member_action(op: str, name: str, slug: str) -> bool:
+    with db.connect() as conn:
+        if op == "add" and name.strip():
+            clubdb.create_member(conn, name)
+            return True
+        if op == "retire" and slug:
+            return clubdb.set_member_current(conn, slug, is_current=False)
+        if op == "reactivate" and slug:
+            return clubdb.set_member_current(conn, slug, is_current=True)
+    return False
+
+
+async def member_action(request: web.Request) -> web.Response:
+    form = _form(request)
+    changed = await asyncio.to_thread(_member_action, form.get("op", ""),
+                                      form.get("name", ""), form.get("slug", ""))
+    if changed:
+        state.mark_dirty()  # member currency drives whole swaths of the site
+    raise web.HTTPFound("/webapp/admin/members")
 
 
 def add_routes(app: web.Application) -> None:
@@ -212,4 +256,6 @@ def add_routes(app: web.Application) -> None:
         web.post("/webapp/admin/meetings/add", meeting_add),
         web.get("/webapp/admin/meetings/{id}", meeting_edit),
         web.post("/webapp/admin/meetings/{id}", meeting_save),
+        web.get("/webapp/admin/members", members_page),
+        web.post("/webapp/admin/members", member_action),
     ])

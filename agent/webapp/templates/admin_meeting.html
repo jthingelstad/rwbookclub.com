@@ -12,6 +12,10 @@
     <select name="books" multiple size="5">
       {% for b in books %}<option value="{{ b.slug }}" {{ 'selected' if b.slug in meeting.book_slugs }}>{{ b.title }}</option>{% endfor %}
     </select>
+    <label>Type(s)</label>
+    <select name="types" multiple size="3">
+      {% for t in meeting_types %}<option value="{{ t }}" {{ 'selected' if t in meeting.type }}>{{ t }}</option>{% endfor %}
+    </select>
     <label>Location</label><input type="text" name="location" value="{{ meeting.location or '' }}">
     <label>Notes</label><textarea name="notes">{{ meeting.notes or '' }}</textarea>
     <label class="row"><input type="checkbox" name="held" value="1" style="width:auto" {{ 'checked' if not meeting.placeholder }}> &nbsp;Held (not tentative)</label>

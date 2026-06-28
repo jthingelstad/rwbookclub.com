@@ -84,6 +84,23 @@ def add_book(list_ref: str, book_query: str, note: str | None = None, *,
     return {"slug": row["slug"], "name": row["name"], "book": book["title"], "added": added}
 
 
+def move_book(list_ref: str, book_query: str, *, up: bool, actor_slug: str | None,
+              is_admin: bool) -> dict:
+    """Move a book one step up/down within a list (preserving its note)."""
+    clubdb.ensure_schema()
+    book = cr.find_book(book_query)
+    if not book:
+        raise ListError(f"No book matching {book_query!r} in our corpus.")
+    with db.connect() as conn:
+        row = _resolve_list(conn, list_ref, actor_slug=actor_slug, is_admin=is_admin)
+        _authorize(row, actor_slug=actor_slug, is_admin=is_admin)
+        book_id = clubdb.book_id_for_slug(conn, book["slug"])
+        moved = clubdb.move_list_book(conn, row["id"], book_id, up=up)
+        corpus_gen.write_list_file(conn, row["id"], DATA_DIR)
+    _validate_or_raise()
+    return {"slug": row["slug"], "name": row["name"], "book": book["title"], "moved": moved}
+
+
 def remove_book(list_ref: str, book_query: str, *, actor_slug: str | None, is_admin: bool) -> dict:
     clubdb.ensure_schema()
     book = cr.find_book(book_query)

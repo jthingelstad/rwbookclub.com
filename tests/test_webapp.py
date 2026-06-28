@@ -112,6 +112,49 @@ def test_topics_constant():
     assert "Technology" in clubdb.TOPICS and len(clubdb.TOPICS) == 11
 
 
+def test_set_book_pickers_multi():
+    with db.connect() as conn:
+        bid = clubdb.book_id_for_slug(conn, "heart-of-darkness")
+        ids = [clubdb.member_id_for_slug(conn, s) for s in ("jamie", "erik")]
+        clubdb.set_book_pickers(conn, bid, ids)
+        assert clubdb.book_picker_slugs(conn, bid) == ["jamie", "erik"]
+        clubdb.set_book_pickers(conn, bid, [])
+        assert clubdb.book_picker_slugs(conn, bid) == []
+
+
+def test_create_and_retire_member():
+    with db.connect() as conn:
+        res = clubdb.create_member(conn, "Test Person")
+        assert res["slug"] == "test-person"
+        assert next(m for m in clubdb.all_members(conn) if m["slug"] == "test-person")["is_current"] == 1
+        assert clubdb.set_member_current(conn, "test-person", is_current=False) is True
+        assert next(m for m in clubdb.all_members(conn) if m["slug"] == "test-person")["is_current"] == 0
+
+
+def test_move_list_book_preserves_notes():
+    with db.connect() as conn:
+        jamie = _jamie_id()
+        lst = clubdb.create_list(conn, name="Order Test", scope="member", owner_id=jamie)
+        b1 = clubdb.book_id_for_slug(conn, "heart-of-darkness")
+        b2 = clubdb.book_id_for_slug(conn, "enshittification")
+        clubdb.set_list_book(conn, lst["id"], b1, "note-a")
+        clubdb.set_list_book(conn, lst["id"], b2, "note-b")
+        assert clubdb.move_list_book(conn, lst["id"], b2, up=True) is True
+        rows = conn.execute("SELECT book_id, note FROM club_list_books WHERE list_id=? ORDER BY ordinal",
+                            (lst["id"],)).fetchall()
+        assert [(r["book_id"], r["note"]) for r in rows] == [(b2, "note-b"), (b1, "note-a")]
+
+
+def test_member_handles_and_set_primary():
+    db.link_member_email("a@x.com", "jamie", linked_by="t")
+    db.link_member_email("b@x.com", "jamie", linked_by="t")
+    assert {h["identifier"] for h in db.member_handles("jamie", "email")} >= {"a@x.com", "b@x.com"}
+    assert db.set_primary_identity("jamie", "email", "b@x.com") is True
+    by = {h["identifier"]: h["is_primary"] for h in db.member_handles("jamie", "email")}
+    assert by["b@x.com"] is True and by["a@x.com"] is False
+    assert db.set_primary_identity("jamie", "email", "nobody@x.com") is False  # not this member's
+
+
 def test_create_bookless_meeting_and_set_books():
     with db.connect() as conn:
         mid = clubdb.create_meeting(conn, date_iso="2026-09-01", book_id=None, types=["Social"])
@@ -190,6 +233,17 @@ def test_routes_end_to_end(monkeypatch):
                 async with s.post(base + "/webapp/admin/meetings/add", headers=ahdr, allow_redirects=False,
                                   data=[("csrf", acsrf), ("date", "2026-10-02")]) as r:
                     assert r.status == 302
+                # set two pickers on a book via the admin editor
+                async with s.post(base + "/webapp/admin/books/enshittification", headers=ahdr, allow_redirects=False,
+                                  data=[("csrf", acsrf), ("pickers", "jamie"), ("pickers", "erik")]) as r:
+                    assert r.status == 302
+                # member management: add then retire
+                async with s.post(base + "/webapp/admin/members", headers=ahdr, allow_redirects=False,
+                                  data={"csrf": acsrf, "op": "add", "name": "Web Test Member"}) as r:
+                    assert r.status == 302
+                async with s.post(base + "/webapp/admin/members", headers=ahdr, allow_redirects=False,
+                                  data={"csrf": acsrf, "op": "retire", "slug": "web-test-member"}) as r:
+                    assert r.status == 302
                 # no session at all → 401-ish (expired page)
                 async with s.get(base + "/webapp/ratings", allow_redirects=False) as r:
                     assert r.status == 401
@@ -205,6 +259,25 @@ def test_routes_end_to_end(monkeypatch):
                 # publish endpoint runs the (patched) trigger
                 async with s.post(base + "/webapp/publish", headers=ajax, data={"csrf": csrf}) as r:
                     assert r.status == 200
+                # lists: create, add two books, reorder
+                async with s.post(base + "/webapp/lists/create", headers=hdr, allow_redirects=False,
+                                  data={"csrf": csrf, "name": "E2E List"}) as r:
+                    assert r.status == 302
+                for bk in ("heart-of-darkness", "enshittification"):
+                    async with s.post(base + "/webapp/lists/act", headers=hdr, allow_redirects=False,
+                                      data={"csrf": csrf, "op": "add-book", "list": "jamie-e2e-list", "book": bk}) as r:
+                        assert r.status == 302
+                async with s.post(base + "/webapp/lists/act", headers=hdr, allow_redirects=False,
+                                  data={"csrf": csrf, "op": "move-up", "list": "jamie-e2e-list", "book": "enshittification"}) as r:
+                    assert r.status == 302
+                # profile: add two emails, make the second primary
+                for em in ("one@x.com", "two@x.com"):
+                    async with s.post(base + "/webapp/profile/act", headers=hdr, allow_redirects=False,
+                                      data={"csrf": csrf, "op": "add-email", "value": em}) as r:
+                        assert r.status == 302
+                async with s.post(base + "/webapp/profile/act", headers=hdr, allow_redirects=False,
+                                  data={"csrf": csrf, "op": "primary-email", "value": "two@x.com"}) as r:
+                    assert r.status == 302
         finally:
             async with server._lock:
                 if server._runner is not None:
@@ -216,9 +289,17 @@ def test_routes_end_to_end(monkeypatch):
         row = conn.execute("SELECT rating FROM club_reviews WHERE book_id=? AND member_id=?",
                            (bid, _jamie_id())).fetchone()
         meetings = {m["date"]: m for m in clubdb.all_meetings(conn)}
+        pickers = clubdb.book_picker_slugs(conn, clubdb.book_id_for_slug(conn, "enshittification"))
+        wtm = [m for m in clubdb.all_members(conn) if m["slug"] == "web-test-member"]
+        e2e = next(x for x in clubdb.all_lists(conn) if x["slug"] == "jamie-e2e-list")
     assert row["rating"] == 4
     assert meetings["2026-10-01"]["book_slugs"] == ["heart-of-darkness", "enshittification"]
     assert meetings["2026-10-02"]["book_slugs"] == []  # bookless meeting created
+    assert pickers == ["jamie", "erik"]                # two pickers set via the book editor
+    assert wtm and wtm[0]["is_current"] == 0           # member added then retired
+    assert [e["book_slug"] for e in e2e["entries"]] == ["enshittification", "heart-of-darkness"]  # reordered
+    primary = next((h["identifier"] for h in db.member_handles("jamie", "email") if h["is_primary"]), None)
+    assert primary == "two@x.com"
 
 
 # ── On-demand lifecycle (in-process) ─────────────────────────────────────────

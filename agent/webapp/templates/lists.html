@@ -16,8 +16,20 @@
     <table>
       {% for e in lst.books %}
       <tr><td>{{ titles.get(e.book, e.book) }}{% if e.note %} <span class="muted">— {{ e.note }}</span>{% endif %}</td>
-        <td style="text-align:right">
-          <form method="post" action="/webapp/lists/act">
+        <td style="text-align:right; white-space:nowrap">
+          {% if not loop.first %}
+          <form method="post" action="/webapp/lists/act" style="display:inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="move-up">
+            <input type="hidden" name="list" value="{{ lst.slug }}"><input type="hidden" name="book" value="{{ e.book }}">
+            <button title="Move up">↑</button></form>
+          {% endif %}
+          {% if not loop.last %}
+          <form method="post" action="/webapp/lists/act" style="display:inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="move-down">
+            <input type="hidden" name="list" value="{{ lst.slug }}"><input type="hidden" name="book" value="{{ e.book }}">
+            <button title="Move down">↓</button></form>
+          {% endif %}
+          <form method="post" action="/webapp/lists/act" style="display:inline">
             <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="remove-book">
             <input type="hidden" name="list" value="{{ lst.slug }}"><input type="hidden" name="book" value="{{ e.book }}">
             <button>Remove</button></form></td></tr>

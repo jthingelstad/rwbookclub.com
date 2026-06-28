@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% set nav = "members" %}
+{% block title %}Members (admin){% endblock %}
+{% block content %}
+  <h1>Members</h1>
+  <form method="post" action="/webapp/admin/members" class="card">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="add">
+    <label>Add a member</label>
+    <div class="row"><input type="text" name="name" placeholder="Name" style="flex:1"><button class="primary">Add</button></div>
+  </form>
+  <table>
+    {% for m in members %}
+    <tr>
+      <td>{{ m.name }}{% if not m.current %} <span class="muted">· former</span>{% endif %}</td>
+      <td style="text-align:right">
+        <form method="post" action="/webapp/admin/members">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <input type="hidden" name="slug" value="{{ m.slug }}">
+          {% if m.current %}
+            <input type="hidden" name="op" value="retire"><button>Retire</button>
+          {% else %}
+            <input type="hidden" name="op" value="reactivate"><button class="primary">Reactivate</button>
+          {% endif %}
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+{% endblock %}

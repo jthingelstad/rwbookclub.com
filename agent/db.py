@@ -838,6 +838,37 @@ def link_identity(surface: str, identifier: str, member_slug: str, *,
         )
 
 
+def member_handles(member_slug: str, surface: str) -> list[dict]:
+    """A member's handles for a surface with their primary flag, primary-first."""
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT mi.identifier, mi.is_primary FROM member_identities mi "
+            "JOIN club_members m ON m.id = mi.member_id "
+            "WHERE m.slug = ? AND mi.surface = ? ORDER BY mi.is_primary DESC, mi.identifier",
+            (member_slug, surface),
+        ).fetchall()
+    return [{"identifier": r["identifier"], "is_primary": bool(r["is_primary"])} for r in rows]
+
+
+def set_primary_identity(member_slug: str, surface: str, identifier: str) -> bool:
+    """Mark one handle primary for (member, surface), clearing the flag on the others. Returns True
+    if the identifier belongs to this member + surface."""
+    with connect() as conn:
+        mid = _member_id_for_slug(conn, member_slug)
+        if mid is None:
+            return False
+        owned = conn.execute(
+            "SELECT 1 FROM member_identities WHERE surface = ? AND identifier = ? AND member_id = ?",
+            (surface, identifier, mid)).fetchone()
+        if not owned:
+            return False
+        conn.execute("UPDATE member_identities SET is_primary = 0 WHERE surface = ? AND member_id = ?",
+                     (surface, mid))
+        conn.execute("UPDATE member_identities SET is_primary = 1, updated_at = ? "
+                     "WHERE surface = ? AND identifier = ?", (_now(), surface, identifier))
+    return True
+
+
 def member_id_for_identity(surface: str, identifier: str | None) -> int | None:
     if not identifier:
         return None

@@ -12,8 +12,10 @@ eleventyComputed:
 <article class="list-detail">
   {% if list.scope == "club" %}
     <a class="back" href="/lists/">← Lists</a>
-  {% else %}
+  {% elif list.ownerCurrent %}
     <a class="back" href="/members/{{ list.owner }}/">← {{ list.ownerName }}</a>
+  {% else %}
+    <span class="back">{{ list.ownerName }}'s list</span>
   {% endif %}
 
   <header class="list-header">

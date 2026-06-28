@@ -397,6 +397,28 @@ def all_members(conn: sqlite3.Connection) -> list[dict]:
     return _rows(conn, "SELECT * FROM club_members ORDER BY id")
 
 
+def create_member(conn: sqlite3.Connection, name: str) -> dict:
+    """Add a new current member with a globally-unique slug. Returns {id, slug}."""
+    name = (name or "").strip()
+    if not name:
+        raise ValueError("a member needs a name")
+    root = slugify(name) or "member"
+    slug, n = root, 2
+    while conn.execute("SELECT 1 FROM club_members WHERE slug = ?", (slug,)).fetchone():
+        slug, n = f"{root}-{n}", n + 1
+    mid = _next_id(conn, "club_members")
+    conn.execute("INSERT INTO club_members(id, slug, name, is_current) VALUES (?, ?, ?, 1)",
+                 (mid, slug, name))
+    return {"id": mid, "slug": slug}
+
+
+def set_member_current(conn: sqlite3.Connection, member_slug: str, *, is_current: bool) -> bool:
+    """Mark a member current (active) or former. Returns True if a row changed."""
+    cur = conn.execute("UPDATE club_members SET is_current = ? WHERE slug = ?",
+                       (1 if is_current else 0, member_slug))
+    return cur.rowcount > 0
+
+
 def all_authors(conn: sqlite3.Connection) -> list[dict]:
     """Every author with external enrichment LEFT JOINed in. Curated `bio` wins
     via COALESCE; net-new fields (dates/nationality/links/notable works) come from
@@ -679,12 +701,47 @@ def remove_list_book(conn: sqlite3.Connection, list_id: int, book_id: int) -> bo
     return cur.rowcount > 0
 
 
+def move_list_book(conn: sqlite3.Connection, list_id: int, book_id: int, *, up: bool) -> bool:
+    """Swap a book one step up/down in a list's order (preserving notes). Returns True if it moved."""
+    rows = conn.execute(
+        "SELECT book_id, ordinal FROM club_list_books WHERE list_id = ? ORDER BY ordinal",
+        (list_id,)).fetchall()
+    idx = next((i for i, r in enumerate(rows) if r["book_id"] == book_id), None)
+    if idx is None:
+        return False
+    swap = idx - 1 if up else idx + 1
+    if swap < 0 or swap >= len(rows):
+        return False
+    a, b = rows[idx], rows[swap]
+    conn.execute("UPDATE club_list_books SET ordinal = ? WHERE list_id = ? AND book_id = ?",
+                 (b["ordinal"], list_id, a["book_id"]))
+    conn.execute("UPDATE club_list_books SET ordinal = ? WHERE list_id = ? AND book_id = ?",
+                 (a["ordinal"], list_id, b["book_id"]))
+    return True
+
+
 def set_book_picker(conn: sqlite3.Connection, book_id: int, member_id: int) -> None:
     conn.execute("DELETE FROM club_book_pickers WHERE book_id = ?", (book_id,))
     conn.execute(
         "INSERT INTO club_book_pickers(book_id, member_id, ordinal) VALUES (?, ?, 0)",
         (book_id, member_id),
     )
+
+
+def set_book_pickers(conn: sqlite3.Connection, book_id: int, member_ids: list[int]) -> None:
+    """Replace a book's picker(s), ordered. A book can have multiple pickers (e.g. a long book split
+    between two members). Pass [] for no picker. Mirrors set_meeting_hosts."""
+    conn.execute("DELETE FROM club_book_pickers WHERE book_id = ?", (book_id,))
+    conn.executemany(
+        "INSERT INTO club_book_pickers(book_id, member_id, ordinal) VALUES (?, ?, ?)",
+        [(book_id, mid, i) for i, mid in enumerate(member_ids)],
+    )
+
+
+def book_picker_slugs(conn: sqlite3.Connection, book_id: int) -> list[str]:
+    return [r["slug"] for r in conn.execute(
+        "SELECT m.slug FROM club_book_pickers bp JOIN club_members m ON m.id = bp.member_id "
+        "WHERE bp.book_id = ? ORDER BY bp.ordinal", (book_id,))]
 
 
 def set_meeting_hosts(conn: sqlite3.Connection, meeting_id: int, member_ids: list[int]) -> None:
@@ -720,6 +777,9 @@ def update_meeting(conn: sqlite3.Connection, meeting_id: int, *, date: str | Non
     vals.append(meeting_id)
     conn.execute(f"UPDATE club_meetings SET {', '.join(sets)} WHERE id = ?", vals)
 
+
+# Meeting type tags (club_meetings.type_json is a JSON array — a meeting can be more than one).
+MEETING_TYPES = ["Book", "Social", "Picking", "Planning", "Holiday"]
 
 # The 11 single-select Topic choices (see CLAUDE.md). The admin book editor validates against these.
 TOPICS = [

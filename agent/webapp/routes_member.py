@@ -164,6 +164,9 @@ async def lists_action(request: web.Request) -> web.Response:
                                     description=form.get("description"), actor_slug=actor, is_admin=is_admin)
         elif op == "delete":
             await asyncio.to_thread(lists_writer.delete_list, ref, actor_slug=actor, is_admin=is_admin)
+        elif op in ("move-up", "move-down"):
+            await asyncio.to_thread(lists_writer.move_book, ref, form.get("book", ""),
+                                    up=(op == "move-up"), actor_slug=actor, is_admin=is_admin)
     except lists_writer.ListError:
         pass
     state.mark_dirty()
@@ -173,9 +176,9 @@ async def lists_action(request: web.Request) -> web.Response:
 # ── Profile / contact ────────────────────────────────────────────────────────
 async def profile_page(request: web.Request) -> web.Response:
     slug = request["session"]["slug"]
-    websites = await asyncio.to_thread(db.websites_for_member, slug)
-    emails = await asyncio.to_thread(db.emails_for_member, slug)
-    phones = await asyncio.to_thread(db.sms_for_member, slug)
+    websites = await asyncio.to_thread(db.member_handles, slug, "website")
+    emails = await asyncio.to_thread(db.member_handles, slug, "email")
+    phones = await asyncio.to_thread(db.member_handles, slug, "sms")
     return render("profile.html", request, websites=websites, emails=emails, phones=phones)
 
 
@@ -198,6 +201,13 @@ async def profile_action(request: web.Request) -> web.Response:
             await asyncio.to_thread(db.link_member_sms, val, slug, linked_by="webapp")
         elif op == "remove-phone" and val:
             await asyncio.to_thread(db.remove_member_sms, val, slug)
+        elif op == "primary-website" and val:
+            await asyncio.to_thread(db.set_primary_identity, slug, "website", val)
+            published = True  # website order is public
+        elif op == "primary-email" and val:
+            await asyncio.to_thread(db.set_primary_identity, slug, "email", val)
+        elif op == "primary-phone" and val:
+            await asyncio.to_thread(db.set_primary_identity, slug, "sms", val)
     except ValueError:
         pass  # bad input — re-render current state
     if published:
