@@ -65,11 +65,13 @@ def next_meeting() -> dict:
     meeting_key = book_slug or meeting_date[:10]
     picker_slugs = [s for s in ((book or {}).get("pickerSlugs") or []) if s]
     picker_names = (book or {}).get("pickerNames") or []
+    meeting_id = clubdb.meeting_id_for_book_slug(book_slug)
     return {
         "meetingKey": meeting_key,
-        "meetingId": clubdb.meeting_id_for_book_slug(book_slug),
+        "meetingId": meeting_id,
         "pickerIds": clubdb.picker_ids_for_book_slug(book_slug),
         "date": meeting_date[:10],
+        "startTime": clubdb.start_time_for_meeting(meeting_id),
         "expectedRuleDate": last_tuesday(
             int(meeting_date[:4]), int(meeting_date[5:7])
         ).isoformat() if meeting_date else inferred_date,

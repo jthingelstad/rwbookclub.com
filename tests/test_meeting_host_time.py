@@ -12,6 +12,17 @@ def test_hosts_for_meeting_returns_meeting_host(fresh_db):
     assert clubdb.hosts_for_meeting(None) == []
 
 
+def test_start_time_for_meeting_returns_local_time(fresh_db):
+    mid = clubdb.meeting_id_for_book_slug("a-world-appears")
+    assert clubdb.start_time_for_meeting(mid) == "18:30"   # local 'HH:MM', not UTC
+    assert clubdb.start_time_for_meeting(None) is None
+
+
+def test_next_meeting_surfaces_start_time(fresh_db, reset_books_cache):
+    from agent.club import meeting_rules
+    assert meeting_rules.next_meeting()["startTime"] == "18:30"
+
+
 def test_books_expose_meeting_host_and_local_start_time(reset_books_cache):
     from agent import corpus_read as cr
     full = cr.find_book("a-world-appears")               # full enriched dict

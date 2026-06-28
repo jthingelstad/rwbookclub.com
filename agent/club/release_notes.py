@@ -13,6 +13,10 @@ The grounding rule in the prompt is strict: describe only what's in the material
 invent a capability.
 
 Scope is either a day window (`--days`, default 7) or everything since a commit (`--since <hash>`).
+In the Discord command, the default scope (no day/since given) is everything since the LAST
+release notes: a list send records HEAD as a `release_notes_sent` event in the club timeline
+(`db.record_release_notes_sent`), and the next run scopes from `db.last_release_notes_commit()` —
+so each shipped change is announced exactly once.
 
 Build-time preview / test:
     python -m agent.club.release_notes --days 7               # print the draft
@@ -60,6 +64,12 @@ def resolve_commit(ref: str) -> str | None:
     """The short hash for a commit-ish, or None if it doesn't resolve (used to validate `since:`)."""
     return publish.git_output(
         ["rev-parse", "--verify", "--short", f"{ref}^{{commit}}"]).strip() or None
+
+
+def head_commit() -> str | None:
+    """The current repo HEAD as a short hash — stored as the baseline when notes are sent, so the
+    next release-notes scopes from here. None if git is unavailable."""
+    return resolve_commit("HEAD")
 
 
 def recent_changes(*, days: int | None = None, since_commit: str | None = None) -> dict:

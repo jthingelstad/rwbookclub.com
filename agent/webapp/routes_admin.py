@@ -344,7 +344,8 @@ def _member_save(slug: str, op: str, form) -> bool:
     # Otherwise it's an identity op (website/email/phone), shared with the member profile page.
     val = (form.get("value") or "").strip()
     label = (form.get("label") or "").strip() or None
-    return apply_identity_op(slug, op or "", val, label)
+    new_value = (form.get("new_value") or "").strip() or None
+    return apply_identity_op(slug, op or "", val, label, new_value)
 
 
 async def member_save(request: web.Request) -> web.Response:
@@ -390,17 +391,44 @@ async def events_page(request: web.Request) -> web.Response:
     members = await asyncio.to_thread(_members)
     members = sorted(members, key=lambda m: m["name"].lower())
     return render("admin_events.html", request, events=events, categories=categories,
-                  members=members, f={"category": category, "member": member,
-                                      "since": since, "until": until, "limit": limit})
+                  members=members, query_string=request.query_string,
+                  f={"category": category, "member": member,
+                     "since": since, "until": until, "limit": limit})
+
+
+async def event_delete(request: web.Request) -> web.Response:
+    """POST /webapp/admin/events/delete — remove one timeline event by id (admin housekeeping).
+    Redirects back to the events view, preserving the active filters via the `return` field."""
+    form = _form(request)
+    try:
+        event_id = int(form.get("id", ""))
+    except ValueError:
+        raise web.HTTPFound("/webapp/admin/events")
+    await asyncio.to_thread(db.delete_event, event_id)
+    ret = (form.get("return") or "").strip()
+    if not ret.startswith("/webapp/admin/events"):
+        ret = "/webapp/admin/events"
+    raise web.HTTPFound(ret)
 
 
 # ── Club lists ───────────────────────────────────────────────────────────────
+# Two pages, like the member side: the index (manage club lists) and a per-list detail page (manage
+# its books). Item ops post to the shared /webapp/lists/act (authorized as a club list for admins).
 async def lists_page(request: web.Request) -> web.Response:
     all_lists = await asyncio.to_thread(cr.lists)
     club = [lst for lst in all_lists if lst.get("scope") == "club"]
+    return render("admin_lists.html", request, lists=club)
+
+
+async def list_detail(request: web.Request) -> web.Response:
+    list_slug = request.match_info["slug"]
+    all_lists = await asyncio.to_thread(cr.lists)
+    lst = next((x for x in all_lists if x.get("slug") == list_slug and x.get("scope") == "club"), None)
+    if lst is None:
+        return web.Response(status=404, text="No such club list.")
     books = await asyncio.to_thread(_sorted_books)
     titles = {b["slug"]: b["title"] for b in books}
-    return render("admin_lists.html", request, lists=club, books=books, titles=titles)
+    return render("admin_list_detail.html", request, lst=lst, books=books, titles=titles)
 
 
 def add_routes(app: web.Application) -> None:
@@ -418,5 +446,7 @@ def add_routes(app: web.Application) -> None:
         web.get("/webapp/admin/members/{slug}", member_edit),
         web.post("/webapp/admin/members/{slug}", member_save),
         web.get("/webapp/admin/lists", lists_page),
+        web.get("/webapp/admin/lists/{slug}", list_detail),
         web.get("/webapp/admin/events", events_page),
+        web.post("/webapp/admin/events/delete", event_delete),
     ])

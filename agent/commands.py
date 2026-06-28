@@ -12,7 +12,7 @@ import asyncio
 import functools
 import json
 import logging
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import discord
@@ -205,6 +205,36 @@ def _club_now() -> datetime:
         return datetime.now(ZoneInfo(config.CLUB_TIMEZONE))
     except ZoneInfoNotFoundError:
         return datetime.now().astimezone()
+
+
+# When a meeting has no explicit start_time, time-bounded cadence (the 1-week + 2-day emails)
+# falls back to this local hour so a "2 days before" send lands in the evening, never at the
+# midnight heartbeat. The club meets in the evening (see CLAUDE.md).
+DEFAULT_MEETING_HOUR = 18
+
+
+def _meeting_datetime(meeting: dict) -> datetime | None:
+    """The meeting's local start as a club-tz aware datetime. Honors `startTime` ('HH:MM') when
+    set, else falls back to DEFAULT_MEETING_HOUR. None if the date can't be parsed.
+
+    Cadence that's "N days before the meeting" is bounded against this — so it honors the
+    meeting's *time*, not just its date, and doesn't fire in the middle of the night."""
+    try:
+        d = date.fromisoformat(str(meeting.get("date"))[:10])
+    except ValueError:
+        return None
+    hour, minute = DEFAULT_MEETING_HOUR, 0
+    st = meeting.get("startTime")
+    if st:
+        try:
+            hour, minute = int(str(st)[:2]), int(str(st)[3:5])
+        except (ValueError, IndexError):
+            hour, minute = DEFAULT_MEETING_HOUR, 0
+    try:
+        tz = ZoneInfo(config.CLUB_TIMEZONE)
+    except ZoneInfoNotFoundError:
+        tz = _club_now().tzinfo
+    return datetime(d.year, d.month, d.day, hour, minute, tzinfo=tz)
 
 
 def _roll_call_message(status: dict | None = None) -> str:
@@ -559,9 +589,11 @@ async def oliver_stats(interaction: discord.Interaction) -> None:
 @admin_cmds.command(name="release-notes",
                      description="Draft & send release notes from recent changes (admin).")
 @discord.app_commands.describe(
-    days="Look back this many days (1-90; default 7). Ignored if 'since' is set.",
+    days="Look back this many days (1-90). Ignored if 'since' is set.",
     since="Or scope to changes since this git commit (hash or ref).",
     to="Where to send — yourself (default) or the club mailing list")
+# Default scope (no days, no since): everything since the last release notes — or the last
+# 7 days if none has ever been sent. A list send records HEAD as the next baseline.
 @discord.app_commands.choices(to=[
     discord.app_commands.Choice(name="me", value="me"),
     discord.app_commands.Choice(name="list", value="list"),
@@ -577,6 +609,11 @@ async def release_notes_cmd(interaction: discord.Interaction, days: int | None =
                 f"I couldn't find a commit matching `{since}`.", ephemeral=True)
             return
         days_arg, since_arg, scope = None, resolved, f"since `{resolved}`"
+    elif days is None and (baseline := db.last_release_notes_commit()) \
+            and release_notes.resolve_commit(baseline):
+        # No explicit scope → pick up where the last release notes left off, so every change
+        # since then is covered exactly once.
+        days_arg, since_arg, scope = None, baseline, f"since the last release notes (`{baseline}`)"
     else:
         d = days if days is not None else 7
         if not 1 <= d <= 90:
@@ -609,6 +646,12 @@ async def release_notes_cmd(interaction: discord.Interaction, days: int | None =
             await _send_club_email(email["subject"], email["body"])
             db.add_activity("release_notes_sent", "Release notes sent",
                             f"Scope: {scope}\nTo: club mailing list\nSubject: {email['subject']}")
+            # Mark this release in the club timeline and store HEAD as the baseline the next
+            # release-notes scopes from (so it auto-covers everything shipped since).
+            head = release_notes.head_commit()
+            if head:
+                db.record_release_notes_sent(head, scope=scope, subject=email["subject"],
+                                             window=email.get("window"))
             await interaction.followup.send(
                 f"📣 Sent release notes ({scope}) to the club list and mirrored to the main "
                 f"channel.\nSubject: *{email['subject']}*", ephemeral=True)
@@ -1197,6 +1240,9 @@ async def run_scheduler() -> int:
             meeting_date = None
         if meeting_date:
             days = (meeting_date.date() - now.date()).days
+            # Time-aware meeting start (honors start_time): cadence bounded "N days before" uses
+            # this so it fires at the meeting's hour N days prior, not on the midnight heartbeat.
+            meeting_dt = _meeting_datetime(meeting)
             meeting_id = meeting["meetingId"]
 
             # Autonomous per-member meeting prep (roll call → reading check-ins): email only,
@@ -1239,10 +1285,13 @@ async def run_scheduler() -> int:
                 )
                 posted += 1
 
-            # Club-wide cadence emails (OFF unless CLUB_EMAIL_CADENCE_ENABLED): the
-            # 1-week reminder and the 2-day discussion-topics email, each once per meeting.
-            if config.CLUB_EMAIL_CADENCE_ENABLED and email_jmap.enabled() and meeting_id is not None:
-                if (0 <= days <= 7
+            # Club-wide cadence emails (OFF unless CLUB_EMAIL_CADENCE_ENABLED): the 1-week
+            # reminder and the 2-day discussion-topics email, each once per meeting. The "N days
+            # before" bound honors the meeting's TIME (meeting_dt - N days <= now <= meeting_dt),
+            # so these go out at the meeting's hour N days prior — never at the midnight heartbeat.
+            if (config.CLUB_EMAIL_CADENCE_ENABLED and email_jmap.enabled()
+                    and meeting_id is not None and meeting_dt is not None):
+                if (meeting_dt - timedelta(days=7) <= now <= meeting_dt
                         and not db.has_group_event(meeting_id, "week_reminder_sent")):
                     email = await asyncio.to_thread(meeting_emails.week_reminder, meeting, status)
                     await _send_club_email(email["subject"], email["body"])
@@ -1251,7 +1300,7 @@ async def run_scheduler() -> int:
                     db.add_activity("club_email_sent", "1-week reminder sent to the mailing list",
                                     f"Meeting: {meeting['meetingKey']}")
                     posted += 1
-                if (0 <= days <= 2
+                if (meeting_dt - timedelta(days=2) <= now <= meeting_dt
                         and not db.has_group_event(meeting_id, "briefing_sent")):
                     email = await asyncio.to_thread(meeting_emails.topic_email, meeting)
                     await _send_club_email(email["subject"], email["body"])

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% from "_list_card.html" import list_items %}
+{% set nav = "lists" %}
+{% block title %}{{ lst.name }}{% endblock %}
+{% block content %}
+  <p class="muted"><a href="/webapp/lists">← your lists</a></p>
+  <h1>{{ lst.name }}</h1>
+  {% if lst.description %}<p class="muted">{{ lst.description }}</p>{% endif %}
+  {{ list_items(lst, books, titles, csrf, "/webapp/lists/" ~ lst.slug) }}
+{% endblock %}

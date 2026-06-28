@@ -1023,16 +1023,46 @@ def _normalize_url(url: str) -> str:
     return url.rstrip("/")
 
 
-def link_member_website(url: str, member_slug: str, *, linked_by: str | None = None,
-                        is_primary: bool = False, label: str | None = None) -> None:
+def _require_web_url(url: str) -> str:
+    """Normalize + validate a website URL, or raise ValueError. Restricts to http/https: the URL
+    renders as an <a href> on the PUBLIC member page, so a `javascript:`/`data:` scheme here would
+    be stored XSS. A scheme check (not a substring of "://") is the gate: `javascript://x.y//comment`
+    carries "://" and a dotted host but must be rejected."""
     url = _normalize_url(url)
     parts = urlsplit(url)
-    # Restrict to http/https. The website renders as an <a href> on the PUBLIC member page, so a
-    # `javascript:`/`data:` scheme here would be stored XSS. A scheme check (not a substring of "://")
-    # is the gate: `javascript://x.y//comment` carries "://" and a dotted host but must be rejected.
     if parts.scheme not in ("http", "https") or "." not in parts.netloc:
         raise ValueError("website must be an http(s) URL, e.g. https://example.com")
+    return url
+
+
+def link_member_website(url: str, member_slug: str, *, linked_by: str | None = None,
+                        is_primary: bool = False, label: str | None = None) -> None:
+    url = _require_web_url(url)
     link_identity("website", url, member_slug, is_primary=is_primary, linked_by=linked_by, label=label)
+
+
+def update_member_website(old_url: str, member_slug: str, *, url: str | None = None,
+                          label: str | None = None) -> bool:
+    """Edit one of a member's existing websites in place: rename it (set/clear the display `label`)
+    and/or change its URL. Unlike `link_member_website`'s upsert (which COALESCEs the label and can
+    only add), this UPDATEs the row, so the name can be cleared and the URL changed without losing
+    the row's primary flag. Returns True if a row was changed (False if the old URL wasn't found).
+    Raises ValueError on a bad new URL or a collision with another of the member's websites."""
+    old = _normalize_url(old_url)
+    new = _require_web_url(url) if url else old
+    label = (label or "").strip() or None
+    with connect() as conn:
+        mid = _member_id_for_slug(conn, member_slug)
+        if mid is None:
+            return False
+        try:
+            cur = conn.execute(
+                "UPDATE member_identities SET identifier = ?, label = ?, updated_at = ? "
+                "WHERE surface = 'website' AND member_id = ? AND identifier = ?",
+                (new, label, _now(), mid, old))
+        except sqlite3.IntegrityError:
+            raise ValueError("you already have that website")
+        return cur.rowcount > 0
 
 
 def websites_for_member(member_slug: str) -> list[str]:
@@ -1508,6 +1538,7 @@ _KIND_CATEGORY = {
     "member_away": "member_life", "member_milestone": "member_life",
     # ── club / tooling milestones ──
     "website_launched": "club", "tooling_change": "club", "mailing_list_flurry": "club",
+    "release_notes_sent": "club",
     # ── reading / discussion ──
     "book_discussed": "reading", "strong_opinion": "reading",
     "dnf": "reading", "award_given": "reading",
@@ -1636,6 +1667,35 @@ def record_meeting_scheduled(meeting_id: int, *, detail: str | None = None,
                         detail=detail, surface="system", occurred_at=occurred_at)
 
 
+def record_release_notes_sent(commit: str, *, scope: str, subject: str,
+                              window: str | None = None, occurred_at: str | None = None) -> int:
+    """Log a release-notes send to the club timeline (category 'club').
+
+    `commit` is the repo HEAD at send time; it becomes the baseline the *next* release-notes
+    scopes from (everything since this commit). The detail JSON carries the commit plus the
+    human-facing subject/scope/window so the timeline reads as a real club milestone."""
+    detail = {"commit": commit, "subject": subject, "scope": scope}
+    if window:
+        detail["window"] = window
+    return record_event(actor="oliver", kind="release_notes_sent", category="club",
+                        surface="system", detail=detail, occurred_at=occurred_at)
+
+
+def last_release_notes_commit() -> str | None:
+    """The HEAD commit recorded by the most recent release-notes send, or None if there's never
+    been one. The next release-notes scopes from here (`<commit>..HEAD`)."""
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT detail FROM events WHERE kind = 'release_notes_sent' "
+            "ORDER BY occurred_at DESC, id DESC LIMIT 1").fetchone()
+    if not row or not row["detail"]:
+        return None
+    try:
+        return json.loads(row["detail"]).get("commit")
+    except (ValueError, TypeError):
+        return None
+
+
 def meeting_member_status_for_meeting(meeting_id: int) -> list[dict]:
     """Current status rows for a meeting, with member slug/name projected. Sparse — a member with
     no row is 'unknown'/'unknown' (callers default that)."""
@@ -1744,6 +1804,14 @@ def timeline(*, category: str | None = None, member_id: int | None = None,
     sql += " ORDER BY e.occurred_at DESC, e.id DESC LIMIT ?"; args.append(limit)
     with connect() as conn:
         return [dict(r) for r in conn.execute(sql, args)]
+
+
+def delete_event(event_id: int) -> bool:
+    """Delete one event from the club timeline by id (the admin events view's selective delete).
+    Returns True if a row was removed. Note: this does NOT recompute the meeting_member_status
+    projection, so it's intended for chronicle/club/note rows, not live meeting-ops bookkeeping."""
+    with connect() as conn:
+        return conn.execute("DELETE FROM events WHERE id = ?", (event_id,)).rowcount > 0
 
 
 def list_mail_threads(*, limit: int | None = None) -> list[dict]:

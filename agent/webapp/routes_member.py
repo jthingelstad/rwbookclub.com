@@ -34,11 +34,17 @@ def _safe_return(form, default: str) -> str:
     return ret
 
 
-def apply_identity_op(slug: str, op: str, val: str, label: str | None = None) -> bool:
+def apply_identity_op(slug: str, op: str, val: str, label: str | None = None,
+                      new_value: str | None = None) -> bool:
     """Apply one profile identity mutation for `slug`. Shared by the member profile page
-    and the admin member editor. Returns True when the change is public (websites)."""
+    and the admin member editor. Returns True when the change is public (websites).
+
+    `new_value` is only used by edit-website (the new URL); `val` is the existing URL being edited."""
     if op == "add-website" and val:
         db.link_member_website(val, slug, linked_by="webapp", label=label)
+        return True
+    if op == "edit-website" and val:
+        db.update_member_website(val, slug, url=new_value or val, label=label)
         return True
     if op == "remove-website" and val:
         db.remove_member_website(val, slug)
@@ -182,13 +188,25 @@ async def review_submit(request: web.Request) -> web.Response:
 
 
 # ── Lists ────────────────────────────────────────────────────────────────────
+# Two pages: the index (manage lists — create/rename/delete) and a per-list detail page (manage the
+# books on one list). The shared item ops live in lists_action.
 async def lists_page(request: web.Request) -> web.Response:
     slug = request["session"]["slug"]
     all_lists = await asyncio.to_thread(cr.lists)
     mine = [lst for lst in all_lists if lst.get("owner") == slug]
+    return render("lists.html", request, lists=mine)
+
+
+async def list_detail(request: web.Request) -> web.Response:
+    slug = request["session"]["slug"]
+    list_slug = request.match_info["slug"]
+    all_lists = await asyncio.to_thread(cr.lists)
+    lst = next((x for x in all_lists if x.get("slug") == list_slug and x.get("owner") == slug), None)
+    if lst is None:
+        return web.Response(status=404, text="No such list.")
     books = await asyncio.to_thread(_load_books)
     titles = {b["slug"]: b["title"] for b in books}
-    return render("lists.html", request, lists=mine, books=books, titles=titles)
+    return render("list_detail.html", request, lst=lst, books=books, titles=titles)
 
 
 async def lists_create(request: web.Request) -> web.Response:
@@ -259,8 +277,9 @@ async def profile_action(request: web.Request) -> web.Response:
     op = form.get("op")
     val = (form.get("value") or "").strip()
     label = (form.get("label") or "").strip() or None
+    new_value = (form.get("new_value") or "").strip() or None
     try:
-        published = await asyncio.to_thread(apply_identity_op, slug, op, val, label)
+        published = await asyncio.to_thread(apply_identity_op, slug, op, val, label, new_value)
     except ValueError:
         published = False  # bad input — re-render current state
     if published:
@@ -278,6 +297,7 @@ def add_routes(app: web.Application) -> None:
         web.get("/webapp/lists", lists_page),
         web.post("/webapp/lists/create", lists_create),
         web.post("/webapp/lists/act", lists_action),
+        web.get("/webapp/lists/{slug}", list_detail),
         web.get("/webapp/profile", profile_page),
         web.post("/webapp/profile/act", profile_action),
     ])

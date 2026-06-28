@@ -91,6 +91,62 @@ def test_website_rejects_dangerous_schemes():
             db.link_member_website(bad, "jamie", linked_by="t")
 
 
+def test_update_member_website_renames_and_repoints(fresh_db):
+    db.link_member_website("https://old.example.com", "jamie", linked_by="t", label="Blog")
+    # rename only — same URL, new label
+    assert db.update_member_website("https://old.example.com", "jamie", label="My Blog") is True
+    h = db.member_handles("jamie", "website")[0]
+    assert h["identifier"] == "https://old.example.com" and h["label"] == "My Blog"
+    # change the URL and clear the label in one edit
+    assert db.update_member_website("https://old.example.com", "jamie",
+                                    url="https://new.example.com", label="") is True
+    h = db.member_handles("jamie", "website")[0]
+    assert h["identifier"] == "https://new.example.com" and h["label"] is None
+    # an unknown old URL changes nothing
+    assert db.update_member_website("https://missing.example.com", "jamie", label="x") is False
+
+
+def test_update_member_website_rejects_bad_url_and_collision(fresh_db):
+    import pytest
+    db.link_member_website("https://a.example.com", "jamie", linked_by="t")
+    db.link_member_website("https://b.example.com", "jamie", linked_by="t")
+    with pytest.raises(ValueError):  # XSS scheme rejected, same as add
+        db.update_member_website("https://a.example.com", "jamie", url="javascript:alert(1)")
+    with pytest.raises(ValueError):  # collide with the member's other website
+        db.update_member_website("https://a.example.com", "jamie", url="https://b.example.com")
+
+
+def test_delete_event(fresh_db):
+    eid = db.record_event(actor="oliver", kind="note", category="club", detail="to-delete")
+    assert any(e["id"] == eid for e in db.timeline(limit=50))
+    assert db.delete_event(eid) is True
+    assert all(e["id"] != eid for e in db.timeline(limit=50))
+    assert db.delete_event(eid) is False  # already gone → no-op
+
+
+def test_new_webapp_templates_render():
+    """The split lists pages and reworked events page render without Jinja errors."""
+    from agent.webapp.render import _env
+    base_ctx = {"csrf": "tok", "member_name": "Jamie", "is_admin": True}
+    lst = {"slug": "my-list", "name": "My List", "description": "desc",
+           "books": [{"book": "heart-of-darkness", "note": "great"}]}
+    books = [{"slug": "heart-of-darkness", "title": "Heart of Darkness"}]
+    titles = {"heart-of-darkness": "Heart of Darkness"}
+    detail = _env.get_template("list_detail.html").render(lst=lst, books=books, titles=titles, **base_ctx)
+    assert "My List" in detail and "Heart of Darkness" in detail and "remove-book" in detail
+    admin_detail = _env.get_template("admin_list_detail.html").render(
+        lst=lst, books=books, titles=titles, **base_ctx)
+    assert "My List" in admin_detail
+    index = _env.get_template("lists.html").render(lists=[lst], **base_ctx)
+    assert "Manage items" in index and "/webapp/lists/my-list" in index
+    events = [{"id": 7, "occurred_at": "2026-06-01", "category": "club", "kind": "note",
+               "member_name": None, "actor": "oliver", "detail": "hello", "surface": "system"}]
+    page = _env.get_template("admin_events.html").render(
+        events=events, categories=["club"], members=[], query_string="category=club",
+        f={"category": "club", "member": "", "since": "", "until": "", "limit": 200}, **base_ctx)
+    assert "ev-detail" in page and "hello" in page and "/webapp/admin/events/delete" in page
+
+
 def test_webapp_refuses_dev_secret(monkeypatch):
     import pytest
     # Fail closed: the public server must never bind while signing sessions with the dev literal.
@@ -386,6 +442,30 @@ def test_routes_end_to_end(monkeypatch):
                 async with s.post(base + "/webapp/profile/act", headers=hdr, allow_redirects=False,
                                   data={"csrf": csrf, "op": "primary-email", "value": "two@x.com"}) as r:
                     assert r.status == 302
+                # profile: add a website, then EDIT its name + URL (the reported bug)
+                async with s.post(base + "/webapp/profile/act", headers=hdr, allow_redirects=False,
+                                  data={"csrf": csrf, "op": "add-website", "label": "Blog",
+                                        "value": "https://old.example.com"}) as r:
+                    assert r.status == 302
+                async with s.post(base + "/webapp/profile/act", headers=hdr, allow_redirects=False,
+                                  data={"csrf": csrf, "op": "edit-website", "value": "https://old.example.com",
+                                        "label": "My Blog", "new_value": "https://new.example.com"}) as r:
+                    assert r.status == 302
+                # lists: the index links into a per-list detail page that manages its books
+                async with s.get(base + "/webapp/lists/jamie-e2e-list", headers=hdr) as r:
+                    assert r.status == 200
+                    assert "Heart of Darkness" in await r.text()
+                # admin: events page offers a Delete control; deleting removes the row
+                evid = await asyncio.to_thread(
+                    db.record_event, actor="oliver", kind="note", category="club", detail="webtest-event")
+                async with s.get(base + "/webapp/admin/events", headers=ahdr) as r:
+                    assert r.status == 200 and "Delete" in await r.text()
+                async with s.post(base + "/webapp/admin/events/delete", headers=ahdr, allow_redirects=False,
+                                  data={"csrf": acsrf, "id": str(evid)}) as r:
+                    assert r.status == 302
+                # admin: the club-list detail page renders
+                async with s.get(base + "/webapp/admin/lists/books-of-the-year", headers=ahdr) as r:
+                    assert r.status == 200 and "Books of the Year" in await r.text()
         finally:
             async with server._lock:
                 if server._runner is not None:
@@ -408,6 +488,9 @@ def test_routes_end_to_end(monkeypatch):
     assert [e["book_slug"] for e in e2e["entries"]] == ["enshittification", "heart-of-darkness"]  # reordered
     primary = next((h["identifier"] for h in db.member_handles("jamie", "email") if h["is_primary"]), None)
     assert primary == "two@x.com"
+    sites = {h["identifier"]: h["label"] for h in db.member_handles("jamie", "website")}
+    assert sites == {"https://new.example.com": "My Blog"}     # renamed + re-pointed in place
+    assert all(e["detail"] != "webtest-event" for e in db.timeline(limit=500))  # event deleted
 
 
 # ── On-demand lifecycle (in-process) ─────────────────────────────────────────

@@ -1,10 +1,11 @@
 {% extends "base.html" %}
-{% from "_list_card.html" import list_card %}
+{% from "_list_card.html" import list_summary %}
 {% set nav = "lists" %}
 {% block title %}Lists{% endblock %}
 {% block content %}
   <h1>Your lists</h1>
-  {% for lst in lists %}{{ list_card(lst, books, titles, csrf) }}{% else %}<p class="muted">No lists yet.</p>{% endfor %}
+  <p class="muted">Click a list to manage the books on it.</p>
+  {% for lst in lists %}{{ list_summary(lst, csrf, "/webapp/lists/", "/webapp/lists") }}{% else %}<p class="muted">No lists yet.</p>{% endfor %}
 
   <h2>New list</h2>
   <form method="post" action="/webapp/lists/create" class="card">

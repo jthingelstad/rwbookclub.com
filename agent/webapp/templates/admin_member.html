@@ -53,8 +53,16 @@
       <tr>
         <td><a href="{{ w.identifier }}" rel="external noopener">{{ w.label or w.identifier }}</a>
           {% if w.label %}<span class="muted"> — {{ w.identifier }}</span>{% endif %}
-          {% if w.is_primary %} <span class="badge-default">default</span>{% endif %}</td>
-        <td style="text-align:right; white-space:nowrap">
+          {% if w.is_primary %} <span class="badge-default">default</span>{% endif %}
+          <details style="margin-top:.3rem"><summary class="muted">Edit</summary>
+            <form method="post" action="{{ act }}" class="row" style="margin-top:.4rem; gap:.4rem">
+              <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="edit-website">
+              <input type="hidden" name="value" value="{{ w.identifier }}">
+              <input type="text" name="label" value="{{ w.label or '' }}" placeholder="Name (e.g. Blog)" style="flex:1">
+              <input type="url" name="new_value" value="{{ w.identifier }}" placeholder="https://example.com" style="flex:2">
+              <button class="primary">Save</button></form>
+          </details></td>
+        <td style="text-align:right; white-space:nowrap; vertical-align:top">
           {% if not w.is_primary and websites|length > 1 %}
           <form method="post" action="{{ act }}" style="display:inline">
             <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="primary-website">
