@@ -19,6 +19,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterator
+from urllib.parse import urlsplit
 
 DB_PATH = Path(os.environ.get("OLIVER_DB_PATH") or Path(__file__).resolve().parent / "oliver.db")
 
@@ -1025,9 +1026,12 @@ def _normalize_url(url: str) -> str:
 def link_member_website(url: str, member_slug: str, *, linked_by: str | None = None,
                         is_primary: bool = False, label: str | None = None) -> None:
     url = _normalize_url(url)
-    host = url.split("://", 1)[-1].split("/", 1)[0]
-    if not url or "." not in host:
-        raise ValueError("website must look like a URL, e.g. https://example.com")
+    parts = urlsplit(url)
+    # Restrict to http/https. The website renders as an <a href> on the PUBLIC member page, so a
+    # `javascript:`/`data:` scheme here would be stored XSS. A scheme check (not a substring of "://")
+    # is the gate: `javascript://x.y//comment` carries "://" and a dotted host but must be rejected.
+    if parts.scheme not in ("http", "https") or "." not in parts.netloc:
+        raise ValueError("website must be an http(s) URL, e.g. https://example.com")
     link_identity("website", url, member_slug, is_primary=is_primary, linked_by=linked_by, label=label)
 
 

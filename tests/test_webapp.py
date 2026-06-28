@@ -75,6 +75,42 @@ def test_csrf_ok():
     assert sessions.csrf_ok(sess, None) is False
 
 
+def test_website_rejects_dangerous_schemes():
+    import pytest
+    # http(s) and scheme-less (→ https) are accepted and stored.
+    db.link_member_website("https://blog.example.com", "jamie", linked_by="t")
+    db.link_member_website("example.org/path", "jamie", linked_by="t")  # gets https:// prefix
+    stored = {h["identifier"] for h in db.member_handles("jamie", "website")}
+    assert "https://blog.example.com" in stored and "https://example.org/path" in stored
+    # javascript:/data: must be rejected even when crafted to carry "://" and a dotted host —
+    # otherwise it renders as a clickable XSS href on the public member page.
+    for bad in ("javascript://%0aalert(document.domain)//x.com",
+                "javascript:alert(1)", "data:text/html,<script>alert(1)</script>",
+                "ftp://example.com"):
+        with pytest.raises(ValueError):
+            db.link_member_website(bad, "jamie", linked_by="t")
+
+
+def test_webapp_refuses_dev_secret(monkeypatch):
+    import pytest
+    # Fail closed: the public server must never bind while signing sessions with the dev literal.
+    monkeypatch.setattr(config, "WEBAPP_SECRET", config.WEBAPP_DEV_SECRET)
+    monkeypatch.setattr(server, "_runner", None)
+    with pytest.raises(RuntimeError, match="WEBAPP_SECRET"):
+        asyncio.run(server.ensure_running())
+
+
+def test_safe_return_blocks_open_redirect():
+    from agent.webapp.routes_member import _safe_return
+    # legitimate in-app paths pass through
+    assert _safe_return({"return": "/webapp/admin/lists"}, "/webapp/lists") == "/webapp/admin/lists"
+    assert _safe_return({"return": "/webapp/profile"}, "/webapp/lists") == "/webapp/profile"
+    # off-site / scheme-relative / backslash variants fall back to the default
+    for evil in ("//evil.com", "https://evil.com", "/webapp//evil.com",
+                 "/webapp/\\evil.com", "", "/etc/passwd"):
+        assert _safe_return({"return": evil}, "/webapp/lists") == "/webapp/lists"
+
+
 # ── New clubdb writers ───────────────────────────────────────────────────────
 def test_set_rating_preserves_existing_review_body():
     with db.connect() as conn:

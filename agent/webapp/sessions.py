@@ -95,7 +95,14 @@ def consume_token(token: str | None) -> dict | None:
         row = _lookup(conn, token)
         if not _valid(row):
             return None
-        conn.execute("UPDATE webapp_tokens SET used_at = ? WHERE token = ?", (_now().isoformat(), token))
+        # Atomic single-use gate: only the request that flips used_at NULL→now wins. Two concurrent
+        # exchanges of the same token both pass _valid (a TOCTOU window), so the conditional UPDATE —
+        # not the SELECT — is the authority. rowcount 0 means another request already consumed it.
+        cur = conn.execute(
+            "UPDATE webapp_tokens SET used_at = ? WHERE token = ? AND used_at IS NULL",
+            (_now().isoformat(), token))
+        if cur.rowcount == 0:
+            return None
         return _row_to_member(row)
 
 

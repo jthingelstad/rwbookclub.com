@@ -25,9 +25,13 @@ def _form(request: web.Request):
 
 
 def _safe_return(form, default: str) -> str:
-    """A redirect target from the form, restricted to in-app paths (no open redirect)."""
+    """A redirect target from the form, restricted to in-app paths (no open redirect). Must be a
+    single-slash `/webapp/` path: reject `/webapp//evil.com` (some proxies treat `//` as
+    scheme-relative) and backslash variants browsers normalize to `//`."""
     ret = (form.get("return") or "").strip()
-    return ret if ret.startswith("/webapp/") else default
+    if not ret.startswith("/webapp/") or ret.startswith("/webapp//") or "\\" in ret:
+        return default
+    return ret
 
 
 def apply_identity_op(slug: str, op: str, val: str, label: str | None = None) -> bool:

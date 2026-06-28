@@ -21,6 +21,9 @@ os.environ["OLIVER_DB_PATH"] = str(_TMP_DIR / "test.db")
 os.environ["OLIVER_CORPUS_DIR"] = str(_TMP_DIR / "corpus")
 # Keep /oliver add-book offline in tests — no inline external enrichment (network).
 os.environ["OLIVER_ENRICH_ON_WRITE"] = "0"
+# Give the web app a real (test) signing secret so session-cookie tests work and the
+# fail-closed guard in server.ensure_running doesn't trip in CI (which has no bot token).
+os.environ.setdefault("WEBAPP_SECRET", "test-webapp-signing-secret-not-the-dev-default")
 
 # Public-safe club_* seed (no PII) — replaces seeding from the (now-gitignored) corpus.
 # Regenerate with: python -m agent.script.dump_club_seed > tests/fixtures/club_seed.sql

@@ -47,6 +47,33 @@ def _is_link_preview(request: web.Request) -> bool:
     return any(b in ua for b in _PREVIEW_BOTS)
 
 
+# Sent on every response. The app is public (Funnel): nosniff blocks MIME-confusion, DENY/none stops
+# clickjacking of the admin editor, no-referrer keeps the one-time `?t=` token out of Referer, and a
+# self-only CSP limits what an injected page could load (inline scripts are still allowed — the
+# templates rely on them — so this is a backstop, not the primary XSS control, which is autoescape).
+_SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; "
+                               "style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; "
+                               "frame-ancestors 'none'",
+}
+
+
+@web.middleware
+async def _security_headers(request: web.Request, handler):
+    try:
+        resp = await handler(request)
+    except web.HTTPException as exc:
+        for k, v in _SECURITY_HEADERS.items():
+            exc.headers.setdefault(k, v)
+        raise
+    for k, v in _SECURITY_HEADERS.items():
+        resp.headers.setdefault(k, v)
+    return resp
+
+
 # ── Middleware: activity + auth + admin gate + CSRF ──────────────────────────
 @web.middleware
 async def _mw(request: web.Request, handler):
@@ -122,7 +149,9 @@ def _trigger_publish() -> None:
 
 # ── Lifecycle (on-demand start, idle shutdown, publish-if-dirty) ─────────────
 def _build_app() -> web.Application:
-    app = web.Application(middlewares=[_mw])
+    # client_max_size caps request bodies (the app only takes small forms) so the shared bot process
+    # can't be memory-pressured by a giant POST. Outer middleware runs first: headers wrap everything.
+    app = web.Application(middlewares=[_security_headers, _mw], client_max_size=256 * 1024)
     app.add_routes([
         web.get("/healthz", healthz),
         web.get("/webapp", entry),
@@ -140,6 +169,12 @@ async def ensure_running() -> None:
         _last_activity = _now()
         if _runner is not None:
             return
+        # Fail closed: never serve the public (Funnel) app signed with the known dev literal, or a
+        # missing key — that would let anyone forge an admin session cookie. Require a real secret.
+        if not config.WEBAPP_SECRET or config.WEBAPP_SECRET == config.WEBAPP_DEV_SECRET:
+            raise RuntimeError(
+                "Refusing to start the web app: set WEBAPP_SECRET (or DISCORD_BOT_TOKEN) to a real "
+                "secret — signing sessions with the dev default would allow forged admin cookies.")
         runner = web.AppRunner(_build_app())
         await runner.setup()
         site = web.TCPSite(runner, "127.0.0.1", config.WEBAPP_PORT)
