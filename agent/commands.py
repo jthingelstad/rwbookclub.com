@@ -19,7 +19,7 @@ import discord
 from discord.ext import tasks
 
 from agent import (clubdb, config, context as kb, corpus_read, corpus_write, db, oliver,
-                   publish, scheduler)
+                   publish, scheduler, webapp)
 from agent.mail import email_jmap, mail_archive, outbound
 from agent.club import (lists as lists_writer, meeting_campaign, meeting_emails, meeting_rules,
                         openlibrary, release_notes, reviews)
@@ -608,6 +608,24 @@ class ReviewModal(discord.ui.Modal):
 @oliver_cmds.command(name="ping", description="Check that Oliver is awake.")
 async def oliver_ping(interaction: discord.Interaction) -> None:
     await interaction.response.send_message("🟢 Oliver is awake.", ephemeral=True)
+
+
+@oliver_cmds.command(name="webapp", description="Get a private link to manage your club info on the web.")
+async def oliver_webapp(interaction: discord.Interaction) -> None:
+    member = _linked_member_for_user(interaction.user.id)
+    if not member:
+        await interaction.response.send_message(_LINK_FIRST, ephemeral=True)
+        return
+    member_id = clubdb.lookup_member_id(member["slug"])
+    if member_id is None:
+        await interaction.response.send_message(
+            "I couldn't resolve your member record — ask an admin to check your link.", ephemeral=True)
+        return
+    token = await asyncio.to_thread(
+        webapp.mint_token, member_id, is_admin=_is_admin(interaction))
+    url = f"{config.WEBAPP_BASE_URL}/webapp?t={token}"
+    await interaction.response.send_message(
+        f"🔧 Your private link (good for ~15 minutes, just for you):\n{url}", ephemeral=True)
 
 
 @admin_cmds.command(name="stats", description="Report corpus stats (admin).")

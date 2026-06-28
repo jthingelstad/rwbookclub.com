@@ -25,7 +25,7 @@ import discord
 import requests
 from discord.ext import tasks
 
-from agent import clubdb, commands, config, context as kb, db, oliver, publish
+from agent import clubdb, commands, config, context as kb, db, oliver, publish, webapp
 from agent.mail import email_jmap, email_policy, mail_archive, outbound
 from agent.club import meeting_rules
 
@@ -231,6 +231,10 @@ async def on_ready() -> None:
     commands.start_scheduler()
     start_activity_logger()
     start_email_poller()
+    try:
+        await webapp.start_webapp()
+    except Exception:
+        log.exception("webapp failed to start (non-fatal); /oliver webapp links won't resolve")
 
 
 def start_activity_logger() -> None:

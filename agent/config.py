@@ -40,6 +40,12 @@ CHANNEL_NAMES = {
 MAX_DISCORD_LEN = 2000
 CLUB_TIMEZONE = os.environ.get("CLUB_TIMEZONE", "America/Chicago")
 
+# Member web app (served locally inside the bot process, reached over Tailscale Funnel).
+# WEBAPP_BASE_URL is the public Funnel origin (no trailing slash); WEBAPP_PORT is the
+# loopback port the in-process aiohttp server binds. Funnel maps the public 443 → this port.
+WEBAPP_PORT = int(os.environ.get("WEBAPP_PORT") or 8765)
+WEBAPP_BASE_URL = (os.environ.get("WEBAPP_BASE_URL") or "https://otto.tail09aaf9.ts.net").rstrip("/")
+
 # Fastmail/JMAP — optional. If FASTMAIL_JMAP_TOKEN is absent, all email features
 # no-op at runtime so local/dev Discord-only runs keep working.
 FASTMAIL_JMAP_TOKEN = os.environ.get("FASTMAIL_JMAP_TOKEN")

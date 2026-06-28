@@ -98,6 +98,19 @@ CREATE TABLE IF NOT EXISTS notifications_sent (
     sent_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- One-time links for the member web app. A Discord command mints a row (the Discord
+-- identity IS the auth); the local web server (reached via Tailscale Funnel) resolves the
+-- token to a member. created_at/expires_at are ISO-8601 UTC; used_at is reserved for the
+-- production single-use exchange (the spike leaves it null and allows reuse until expiry).
+CREATE TABLE IF NOT EXISTS webapp_tokens (
+    token       TEXT PRIMARY KEY,
+    member_id   INTEGER NOT NULL,
+    is_admin    INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL,
+    expires_at  TEXT NOT NULL,
+    used_at     TEXT
+);
+
 -- Each reply Oliver posts to Discord — keyed by Discord message id so reaction
 -- handlers can cheaply check "is this one of mine?" without fetching the message.
 CREATE TABLE IF NOT EXISTS responses (
