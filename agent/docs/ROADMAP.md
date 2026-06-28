@@ -110,6 +110,19 @@ get a **Lists** nav hub at `/lists/`. Read surface: the `club_lists` tool + memb
 `member_history`. The one legacy award (2016 Book of the Year) migrated into a "Books of the Year"
 club list. (The separate enrichment-driven literary-awards field on books is unrelated and stays.)
 
+**Phase 8 — Member + admin web app.** ✅ **Done.** A real web editor served **inside the bot process**
+(`agent/webapp/`, aiohttp + Jinja2) over **Tailscale Funnel**, authed by a Discord-minted single-use
+token → signed session cookie (the Discord identity link *is* the login; no passwords, no cloud DB —
+the authoritative SQLite stays local and the Mac dials out via Funnel). On-demand lifecycle (starts on
+`/oliver webapp`, idles off ~15 min) and **deferred publish** (Publish button / idle shutdown, no
+per-write rebuild). Member tabs: bulk **ratings** grid (1–5/DNF, one click), **reviews** (Markdown),
+**lists**, **profile/contact**. Admin tabs: **book** data, **meetings** (add/edit, mark held),
+**hosts**. Reuses existing writers + new `clubdb.set_rating`/`update_meeting`/`set_meeting_hosts`. The
+obsoleted Discord commands were retired (`/oliver reading review`, the `/oliver list` group, member
+self-service `/oliver contact` add/remove, `/oliver library schedule`); their writers stay. Division
+of labor: Discord keeps attendance, reading status, and **private meeting feedback**; the web app owns
+the structured/public editing. Deferred: enrichment review, member name/bio/photo, book title rename.
+
 **What's next (candidates).** The "book cloud" capture stream
 (`agent/team/work/2026-06-26-build-book-cloud.md`, slice 1a ready); backfilling the 3
 picker-less / host-less book-meetings (Love Sense, Complexity, Being Mortal) once the names are known.

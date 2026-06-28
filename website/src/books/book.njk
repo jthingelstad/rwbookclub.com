@@ -125,7 +125,7 @@ eleventyComputed:
                 <p class="review-rating" aria-label="Rated {{ r.rating }} of 5">{% for i in range(0, r.rating) %}★{% endfor %}{% for i in range(r.rating, 5) %}<span class="dim">★</span>{% endfor %}</p>
               {% endif %}
             </header>
-            {% if r.review %}<p class="review-body">{{ r.review }}</p>{% endif %}
+            {% if r.review %}<div class="review-body">{{ r.review | markdown | safe }}</div>{% endif %}
             {% if r.favoriteQuote %}<blockquote>{{ r.favoriteQuote }}</blockquote>{% endif %}
             {% if (not r.dnf) and (r.wouldRecommend or r.discussionQuality) %}
               <ul class="review-tags">

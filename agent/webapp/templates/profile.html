@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% set nav = "profile" %}
+{% block title %}Profile{% endblock %}
+{% macro handle_list(items, op_remove, removable) %}
+  <table>
+    {% for v in items %}
+    <tr><td>{{ v }}</td><td style="text-align:right">
+      {% if removable %}
+      <form method="post" action="/webapp/profile/act">
+        <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="{{ op_remove }}">
+        <input type="hidden" name="value" value="{{ v }}"><button>Remove</button></form>
+      {% endif %}
+    </td></tr>
+    {% else %}<tr><td class="muted">None yet.</td></tr>
+    {% endfor %}
+  </table>
+{% endmacro %}
+{% macro add_form(op, label, type) %}
+  <form method="post" action="/webapp/profile/act" class="row" style="margin-top:.4rem">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="{{ op }}">
+    <input type="{{ type }}" name="value" placeholder="{{ label }}" style="flex:1"><button class="primary">Add</button>
+  </form>
+{% endmacro %}
+{% block content %}
+  <h1>Your profile</h1>
+
+  <div class="card">
+    <h2 style="margin-top:0">Websites <span class="muted">(public — shown on your member page)</span></h2>
+    {{ handle_list(websites, "remove-website", true) }}
+    {{ add_form("add-website", "https://example.com", "url") }}
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Email <span class="muted">(private; can be added, not removed)</span></h2>
+    {{ handle_list(emails, "", false) }}
+    {{ add_form("add-email", "you@example.com", "email") }}
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Phone <span class="muted">(private)</span></h2>
+    {{ handle_list(phones, "remove-phone", true) }}
+    {{ add_form("add-phone", "+1 555 123 4567", "tel") }}
+  </div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% set nav = "meetings" %}
+{% block title %}Meetings (admin){% endblock %}
+{% block content %}
+  <h1>Meetings</h1>
+
+  <h2>Schedule a meeting</h2>
+  <form method="post" action="/webapp/admin/meetings/add" class="card">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Book</label>
+    <select name="book">{% for b in books %}<option value="{{ b.slug }}">{{ b.title }}</option>{% endfor %}</select>
+    <label>Date (YYYY-MM-DD)</label><input type="text" name="date" placeholder="2026-07-15">
+    <label>Picker</label>
+    <select name="picker">{% for m in members %}{% if m.current %}<option value="{{ m.slug }}">{{ m.name }}</option>{% endif %}{% endfor %}</select>
+    <p style="margin-top:.8rem"><button class="primary">Schedule</button></p>
+  </form>
+
+  <h2>All meetings</h2>
+  <table>
+    {% for m in meetings %}
+    <tr>
+      <td><a href="/webapp/admin/meetings/{{ m.id }}">{{ m.date or 'TBD' }}</a>
+        {% if m.placeholder %}<span class="muted"> · tentative</span>{% endif %}</td>
+      <td class="muted">{{ m.book_slugs|join(', ') }}</td>
+      <td class="muted" style="text-align:right">{{ m.host_slugs|join(', ') or 'no host' }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+{% endblock %}

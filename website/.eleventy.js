@@ -1,3 +1,8 @@
+const markdownIt = require("markdown-it");
+// Member-authored review bodies are Markdown. html:false escapes any raw HTML in the source, so
+// rendering member content is XSS-safe; linkify turns bare URLs into links; breaks honors newlines.
+const _reviewMd = markdownIt({ html: false, linkify: true, breaks: true });
+
 module.exports = function (eleventyConfig) {
   // Pass static assets through unchanged
   eleventyConfig.addPassthroughCopy({ "src/assets": "assets" });
@@ -111,6 +116,9 @@ module.exports = function (eleventyConfig) {
     if (!Array.isArray(arr)) return [];
     return arr.slice(0, n);
   });
+
+  // Render Markdown (member review bodies). Use with |safe; the renderer escapes raw HTML.
+  eleventyConfig.addFilter("markdown", (str) => (str ? _reviewMd.render(String(str)) : ""));
 
   // Strip HTML tags from a string (for plain-text outputs like llms.txt)
   eleventyConfig.addFilter("stripHtml", (str) => {

@@ -596,6 +596,27 @@ def upsert_review(conn: sqlite3.Connection, *, book_id: int, member_id: int,
     return {"id": rid, "created_at": created_at, "existed": bool(existing)}
 
 
+def set_rating(conn: sqlite3.Connection, book_id: int, member_id: int, *,
+               rating: int | None, dnf: bool = False) -> int:
+    """Set just a member's rating/DNF for a book, PRESERVING any existing review body and other
+    fields (the bulk ratings grid uses this; `upsert_review` would replace the whole row). Returns
+    the review id."""
+    existing = conn.execute(
+        "SELECT id FROM club_reviews WHERE book_id = ? AND member_id = ?", (book_id, member_id),
+    ).fetchone()
+    if existing:
+        conn.execute("UPDATE club_reviews SET rating = ?, dnf = ? WHERE id = ?",
+                     (rating, 1 if dnf else 0, existing["id"]))
+        return existing["id"]
+    rid = _next_id(conn, "club_reviews")
+    conn.execute(
+        "INSERT INTO club_reviews(id, book_id, member_id, rating, dnf, created_at) "
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        (rid, book_id, member_id, rating, 1 if dnf else 0, datetime.now(timezone.utc).isoformat()),
+    )
+    return rid
+
+
 def _unique_list_slug(conn: sqlite3.Connection, base: str) -> str:
     """A globally-unique club_lists slug from `base`, with a -2/-3… suffix on collision."""
     root = slugify(base) or "list"
@@ -664,6 +685,49 @@ def set_book_picker(conn: sqlite3.Connection, book_id: int, member_id: int) -> N
         "INSERT INTO club_book_pickers(book_id, member_id, ordinal) VALUES (?, ?, 0)",
         (book_id, member_id),
     )
+
+
+def set_meeting_hosts(conn: sqlite3.Connection, meeting_id: int, member_ids: list[int]) -> None:
+    """Replace a meeting's host(s) with the given members (ordered). Mirrors set_book_picker for the
+    M:N club_meeting_hosts table."""
+    conn.execute("DELETE FROM club_meeting_hosts WHERE meeting_id = ?", (meeting_id,))
+    conn.executemany(
+        "INSERT INTO club_meeting_hosts(meeting_id, member_id, ordinal) VALUES (?, ?, ?)",
+        [(meeting_id, mid, i) for i, mid in enumerate(member_ids)],
+    )
+
+
+def update_meeting(conn: sqlite3.Connection, meeting_id: int, *, date: str | None = None,
+                   start_time: str | None = None, location: str | None = None,
+                   notes: str | None = None, types: list[str] | None = None,
+                   placeholder: bool | None = None) -> None:
+    """Edit an existing meeting's scalar fields. Only provided (non-None) fields are changed; pass
+    placeholder=False to mark a tentative meeting as held."""
+    sets, vals = [], []
+    for key, val in (("date", date), ("start_time", start_time), ("location", location),
+                     ("notes", notes)):
+        if val is not None:
+            sets.append(f"{key} = ?")
+            vals.append(val)
+    if types is not None:
+        sets.append("type_json = ?")
+        vals.append(json.dumps(types))
+    if placeholder is not None:
+        sets.append("placeholder = ?")
+        vals.append(1 if placeholder else 0)
+    if not sets:
+        return
+    vals.append(meeting_id)
+    conn.execute(f"UPDATE club_meetings SET {', '.join(sets)} WHERE id = ?", vals)
+
+
+# The 11 single-select Topic choices (see CLAUDE.md). The admin book editor validates against these.
+TOPICS = [
+    "Brain & Psychology", "Current Events & People", "Essays & Literature",
+    "Health & Medicine", "History & Economics", "Philosophy & Religion",
+    "Politics & Social Sciences", "Science and Math", "Science Fiction & Fiction",
+    "Technology", "Travel & Memoir",
+]
 
 
 def create_meeting(conn: sqlite3.Connection, *, date_iso: str, book_id: int,

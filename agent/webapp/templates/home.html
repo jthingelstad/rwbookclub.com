@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% set nav = "home" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+  <h1>Hi {{ member_name }} 👋</h1>
+  <p class="muted">Manage your book club data here. Changes save instantly to Oliver; the public site
+  updates when you hit <strong>Publish</strong> (or automatically a few minutes after you're done).</p>
+  <div class="card"><a href="/webapp/ratings"><strong>⭐ Rate books</strong></a><br>
+    <span class="muted">Quick 1–5 / DNF across every book — one click each.</span></div>
+  <div class="card"><a href="/webapp/reviews"><strong>✍️ Write a review</strong></a><br>
+    <span class="muted">A full review (Markdown) for a book.</span></div>
+  <div class="card"><a href="/webapp/lists"><strong>📋 Your lists</strong></a><br>
+    <span class="muted">Curate lists of club books.</span></div>
+  <div class="card"><a href="/webapp/profile"><strong>👤 Profile</strong></a><br>
+    <span class="muted">Your websites, email, and phone.</span></div>
+  {% if is_admin %}
+  <h2>Admin</h2>
+  <div class="card"><a href="/webapp/admin/books">📚 Edit book data</a> ·
+    <a href="/webapp/admin/meetings">🗓️ Meetings &amp; hosts</a></div>
+  {% endif %}
+{% endblock %}

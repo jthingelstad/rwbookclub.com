@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% set nav = "lists" %}
+{% block title %}Lists{% endblock %}
+{% macro book_options(books) %}
+  {% for b in books %}<option value="{{ b.slug }}">{{ b.title }}</option>{% endfor %}
+{% endmacro %}
+{% macro list_card(lst, books, titles) %}
+  <div class="card">
+    <div class="row"><strong style="flex:1">{{ lst.name }}</strong>
+      <form method="post" action="/webapp/lists/act" onsubmit="return confirm('Delete this list?')">
+        <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="delete">
+        <input type="hidden" name="list" value="{{ lst.slug }}">
+        <button class="danger">Delete</button></form>
+    </div>
+    {% if lst.description %}<p class="muted">{{ lst.description }}</p>{% endif %}
+    <table>
+      {% for e in lst.books %}
+      <tr><td>{{ titles.get(e.book, e.book) }}{% if e.note %} <span class="muted">— {{ e.note }}</span>{% endif %}</td>
+        <td style="text-align:right">
+          <form method="post" action="/webapp/lists/act">
+            <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="remove-book">
+            <input type="hidden" name="list" value="{{ lst.slug }}"><input type="hidden" name="book" value="{{ e.book }}">
+            <button>Remove</button></form></td></tr>
+      {% endfor %}
+    </table>
+    <form method="post" action="/webapp/lists/act" class="row" style="margin-top:.5rem">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="add-book">
+      <input type="hidden" name="list" value="{{ lst.slug }}">
+      <select name="book" style="flex:2">{{ book_options(books) }}</select>
+      <input type="text" name="note" placeholder="note (optional)" style="flex:2">
+      <button class="primary">Add</button>
+    </form>
+    <details style="margin-top:.5rem"><summary class="muted">Rename / edit description</summary>
+      <form method="post" action="/webapp/lists/act" style="margin-top:.5rem">
+        <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="edit">
+        <input type="hidden" name="list" value="{{ lst.slug }}">
+        <input type="text" name="name" value="{{ lst.name }}" placeholder="name">
+        <input type="text" name="description" value="{{ lst.description or '' }}" placeholder="description" style="margin-top:.4rem">
+        <button class="primary" style="margin-top:.4rem">Save</button>
+      </form>
+    </details>
+  </div>
+{% endmacro %}
+{% block content %}
+  <h1>Your lists</h1>
+  {% for lst in lists %}{{ list_card(lst, books, titles) }}{% else %}<p class="muted">No lists yet.</p>{% endfor %}
+
+  <h2>New list</h2>
+  <form method="post" action="/webapp/lists/create" class="card">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Name</label><input type="text" name="name" required>
+    <label>Description</label><input type="text" name="description">
+    {% if is_admin %}<label class="row"><input type="checkbox" name="scope" value="club" style="width:auto"> &nbsp;Club list (everyone's)</label>{% endif %}
+    <p style="margin-top:.8rem"><button class="primary">Create list</button></p>
+  </form>
+
+  {% if is_admin and club_lists %}
+  <h2>Club lists</h2>
+  {% for lst in club_lists %}{{ list_card(lst, books, titles) }}{% endfor %}
+  {% endif %}
+{% endblock %}

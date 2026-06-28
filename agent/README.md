@@ -13,7 +13,8 @@ agent/
 ├── clubdb.py       # the authoritative club_* tables + read/write helpers
 ├── corpus_gen.py   # generate the (private, gitignored) corpus from the DB
 ├── corpus_read.py  # query/join layer over the generated corpus
-├── corpus_write.py # /oliver library add-book/schedule → DB upsert + corpus regen
+├── corpus_write.py # add-book / schedule_meeting → DB upsert + corpus regen (web app + /oliver library)
+├── webapp/         # member + admin web editor (aiohttp + Jinja2, Tailscale Funnel, token→cookie auth)
 ├── publish.py      # local build + deploy of the site to the gh-pages branch
 ├── scheduler.py    # pure due_notifications (reminders / nudges / milestones)
 ├── context.py      # compact club overview for the cached system prompt
@@ -43,13 +44,14 @@ agent/
   `compare_books`, `review_summary`), email (`send_email`, `email_status`), proposal staging
   (`propose_action`, `open_proposals`), plus `remember`, `recall`, `set_reminder`, and explicit
   self-reported `record_availability` (SQLite).
-- **Reviews** (`/oliver reading review`): members log reviews via a Discord form that writes
-  `club_reviews` (DB-backed) and regenerates the corpus review file — see below. Review
-  identity comes from the private Discord-user → member map, not mutable display names.
+- **Reviews / ratings / lists / profile**: members manage these in the **web app** (`/oliver webapp`,
+  see below), which writes `club_reviews` / `club_lists` / `member_identities` and regenerates the
+  corpus. Identity comes from the Discord-user → member map (carried into a signed web session), not
+  mutable display names.
 - **Operations** (admin), organized into `/oliver` subcommand groups: `/oliver library add-book`
-  (Open Library → book file + cover) and `schedule` (book + date + picker → a meeting);
-  `/oliver meeting roll-call`/`dashboard`/`check-in`; `/oliver contact` identity links; `/oliver admin`
-  (stats, feedback, proposals, tick); `/oliver memory` maintenance. Writes go through `corpus_write.py`
+  (Open Library → book file + cover); `/oliver meeting roll-call`/`dashboard`/`check-in`;
+  `/oliver contact` admin identity links; `/oliver admin` (stats, feedback, proposals, tick);
+  `/oliver memory` maintenance. Admin **book/meeting/host editing** is in the web app. Writes go through `corpus_write.py`
   and validate the corpus before commit.
 - **Feedback** (any member): react 👍 or 👎 to any of Oliver's replies. The bot logs the
   reaction (user, message, question that prompted it) to SQLite and confirms with ✅. Use
@@ -136,36 +138,43 @@ Thing pattern). Backup wiring is a deployment step, not in the repo.
 ### Command structure
 
 `/oliver` is organized into subcommand groups by purpose (Discord's 2-level nesting:
-`/oliver <group> <subcommand> [options]`). Two quick commands stay top-level: `/oliver ping`
-and `/oliver whoami`.
+`/oliver <group> <subcommand> [options]`). Quick top-level commands: `/oliver ping`, `/oliver whoami`,
+and `/oliver webapp` (see "Member + admin web app" below).
+
+Structured, public, deliberate editing — **book ratings/reviews, lists, profile/contact, and admin
+data management** — moved to the web app. Discord stays primary for the conversational, private,
+in-the-moment things (attendance, reading status, private meeting feedback).
 
 - **`/oliver reading`** (members) — `status [status|progress|page|percent]` shows everyone / updates
-  yours; `review book:<…>` logs a review (form).
+  yours. (Reviews moved to the web app.)
 - **`/oliver meeting`** (admin) — `dashboard` readiness; `roll-call action:<status|start|remind|email|close>`
   runs attendance (email roll call targets pending members only); `check-in member:<slug>` emails a
   reading nudge.
 - **`/oliver timeline`** — `show [member|category]` (members) views the club event log; `log date:
   category: text: [member]` (admin) records an event.
-- **`/oliver contact`** — members manage their own handles (`add-website`/`add-email`/`add-phone`,
-  `remove-website`/`remove-phone`); admins link anyone (`link-member`/`link-email`/`link-sms`) and
-  `list` all links. Email can be added but never removed.
+- **`/oliver contact`** — admins link anyone (`link-member`/`link-email`/`link-sms`) and `list` all
+  links. (Members manage their own websites/emails/phones in the web app → Profile.)
 - **`/oliver memory`** (admin) — `search [subject|query]`, `edit id: note:`, `forget id:`.
-- **`/oliver list`** — members manage their own book lists: `create name: description:`,
-  `add-book list: book: [note:]`, `remove-book list: book:`, `edit list: [name] [description]`,
-  `delete list:`. `create-club` (admin) makes a club-wide list. Lists render on member profiles
-  and at `/lists/<slug>/`; club lists appear in the site's **Lists** nav hub.
+- **`/oliver library`** (admin) — `add-book title: [isbn]` fetches metadata from Open Library.
+  (Scheduling/editing meetings moved to the web app → Meetings.)
 - **`/oliver admin`** — `stats`, `feedback`, `proposals`, `resolve id: decision:<accept|dismiss>`,
   `release-notes [to]`, `reattribute-mail`, `tick` (run the scheduler now).
 
-## Reviews (`/oliver reading review`)
+## Member + admin web app (`/oliver webapp`)
 
-Members log book reviews with the `/oliver reading review` command: pick the book (autocomplete), fill the
-form (rating 1–5 or DNF, the review, recommend?, discussion quality, favorite quote), and
-submit. Oliver upserts the review into `club_reviews` (the authoritative DB) and regenerates the
-corpus review file (`corpus/data/reviews/<book>--<member>.md`); the command then schedules a
-background publish that rebuilds + deploys the site to `gh-pages`. Only linked club members can
-submit, and submitting the form is the confirmation. `reviews.py` → `clubdb.upsert_review` is the
-single write path (any future front-end reuses it).
+A real web editor served **inside the bot process** (`agent/webapp/`, aiohttp + Jinja2) and reached
+over **Tailscale Funnel**. `/oliver webapp` mints a single-use token (the Discord identity link *is*
+the auth); the member opens the URL, the server exchanges the token for a signed session cookie, and
+they edit on a page. The server starts on demand and idles off after ~15 min; changes go live on a
+**Publish** button or on idle shutdown (deferred publish — no per-write rebuild).
+
+- **Member tabs:** Ratings (one-click 1–5/DNF across all books), Reviews (per-book, Markdown body),
+  Lists (CRUD), Profile (websites/emails/phones).
+- **Admin tabs:** Books (edit core fields; title is read-only to keep the slug), Meetings (add + edit,
+  mark held), Hosts.
+- **Writers are reused** — `reviews.write_review`, `agent/club/lists.py`, `db.link_member_*`,
+  `clubdb.upsert_book`, and the new `clubdb.set_rating`/`update_meeting`/`set_meeting_hosts`. Auth/
+  session/CSRF live in `agent/webapp/sessions.py`; routes in `routes_member.py`/`routes_admin.py`.
 
 ## Tests
 

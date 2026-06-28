@@ -21,8 +21,8 @@ from discord.ext import tasks
 from agent import (clubdb, config, context as kb, corpus_read, corpus_write, db, oliver,
                    publish, scheduler, webapp)
 from agent.mail import email_jmap, mail_archive, outbound
-from agent.club import (lists as lists_writer, meeting_campaign, meeting_emails, meeting_rules,
-                        openlibrary, release_notes, reviews)
+from agent.club import (meeting_campaign, meeting_emails, meeting_rules,
+                        openlibrary, release_notes)
 
 log = logging.getLogger("oliver.commands")
 
@@ -126,9 +126,6 @@ library_cmds = discord.app_commands.Group(
 admin_cmds = discord.app_commands.Group(
     name="admin", description="Operate Oliver — stats, feedback, proposals, scheduler (admin).",
     parent=oliver_cmds)
-list_cmds = discord.app_commands.Group(
-    name="list", description="Make and curate book lists (yours, or club lists for admins).",
-    parent=oliver_cmds)
 
 
 # ── Autocompletes ────────────────────────────────────────────────────────────
@@ -146,25 +143,6 @@ async def member_autocomplete(interaction: discord.Interaction, current: str):
         name = m.get("name") or ""
         if not cur or cur in name.lower():
             out.append(discord.app_commands.Choice(name=name, value=m.get("slug")))
-        if len(out) >= 25:
-            break
-    return out
-
-
-async def list_autocomplete(interaction: discord.Interaction, current: str):
-    """Lists the caller may edit — their own, plus club lists if they're an admin."""
-    cur = current.strip().lower()
-    slug = db.member_slug_for_user(str(interaction.user.id))
-    admin = _is_admin(interaction)
-    out = []
-    for x in corpus_read.lists():
-        if not (admin or x.get("owner") == slug):
-            continue
-        label = x.get("name") or x.get("slug")
-        if x.get("scope") == "club":
-            label = f"{label} (club)"
-        if not cur or cur in label.lower() or cur in (x.get("slug") or ""):
-            out.append(discord.app_commands.Choice(name=label[:100], value=x.get("slug")))
         if len(out) >= 25:
             break
     return out
@@ -541,69 +519,6 @@ async def record_attendance_response(interaction: discord.Interaction, status: s
         ephemeral=True)
 
 
-# ── Modals ───────────────────────────────────────────────────────────────────
-class ReviewModal(discord.ui.Modal):
-    """The /oliver reading review form — five inputs, one submit, upserted to the club_* DB (the corpus is then regenerated + redeployed)."""
-
-    def __init__(self, slug: str, title: str, member_slug: str,
-                 existing: dict | None = None) -> None:
-        super().__init__(title=f"Review: {title}"[:45])
-        self.slug = slug
-        self.member_slug = member_slug
-        existing = existing or {}
-        rating_default = "DNF" if existing.get("dnf") else (
-            str(existing["rating"]) if existing.get("rating") else None)
-        self.rating = discord.ui.TextInput(
-            label="Rating (1–5, or DNF)", required=False, max_length=12, default=rating_default)
-        self.review = discord.ui.TextInput(
-            label="Your review", style=discord.TextStyle.paragraph, required=False,
-            max_length=2000, default=existing.get("review") or None)
-        self.recommend = discord.ui.TextInput(
-            label="Would you recommend it? (yes/no)", required=False, max_length=5,
-            default=("yes" if existing.get("wouldRecommend") else None))
-        self.discussion = discord.ui.TextInput(
-            label="Discussion quality (1–5, optional)", required=False, max_length=3,
-            default=(str(existing["discussionQuality"]) if existing.get("discussionQuality") else None))
-        self.quote = discord.ui.TextInput(
-            label="Favorite quote (optional)", style=discord.TextStyle.paragraph,
-            required=False, max_length=1000, default=existing.get("favoriteQuote") or None)
-        for item in (self.rating, self.review, self.recommend, self.discussion, self.quote):
-            self.add_item(item)
-
-    async def on_submit(self, interaction: discord.Interaction) -> None:
-        await interaction.response.defer(ephemeral=True)  # DB upsert + corpus regen may take a moment
-        try:
-            res = await asyncio.to_thread(
-                reviews.write_review, self.slug, self.member_slug,
-                rating=self.rating.value, review=self.review.value,
-                recommend=self.recommend.value, discussion=self.discussion.value,
-                quote=self.quote.value,
-            )
-        except reviews.ReviewError as e:
-            await interaction.followup.send(f"⚠️ {e}", ephemeral=True)
-            return
-        except Exception:
-            log.exception("Failed to write review")
-            await interaction.followup.send(
-                "Sorry — I couldn't save that just now. Try again in a moment.", ephemeral=True)
-            return
-        schedule_publish()  # rebuild + deploy the site in the background
-        verb = "Updated" if res["updated"] else "Logged"
-        score = "DNF" if res["dnf"] else (f"{res['rating']}/5" if res["rating"] else "your notes")
-        ack = await asyncio.to_thread(
-            oliver.compose,
-            "brief acknowledgement that a member just logged their book review",
-            {
-                "action": verb.lower(),
-                "book": res["book"],
-                "rating": score,
-                "note": "the review will appear on the club website shortly",
-            },
-            fallback=f"📚 {verb} your review of *{res['book']}* ({score}) — it'll be live on the site shortly.",
-        )
-        await interaction.followup.send(ack, ephemeral=True)
-
-
 # ── Subcommands ──────────────────────────────────────────────────────────────
 @oliver_cmds.command(name="ping", description="Check that Oliver is awake.")
 async def oliver_ping(interaction: discord.Interaction) -> None:
@@ -770,206 +685,11 @@ async def link_sms_cmd(interaction: discord.Interaction, member: str, number: st
         f"Linked `{number.strip()}` to {m['name']} (`{m['slug']}`).", ephemeral=True)
 
 
-# ── Member self-service contact handles ──────────────────────────────────────
-# Members manage their OWN identities (no admin gate; the caller is resolved via their Discord link).
-# Websites are public (profile page → schedule a rebuild); emails/phones are private. Emails can be
-# added but never removed — they anchor mailing-list attribution (db.unlink_member_identity blocks it).
+# Members manage their own contact handles, lists, and ratings/reviews in the web app now
+# (/oliver webapp). _LINK_FIRST is still used by /oliver webapp for unlinked callers; the admin
+# link-* commands above and the underlying writers (db.link_member_*, agent/club/lists.py) stay.
 _LINK_FIRST = ("I can only do that for linked club members — ask an admin to run "
                "`/oliver contact link-member` to connect your Discord account first.")
-
-
-@contact_cmds.command(name="add-website", description="Add one of your website addresses (public, on your profile).")
-@discord.app_commands.describe(url="Your website URL, e.g. https://example.com")
-async def add_website_cmd(interaction: discord.Interaction, url: str) -> None:
-    member = _linked_member_for_user(interaction.user.id)
-    if not member:
-        await interaction.response.send_message(_LINK_FIRST, ephemeral=True)
-        return
-    try:
-        db.link_member_website(url, member["slug"], linked_by=str(interaction.user.id))
-    except ValueError as e:
-        await interaction.response.send_message(str(e), ephemeral=True)
-        return
-    schedule_publish()
-    await interaction.response.send_message(
-        "Added that website to your profile — it'll show once the site rebuilds.", ephemeral=True)
-
-
-@contact_cmds.command(name="add-email", description="Add one of your email addresses (private).")
-@discord.app_commands.describe(email="Email address")
-async def add_email_cmd(interaction: discord.Interaction, email: str) -> None:
-    member = _linked_member_for_user(interaction.user.id)
-    if not member:
-        await interaction.response.send_message(_LINK_FIRST, ephemeral=True)
-        return
-    try:
-        db.link_member_email(email, member["slug"], linked_by=str(interaction.user.id))
-    except ValueError as e:
-        await interaction.response.send_message(str(e), ephemeral=True)
-        return
-    rescored = await asyncio.to_thread(mail_archive.reattribute_archive, email)
-    extra = f" Re-attributed {rescored} archived message(s)." if rescored else ""
-    await interaction.response.send_message(
-        f"Added `{email.strip().lower()}` to your contact info.{extra}", ephemeral=True)
-
-
-@contact_cmds.command(name="add-phone", description="Add one of your phone numbers (private).")
-@discord.app_commands.describe(number="Phone number")
-async def add_phone_cmd(interaction: discord.Interaction, number: str) -> None:
-    member = _linked_member_for_user(interaction.user.id)
-    if not member:
-        await interaction.response.send_message(_LINK_FIRST, ephemeral=True)
-        return
-    try:
-        db.link_member_sms(number, member["slug"], linked_by=str(interaction.user.id))
-    except ValueError as e:
-        await interaction.response.send_message(str(e), ephemeral=True)
-        return
-    await interaction.response.send_message(
-        f"Added `{number.strip()}` to your contact info.", ephemeral=True)
-
-
-@contact_cmds.command(name="remove-website", description="Remove one of your website addresses.")
-@discord.app_commands.describe(url="The website URL to remove")
-async def remove_website_cmd(interaction: discord.Interaction, url: str) -> None:
-    member = _linked_member_for_user(interaction.user.id)
-    if not member:
-        await interaction.response.send_message(_LINK_FIRST, ephemeral=True)
-        return
-    if not await asyncio.to_thread(db.remove_member_website, url, member["slug"]):
-        await interaction.response.send_message(
-            "I couldn't find that website on your profile — check the exact URL with `/oliver whoami`.",
-            ephemeral=True)
-        return
-    schedule_publish()
-    await interaction.response.send_message(
-        "Removed that website — your profile updates once the site rebuilds.", ephemeral=True)
-
-
-@contact_cmds.command(name="remove-phone", description="Remove one of your phone numbers.")
-@discord.app_commands.describe(number="The phone number to remove")
-async def remove_phone_cmd(interaction: discord.Interaction, number: str) -> None:
-    member = _linked_member_for_user(interaction.user.id)
-    if not member:
-        await interaction.response.send_message(_LINK_FIRST, ephemeral=True)
-        return
-    removed = await asyncio.to_thread(db.remove_member_sms, number, member["slug"])
-    await interaction.response.send_message(
-        "Removed that number from your contact info." if removed
-        else "I couldn't find that number on your account.", ephemeral=True)
-
-
-# ── Book lists ───────────────────────────────────────────────────────────────
-# Member self-service for your own lists; admins also curate club lists. Each write rebuilds the
-# site (lists are public). Authorization (own list vs club list) is enforced in agent/club/lists.py.
-def _actor(interaction: discord.Interaction) -> tuple[str | None, bool]:
-    return db.member_slug_for_user(str(interaction.user.id)), _is_admin(interaction)
-
-
-@list_cmds.command(name="create", description="Create one of your own book lists.")
-@discord.app_commands.describe(name="List name", description="A short description of the list")
-async def list_create_cmd(interaction: discord.Interaction, name: str,
-                          description: str | None = None) -> None:
-    member = _linked_member_for_user(interaction.user.id)
-    if not member:
-        await interaction.response.send_message(_LINK_FIRST, ephemeral=True)
-        return
-    try:
-        res = await asyncio.to_thread(lists_writer.create_list, name, description,
-                                      owner_slug=member["slug"], scope="member")
-    except lists_writer.ListError as e:
-        await interaction.response.send_message(str(e), ephemeral=True)
-        return
-    schedule_publish()
-    await interaction.response.send_message(
-        f"📋 Created your list **{res['name']}** (`/lists/{res['slug']}/`). Add books with "
-        "`/oliver list add-book`.", ephemeral=True)
-
-
-@list_cmds.command(name="create-club", description="Create a club-wide list (admin).")
-@discord.app_commands.describe(name="List name", description="A short description of the list")
-@admin_only
-async def list_create_club_cmd(interaction: discord.Interaction, name: str,
-                               description: str | None = None) -> None:
-    try:
-        res = await asyncio.to_thread(lists_writer.create_list, name, description, scope="club")
-    except lists_writer.ListError as e:
-        await interaction.response.send_message(str(e), ephemeral=True)
-        return
-    schedule_publish()
-    await interaction.response.send_message(
-        f"📋 Created club list **{res['name']}** (`/lists/{res['slug']}/`, featured in the site nav).",
-        ephemeral=True)
-
-
-@list_cmds.command(name="add-book", description="Add a book to one of your lists (or a club list, admin).")
-@discord.app_commands.describe(list="Which list", book="The book", note="Optional one-line note")
-@discord.app_commands.autocomplete(list=list_autocomplete, book=book_autocomplete)
-async def list_add_book_cmd(interaction: discord.Interaction, list: str, book: str,
-                            note: str | None = None) -> None:
-    actor_slug, is_admin = _actor(interaction)
-    try:
-        res = await asyncio.to_thread(lists_writer.add_book, list, book, note,
-                                      actor_slug=actor_slug, is_admin=is_admin)
-    except lists_writer.ListError as e:
-        await interaction.response.send_message(str(e), ephemeral=True)
-        return
-    schedule_publish()
-    verb = "Added" if res["added"] else "Updated the note for"
-    await interaction.response.send_message(
-        f"📋 {verb} *{res['book']}* on **{res['name']}**.", ephemeral=True)
-
-
-@list_cmds.command(name="remove-book", description="Remove a book from a list.")
-@discord.app_commands.describe(list="Which list", book="The book to remove")
-@discord.app_commands.autocomplete(list=list_autocomplete, book=book_autocomplete)
-async def list_remove_book_cmd(interaction: discord.Interaction, list: str, book: str) -> None:
-    actor_slug, is_admin = _actor(interaction)
-    try:
-        res = await asyncio.to_thread(lists_writer.remove_book, list, book,
-                                      actor_slug=actor_slug, is_admin=is_admin)
-    except lists_writer.ListError as e:
-        await interaction.response.send_message(str(e), ephemeral=True)
-        return
-    schedule_publish()
-    await interaction.response.send_message(
-        f"📋 Removed *{res['book']}* from **{res['name']}**." if res["removed"]
-        else f"*{res['book']}* wasn't on **{res['name']}**.", ephemeral=True)
-
-
-@list_cmds.command(name="edit", description="Rename a list or change its description.")
-@discord.app_commands.describe(list="Which list", name="New name (optional)",
-                               description="New description (optional)")
-@discord.app_commands.autocomplete(list=list_autocomplete)
-async def list_edit_cmd(interaction: discord.Interaction, list: str, name: str | None = None,
-                        description: str | None = None) -> None:
-    if name is None and description is None:
-        await interaction.response.send_message("Give a new name or description to change.", ephemeral=True)
-        return
-    actor_slug, is_admin = _actor(interaction)
-    try:
-        res = await asyncio.to_thread(lists_writer.edit_list, list, name=name, description=description,
-                                      actor_slug=actor_slug, is_admin=is_admin)
-    except lists_writer.ListError as e:
-        await interaction.response.send_message(str(e), ephemeral=True)
-        return
-    schedule_publish()
-    await interaction.response.send_message(f"📋 Updated **{res['name']}**.", ephemeral=True)
-
-
-@list_cmds.command(name="delete", description="Delete a list.")
-@discord.app_commands.describe(list="Which list to delete")
-@discord.app_commands.autocomplete(list=list_autocomplete)
-async def list_delete_cmd(interaction: discord.Interaction, list: str) -> None:
-    actor_slug, is_admin = _actor(interaction)
-    try:
-        res = await asyncio.to_thread(lists_writer.delete_list, list,
-                                      actor_slug=actor_slug, is_admin=is_admin)
-    except lists_writer.ListError as e:
-        await interaction.response.send_message(str(e), ephemeral=True)
-        return
-    schedule_publish()
-    await interaction.response.send_message(f"🗑️ Deleted **{res['name']}**.", ephemeral=True)
 
 
 @admin_cmds.command(name="reattribute-mail",
@@ -1127,30 +847,6 @@ async def reading_checkin_cmd(interaction: discord.Interaction, member: str,
         ephemeral=True)
 
 
-@reading_cmds.command(name="review", description="Log your review of a book the club has read.")
-@discord.app_commands.describe(book="The book you're reviewing")
-@discord.app_commands.autocomplete(book=book_autocomplete)
-async def review_cmd(interaction: discord.Interaction, book: str) -> None:
-    member = _linked_member_for_user(interaction.user.id)
-    if not member:
-        await interaction.response.send_message(
-            "I can only log reviews from linked club members — ask an admin to run `/oliver contact link-member`.",
-            ephemeral=True)
-        return
-    b = corpus_read.find_book(book)
-    if not b:
-        await interaction.response.send_message(
-            "I couldn't find that book — pick one from the suggestions as you type.", ephemeral=True)
-        return
-    # Prefill the form if this member already reviewed this book.
-    existing: dict = {}
-    rp = corpus_read.DATA_DIR / "reviews" / f"{b['slug']}--{member['slug']}.md"
-    if rp.exists():
-        data, body = corpus_read.parse_frontmatter(rp.read_text())
-        existing = {**(data or {}), "review": body}
-    await interaction.response.send_modal(ReviewModal(b["slug"], b["title"], member["slug"], existing))
-
-
 @library_cmds.command(name="add-book", description="Add a book to the corpus (admin) — fetches metadata from Open Library.")
 @discord.app_commands.describe(title="Book title", isbn="ISBN (optional, more precise)")
 @admin_only
@@ -1180,34 +876,9 @@ async def oliver_add_book(interaction: discord.Interaction, title: str, isbn: st
     )
     # Keep the exact file path + next step deterministic (don't let the LLM mangle it).
     await interaction.followup.send(
-        f"{ack}\n\nEdit `corpus/data/books/{res['slug']}.json` if anything's off, then `/oliver library schedule` it.",
+        f"{ack}\n\nEdit details in the web app (/oliver webapp → Books), then schedule it there under Meetings.",
         ephemeral=True,
     )
-
-
-@library_cmds.command(name="schedule", description="Schedule the next read — book + date + picker (admin).")
-@discord.app_commands.describe(book="The book", date="Meeting date (YYYY-MM-DD)", picker="Who picked it")
-@discord.app_commands.autocomplete(book=book_autocomplete, picker=member_autocomplete)
-@admin_only
-async def oliver_schedule(interaction: discord.Interaction, book: str, date: str, picker: str) -> None:
-    await interaction.response.defer(ephemeral=True)
-    try:
-        res = await asyncio.to_thread(corpus_write.schedule_meeting, book, date, picker)
-    except corpus_write.WriteError as e:
-        await interaction.followup.send(f"⚠️ {e}", ephemeral=True)
-        return
-    except Exception:
-        log.exception("schedule failed")
-        await interaction.followup.send("Something went wrong scheduling that.", ephemeral=True)
-        return
-    schedule_publish()  # rebuild + deploy the site in the background
-    ack = await asyncio.to_thread(
-        oliver.compose,
-        "brief acknowledgement that an admin just scheduled the next club read",
-        {"book": res["book"], "meeting date": res["date"], "picker": res["picker"]},
-        fallback=f"🗓️ Scheduled **{res['book']}** for {res['date']}, picked by {res['picker']}.",
-    )
-    await interaction.followup.send(ack, ephemeral=True)
 
 
 @timeline_cmds.command(name="log", description="Record a club timeline event (admin).")

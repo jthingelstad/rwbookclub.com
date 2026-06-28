@@ -43,6 +43,19 @@ Oliver writes nothing to it. The site is built + deployed **locally** to the **`
   **One-time manual setting:** Settings → Pages → Source → *Deploy from a branch* → `gh-pages` / `(root)`.
 - **Pages:** `/` (home), `/books/<slug>/`, `/members/<slug>/`, `/lists/`, `/lists/<slug>/`, `/about/`, `/stats/`, `/feed.xml`, `/llms.txt`, `/llms-full.txt`, `/robots.txt`, `/sitemap.xml`
 
+## Member + admin web app (`agent/webapp/`)
+
+Separate from the static site: a **live web editor served inside the Oliver bot process** (aiohttp +
+Jinja2), reached over **Tailscale Funnel** (the Mac dials out; `oliver.db` stays local). `/oliver
+webapp` mints a single-use token → signed session cookie (the Discord identity link is the auth). It
+starts on demand and idles off after ~15 min; edits write the DB immediately but the public site is
+rebuilt only on the in-app **Publish** button or on idle shutdown (deferred publish). Members edit
+ratings/reviews/lists/profile; admins edit book data/meetings/hosts. It **reuses the same writers** as
+the bot (`reviews.write_review`, `agent/club/lists.py`, `db.link_member_*`, `clubdb.upsert_book` +
+`set_rating`/`update_meeting`/`set_meeting_hosts`) — so the public/private boundary holds. Discord still
+owns attendance, reading status, and private meeting feedback. Funnel needs HTTPS certs + the `funnel`
+nodeAttr enabled in the tailnet ACL (one-time).
+
 ### Nunjucks whitespace gotcha
 
 Loops and `{% set %}` tags emit a newline per iteration by default. When a loop's only job is to build up a variable (not render output), use `{%-` / `-%}` on every tag in the block, otherwise a 179-iteration loop dumps ~360 blank lines into the output. The `futureBooks` setup block in `website/src/llms*.txt.njk` is the canonical example.

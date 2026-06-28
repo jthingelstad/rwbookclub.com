@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% set nav = "reviews" %}
+{% block title %}Review · {{ book.title }}{% endblock %}
+{% block content %}
+  <p class="muted"><a href="/webapp/reviews">← all books</a></p>
+  <h1>{{ book.title }}</h1>
+  {% set cur_rating = "DNF" if existing.get('dnf') else (existing.get('rating') or "") %}
+  <form method="post" action="/webapp/reviews">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="book_slug" value="{{ book.slug }}">
+    <label>Rating</label>
+    <select name="rating">
+      <option value="">—</option>
+      {% for n in [1,2,3,4,5] %}<option value="{{ n }}" {{ 'selected' if cur_rating == n }}>{{ n }} / 5</option>{% endfor %}
+      <option value="DNF" {{ 'selected' if cur_rating == 'DNF' }}>Did not finish</option>
+    </select>
+    <label>Would you recommend it?</label>
+    <select name="recommend">
+      <option value="">—</option>
+      <option value="yes" {{ 'selected' if existing.get('wouldRecommend') }}>Yes</option>
+      <option value="no" {{ '' }}>No</option>
+    </select>
+    <label>Discussion quality (1–5, optional)</label>
+    <select name="discussion">
+      <option value="">—</option>
+      {% for n in [1,2,3,4,5] %}<option value="{{ n }}" {{ 'selected' if existing.get('discussionQuality') == n }}>{{ n }}</option>{% endfor %}
+    </select>
+    <label>Favorite quote (optional)</label>
+    <input type="text" name="quote" value="{{ existing.get('favoriteQuote') or '' }}">
+    <label>Review <span class="muted">(Markdown supported)</span></label>
+    <textarea name="body" placeholder="What did you think?">{{ existing.get('body') or existing.get('review') or '' }}</textarea>
+    <p style="margin-top:1rem"><button class="primary" type="submit">Save review</button></p>
+  </form>
+{% endblock %}

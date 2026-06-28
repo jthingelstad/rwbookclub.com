@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% set nav = "ratings" %}
+{% block title %}Ratings{% endblock %}
+{% block content %}
+  <h1>Rate books</h1>
+  <p class="muted">Click a star for 1–5, or DNF. Saves instantly; hit Publish when you're done.</p>
+  <input class="filter" type="text" id="filter" placeholder="Filter books…" autocomplete="off">
+  <table>
+    <tbody id="grid">
+      {% for b in books %}
+      <tr data-title="{{ b.title|lower }}">
+        <td>{{ b.title }}</td>
+        <td style="text-align:right; white-space:nowrap">
+          <span class="stars" data-slug="{{ b.slug }}">
+            {% for i in range(1, 6) %}<span class="star {{ 'on' if b.rating and i <= b.rating else 'off' }}" data-v="{{ i }}">★</span>{% endfor %}
+          </span>
+          <button class="dnf {{ 'active' if b.dnf }}" data-slug="{{ b.slug }}">DNF</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
+{% block script %}
+  const filter = document.getElementById('filter');
+  filter.addEventListener('input', () => {
+    const q = filter.value.toLowerCase();
+    document.querySelectorAll('#grid tr').forEach(tr =>
+      { tr.style.display = tr.dataset.title.includes(q) ? '' : 'none'; });
+  });
+  function paint(slug, rating, dnf) {
+    const wrap = document.querySelector('.stars[data-slug="' + CSS.escape(slug) + '"]');
+    wrap.querySelectorAll('.star').forEach(s =>
+      s.className = 'star ' + ((!dnf && rating && +s.dataset.v <= rating) ? 'on' : 'off'));
+    const d = document.querySelector('.dnf[data-slug="' + CSS.escape(slug) + '"]');
+    d.classList.toggle('active', !!dnf);
+  }
+  document.getElementById('grid').addEventListener('click', async (e) => {
+    const star = e.target.closest('.star'); const dnfBtn = e.target.closest('.dnf');
+    if (star) {
+      const slug = star.parentElement.dataset.slug, v = +star.dataset.v;
+      const r = await post('/webapp/ratings/set', { book_slug: slug, rating: v });
+      if (r.ok) paint(slug, v, false);
+    } else if (dnfBtn) {
+      const slug = dnfBtn.dataset.slug, makeDnf = !dnfBtn.classList.contains('active');
+      const r = await post('/webapp/ratings/set', { book_slug: slug, dnf: makeDnf ? '1' : '' });
+      if (r.ok) paint(slug, null, makeDnf);
+    }
+  });
+{% endblock %}
