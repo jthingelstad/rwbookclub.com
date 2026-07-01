@@ -35,6 +35,21 @@ def test_write_book_persists_to_db_and_regenerates_corpus(monkeypatch, tmp_path)
     assert author_doc == {"name": "Ada Lovelace"}   # bio omitted until set
 
 
+def test_upsert_book_dedupes_repeated_authors(fresh_db):
+    # Regression: Open Library sometimes lists the same author twice (e.g. Blindsight →
+    # ["Peter Watts", "Peter Watts"]); upsert must not trip the (book_id, author_id) UNIQUE
+    # constraint. One link should survive, in order.
+    clubdb.ensure_schema()
+    with db.connect() as conn:
+        res = clubdb.upsert_book(conn, {"title": "Blindsight", "authors": ["Peter Watts", "Peter Watts"]})
+        links = conn.execute(
+            "SELECT a.name, ba.ordinal FROM club_book_authors ba "
+            "JOIN club_authors a ON a.id = ba.author_id WHERE ba.book_id = ? ORDER BY ba.ordinal",
+            (res["id"],)).fetchall()
+    assert [(r["name"], r["ordinal"]) for r in links] == [("Peter Watts", 0)]
+    assert res["author_ids"] == list(dict.fromkeys(res["author_ids"]))  # no dup ids returned
+
+
 def test_schedule_meeting_persists_picker_and_placeholder(monkeypatch, tmp_path):
     data = tmp_path / "data"
     for d in ("books", "meetings", "authors", "members"):

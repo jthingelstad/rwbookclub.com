@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 
 from aiohttp import web
 
@@ -16,6 +17,8 @@ from agent.webapp import state
 from agent.webapp.render import render
 from agent.webapp.routes_member import apply_identity_op
 from corpus.paths import DATA_DIR
+
+log = logging.getLogger("oliver.webapp")
 
 
 def _form(request: web.Request):
@@ -134,8 +137,11 @@ async def book_add(request: web.Request) -> web.Response:
         return await _render_books(request, status=400, error="A book needs a title.")
     try:
         res = await asyncio.to_thread(_add_book, title, isbn)
-    except Exception:
-        return await _render_books(request, status=500, error="Something went wrong adding that book.")
+    except Exception as e:  # noqa: BLE001 — surface the real reason instead of a silent 500
+        log.exception("add-book failed for title=%r isbn=%r", title, isbn)
+        return await _render_books(
+            request, status=500,
+            error=f"Couldn't add “{title}”: {type(e).__name__}: {e}")
     if res is None:
         return await _render_books(
             request, status=404,

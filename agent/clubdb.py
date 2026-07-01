@@ -530,7 +530,16 @@ def upsert_book(conn: sqlite3.Connection, meta: dict) -> dict:
          1 if meta.get("fiction") else 0, meta.get("publicationYear"), meta.get("pageCount"),
          meta.get("isbn13"), meta.get("olKey"), meta.get("synopsis"), subjects_json),
     )
-    author_ids = [_author_id(conn, a) for a in (meta.get("authors") or []) if a]
+    # Dedupe while preserving order: some Open Library records list the same author twice
+    # (e.g. Blindsight → ["Peter Watts", "Peter Watts"]), and distinct spellings can resolve
+    # to one author_id — either would trip the (book_id, author_id) UNIQUE constraint below.
+    author_ids: list[int] = []
+    for a in (meta.get("authors") or []):
+        if not a:
+            continue
+        aid = _author_id(conn, a)
+        if aid not in author_ids:
+            author_ids.append(aid)
     conn.execute("DELETE FROM club_book_authors WHERE book_id = ?", (book_id,))
     conn.executemany(
         "INSERT INTO club_book_authors(book_id, author_id, ordinal) VALUES (?, ?, ?)",
