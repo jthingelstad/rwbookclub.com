@@ -53,11 +53,6 @@ module.exports = function (eleventyConfig) {
     });
   });
 
-  eleventyConfig.addFilter("year", (iso) => {
-    if (!iso) return "";
-    return new Date(iso).getUTCFullYear();
-  });
-
   // Join author names: ["A", "B", "C"] → "A, B, and C"
   eleventyConfig.addFilter("joinNames", (list) => {
     if (!Array.isArray(list) || list.length === 0) return "";

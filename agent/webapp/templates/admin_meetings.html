@@ -24,8 +24,7 @@
   <table>
     {% for m in meetings %}
     <tr>
-      <td><a href="/webapp/admin/meetings/{{ m.id }}">{{ m.date or 'TBD' }}</a>
-        {% if m.placeholder %}<span class="muted"> · tentative</span>{% endif %}</td>
+      <td><a href="/webapp/admin/meetings/{{ m.id }}">{{ m.date or 'TBD' }}</a></td>
       <td class="muted">{{ m.book_slugs|join(', ') }}</td>
       <td class="muted" style="text-align:right">{{ m.host_slugs|join(', ') or 'no host' }}</td>
     </tr>
