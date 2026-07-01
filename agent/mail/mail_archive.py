@@ -13,7 +13,7 @@ import mailbox
 import re
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import timezone
+from datetime import datetime, timezone
 from email.header import decode_header, make_header
 from html import unescape
 from pathlib import Path
@@ -385,6 +385,61 @@ def normalized_from_inbound_email(msg, *, is_mailing_list: bool,
 def archive_inbound_email(msg, *, is_mailing_list: bool, member_slug: str | None = None) -> bool:
     normalized = normalized_from_inbound_email(
         msg, is_mailing_list=is_mailing_list, member_slug=member_slug,
+    )
+    inserted = db.upsert_mail_message(normalized)
+    db.rebuild_mail_thread_stats()
+    return inserted
+
+
+def normalized_from_outbound_email(in_reply_to, *, body: str, to_emails: list[str], subject: str,
+                                   member_slug: str | None, is_mailing_list: bool,
+                                   sent_email_id: str | None, sent_at: str) -> dict:
+    """Build a mail_messages row for one of Oliver's OWN sent replies, filed under the SAME
+    thread_id as the inbound `in_reply_to` it answers — so `get_mail_thread` reads as a two-sided
+    conversation and Oliver can recall what it sent. `member_slug` is the recipient's member for a
+    1:1 reply (so recall-by-member returns Oliver's replies too); None for a mailing-list post."""
+    msg = in_reply_to
+    list_id = config.BOOK_CLUB_MAILING_LIST_ADDRESS.lower() if is_mailing_list else None
+    thread_id = (  # identical derivation to normalized_from_inbound_email → same thread
+        f"jmap:{msg.thread_id}" if msg.thread_id
+        else f"email:{list_id or normalize_email(msg.from_email)}:{normalize_subject(msg.subject)}"
+    )
+    return {
+        "message_id": f"jmap-sent:{sent_email_id}" if sent_email_id else f"sent:{thread_id}:{sent_at}",
+        "thread_id": thread_id,
+        "parent_message_id": msg.message_id,
+        "source": "live_jmap_outbound",
+        "source_ref": sent_email_id,
+        "list_id": list_id,
+        "from_email": normalize_email(config.OLIVER_EMAIL_ADDRESS),
+        "from_name": "Oliver",
+        "member_slug": None if is_mailing_list else member_slug,
+        "to": [{"name": None, "email": normalize_email(e)} for e in (to_emails or [])],
+        "cc": [],
+        "reply_to": [],
+        "subject": subject or "",
+        "subject_normalized": normalize_subject(subject),
+        "sent_at": sent_at,
+        "received_at": sent_at,
+        "body_text": body or "",
+        "body_clean": clean_body(body or ""),
+        "body_html": None,
+        "attachments": None,
+        "headers": {"In-Reply-To": msg.message_id},
+        "processed_inbound_email_id": None,
+    }
+
+
+def archive_outbound_email(in_reply_to, *, body: str, to_emails: list[str], subject: str,
+                           member_slug: str | None, is_mailing_list: bool,
+                           sent_email_id: str | None) -> bool:
+    """Archive one of Oliver's sent email replies so the thread record has both sides. Best-effort;
+    the reply has already gone out. `sent_at` is a real send-time UTC instant (an audit timestamp,
+    not a club-calendar date — so datetime.now is correct here, not agent.clock)."""
+    sent_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    normalized = normalized_from_outbound_email(
+        in_reply_to, body=body, to_emails=to_emails, subject=subject, member_slug=member_slug,
+        is_mailing_list=is_mailing_list, sent_email_id=sent_email_id, sent_at=sent_at,
     )
     inserted = db.upsert_mail_message(normalized)
     db.rebuild_mail_thread_stats()

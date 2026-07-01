@@ -90,10 +90,21 @@ OPERATIONAL_PROMPT = (
     "search_books for precise filter browsing (all 2018 reads, all Technology books). Use "
     "related_books, compare_books, and review_summary when someone asks for connections, "
     "contrasts, or what the group thought after reading. When a question instead points "
-    "at something MEMBERS said in chat — \"didn't we talk about…\", \"what did someone in "
-    "book-talk say about…\", a reference to another channel — use search_discussion, which "
-    "searches the live Discord conversation across all channels (distinct from find_books "
-    "and the book corpus).\n"
+    "at an earlier CONVERSATION — \"didn't we talk about…\", \"the books we went over in email\", "
+    "\"what did someone in book-talk say about…\" — use search_discussion. It searches your whole "
+    "conversation memory across every medium (Discord channels AND your 1:1 email threads AND the "
+    "mailing list), tagging each hit with its medium, who said it, and whether it was their turn or "
+    "YOUR reply; pass member=<slug> to scope to one person. It is distinct from find_books and the "
+    "book corpus.\n"
+    "CONTINUITY ACROSS MEDIUMS. You talk to the same members over Discord AND email, and each "
+    "surface keeps its own running history — a Discord thread does NOT automatically show what you "
+    "discussed in email, or vice versa. Two things bridge them: the [Recently with them elsewhere: "
+    "…] note in the speaker line flags when they have a recent thread on another medium, and "
+    "search_discussion recalls it in full. So when someone picks up an earlier exchange (\"the books "
+    "we were going over in email,\" \"like I said the other day\"), SEARCH your conversation memory "
+    "before answering, read the medium tag off the result to say where it happened, and treat your "
+    "own logged replies as what you actually sent them. If you truly can't find it, say so plainly "
+    "and ask — NEVER invent what was discussed or claim it happened on a medium you didn't verify.\n"
     "When a member asks a point-blank count or total (\"how many books have we read,\" \"how "
     "many meetings\"), call club_stats so the number is authoritative and current rather than "
     "answering from the cached figure, which drifts as meetings are added — and don't imply you "
@@ -349,7 +360,7 @@ def _history(channel_id: str) -> tuple[list[dict], str | None]:
 
 
 def _question_block(question: str, speaker: str | None, member_slug: str | None,
-                    summary: str | None) -> str:
+                    summary: str | None, channel_id: str | None = None) -> str:
     parts: list[str] = []
     if speaker:
         who = f"{speaker} (member: {member_slug})" if member_slug else f"{speaker} (not a recognized member)"
@@ -358,6 +369,13 @@ def _question_block(question: str, speaker: str | None, member_slug: str | None,
         mems = db.get_memories(subject=member_slug, limit=5)
         if mems:
             parts.append("[You remember about them: " + "; ".join(m["note"] for m in mems) + "]")
+        # Proactively surface this member's recent threads on OTHER mediums so you're not blindsided
+        # when they carry an email conversation into Discord (or vice versa). Use search_discussion
+        # (member=<slug>) to pull the full thread if they reference it.
+        recent = db.recent_threads_for_member(member_slug, exclude_channel=channel_id, limit=3)
+        if recent:
+            bits = "; ".join(f"{r['medium']} — \"{r['snippet']}\"" for r in recent)
+            parts.append(f"[Recently with them elsewhere: {bits}]")
     club = db.get_memories(scope="club", limit=3)
     if club:
         parts.append("[Club lore you've noted: " + "; ".join(m["note"] for m in club) + "]")
@@ -433,7 +451,7 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
 
     prior, summary = _history(channel_id) if use_history else ([], None)
     messages = prior + [
-        {"role": "user", "content": _question_block(question, speaker, member_slug, summary)}
+        {"role": "user", "content": _question_block(question, speaker, member_slug, summary, channel_id)}
     ]
 
     usage = {"in": 0, "out": 0, "cr": 0, "cc": 0}
@@ -540,8 +558,10 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
 
     # Persist the visible turn, usage, and maybe fold older history into the summary.
     if persist:
-        db.log_message(channel_id, "user", question, speaker=speaker)
-        db.log_message(channel_id, "assistant", reply)
+        # Tag both turns with the resolved member so this exchange is recallable as a
+        # conversation-with-that-person across mediums (see db.recent_threads_for_member).
+        db.log_message(channel_id, "user", question, speaker=speaker, member_slug=member_slug)
+        db.log_message(channel_id, "assistant", reply, member_slug=member_slug)
         db.log_usage(channel_id, model, input_tokens=usage["in"], output_tokens=usage["out"],
                      cache_read=usage["cr"], cache_creation=usage["cc"], rounds=rounds)
         # Summarization is a best-effort background chore (its own Anthropic call). It must never

@@ -445,6 +445,15 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
     db.mark_email_processed(msg.id, reply_email_id=sent.get("emailId"))
     try:
         await asyncio.to_thread(email_jmap.mark_seen, msg.id, answered=True)
+        # Archive Oliver's own reply into the same thread as the inbound, so the mail record has
+        # BOTH sides (get_mail_thread / recall show what Oliver sent). member_slug is the recipient
+        # for a 1:1 reply, None for a mailing-list post.
+        await asyncio.to_thread(
+            mail_archive.archive_outbound_email,
+            msg, body=reply, to_emails=decision.reply_to or [msg.from_email],
+            subject=msg.reply_subject, member_slug=decision.member_slug,
+            is_mailing_list=decision.is_mailing_list, sent_email_id=sent.get("emailId"),
+        )
         db.add_activity(
             "email_sent",
             "Email reply sent",
@@ -490,7 +499,9 @@ async def on_message(message: discord.Message) -> None:
         has_name = bool(NAME_RE.search(content))
         if not _is_addressed(is_mention, has_name, await _is_reply_to_bot(message)):
             if content.strip():
-                db.log_message(str(cid), "user", content.strip(), speaker=message.author.display_name)
+                member_slug = db.member_slug_for_user(str(message.author.id))
+                db.log_message(str(cid), "user", content.strip(),
+                               speaker=message.author.display_name, member_slug=member_slug)
             return
         question = _strip_address(content, client.user.id)
     else:

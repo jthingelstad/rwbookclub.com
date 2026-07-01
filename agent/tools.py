@@ -370,17 +370,21 @@ TOOLS = [
     },
     {
         "name": "search_discussion",
-        "description": "Keyword-search what MEMBERS have actually said in the club's Discord "
-                       "channels (#ask-oliver, #general, #book-talk), newest first. This is live "
-                       "chat history, NOT the book corpus — reach for it when a question references "
-                       "a past conversation or another channel ('didn't we talk about…', 'what did "
-                       "someone say in book-talk about…', 'did anyone mention…'). For questions "
-                       "about books the club has read, use find_books/get_book instead. Returns "
-                       "matching turns tagged with the channel they came from.",
+        "description": "Keyword-search everything you've said or heard across ALL mediums — Discord "
+                       "channels (#ask-oliver, #general, #book-talk) AND your 1:1 email threads AND "
+                       "the mailing list — newest first. This is your own conversation memory, NOT "
+                       "the book corpus. Reach for it whenever someone refers to an earlier exchange "
+                       "on any medium ('the books we went over in email', 'didn't we talk about…', "
+                       "'what did someone say in book-talk'). Each result is tagged with its medium "
+                       "(email / mailing list / Discord), who said it, and whether it was a member's "
+                       "turn or YOUR reply — so you can tell email from Discord and see what you "
+                       "yourself sent. Pass `member` to scope to one person's history with you across "
+                       "mediums. For facts about books the club has read, use find_books/get_book.",
         "input_schema": {
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "words to look for; a turn must contain every word (AND match)"},
+                "member": {"type": "string", "description": "Optional member slug (e.g. jamie) — scope to your conversations with that person across mediums"},
                 "limit": {"type": "integer", "minimum": 1, "maximum": 20},
             },
             "required": ["query"],
@@ -388,10 +392,11 @@ TOOLS = [
     },
     {
         "name": "search_mail_archive",
-        "description": "Keyword-search the R/W Book Club mailing-list email archive and future "
-                       "archived inbound email. Use when a question asks what the club discussed, "
-                       "planned, nominated, voted on, or decided over email. This searches cleaned "
-                       "message bodies, not attachments or quoted history.",
+        "description": "Keyword-search the R/W Book Club email archive — the mailing list, archived "
+                       "inbound email, AND Oliver's own sent replies (both sides of a thread). Use "
+                       "when a question asks what the club (or you) discussed, planned, nominated, "
+                       "voted on, or decided over email. Searches cleaned message bodies, not "
+                       "attachments or quoted history.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -407,7 +412,8 @@ TOOLS = [
     {
         "name": "get_mail_thread",
         "description": "Fetch a chronological cleaned transcript for one email archive thread "
-                       "returned by search_mail_archive.",
+                       "returned by search_mail_archive — both the members' messages and Oliver's "
+                       "own replies, in order.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -541,15 +547,25 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             return _dump(db.recent_messages(str(ctx.get("channel_id") or ""), limit=limit))
         if name == "search_discussion":
             limit = max(1, min(int(tool_input.get("limit", 12)), 20))
-            rows = db.search_conversations(tool_input["query"], limit=limit)
+            rows = db.search_conversations(
+                tool_input["query"], limit=limit, member_slug=tool_input.get("member") or None)
+            out = []
             for r in rows:
                 try:
                     channel_key = int(r["channel_id"])
                 except (TypeError, ValueError):
                     channel_key = r["channel_id"]
-                r["channel"] = config.CHANNEL_NAMES.get(channel_key, r["channel_id"])
-                r["content"] = (r["content"] or "")[:300]  # keep tool result compact
-            return _dump(rows)
+                out.append({
+                    "medium": db.conversation_medium(r["channel_id"]),
+                    "channel": config.CHANNEL_NAMES.get(channel_key, r["channel_id"]),
+                    "who": r.get("speaker"),
+                    "member": r.get("member_slug"),
+                    # role tells Oliver whether this was a member's turn or its OWN reply.
+                    "role": r["role"],
+                    "when": r.get("created_at"),
+                    "content": (r["content"] or "")[:300],  # keep tool result compact
+                })
+            return _dump(out)
         if name == "search_mail_archive":
             limit = max(1, min(int(tool_input.get("limit", 8)), 20))
             rows = db.search_mail_archive(

@@ -61,9 +61,11 @@ CREATE TABLE IF NOT EXISTS conversations (
     role       TEXT NOT NULL,                     -- user | assistant
     speaker    TEXT,                              -- display name (for user turns)
     content    TEXT NOT NULL,
+    member_slug TEXT,                             -- resolved member, for cross-medium recall
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_conv_channel ON conversations(channel_id, id);
+-- idx_conv_member is created in _migrate(), after the member_slug column is ensured on old DBs.
 
 CREATE TABLE IF NOT EXISTS channel_summaries (
     channel_id TEXT PRIMARY KEY,
@@ -335,6 +337,13 @@ def _migrate(conn: sqlite3.Connection) -> None:
     for col, spec in activity_additions.items():
         if col not in activity_cols:
             conn.execute(f"ALTER TABLE activity_events ADD COLUMN {col} {spec}")
+
+    # Tag each conversation turn with the resolved member so Oliver can recall a person's history
+    # across mediums (Discord channel id vs email:{thread} are different channel_ids). Nullable —
+    # unrecognized speakers and old rows stay NULL (a best-effort backfill fills what it can).
+    if "member_slug" not in _columns(conn, "conversations"):
+        conn.execute("ALTER TABLE conversations ADD COLUMN member_slug TEXT")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_conv_member ON conversations(member_slug, id)")
 
 
 def _table_exists(conn: sqlite3.Connection, name: str) -> bool:
@@ -1329,11 +1338,13 @@ def get_mail_thread(thread_id: str, *, limit: int = 50) -> dict | None:
 
 
 # ── Conversations + rolling summary ──────────────────────────────────────────
-def log_message(channel_id: str, role: str, content: str, speaker: str | None = None) -> None:
+def log_message(channel_id: str, role: str, content: str, speaker: str | None = None,
+                member_slug: str | None = None) -> None:
     with connect() as conn:
         conn.execute(
-            "INSERT INTO conversations (channel_id, role, speaker, content) VALUES (?, ?, ?, ?)",
-            (channel_id, role, speaker, content),
+            "INSERT INTO conversations (channel_id, role, speaker, content, member_slug) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (channel_id, role, speaker, content, member_slug),
         )
 
 
@@ -1377,30 +1388,72 @@ def recent_messages(channel_id: str, limit: int = 12) -> list[dict]:
     return [dict(r) for r in reversed(rows)]
 
 
-def search_conversations(query: str, *, limit: int = 12,
-                         channel_ids: list[str] | None = None) -> list[dict]:
-    """Keyword search over logged turns across ALL channels, newest first.
+def conversation_medium(channel_id: str) -> str:
+    """Human label for the surface a logged turn came from, derived from its channel_id
+    (Discord channels are numeric ids; email threads are prefixed). Used to tell Oliver — and
+    the member — which medium a recalled turn happened on."""
+    if (channel_id or "").startswith("email:list:"):
+        return "mailing list"
+    if (channel_id or "").startswith("email:"):
+        return "email"
+    return "Discord"
 
-    Splits the query into whitespace terms; a row must contain every term
-    (AND match). No channel filter by default, so this spans every channel
-    Oliver has logged. The simple LIKE backend is swappable for FTS5/embeddings
-    later without changing callers.
+
+def search_conversations(query: str, *, limit: int = 12,
+                         channel_ids: list[str] | None = None,
+                         member_slug: str | None = None) -> list[dict]:
+    """Keyword search over logged turns across ALL channels and mediums, newest first.
+
+    Splits the query into whitespace terms; a row must contain every term (AND match). Spans every
+    channel Oliver has logged — Discord AND email threads — unless narrowed by `channel_ids` or
+    `member_slug` (conversations with one member, across mediums). The simple LIKE backend is
+    swappable for FTS5/embeddings later without changing callers.
     """
     terms = [t for t in query.split() if t]
     if not terms:
         return []
     sql = (
-        "SELECT id, channel_id, role, speaker, content, created_at FROM conversations "
+        "SELECT id, channel_id, role, speaker, content, member_slug, created_at FROM conversations "
         "WHERE " + " AND ".join("content LIKE ?" for _ in terms)
     )
     args: list = [f"%{t}%" for t in terms]
     if channel_ids:
         sql += f" AND channel_id IN ({','.join('?' for _ in channel_ids)})"
         args += channel_ids
+    if member_slug:
+        sql += " AND member_slug = ?"
+        args.append(member_slug)
     sql += " ORDER BY id DESC LIMIT ?"
     args.append(limit)
     with connect() as conn:
         return [dict(r) for r in conn.execute(sql, args)]
+
+
+def recent_threads_for_member(member_slug: str, *, exclude_channel: str | None = None,
+                              limit: int = 3) -> list[dict]:
+    """Most recent conversation per OTHER channel Oliver has had with this member, newest first —
+    used to proactively remind Oliver a member has a recent thread on another medium. Each entry:
+    {medium, channel_id, last_at, snippet}. `exclude_channel` drops the channel currently being
+    answered (Oliver already sees that one)."""
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT channel_id, MAX(id) AS last_id FROM conversations "
+            "WHERE member_slug = ? AND channel_id != ? "
+            "GROUP BY channel_id ORDER BY last_id DESC LIMIT ?",
+            (member_slug, exclude_channel or "", limit),
+        ).fetchall()
+        out = []
+        for r in rows:
+            turn = conn.execute(
+                "SELECT content, created_at FROM conversations WHERE id = ?", (r["last_id"],)
+            ).fetchone()
+            out.append({
+                "medium": conversation_medium(r["channel_id"]),
+                "channel_id": r["channel_id"],
+                "last_at": turn["created_at"] if turn else None,
+                "snippet": ((turn["content"] if turn else "") or "")[:160],
+            })
+        return out
 
 
 # ── Reminders (Phase 4 scheduler fires these) ────────────────────────────────
