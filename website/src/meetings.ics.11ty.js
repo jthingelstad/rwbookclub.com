@@ -92,7 +92,7 @@ function eventLines(m, bookBySlug, nameBySlug, baseUrl) {
 
   let summary;
   if (titles.length) {
-    summary = "Book Club: " + titles.map((t) => `«${t}»`).join(" & ");
+    summary = "Book Club: " + titles.join(" & ");
   } else {
     const types = (m.nonBookTypes && m.nonBookTypes.length) ? m.nonBookTypes : (m.types || []);
     summary = types.length ? `Book Club: ${types.join(", ")}` : "Book Club";
@@ -101,7 +101,7 @@ function eventLines(m, bookBySlug, nameBySlug, baseUrl) {
   const desc = [];
   for (const b of mbooks) {
     const authors = joinNames(b.authors);
-    desc.push(authors ? `«${b.title}» by ${authors}` : `«${b.title}»`);
+    desc.push(authors ? `${b.title} by ${authors}` : b.title);
   }
   const pickers = [...new Set(mbooks.flatMap(
     (b) => b.pickerNames || (b.pickerName ? [b.pickerName] : [])))];
