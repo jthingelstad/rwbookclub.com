@@ -35,7 +35,7 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 # negligible against the faithfulness gain. Opus is intentionally not used — the
 # project mandate is cost-conscious.
 MODEL = "claude-sonnet-5"          # user-facing agent loop
-OPUS_MODEL = "claude-opus-4-8"       # opt-in for one-off, quality-critical generation (topic email)
+OPUS_MODEL = "claude-fable-5"        # opt-in for one-off, quality-critical generation (topic email)
 SUMMARY_MODEL = "claude-sonnet-5"  # rolling internal summarization
 MAX_TOKENS = 2048
 # Email replies get more headroom than Discord chat: a substantive reply (e.g. weighing a few book
