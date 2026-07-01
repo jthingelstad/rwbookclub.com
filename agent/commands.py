@@ -699,6 +699,49 @@ async def release_notes_cmd(interaction: discord.Interaction, days: int | None =
         await interaction.followup.send("I drafted the notes but couldn't send the email.", ephemeral=True)
 
 
+@admin_cmds.command(name="postscript",
+                    description="Draft the after-meeting 'Postscript' digest and email it to you (admin test).")
+@admin_only
+async def postscript_cmd(interaction: discord.Interaction) -> None:
+    if not email_jmap.enabled():
+        await interaction.response.send_message(
+            "Email isn't configured (no FASTMAIL_JMAP_TOKEN), so I can't draft Postscript.",
+            ephemeral=True)
+        return
+    slug = db.member_slug_for_user(str(interaction.user.id))
+    rec = db.email_for_member(slug) if slug else None
+    if not rec:
+        await interaction.response.send_message(
+            "You don't have a linked email address — link one first (`/oliver contact link-email`).",
+            ephemeral=True)
+        return
+    await interaction.response.defer(ephemeral=True)
+    try:
+        email = await asyncio.to_thread(meeting_emails.postscript_email)
+    except Exception:
+        log.exception("postscript generation failed")
+        db.add_activity("warning", "Postscript draft failed",
+                        "Generating the Postscript digest raised an exception.")
+        await interaction.followup.send("Something went wrong drafting Postscript.", ephemeral=True)
+        return
+    try:
+        # Self-only test send — to the admin's own linked email, never the club list. Bypasses the
+        # flag/window/dedup and records no group event, so it can be re-run freely while iterating.
+        sent = await asyncio.to_thread(
+            outbound.send, to=[rec["email"]], subject=email["subject"], body=email["body"])
+    except Exception:
+        log.exception("postscript send failed")
+        await interaction.followup.send("I drafted Postscript but couldn't send the email.", ephemeral=True)
+        return
+    db.add_activity("club_email_sent", "Postscript test draft sent",
+                    f"To: {rec['email']} (admin test)\nItems offered: {len(email['offered'])}\n"
+                    f"Email ID: {sent.get('emailId')}")
+    await interaction.followup.send(
+        f"📝 Emailed a Postscript draft to `{rec['email']}` (`{sent.get('emailId')}`) — test only, "
+        "not the club. Check the items are real, then set `CLUB_POSTSCRIPT_ENABLED=1` for the real "
+        "~1-week-after-meeting send.", ephemeral=True)
+
+
 @contact_cmds.command(name="link-member", description="Link a Discord user to a club member (admin).")
 @discord.app_commands.describe(member="Club member", user="Discord user")
 @discord.app_commands.autocomplete(member=member_autocomplete)
@@ -1225,6 +1268,28 @@ async def _send_club_email(subject: str, body: str) -> None:
             await main.send(chunk)
 
 
+async def _maybe_send_postscript(now: datetime) -> int:
+    """Send Postscript (the after-meeting digest) once, ~1 week after the most-recent past meeting.
+    The window is bounded on both ends so enabling the feature never retroactively fires for old
+    meetings; the group event dedups it per meeting and records the offered slugs for rotation."""
+    recent = meeting_emails._most_recent_read_book()
+    if not recent or not recent.get("meetingDate"):
+        return 0
+    meeting_id = clubdb.meeting_id_for_book_slug(recent.get("slug"))
+    if meeting_id is None or db.has_group_event(meeting_id, meeting_emails.POSTSCRIPT_KIND):
+        return 0
+    start = clock.meeting_start(recent.get("meetingDate"), recent.get("meetingStartTime"))
+    if not (start + timedelta(days=7) <= now <= start + timedelta(days=10)):
+        return 0
+    email = await asyncio.to_thread(meeting_emails.postscript_email, recent)
+    await _send_club_email(email["subject"], email["body"])
+    db.record_group_event(meeting_id, meeting_emails.POSTSCRIPT_KIND, actor="oliver",
+                          surface="email", detail=json.dumps({"featured": email["offered"]}))
+    db.add_activity("club_email_sent", "Postscript sent to the mailing list",
+                    f"Meeting: {recent.get('slug')}\nItems offered: {len(email['offered'])}")
+    return 1
+
+
 async def run_scheduler() -> int:
     """Post anything due to its target channel; returns the count posted.
 
@@ -1336,6 +1401,11 @@ async def run_scheduler() -> int:
                     db.add_activity("club_email_sent", "2-day topic email sent to the mailing list",
                                     f"Meeting: {meeting['meetingKey']}")
                     posted += 1
+
+        # Postscript — the ~1-week-AFTER-meeting digest (OFF unless CLUB_POSTSCRIPT_ENABLED),
+        # keyed on the most-recent PAST meeting (independent of the upcoming one above).
+        if config.CLUB_POSTSCRIPT_ENABLED and email_jmap.enabled():
+            posted += await _maybe_send_postscript(now)
 
     # 2. User-set reminders → their original channel (or main as fallback).
     reminders = await asyncio.to_thread(db.due_reminders)

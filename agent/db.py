@@ -1831,6 +1831,16 @@ def has_group_event(meeting_id: int, kind: str) -> bool:
             (meeting_id, kind)).fetchone() is not None
 
 
+def recent_group_event_details(kind: str, *, limit: int = 3) -> list[str | None]:
+    """The `detail` payloads of the most recent group (member-less) events of this kind, newest
+    first — for cross-edition rotation (e.g. which books recent Postscripts already featured)."""
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT detail FROM events WHERE member_id IS NULL AND kind = ? ORDER BY id DESC LIMIT ?",
+            (kind, limit)).fetchall()
+    return [r["detail"] for r in rows]
+
+
 def event_source_exists(source: str) -> bool:
     """Whether any event already carries this provenance string — the idempotency guard for the
     archive miner's loader (source = 'mail:<thread_id>#<n>'), so re-loads don't duplicate."""

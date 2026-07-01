@@ -70,6 +70,11 @@ BOOK_CLUB_MAILING_LIST_ADDRESS = os.environ.get(
 # cadence windows. OFF by default — a club-wide blast is consequential, so it must be
 # explicitly enabled (CLUB_EMAIL_CADENCE_ENABLED=1) once the drafts are trusted.
 CLUB_EMAIL_CADENCE_ENABLED = os.environ.get("CLUB_EMAIL_CADENCE_ENABLED", "0") in {"1", "true", "True"}
+# Auto-send "Postscript" — the ~1-week-AFTER-meeting digest of real recent news about books the
+# club has read. OFF by default and independent of the pre-meeting cadence above: it's a new,
+# experimental club-wide blast, so trial it self-only (/oliver postscript) until the drafts are
+# trusted, then enable (CLUB_POSTSCRIPT_ENABLED=1).
+CLUB_POSTSCRIPT_ENABLED = os.environ.get("CLUB_POSTSCRIPT_ENABLED", "0") in {"1", "true", "True"}
 OLIVER_EMAIL_INBOX_PARENT = os.environ.get("OLIVER_EMAIL_INBOX_PARENT", "Inbox")
 OLIVER_EMAIL_INBOX_FOLDER = os.environ.get("OLIVER_EMAIL_INBOX_FOLDER", "Oliver")
 OLIVER_EMAIL_SENT_PARENT = os.environ.get("OLIVER_EMAIL_SENT_PARENT", "Sent")

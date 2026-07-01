@@ -430,11 +430,21 @@ def answer_mailing_list_email(msg, *, channel_id: str, speaker: str | None = Non
     return MailingListEmailResult(True, body)
 
 
+def _tools_for(web_search_max_uses: int | None) -> list[dict]:
+    """TOOLS as-is, or a copy with the web_search cap raised. The Postscript digest researches
+    several titles in one turn, so the shared default (max_uses: 3) is too few; other callers keep
+    the default."""
+    if not web_search_max_uses:
+        return TOOLS
+    return [{**t, "max_uses": web_search_max_uses} if t.get("name") == "web_search" else t
+            for t in TOOLS]
+
+
 def answer(question: str, channel_id: str = "default", speaker: str | None = None,
            speaker_user_id: str | None = None, source_message_id: str | None = None,
            *, use_history: bool = True, persist: bool = True, max_tokens: int = MAX_TOKENS,
            model: str = MODEL, effort: str = "medium", timeout: float | None = None,
-           medium: str = "discord") -> str:
+           medium: str = "discord", web_search_max_uses: int | None = None) -> str:
     """Answer one message. Synchronous — call via asyncio.to_thread from the bot.
 
     use_history/persist default True for the conversational path. Set both False for a
@@ -454,6 +464,7 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
         {"role": "user", "content": _question_block(question, speaker, member_slug, summary, channel_id)}
     ]
 
+    tools = _tools_for(web_search_max_uses)
     usage = {"in": 0, "out": 0, "cr": 0, "cc": 0}
     rounds = 0
     while True:
@@ -462,7 +473,7 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
             model=model,
             max_tokens=max_tokens,
             system=_system_blocks(medium),
-            tools=TOOLS,
+            tools=tools,
             thinking={"type": "adaptive"},
             output_config={"effort": effort},
             messages=messages,
@@ -525,7 +536,7 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
                     try:
                         resp = client.messages.create(
                             model=model, max_tokens=max_tokens,
-                            system=_system_blocks(medium), tools=TOOLS,
+                            system=_system_blocks(medium), tools=tools,
                             thinking={"type": "adaptive"},
                             output_config={"effort": effort},
                             messages=messages,
@@ -574,7 +585,8 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
     return reply
 
 
-def generate(prompt: str, *, model: str = OPUS_MODEL, effort: str = "high") -> str:
+def generate(prompt: str, *, model: str = OPUS_MODEL, effort: str = "high",
+             web_search_max_uses: int | None = None) -> str:
     """One-off, stateless, tool-enabled generation — for proactive content Oliver must
     research (e.g. a meeting topic email mined from the reading history).
 
@@ -590,7 +602,8 @@ def generate(prompt: str, *, model: str = OPUS_MODEL, effort: str = "high") -> s
     # medium="raw": the topic + release-notes prompts fully specify their (intentionally sectioned)
     # email format, so add no email/discord voice framing that would fight those instructions.
     return answer(prompt, channel_id="scheduler:generate", use_history=False, persist=False,
-                  max_tokens=16000, model=model, effort=effort, timeout=600.0, medium="raw")
+                  max_tokens=16000, model=model, effort=effort, timeout=600.0, medium="raw",
+                  web_search_max_uses=web_search_max_uses)
 
 
 def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -> str:
