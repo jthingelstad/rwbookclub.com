@@ -33,7 +33,7 @@ import anthropic  # noqa: E402
 from agent import db, oliver as oliver_mod  # noqa: E402
 
 CLIENT = anthropic.Anthropic()
-MODEL = "claude-sonnet-4-6"
+MODEL = "claude-sonnet-5"
 LOG_PATH = pathlib.Path("agent/logs/oliver-eval-log.md")  # gitignored (agent/logs/)
 FAKE_MEMBER_IDS = {
     "Jamie": "eval-user-jamie",

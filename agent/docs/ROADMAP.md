@@ -22,7 +22,7 @@ member**, not a foreign bot.
 
 Consequences: the DB is the single source of truth; the static site is built + deployed
 locally from the DB-generated corpus (CI only runs tests). Oliver is a **self-hosted Claude
-API agentic loop** (`claude-sonnet-4-6`, prompt caching, adaptive thinking) with a **manual
+API agentic loop** (`claude-sonnet-5`, prompt caching, adaptive thinking) with a **manual
 tool-use loop** so irreversible/outward actions are gated. Hosting + ops reuse the Weekly
 Thing pattern (process supervisor, SQLite backup, host `.env`).
 

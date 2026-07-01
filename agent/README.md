@@ -1,7 +1,7 @@
 # agent — Oliver
 
 Oliver is the R/W Book Club's Discord agent: a [discord.py](https://discordpy.readthedocs.io/)
-bot that answers in **#ask-oliver** as a **tool-using agent** (`claude-sonnet-4-6`, with
+bot that answers in **#ask-oliver** as a **tool-using agent** (`claude-sonnet-5`, with
 Haiku for cheap summaries and Opus reserved) — a manual tool-use loop, prompt caching,
 **persistent memory** (SQLite), conversation continuity, and a proactive scheduler.
 

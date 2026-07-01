@@ -1,6 +1,6 @@
 """Oliver's brain: a tool-using agent loop over the club corpus + SQLite memory.
 
-Sonnet by default (claude-sonnet-4-6) with adaptive thinking and prompt caching;
+Sonnet by default (claude-sonnet-5) with adaptive thinking and prompt caching;
 Haiku for cheap internal rolling summaries; Opus reserved for selective upgrades.
 The stable prefix (tools → system: persona + compact club overview) is cached;
 the volatile tail (per-channel conversation history, speaker, question) follows
@@ -34,9 +34,9 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 # threshold, capped at 500 output tokens), so Sonnet's marginal cost is
 # negligible against the faithfulness gain. Opus is intentionally not used — the
 # project mandate is cost-conscious.
-MODEL = "claude-sonnet-4-6"          # user-facing agent loop
+MODEL = "claude-sonnet-5"          # user-facing agent loop
 OPUS_MODEL = "claude-opus-4-8"       # opt-in for one-off, quality-critical generation (topic email)
-SUMMARY_MODEL = "claude-sonnet-4-6"  # rolling internal summarization
+SUMMARY_MODEL = "claude-sonnet-5"  # rolling internal summarization
 MAX_TOKENS = 2048
 MAX_TOOL_ROUNDS = 8
 SUMMARIZE_THRESHOLD = 24   # un-summarized turns before folding into the rolling summary

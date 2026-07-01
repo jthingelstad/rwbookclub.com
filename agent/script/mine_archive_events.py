@@ -390,7 +390,7 @@ def _append_line(path: pathlib.Path, text: str) -> None:
         f.write(text + "\n")
 
 
-DEFAULT_MODEL = "claude-sonnet-4-6"  # mining is constrained extraction — no need for Opus
+DEFAULT_MODEL = "claude-sonnet-5"  # mining is constrained extraction — no need for Opus
 
 
 def main(argv: list[str] | None = None) -> int:
