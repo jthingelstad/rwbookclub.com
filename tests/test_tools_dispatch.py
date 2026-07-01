@@ -289,9 +289,9 @@ class TestDispatchHappyPaths:
         }))
         assert len(result["sent"]) == 2
         assert {call["to"][0] for call in sent} == {"jamie@thingelstad.com", "tom@tomeri.org"}
-        assert all("Roll call: A World Appears on 2026-06-30" == call["subject"] for call in sent)
+        assert all("Roll call: A World Appears on Tuesday, June 30" == call["subject"] for call in sent)
         assert all("yes, no, or unsure" in call["body"] for call in sent)
-        assert all("2026-06-30" in call["body"] for call in sent)
+        assert all("Tuesday, June 30" in call["body"] for call in sent)
 
     def test_request_roll_call_update_skips_confirmed_members(self, monkeypatch, fresh_db):
         from agent import config

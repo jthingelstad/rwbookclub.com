@@ -4,6 +4,18 @@ import datetime
 from agent import clubdb, db
 
 
+def test_friendly_time_when_and_location():
+    from agent.club import meeting_rules as mr
+    assert mr.friendly_time("18:30") == "6:30 PM"
+    assert mr.friendly_time("09:00") == "9:00 AM"
+    assert mr.friendly_time("00:15") == "12:15 AM"
+    assert mr.friendly_time(None) == ""
+    assert mr.friendly_when("2026-07-28", "18:30") == "Tuesday, July 28 at 6:30 PM"
+    assert mr.friendly_when("2026-07-28", None) == "Tuesday, July 28"   # no time → just the date
+    assert mr.with_location("Tuesday, July 28", "Broder's") == "Tuesday, July 28 (Broder's)"
+    assert mr.with_location("Tuesday, July 28", None) == "Tuesday, July 28"
+
+
 def test_hosts_for_meeting_returns_meeting_host(fresh_db):
     # a-world-appears (the upcoming meeting) was hosted by jamie.
     mid = clubdb.meeting_id_for_book_slug("a-world-appears")

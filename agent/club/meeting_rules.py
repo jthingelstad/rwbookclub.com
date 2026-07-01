@@ -33,6 +33,27 @@ def friendly_date(iso: str | None) -> str:
     return f"{d.strftime('%A, %B')} {d.day}"
 
 
+def friendly_time(hhmm: str | None) -> str:
+    """Local 'HH:MM' → '6:30 PM'; '' when the time is unset/unparseable."""
+    try:
+        h, m = int(str(hhmm)[:2]), int(str(hhmm)[3:5])
+    except (ValueError, IndexError, TypeError):
+        return ""
+    return f"{h % 12 or 12}:{m:02d} {'AM' if h < 12 else 'PM'}"
+
+
+def friendly_when(iso: str | None, start_time: str | None = None) -> str:
+    """'Tuesday, July 28 at 6:30 PM' when the time is known, else just the friendly date."""
+    d = friendly_date(iso)
+    t = friendly_time(start_time)
+    return f"{d} at {t}" if d and t else d
+
+
+def with_location(when: str, location: str | None) -> str:
+    """Append the venue in parens when set: 'Tuesday, July 28 at 6:30 PM (Broder's)'."""
+    return f"{when} ({location})" if when and location else when
+
+
 def next_last_tuesday(today: date | None = None) -> date:
     today = today or clock.club_today()
     candidate = last_tuesday(today.year, today.month)
@@ -72,6 +93,7 @@ def next_meeting() -> dict:
         "pickerIds": clubdb.picker_ids_for_book_slug(book_slug),
         "date": meeting_date[:10],
         "startTime": clubdb.start_time_for_meeting(meeting_id),
+        "location": clubdb.location_for_meeting(meeting_id),
         "expectedRuleDate": last_tuesday(
             int(meeting_date[:4]), int(meeting_date[5:7])
         ).isoformat() if meeting_date else inferred_date,
@@ -173,8 +195,10 @@ def format_status(status: dict) -> str:
     meeting = status["meeting"]
     title = (meeting.get("book") or {}).get("title") or "the next meeting"
     counts = status["counts"]
+    when = with_location(friendly_when(meeting["date"], meeting.get("startTime")),
+                         meeting.get("location"))
     lines = [
-        f"Roll call for **{title}** on {meeting['date']}: "
+        f"Roll call for **{title}** on {when}: "
         f"{counts['yes']} yes, {counts['no']} no, {counts['unsure']} unsure, "
         f"{counts['pending']} pending.",
     ]
@@ -247,7 +271,7 @@ def days_until_text(meeting_date: str) -> str:
 def roll_call_subject(status: dict) -> str:
     meeting = status["meeting"]
     title = (meeting.get("book") or {}).get("title") or "the next meeting"
-    return f"Roll call: {title} on {meeting['date']}"
+    return f"Roll call: {title} on {friendly_date(meeting['date'])}"
 
 
 def roll_call_email_body(member_name: str, status: dict, *, note: str | None = None) -> str:
@@ -258,8 +282,12 @@ def roll_call_email_body(member_name: str, status: dict, *, note: str | None = N
     """
     meeting = status["meeting"]
     title = (meeting.get("book") or {}).get("title") or "the next meeting"
+    meeting_when = friendly_when(meeting["date"], meeting.get("startTime"))
     timing = days_until_text(meeting["date"])
-    meeting_when = f"{meeting['date']}" + (f" ({timing})" if timing else "")
+    if timing:
+        meeting_when += f" ({timing})"
+    if meeting.get("location"):
+        meeting_when += f", at {meeting['location']}"
     picker = ", ".join(meeting.get("pickerNames") or [])
     picker_line = f"\n\n{picker} picked this one, and the picker needs to be able to attend." if picker else ""
     extra = f"\n\n{note.strip()}" if note else ""

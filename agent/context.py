@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections import Counter
 
 from agent import corpus_read as cr
+from agent.club import meeting_rules
 
 
 def book_count() -> int:
@@ -61,10 +62,14 @@ def club_context() -> str:
         ) + ".",
     ]
     if upcoming:
-        nxt = "; ".join(
-            f"{u['title']} ({(u.get('meetingDate') or '')[:7] or 'TBD'}"
-            f"{', picked by ' + u['pickedBy'] if u.get('pickedBy') else ''})"
-            for u in upcoming[:4]
-        )
-        lines.append("Upcoming: " + nxt + ".")
+        parts = []
+        for u in upcoming[:4]:
+            when = meeting_rules.friendly_when(u.get("meetingDate"), u.get("startTime"))
+            bits = [when or "date TBD"]
+            if u.get("location"):
+                bits.append(u["location"])
+            if u.get("pickedBy"):
+                bits.append(f"picked by {u['pickedBy']}")
+            parts.append(f"{u['title']} ({', '.join(bits)})")
+        lines.append("Upcoming: " + "; ".join(parts) + ".")
     return "\n".join(lines)

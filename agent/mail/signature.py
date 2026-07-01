@@ -60,10 +60,11 @@ def _sig_snapshot(*, today: date | None = None, rng: random.Random | None = None
 
 
 def _next_up_text(nxt: dict) -> str:
-    when = meeting_rules.friendly_date(nxt.get("meetingDate"))
+    when = meeting_rules.friendly_when(nxt.get("meetingDate"), nxt.get("startTime"))
     picker = f", picked by {nxt['pickedBy']}" if nxt.get("pickedBy") else ""
     tail = f" on {when}" if when else ""
-    return f"📚 Next up: {nxt['title']}{picker}{tail}."
+    loc = f" ({nxt['location']})" if nxt.get("location") else ""
+    return f"📚 Next up: {nxt['title']}{picker}{tail}{loc}."
 
 
 def _text_from_snapshot(snap: dict) -> str:
@@ -85,10 +86,11 @@ def email_signature_html(snap: dict) -> str:
         title = f"<em>{html.escape(nxt.get('title') or '')}</em>"
         slug = nxt.get("slug")
         title_html = f'<a href="{site}/books/{slug}/">{title}</a>' if slug else title
-        when = meeting_rules.friendly_date(nxt.get("meetingDate"))
+        when = meeting_rules.friendly_when(nxt.get("meetingDate"), nxt.get("startTime"))
         picker = f", picked by {html.escape(nxt['pickedBy'])}" if nxt.get("pickedBy") else ""
         tail = f" on {html.escape(when)}" if when else ""
-        lines.append(f"<p>📚 Next up: {title_html}{picker}{tail}.</p>")
+        loc = f" ({html.escape(nxt['location'])})" if nxt.get("location") else ""
+        lines.append(f"<p>📚 Next up: {title_html}{picker}{tail}{loc}.</p>")
     if snap["fact"]:
         lines.append(f'<p class="oliver-sig-fact">{html.escape(snap["fact"])}</p>')
     return '<div class="oliver-sig">' + "".join(lines) + "</div>"

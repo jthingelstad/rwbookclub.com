@@ -898,6 +898,16 @@ def start_time_for_meeting(meeting_id: int | None) -> str | None:
     return row["start_time"] if row else None
 
 
+def location_for_meeting(meeting_id: int | None) -> str | None:
+    """A meeting's host-set venue (free text), or None if not set yet."""
+    if meeting_id is None:
+        return None
+    with db.connect() as conn:
+        row = conn.execute(
+            "SELECT location FROM club_meetings WHERE id = ?", (meeting_id,)).fetchone()
+    return row["location"] if row else None
+
+
 def picker_ids_for_book_slug(slug: str | None) -> list[int]:
     if not slug:
         return []

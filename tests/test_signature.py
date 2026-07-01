@@ -50,6 +50,19 @@ def test_html_signature_has_links_and_escapes(monkeypatch):
     assert "picked by Tom" in html and "July 28" in html
 
 
+def test_signature_includes_time_and_location_when_set(monkeypatch):
+    _setup(
+        monkeypatch,
+        upcoming=[{"slug": "stiff", "title": "Stiff", "meetingDate": "2026-07-28T00:00:00Z",
+                   "startTime": "18:30", "location": "Broder's", "pickedBy": "Tom"}],
+        stats={"totalRead": 179}, books=[],
+    )
+    text, html = signature.email_signatures(today=date(2026, 6, 25), rng=random.Random(0))
+    assert "Tuesday, July 28 at 6:30 PM (Broder's)" in text
+    assert "Tuesday, July 28 at 6:30 PM" in html
+    assert "Broder" in html  # location present (apostrophe is HTML-escaped in the html part)
+
+
 def test_text_and_html_signatures_share_one_snapshot(monkeypatch):
     # Both MIME parts must show the same rotating fact (built from a single snapshot).
     import html as _html
