@@ -16,6 +16,7 @@ import argparse
 import json
 import re
 
+from agent import config
 from agent import corpus_read as cr
 from agent import db, oliver
 from agent.club import meeting_rules
@@ -104,7 +105,9 @@ def topic_email(meeting: dict | None = None) -> dict:
 
 # ── Postscript: the ~1-week-after-meeting digest of what's new with our books ──
 POSTSCRIPT_KIND = "postscript_sent"          # group-event kind (dedup + rotation store)
-POSTSCRIPT_SEARCH_BUDGET = 10                 # raised web_search cap (default 3 is too few)
+POSTSCRIPT_SEARCH_BUDGET = 15                 # raised web_search cap (default 3 is far too few)
+POSTSCRIPT_POOL_SIZE = 15                     # candidates fed to Oliver (spanning eras)
+_MAX_PER_AUTHOR = 2                           # cap repeats so the pool isn't clustered
 
 
 def _most_recent_read_book() -> dict | None:
@@ -126,50 +129,90 @@ def _recent_featured_slugs(limit: int = 3) -> set[str]:
 
 
 def _candidate_facts(book: dict, author: dict | None) -> dict:
-    """Targeting facts for one candidate so Oliver's news search is specific, not blind."""
+    """Targeting facts for one candidate so Oliver's news search is specific — and ready link
+    targets (our own book page + an external reference) so it links rather than inventing URLs."""
+    slug = book.get("slug")
+    external = (f"https://openlibrary.org{book['olKey']}" if book.get("olKey")
+                else book.get("wikipediaUrl"))
     return {
-        "slug": book.get("slug"),
+        "slug": slug,
         "title": book.get("title"),
         "authors": book.get("authors") or [],
+        "topic": book.get("topic"),
         "yearRead": (book.get("meetingDate") or "")[:4] or None,
         "picker": book.get("pickerName"),
         "fiction": bool(book.get("fiction")),
+        "clubUrl": f"{config.SITE_URL}/books/{slug}/" if slug else None,
+        "externalUrl": external,
         "authorWebsite": (author or {}).get("website"),
         "authorNotableWorks": (author or {}).get("notableWorks"),
     }
 
 
+def _news_score(book: dict, author: dict | None) -> int:
+    """How likely a book is to have real current news: fiction (adaptations) and living, active
+    authors (a website / notable works, no death year) score higher."""
+    s = 2 if book.get("fiction") else 0
+    if author:
+        if not author.get("deathYear"):
+            s += 5
+        if author.get("website") or author.get("notableWorks"):
+            s += 3
+    return s
+
+
 def select_postscript_candidates(anchor_slug: str | None, *, exclude: set[str] | None = None,
-                                 limit: int = 8) -> list[dict]:
-    """~`limit` read books likely to have real recent news, rotated away from recent editions; the
-    anchor (just-discussed book) always leads. Returns candidate-fact dicts for the prompt."""
+                                  limit: int = POSTSCRIPT_POOL_SIZE) -> list[dict]:
+    """A temporally varied, author-diverse pool of read books likely to have real news. Read books
+    are split into Distant / Middle / Recent thirds by meeting date and the top-scored few are drawn
+    from EACH era, so an edition spans the club's history rather than clustering on recent reads; the
+    anchor (just-discussed book) always leads. Repeats per author are capped so it isn't one-note.
+    Returns candidate-fact dicts (with link targets) for the prompt."""
     exclude = exclude or set()
-    read = [b for b in cr.books() if b.get("isRead") and b.get("slug")]
+    read = [b for b in cr.books() if b.get("isRead") and b.get("slug") and b.get("meetingDate")]
     by_slug = {b["slug"]: b for b in read}
+    eligible = sorted((b for b in read if b["slug"] not in exclude and b["slug"] != anchor_slug),
+                      key=lambda b: b["meetingDate"])  # oldest → newest
+    n = len(eligible)
+    third = max(1, n // 3)
+    eras = [eligible[:third], eligible[third:2 * third], eligible[2 * third:]] if n else []
+    per_era = max(1, limit // 3)
 
-    def cheap_score(b: dict) -> int:  # recency dominates; fiction skews toward adaptations
-        return int((b.get("meetingDate") or "0")[:4] or 0) + (2 if b.get("fiction") else 0)
+    _author_cache: dict[str, dict | None] = {}
 
-    # Pre-rank cheaply (skip a get_author call for all ~150 read books), then enrich a shortlist
-    # with author signals — living authors with a site/notable works are the likeliest to have news.
-    pool = sorted((b for b in read if b["slug"] not in exclude and b["slug"] != anchor_slug),
-                  key=cheap_score, reverse=True)[:max(limit * 2, 12)]
-    scored = []
-    for b in pool:
-        author = cr.get_author(b["authors"][0]) if b.get("authors") else None
-        score = cheap_score(b) + (5 if author and not author.get("deathYear") else 0) \
-            + (3 if author and (author.get("website") or author.get("notableWorks")) else 0)
-        scored.append((score, b, author))
-    scored.sort(key=lambda t: t[0], reverse=True)
+    def author_of(book: dict) -> dict | None:
+        if not book.get("authors"):
+            return None
+        name = book["authors"][0]
+        if name not in _author_cache:
+            _author_cache[name] = cr.get_author(name)
+        return _author_cache[name]
 
     picks: list[dict] = []
-    if anchor_slug and anchor_slug in by_slug:  # lead with the book we just discussed
-        ab = by_slug[anchor_slug]
-        picks.append(_candidate_facts(ab, cr.get_author(ab["authors"][0]) if ab.get("authors") else None))
-    for _score, b, author in scored:
-        if len(picks) >= limit:
-            break
-        picks.append(_candidate_facts(b, author))
+    author_count: dict[str, int] = {}
+
+    def take(book: dict) -> None:
+        picks.append(_candidate_facts(book, author_of(book)))
+        for a in book.get("authors") or []:
+            author_count[a] = author_count.get(a, 0) + 1
+
+    if anchor_slug and anchor_slug in by_slug:  # the just-discussed book leads
+        take(by_slug[anchor_slug])
+
+    for era in eras:
+        # Cheap prerank (fiction, then newest within the era) bounds get_author to a shortlist;
+        # then rank that shortlist by newsworthiness and take the top few, capping per author.
+        shortlist = sorted(era, key=lambda b: (b.get("fiction", False), b.get("meetingDate") or ""),
+                           reverse=True)[:per_era * 3]
+        ranked = sorted(shortlist, key=lambda b: _news_score(b, author_of(b)), reverse=True)
+        added = 0
+        for b in ranked:
+            if added >= per_era or len(picks) >= limit:
+                break
+            if any(author_count.get(a, 0) >= _MAX_PER_AUTHOR for a in (b.get("authors") or [])):
+                continue
+            take(b)
+            added += 1
     return picks
 
 
@@ -177,14 +220,18 @@ def postscript_prompt(candidates: list[dict], *, anchor_title: str | None = None
     rows = []
     for c in candidates:
         auth = ", ".join(c["authors"]) or "the author"
-        extra = []
-        if c.get("authorWebsite"):
-            extra.append(f"author site {c['authorWebsite']}")
-        if c.get("authorNotableWorks"):
-            extra.append("other works: " + ", ".join(c["authorNotableWorks"][:4]))
-        tail = f" — {'; '.join(extra)}" if extra else ""
         read = f"read {c['yearRead']}" if c.get("yearRead") else "read"
         pick = f", {c['picker']}'s pick" if c.get("picker") else ""
+        links = []
+        if c.get("clubUrl"):
+            links.append(f"our page {c['clubUrl']}")
+        if c.get("externalUrl"):
+            links.append(f"ref {c['externalUrl']}")
+        if c.get("authorWebsite"):
+            links.append(f"author site {c['authorWebsite']}")
+        if c.get("authorNotableWorks"):
+            links.append("other works: " + ", ".join(c["authorNotableWorks"][:4]))
+        tail = f" — {'; '.join(links)}" if links else ""
         rows.append(f"- *{c['title']}* by {auth} ({read}{pick}){tail}")
     candidate_block = "\n".join(rows)
     anchor_line = (
@@ -193,31 +240,49 @@ def postscript_prompt(candidates: list[dict], *, anchor_title: str | None = None
         if anchor_title else "")
     return (
         "Write 'Postscript' — the club's after-meeting email, sent about a week after we meet, to "
-        "the whole mailing list. It's a warm digest of what's genuinely NEW in the world with books "
-        "we've already read and authors we've read: film/TV/stage adaptations, new or forthcoming "
-        "books from those authors, major awards or honors, a book of ours suddenly back in the "
-        "conversation. Research with web_search FIRST, then write only what you actually found.\n\n"
+        "the whole mailing list. It's a warm, magazine-y digest of what's genuinely NEW or newly "
+        "resonant in the world with the books and authors we've read. Research with web_search "
+        "FIRST, then write only what you actually found.\n\n"
+        "WHAT MAKES A GOOD ITEM (mix these — an edition that's five of one kind is a failure):\n"
+        "- a film/TV/stage adaptation, in the works or newly out;\n"
+        "- a new or forthcoming book from an author we've read;\n"
+        "- a major award or honor, or (sadly) an author's passing;\n"
+        "- a book of ours suddenly back in the cultural conversation;\n"
+        "- a TANGENT: a meme, a live debate, an essay, or a current event that genuinely rhymes "
+        "with something we read ('the thing everyone's arguing about right now is exactly what "
+        "*[book]* was about'). For a tangent the external thing must be REAL and sourced; the "
+        "CONNECTION is your own read — frame it as your insight ('this reminds me of…'), not as a "
+        "fact, and never invent the external thing.\n\n"
+        "DIG UNTIL IT'S GOOD — don't just take the first few candidates:\n"
+        "- Work the WHOLE list below and keep researching until you have about 5-6 genuinely "
+        "notable items. If the recent titles are dry, dig into the middle and older ones — they're "
+        "grouped across our whole history on purpose.\n"
+        "- Make it VARIED: span different eras, topics, and authors, and mix the KINDS of items "
+        "above. Older reads with a fresh tangent are often the most delightful entries.\n\n"
         "HARD RULES — grounding is everything; one made-up item destroys the whole thing:\n"
-        "- Every item MUST come from a real web_search result you can attribute. If you're not sure "
-        "it's true and current, LEAVE IT OUT.\n"
-        "- NEVER invent or guess an adaptation, award, or release, and don't hedge with "
-        "'reportedly'/'rumored' to smuggle in something unverified.\n"
-        "- If a candidate turns up nothing genuinely new, DROP it silently. A short Postscript with "
-        "2 real items beats a padded one with 6 — do not manufacture filler.\n"
+        "- Every factual item MUST come from a real web_search result you can attribute. If you're "
+        "not sure it's true and current, LEAVE IT OUT.\n"
+        "- NEVER invent an adaptation, award, or release, and don't hedge with 'reportedly' to "
+        "smuggle in something unverified. If a candidate turns up nothing, DROP it silently.\n"
         "- Put every item in your OWN words; never paste jacket copy or press-release language.\n\n"
-        "Candidates (books the club has read — search each for recent news, and search the author "
-        "for new/forthcoming writing; the author site and other works help you aim the search):\n"
+        "LINK GENEROUSLY so members can explore — use markdown links, NOT <cite> tags:\n"
+        "- Give each item a source link — [where you found it](the real URL from your search).\n"
+        "- Link each book we've read to its club page via the 'our page' URL below, e.g. "
+        "[*Title*](our-page-url); add an author-site or reference ('ref') link where it helps.\n\n"
+        "Candidates (books the club has read, drawn across our whole history — search each for "
+        "recent news and search the author for new/forthcoming writing; the links help you aim and "
+        "cite):\n"
         f"{candidate_block}\n\n"
         f"{anchor_line}"
         "Open with a short warm greeting, then the items as the spine of the email. Give each item "
-        "its own '## ' header (the book or author) and 2-4 sentences: what's new (in your words) and "
-        "one line tying it to us — when we read it and who picked it, using ONLY the read-year and "
-        "picker facts above (never guess those). Aim for 4-6 items; fewer is fine.\n\n"
-        "Format: renders as an HTML email — use markdown, a '## ' header per item, *italics* for "
-        "titles, **bold** sparingly. Leave a blank line between every paragraph and after each "
-        "header. Do NOT use '---' or horizontal rules. Write the ENTIRE email between <email> and "
-        "</email> tags with NOTHING outside them — no preamble, no sign-off (a signature is added "
-        "automatically)."
+        "its own '## ' header (the book or author) and 2-4 sentences: what's new or resonant (your "
+        "words, with links), and one line tying it to us — when we read it and who picked it, using "
+        "ONLY the read-year and picker facts above (never guess those).\n\n"
+        "Format: renders as an HTML email — markdown, a '## ' header per item, *italics* for titles, "
+        "**bold** sparingly, and markdown [links](url). Blank line between every paragraph and after "
+        "each header. Do NOT use '---' or horizontal rules. Write the ENTIRE email between <email> "
+        "and </email> tags with NOTHING outside them — no preamble, no sign-off (a signature is "
+        "added automatically)."
     )
 
 

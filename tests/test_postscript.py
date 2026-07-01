@@ -18,23 +18,51 @@ def test_web_search_budget_override():
     assert cap(oliver._tools_for(10)) == 10           # raised for the digest
 
 
-def test_candidate_selection_anchors_and_scores(monkeypatch):
+def test_candidate_selection_anchors_and_spans_eras(monkeypatch):
     books = [
         {"slug": "anchor", "title": "Anchor", "authors": ["A"], "isRead": True,
-         "meetingDate": "2020-01-01", "fiction": True},
-        {"slug": "recent", "title": "Recent", "authors": ["B"], "isRead": True,
-         "meetingDate": "2026-05-01", "fiction": True},
-        {"slug": "old", "title": "Old", "authors": ["C"], "isRead": True,
-         "meetingDate": "2010-01-01", "fiction": False},
-        {"slug": "upcoming", "title": "Up", "authors": ["D"], "isRead": False, "meetingDate": None},
+         "meetingDate": "2026-06-01", "fiction": True},
+        {"slug": "distant", "title": "Distant", "authors": ["B"], "isRead": True,
+         "meetingDate": "2005-01-01"},
+        {"slug": "middle", "title": "Middle", "authors": ["C"], "isRead": True,
+         "meetingDate": "2015-01-01"},
+        {"slug": "recent", "title": "Recent", "authors": ["D"], "isRead": True,
+         "meetingDate": "2025-01-01"},
+        {"slug": "upcoming", "title": "Up", "authors": ["E"], "isRead": False, "meetingDate": None},
     ]
     monkeypatch.setattr(me.cr, "books", lambda: books)
     monkeypatch.setattr(me.cr, "get_author",
                         lambda name: {"website": None, "notableWorks": None, "deathYear": None})
     slugs = [c["slug"] for c in me.select_postscript_candidates("anchor", exclude=set())]
-    assert slugs[0] == "anchor"                         # the just-discussed book always leads
-    assert "upcoming" not in slugs                      # not-yet-read is excluded
-    assert slugs.index("recent") < slugs.index("old")   # recency scores higher
+    assert slugs[0] == "anchor"                             # the just-discussed book always leads
+    assert "upcoming" not in slugs                          # not-yet-read is excluded
+    assert {"distant", "middle", "recent"} <= set(slugs)    # spans all eras, not just recent
+
+
+def test_selection_caps_per_author(monkeypatch):
+    # One prolific author across many reads shouldn't dominate the pool.
+    books = [{"slug": f"b{i}", "title": f"B{i}", "authors": ["Prolific"], "isRead": True,
+              "meetingDate": f"20{10 + i}-01-01"} for i in range(6)]
+    monkeypatch.setattr(me.cr, "books", lambda: books)
+    monkeypatch.setattr(me.cr, "get_author",
+                        lambda name: {"deathYear": None, "website": "x", "notableWorks": None})
+    picks = me.select_postscript_candidates(None, exclude=set())
+    assert 0 < len(picks) <= me._MAX_PER_AUTHOR             # capped despite six eligible
+
+
+def test_candidate_facts_and_prompt_carry_links(monkeypatch):
+    books = [{"slug": "klara", "title": "Klara and the Sun", "authors": ["Kazuo Ishiguro"],
+              "isRead": True, "meetingDate": "2021-05-01", "olKey": "/works/OL1W", "topic": "SF"}]
+    monkeypatch.setattr(me.cr, "books", lambda: books)
+    monkeypatch.setattr(me.cr, "get_author",
+                        lambda name: {"website": "https://ishiguro.example",
+                                      "notableWorks": ["The Remains of the Day"], "deathYear": None})
+    c = me.select_postscript_candidates(None, exclude=set())[0]
+    assert c["clubUrl"].endswith("/books/klara/")                       # internal club-page link
+    assert c["externalUrl"] == "https://openlibrary.org/works/OL1W"     # external reference
+    p = me.postscript_prompt([c], anchor_title="Klara and the Sun")
+    assert "/books/klara/" in p and "markdown links" in p and "<cite>" in p  # link-not-cite guidance
+    assert "TANGENT" in p                                               # tangents invited
 
 
 def test_selection_excludes_recently_featured(monkeypatch):
