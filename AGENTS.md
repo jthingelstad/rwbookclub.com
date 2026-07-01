@@ -22,3 +22,16 @@ History of the SQLite inversion lives in `docs/archive/MIGRATION-*`.
 - Never commit member PII (emails/mobiles); `oliver.db` and the Airtable import cache are gitignored.
 - Don't fetch metadata from Google Books (quota exhausted) — use Open Library.
 - Don't commit `.env` or hard-code the PAT / bot token / API key.
+
+## Work Tracking
+
+**GitHub Issues on this repository are the canonical work queue** for the agent team. Default:
+open an issue before non-trivial work. Commit directly to `main` — PRs are not required —
+referencing the issue (`Closes #N`) so GitHub auto-closes on push. All times **America/Chicago**.
+
+The agent team, its roles, and the full workflow live in **[`AGENT-TEAM/`](AGENT-TEAM/)**:
+[`AGENT-TEAM/WORKFLOW.md`](AGENT-TEAM/WORKFLOW.md) is the shared contract (label taxonomy, the
+`proposal → approved → build+deploy` gate, `wip` claiming, commit lanes, the gitignored `notes/`
+convention); [`AGENT-TEAM/README.md`](AGENT-TEAM/README.md) is the Oliver-specific overview. New
+direction is gated on Jamie's approval; defects (`bug`/`regression`/`operations`) flow straight
+through. Run `AGENT-TEAM/scripts/setup-labels.sh` once to create the labels.
