@@ -399,6 +399,11 @@ def answer_mailing_list_email(msg, *, channel_id: str, speaker: str | None = Non
         source_message_id=source_message_id,
         medium="email",
         max_tokens=EMAIL_MAX_TOKENS,
+        # Don't log this internal decision turn: the "user" message here is the meta decision
+        # prompt (not the member's clean email) and the reply may be a [[NO_REPLY]] sentinel —
+        # persisting either pollutes the list channel's history and its rolling summary. We still
+        # read prior history (use_history defaults True) for context.
+        persist=False,
     )
     stripped = body.strip().strip("`").strip()
     if stripped.startswith(NO_REPLY_PREFIX):
@@ -539,7 +544,13 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
         db.log_message(channel_id, "assistant", reply)
         db.log_usage(channel_id, model, input_tokens=usage["in"], output_tokens=usage["out"],
                      cache_read=usage["cr"], cache_creation=usage["cc"], rounds=rounds)
-        _maybe_summarize(channel_id, client)
+        # Summarization is a best-effort background chore (its own Anthropic call). It must never
+        # sink the reply we just computed and logged — if it errors, the caller would surface
+        # "I hit a snag" and a perfectly good answer would be lost.
+        try:
+            _maybe_summarize(channel_id, client)
+        except Exception:
+            log.exception("History summarization failed for %s (reply already computed)", channel_id)
     return reply
 
 

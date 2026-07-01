@@ -47,6 +47,7 @@ def test_mailing_list_no_reply_sentinel(monkeypatch):
     # A mailing-list reply is an email — forward the email voice + headroom.
     assert calls[0][1]["medium"] == "email"
     assert calls[0][1]["max_tokens"] == oliver.EMAIL_MAX_TOKENS
+    assert calls[0][1]["persist"] is False  # the internal decision turn must not pollute channel memory
     assert "reply exactly `[[NO_REPLY: short_reason]]`" in calls[0][0]
 
 
