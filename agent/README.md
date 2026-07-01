@@ -1,9 +1,10 @@
 # agent — Oliver
 
 Oliver is the R/W Book Club's Discord agent: a [discord.py](https://discordpy.readthedocs.io/)
-bot that answers in **#ask-oliver** as a **tool-using agent** (`claude-sonnet-5`, with
-Haiku for cheap summaries and Opus reserved) — a manual tool-use loop, prompt caching,
-**persistent memory** (SQLite), conversation continuity, and a proactive scheduler.
+bot that answers in **#ask-oliver** as a **tool-using agent** (`claude-sonnet-5` for replies
+and history summaries, with Opus reserved for one-off quality-critical generation) — a manual
+tool-use loop, prompt caching, **persistent memory** (SQLite), conversation continuity, and a
+proactive scheduler.
 
 ```
 agent/
@@ -113,7 +114,7 @@ Run from the **repo root** so the `agent` and `corpus` packages resolve.
 | `DISCORD_BOT_TOKEN` | The bot's login token (Dev Portal → your app → Bot → Reset Token) |
 | `DISCORD_ASK_OLIVER_CHANNEL_ID` | Only messages in this channel get answered |
 | `DISCORD_MAIN_CHANNEL_ID` | Main channel: scheduler posts here, and Oliver replies here when addressed (no-op if unset) |
-| `DISCORD_ADMIN_USER_ID` | Gates the admin `/oliver` commands (stats, add-book, schedule, tick) |
+| `DISCORD_ADMIN_USER_ID` | Gates the admin `/oliver` commands (stats, add-book, release-notes, tick) |
 | `DISCORD_SERVER_ID` | Guild for instant (guild-scoped) slash-command sync |
 | `ANTHROPIC_API_KEY` | Claude API key |
 | `DISCORD_BOT_ID` | The bot's user ID (reference) |
