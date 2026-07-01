@@ -17,6 +17,9 @@ def test_topic_email_prompt_includes_facts():
     assert "Jamie" in prompt
     assert "two days before" in prompt
     assert "reading history" in prompt
+    # Link treatment (mirrors Postscript): markdown links, club-page links, no cite tags.
+    assert "markdown links" in prompt and "/books/<slug>/" in prompt
+    assert "<cite>" in prompt  # the "NEVER <cite> tags" instruction
 
 
 def test_friendly_date():
@@ -51,6 +54,7 @@ def test_topic_email_builds_subject_and_body(monkeypatch):
     monkeypatch.setattr(meeting_emails.oliver, "generate", lambda prompt: "TOPIC BODY")
     out = meeting_emails.topic_email(MEETING)
     assert out["body"] == "TOPIC BODY"  # signature is added later by outbound.send
+    assert out["subject"].startswith("Preface:")  # branded like Postscript
     assert "A World Appears" in out["subject"]
     assert "June 30" in out["subject"]  # friendly date, not ISO
 

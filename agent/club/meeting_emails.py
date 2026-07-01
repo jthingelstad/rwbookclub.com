@@ -82,6 +82,13 @@ def topic_email_prompt(meeting: dict) -> str:
         "about the book, its author, its making, its reception, a strange fact, or a debate it "
         "sparked. Use web_search if it helps you find a real, delightful angle this "
         "technically-minded club hasn't heard. Make it the part people forward to a friend.\n\n"
+        "LINK so members can explore — use markdown links, NEVER <cite> tags:\n"
+        f"- Link every PAST club book you name (especially in Connections) to its page: "
+        f"[*Title*]({config.SITE_URL}/books/<slug>/), using the exact slug your corpus tools "
+        "(get_book, related_books, compare_books) return for it — this turns Connections into a "
+        "doorway back into our reading.\n"
+        "- For any fact you found via web_search, add a [source](real-url) link with the URL from "
+        "your search.\n\n"
         "Format: this renders as an HTML email, so use markdown — a '## ' header for each section, "
         "numbered lists for the questions, *italics* for book titles, and **bold** sparingly on a "
         "key phrase or two per section so it's easy to skim. Separate every paragraph with a fully "
@@ -94,12 +101,13 @@ def topic_email_prompt(meeting: dict) -> str:
 
 
 def topic_email(meeting: dict | None = None) -> dict:
-    """The 2-day discussion-topics email. Subject + body (body includes the signature)."""
+    """Preface — the 2-day pre-meeting brief (discussion topics + connections). Subject + body
+    (body includes the signature)."""
     meeting = meeting or meeting_rules.next_meeting()
     title = (meeting.get("book") or {}).get("title") or "our next book"
     when = _friendly_date(meeting.get("date"))
     body = _extract_email(oliver.generate(topic_email_prompt(meeting)))  # signature added by outbound.send
-    subject = f"Discussion topics for {title}" + (f" — {when}" if when else "")
+    subject = f"Preface: {title}" + (f" — {when}" if when else "")
     return {"subject": subject, "body": body}
 
 
