@@ -3,7 +3,7 @@ import asyncio
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from agent import commands, config
+from agent import clock, commands, config
 
 
 _TZ = ZoneInfo(config.CLUB_TIMEZONE)
@@ -18,7 +18,7 @@ def test_meeting_datetime_honors_start_time():
 def test_meeting_datetime_defaults_to_evening_when_time_unknown():
     # No start_time → fall back to the evening default, never midnight.
     dt = commands._meeting_datetime({"date": "2026-06-30", "startTime": None})
-    assert dt == datetime(2026, 6, 30, commands.DEFAULT_MEETING_HOUR, 0, tzinfo=_TZ)
+    assert dt == datetime(2026, 6, 30, clock.DEFAULT_MEETING_HOUR, 0, tzinfo=_TZ)
 
 
 def test_meeting_datetime_none_on_bad_date():

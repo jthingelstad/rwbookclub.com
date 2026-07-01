@@ -11,13 +11,11 @@ from __future__ import annotations
 
 import json
 from collections import Counter
-from datetime import datetime, timezone
 from statistics import mean
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import yaml
 
-from agent import config
+from agent import clock
 from corpus.paths import DATA_DIR
 
 
@@ -104,14 +102,8 @@ def _books_signature() -> tuple:
 
 
 def _today_iso() -> str:
-    """Today's date in the club's LOCAL timezone (America/Chicago). Meeting dates are stored
-    local, so 'upcoming' must be judged against the local day — using UTC flips tonight's meeting
-    to 'past' at local evening (midnight UTC hits ~6-7pm CST), i.e. mid-meeting on meeting night."""
-    try:
-        tz = ZoneInfo(config.CLUB_TIMEZONE)
-    except ZoneInfoNotFoundError:
-        tz = timezone.utc
-    return datetime.now(tz).date().isoformat()
+    """Today's date in the club's LOCAL timezone. See agent.clock."""
+    return clock.club_today_iso()
 
 
 def books() -> list[dict]:
@@ -126,12 +118,13 @@ def books() -> list[dict]:
 
     mbs = _earliest_meeting_by_book()
     member_by_slug = {m["slug"]: m for m in members()}
-    today = _today_iso()
     out = []
     for b in _load_json_dir("books"):
         mt = mbs.get(b["slug"])
         md = mt.get("date") if mt else None
-        is_upcoming = bool(mt and mt.get("placeholder") and (md or "")[:10] >= today)
+        # Upcoming vs past is derived purely from the meeting's local date+time (no placeholder
+        # flag): a meeting is upcoming until start + buffer has elapsed (see agent.clock).
+        is_upcoming = bool(mt and clock.is_upcoming(md, mt.get("startTime")))
         is_read = bool(md and not is_upcoming)
         pnames, pslugs = [], []
         for ps in b.get("picker") or []:
@@ -147,7 +140,6 @@ def books() -> list[dict]:
             "meetingDate": md,
             "meetingStartTime": (mt.get("startTime") if mt else None),
             "year": int(md[:4]) if md else None,
-            "placeholder": bool(mt.get("placeholder")) if mt else False,
             "isUpcoming": is_upcoming,
             "isRead": is_read,
             "meetingNotes": (mt.get("notes") if mt else None),
@@ -184,7 +176,6 @@ def _book_brief(b: dict) -> dict:
         "pageCount": b.get("pageCount"),
         "yearRead": b.get("year"),
         "pickedBy": b.get("pickerName"),
-        "placeholder": bool(b.get("placeholder")),
         "isUpcoming": bool(b.get("isUpcoming")),
         "isRead": bool(b.get("isRead")),
         # OL subject tags — up to 5 — give Oliver thematic detail beyond the 11 topics.
@@ -581,11 +572,9 @@ def member_history(name_or_slug: str) -> dict | None:
 
 
 def upcoming_meetings() -> list[dict]:
-    """Placeholder (= approximate-date / not-yet-confirmed) meetings that haven't
-    happened yet. We filter past placeholders out because the placeholder flag
-    is doing double-duty for "approximate date" and "future" — if the meeting
-    date has passed, it's no longer upcoming regardless of whether someone
-    flipped the flag yet."""
+    """Meetings that haven't happened yet, earliest first. "Upcoming" is derived from the
+    meeting's local date+time (see agent.clock): a meeting drops off once its start + buffer has
+    passed. The predictive last-Tuesday schedule sets the dates; there is no placeholder flag."""
     future = [
         b for b in books()
         if b.get("isUpcoming")

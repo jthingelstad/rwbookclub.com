@@ -176,8 +176,7 @@ def _add_meeting(date: str, book_slugs: list[str], picker_slug: str | None,
     with db.connect() as conn:
         book_ids = [b for b in (clubdb.book_id_for_slug(conn, s) for s in book_slugs if s) if b]
         use_types = types or (["Book"] if book_ids else ["Social"])
-        mid = clubdb.create_meeting(conn, date_iso=day, book_id=None,
-                                    types=use_types, placeholder=True)
+        mid = clubdb.create_meeting(conn, date_iso=day, book_id=None, types=use_types)
         if book_ids:
             clubdb.set_meeting_books(conn, mid, book_ids)
         if picker_slug:
@@ -250,7 +249,6 @@ def _save_meeting(meeting_id: int, form, host_slugs: list[str], book_slugs: list
             location=(form.get("location") or "").strip() or None,
             notes=(form.get("notes") or "").strip() or None,
             types=types or None,
-            placeholder=False if form.get("held") in ("1", "true", "on") else None,
         )
         # The edit form is the source of truth for books + hosts — set both (empty clears).
         host_ids = [h for h in (clubdb.member_id_for_slug(conn, s) for s in host_slugs if s) if h]

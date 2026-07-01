@@ -84,7 +84,7 @@ function nextDayCompact(date) {
   return `${dt.getUTCFullYear()}${pad(dt.getUTCMonth() + 1)}${pad(dt.getUTCDate())}`;
 }
 
-function eventLines(m, bookBySlug, nameBySlug, baseUrl, today) {
+function eventLines(m, bookBySlug, nameBySlug, baseUrl) {
   const mbooks = (m.books || []).map((s) => bookBySlug.get(s)).filter(Boolean);
   const titles = (m.bookRefs && m.bookRefs.length)
     ? m.bookRefs.map((r) => r.title)
@@ -111,7 +111,6 @@ function eventLines(m, bookBySlug, nameBySlug, baseUrl, today) {
   const topics = [...new Set(mbooks.map((b) => b.topic).filter(Boolean))];
   if (topics.length) desc.push(`Topic: ${topics.join(", ")}.`);
   if (m.notes) desc.push(m.notes);
-  if (m.placeholder && m.date >= today) desc.push("(Date tentative.)"); // only for upcoming
   for (const b of mbooks) desc.push(`${baseUrl}/books/${b.slug}/`);
 
   const out = [
@@ -141,7 +140,6 @@ module.exports = class {
 
   render({ meetings = [], books = [], members = [], site = {} }) {
     const baseUrl = (site.url || "").replace(/\/$/, "");
-    const today = new Date().toISOString().slice(0, 10);
     const bookBySlug = new Map(books.map((b) => [b.slug, b]));
     const nameBySlug = new Map(members.map((m) => [m.slug, m.name]));
 
@@ -157,7 +155,7 @@ module.exports = class {
     ];
     for (const m of meetings) {
       if (!m.date) continue; // can't place an undated meeting on a calendar
-      lines.push(...eventLines(m, bookBySlug, nameBySlug, baseUrl, today));
+      lines.push(...eventLines(m, bookBySlug, nameBySlug, baseUrl));
     }
     lines.push("END:VCALENDAR");
 

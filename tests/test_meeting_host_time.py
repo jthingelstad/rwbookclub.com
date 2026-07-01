@@ -37,7 +37,7 @@ def test_club_migration_converts_utc_meeting_date_to_local(fresh_db):
     # A winter evening meeting stored as next-day UTC must normalize to the true local day.
     with db.connect() as conn:
         conn.execute(
-            "INSERT INTO club_meetings(id, date, placeholder) VALUES (9001, ?, 0)",
+            "INSERT INTO club_meetings(id, date) VALUES (9001, ?)",
             ("2026-01-28T01:00:00.000Z",),   # 7:00pm CST on Jan 27 local
         )
     clubdb.ensure_schema()                    # runs _migrate_club

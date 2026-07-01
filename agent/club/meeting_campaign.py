@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from agent import corpus_read, db
+from agent import clock, corpus_read, db
 from agent.club import meeting_rules
 
 # Dashboard display: a confirmed attendee counts as "reading on track" at on_track/finished. The
@@ -178,7 +178,7 @@ def outreach_plan(data: dict | None = None, *, today: date | None = None) -> lis
     GIVE_UP_AFTER_ASKS tries — Oliver gives up rather than pestering someone who's gone quiet.
     """
     data = data or snapshot()
-    today = today or date.today()
+    today = today or clock.club_today()
     days = data.get("daysUntilMeeting")
     if days is None or days < 0 or days > OUTREACH_START_DAYS:
         return []
@@ -274,7 +274,7 @@ def _age_days(timestamp: str | None, *, today: date) -> int | None:
 
 def _days_until(meeting_date: str) -> int | None:
     try:
-        return (date.fromisoformat(meeting_date) - date.today()).days
+        return (date.fromisoformat(meeting_date) - clock.club_today()).days
     except ValueError:
         return None
 

@@ -51,7 +51,7 @@ def due_notifications(now: datetime, already_sent: set[str]) -> list[Notificatio
     read = [b for b in books if b.get("isRead")]
     out: list[Notification] = []
 
-    # 1. Upcoming-meeting reminders — placeholder meetings within the window.
+    # 1. Upcoming-meeting reminders — upcoming meetings within the window.
     for b in books:
         md = _parse(b.get("meetingDate"))
         if not b.get("isUpcoming") or not md:

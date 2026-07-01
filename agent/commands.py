@@ -12,13 +12,12 @@ import asyncio
 import functools
 import json
 import logging
-from datetime import date, datetime, timedelta
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from datetime import datetime, timedelta
 
 import discord
 from discord.ext import tasks
 
-from agent import (clubdb, config, context as kb, corpus_read, corpus_write, db, oliver,
+from agent import (clock, clubdb, config, context as kb, corpus_read, corpus_write, db, oliver,
                    publish, scheduler, webapp)
 from agent.mail import email_jmap, mail_archive, outbound
 from agent.club import (meeting_campaign, meeting_emails, meeting_rules,
@@ -201,40 +200,14 @@ def _admin_check_message(interaction: discord.Interaction) -> str | None:
 
 
 def _club_now() -> datetime:
-    try:
-        return datetime.now(ZoneInfo(config.CLUB_TIMEZONE))
-    except ZoneInfoNotFoundError:
-        return datetime.now().astimezone()
-
-
-# When a meeting has no explicit start_time, time-bounded cadence (the 1-week + 2-day emails)
-# falls back to this local hour so a "2 days before" send lands in the evening, never at the
-# midnight heartbeat. The club meets in the evening (see CLAUDE.md).
-DEFAULT_MEETING_HOUR = 18
+    return clock.club_now()
 
 
 def _meeting_datetime(meeting: dict) -> datetime | None:
-    """The meeting's local start as a club-tz aware datetime. Honors `startTime` ('HH:MM') when
-    set, else falls back to DEFAULT_MEETING_HOUR. None if the date can't be parsed.
-
-    Cadence that's "N days before the meeting" is bounded against this — so it honors the
-    meeting's *time*, not just its date, and doesn't fire in the middle of the night."""
-    try:
-        d = date.fromisoformat(str(meeting.get("date"))[:10])
-    except ValueError:
-        return None
-    hour, minute = DEFAULT_MEETING_HOUR, 0
-    st = meeting.get("startTime")
-    if st:
-        try:
-            hour, minute = int(str(st)[:2]), int(str(st)[3:5])
-        except (ValueError, IndexError):
-            hour, minute = DEFAULT_MEETING_HOUR, 0
-    try:
-        tz = ZoneInfo(config.CLUB_TIMEZONE)
-    except ZoneInfoNotFoundError:
-        tz = _club_now().tzinfo
-    return datetime(d.year, d.month, d.day, hour, minute, tzinfo=tz)
+    """The meeting's local start as a club-tz aware datetime (honors `startTime`). Cadence that's
+    "N days before the meeting" is bounded against this, so it honors the meeting's time, not just
+    its date, and never fires at the midnight heartbeat."""
+    return clock.meeting_start(meeting.get("date"), meeting.get("startTime"))
 
 
 def _roll_call_message(status: dict | None = None) -> str:

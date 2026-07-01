@@ -10,6 +10,7 @@ from __future__ import annotations
 import random
 from datetime import date
 
+from agent import clock
 from agent import corpus_read as cr
 from agent.club import meeting_rules
 
@@ -51,7 +52,7 @@ def email_signature(*, today: date | None = None, rng: random.Random | None = No
 
     `today`/`rng` are injectable for deterministic tests; both default to live values.
     """
-    today = today or date.today()
+    today = today or clock.club_today()
     rng = rng or random
     lines = ["— Oliver"]
 

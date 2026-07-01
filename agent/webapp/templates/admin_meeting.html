@@ -46,7 +46,6 @@
     <p class="muted">Hold ⌘/Ctrl to select multiple. Leave books empty for a social/picking meeting.</p>
     <label>Location</label><input type="text" name="location" value="{{ meeting.location or '' }}">
     <label>Notes</label><textarea name="notes">{{ meeting.notes or '' }}</textarea>
-    <label class="row"><input type="checkbox" name="held" value="1" style="width:auto" {{ 'checked' if not meeting.placeholder }}> &nbsp;Held (not tentative)</label>
     <p style="margin-top:1rem"><button class="primary" type="submit">Save meeting</button></p>
   </form>
 {% endblock %}

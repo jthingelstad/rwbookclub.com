@@ -61,7 +61,6 @@ module.exports = class {
             name,
             slug: (b.pickerSlugs || [])[i] || null,
           })),
-          placeholder: !!b.placeholder,
           synopsis: b.synopsis || null,
           reviewCount: bookReviews.length,
           reviews: bookReviews,

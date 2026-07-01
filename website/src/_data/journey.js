@@ -13,13 +13,12 @@ const buildBooks = require("./books.js");
 module.exports = function () {
   const books = buildBooks();
 
-  // Separate future placeholders from the reading history. A placeholder date
-  // that has already passed is treated as part of the journey until someone
-  // flips the corpus flag.
+  // Separate upcoming meetings from the reading history. Upcoming/past is derived from the
+  // meeting's local date+time (see website/lib/clock) — a meeting joins the history once it passes.
   const futureBooks = books.filter((b) => b.isUpcoming);
   const pastBooks = books.filter((b) => !b.isUpcoming);
 
-  // Current book = placeholder with earliest meeting date
+  // Current book = upcoming meeting with the earliest meeting date
   // (futureBooks is sorted most-recent-first, so last item is earliest)
   const currentBook = futureBooks.length
     ? futureBooks[futureBooks.length - 1]

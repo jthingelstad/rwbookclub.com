@@ -61,6 +61,24 @@ def _corpus_on_disk():
 
 
 @pytest.fixture(autouse=True)
+def _frozen_club_clock(monkeypatch):
+    """Freeze the club clock so time-dependent meeting logic is deterministic regardless of when
+    the suite runs. The fixture world's upcoming meeting is 2026-06-30 18:30 (A World Appears); pin
+    "now" to the day before so it's reliably upcoming. Also clears the books() cache so isUpcoming
+    is recomputed under the frozen clock. A test needing a specific instant can re-patch
+    agent.clock.club_now."""
+    import datetime as _dt
+    from zoneinfo import ZoneInfo
+    from agent import clock
+    from agent import corpus_read as _cr
+    frozen = _dt.datetime(2026, 6, 29, 12, 0, tzinfo=ZoneInfo("America/Chicago"))
+    monkeypatch.setattr(clock, "club_now", lambda: frozen)
+    _cr._books_cache = None
+    _cr._books_cache_sig = None
+    yield
+
+
+@pytest.fixture(autouse=True)
 def _no_publish(monkeypatch):
     """Never shell out to npm/gh-pages during tests."""
     from agent import publish

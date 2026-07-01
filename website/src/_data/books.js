@@ -2,12 +2,13 @@
 //
 // The corpus is normalized: book files hold intrinsic facts + picker (member
 // slugs); meetings own date + book refs. Here we JOIN — derive each book's
-// meeting date / picker names / placeholder etc. — and derive coverWidths from
+// meeting date / picker names / upcoming-or-past etc. — and derive coverWidths from
 // the JPEGs actually on disk. Downstream (journey, stats, templates) sees the
 // same enriched fields as before.
 
 const fs = require("fs");
 const path = require("path");
+const clock = require("../../lib/clock");
 
 const DATA = path.join(__dirname, "..", "..", "..", "corpus", "data");
 const COVERS_DIR = path.join(__dirname, "..", "assets", "images", "covers");
@@ -193,12 +194,12 @@ function enrich() {
   const meetingForBook = earliestMeetingBySlug(meetings);
   const widthsBySlug = buildWidthsBySlug();
   const reviewCounts = reviewCountBySlug();
-  const today = new Date().toISOString().slice(0, 10);
 
   const enriched = books.map((b) => {
     const mt = meetingForBook.get(b.slug) || null;
     const meetingDate = mt ? mt.date || null : null;
-    const isUpcoming = Boolean(mt && mt.placeholder && (meetingDate || "").slice(0, 10) >= today);
+    // Upcoming vs past is derived from the meeting's local date+time (see website/lib/clock).
+    const isUpcoming = Boolean(mt && clock.isUpcoming(meetingDate, mt.startTime));
     const pickerNames = [];
     const pickerSlugs = [];
     for (const ps of b.picker || []) {
@@ -223,7 +224,6 @@ function enrich() {
       pickerSlug: pickerSlugs.length ? pickerSlugs[0] : null,
       pickerNames: pickerNames.length ? pickerNames : null,
       pickerSlugs: pickerSlugs.length ? pickerSlugs : null,
-      placeholder: mt ? Boolean(mt.placeholder) : false,
       isUpcoming,
       meetingNotes: mt ? mt.notes || null : null,
       meetingLocation: mt ? mt.location || null : null,

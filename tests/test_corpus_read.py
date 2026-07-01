@@ -39,12 +39,11 @@ class TestUpcomingMeetingsFilter:
             md = (m.get("meetingDate") or "")[:10]
             assert md >= today_iso, f"past placeholder leaked: {m['title']} {md}"
 
-    def test_past_placeholder_counts_as_read(self):
-        """The placeholder flag can mean tentative; dates decide read/upcoming."""
+    def test_past_meeting_counts_as_read(self):
+        """A meeting whose local date+time has passed counts as read, not upcoming."""
         from agent import corpus_read as cr
 
         book = cr.find_book("patterns-in-nature")
-        assert book["placeholder"] is True
         assert book["isUpcoming"] is False
         assert book["isRead"] is True
         assert "Patterns in Nature" in {b["title"] for b in cr.pending_reviews("tom")["books"]}

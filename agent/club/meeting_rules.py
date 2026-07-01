@@ -13,7 +13,7 @@ from __future__ import annotations
 import calendar
 from datetime import date, timedelta
 
-from agent import clubdb, corpus_read, db
+from agent import clock, clubdb, corpus_read, db
 
 QUORUM_REQUIRED = 3
 MEETING_WEEKDAY = 1  # Tuesday, where Monday is 0.
@@ -34,7 +34,7 @@ def friendly_date(iso: str | None) -> str:
 
 
 def next_last_tuesday(today: date | None = None) -> date:
-    today = today or date.today()
+    today = today or clock.club_today()
     candidate = last_tuesday(today.year, today.month)
     if candidate >= today:
         return candidate
@@ -232,7 +232,7 @@ def summarize_club_state() -> dict:
 def days_until_text(meeting_date: str) -> str:
     """Human phrasing for how far off a meeting date is ("today", "in 3 days", …)."""
     try:
-        days = (date.fromisoformat(meeting_date) - date.today()).days
+        days = (date.fromisoformat(meeting_date) - clock.club_today()).days
     except ValueError:
         return ""
     if days == 0:

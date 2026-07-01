@@ -193,11 +193,11 @@ def test_update_meeting_and_set_hosts():
         meeting = clubdb.all_meetings(conn)[0]
         mid = meeting["id"]
         jamie = _jamie_id()
-        clubdb.update_meeting(conn, mid, location="Jamie's place", notes="bring snacks", placeholder=False)
+        clubdb.update_meeting(conn, mid, location="Jamie's place", notes="bring snacks")
         clubdb.set_meeting_hosts(conn, mid, [jamie])
         after = next(m for m in clubdb.all_meetings(conn) if m["id"] == mid)
     assert after["location"] == "Jamie's place" and after["notes"] == "bring snacks"
-    assert after["placeholder"] == 0 and "jamie" in after["host_slugs"]
+    assert "jamie" in after["host_slugs"]
 
 
 def test_topics_constant():

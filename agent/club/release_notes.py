@@ -28,9 +28,8 @@ from __future__ import annotations
 
 import argparse
 import re
-from datetime import date
 
-from agent import oliver, publish
+from agent import clock, oliver, publish
 from agent.club.meeting_emails import _extract_email
 from agent.club.meeting_rules import friendly_date as _friendly_date
 from agent.mail import outbound
@@ -184,7 +183,7 @@ def release_notes_email(*, days: int | None = None, since_commit: str | None = N
         return None
     out = oliver.generate(release_notes_prompt(material))
     body = _extract_email(out)
-    subject = _extract_subject(out) or f"Under my hood: what changed — {_friendly_date(date.today().isoformat())}"
+    subject = _extract_subject(out) or f"Under my hood: what changed — {_friendly_date(clock.club_today_iso())}"
     return {"subject": subject, "body": body, "window": material["window"]}
 
 

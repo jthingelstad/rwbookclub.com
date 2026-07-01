@@ -1,6 +1,6 @@
 # CLAUDE.md — rwbookclub.com
 
-Project-specific context for Claude Code. The site is live at rwbookclub.com (served by GitHub Pages from the **`gh-pages` branch**, built + deployed **locally** by Oliver — not from `main`/CI). As of May 2026 there are 179 books, 184 meetings, 177 authors, and 12 members (5 current).
+Project-specific context for Claude Code. The site is live at rwbookclub.com (served by GitHub Pages from the **`gh-pages` branch**, built + deployed **locally** by Oliver — not from `main`/CI). As of June 2026 there are 180 books, 187 meetings, 178 authors, and 12 members (5 current).
 
 ## Project
 
@@ -87,13 +87,37 @@ named `Host` and the old "Host = Picker" shorthand):
 host can run a meeting that discusses **two books with two different pickers**. They agree in
 all current historical data, but the model stores them independently.
 
-### Meeting date + time are LOCAL (America/Chicago)
+### Time & timezone — the club runs on US Central (America/Chicago)
 
-`club_meetings.date` is the **local** meeting date `YYYY-MM-DD` and `start_time` is the local
-`HH:MM` (the club is single-timezone, Minneapolis). The original import stored Airtable's UTC
-instant, which displayed the wrong day for evening meetings (6-7pm local rolls past midnight
-UTC in winter) — `clubdb._migrate_club` normalized them to local. This is what an iCal feed
-(`DTSTART;TZID=America/Chicago`) builds on, so members can subscribe to meeting times.
+The club is single-timezone (Minneapolis). **There is one rule: anything about the club's
+calendar — "today", "now", "is this meeting upcoming?", "how many days until?", the predictive
+schedule — is computed in the club's LOCAL timezone, never UTC and never the process's implicit
+system zone (which differs under launchd/CI).** The one source of truth:
+
+- **`agent/clock.py`** (Python) — `club_now()` / `club_today()` / `club_today_iso()` plus
+  `meeting_start()` / `meeting_end()` / `is_upcoming()`. Everything that reads the club clock goes
+  through here (`corpus_read`, `commands`, `meeting_rules`, `meeting_campaign`, `signature`, …). Do
+  **not** call `datetime.now()`/`date.today()` for club-calendar logic — use the clock.
+- **`website/lib/clock.js`** (JS) — the build-time mirror (`centralToday()`, `isUpcoming()`) used
+  by `_data/books.js` and the ICS feed. Same rule on the site side.
+- Timezone is `config.CLUB_TIMEZONE` (env `CLUB_TIMEZONE`, default `America/Chicago`).
+
+**UTC is only for absolute-instant audit timestamps** — `events`/`activity`/`created_at`/session
+clocks (`db._now`, `clubdb` created_at, enrichment `enriched_at`). Those are points in time, not
+calendar facts, and must NOT use `agent.clock`.
+
+**Meeting dates/times are stored LOCAL:** `club_meetings.date` is the local `YYYY-MM-DD` and
+`start_time` the local `HH:MM`. The original Airtable import stored a UTC instant (wrong day for
+evening meetings — 6-7pm local rolls past midnight UTC in winter); `clubdb._migrate_club`
+normalized them to local, and the iCal feed (`DTSTART;TZID=America/Chicago`) builds on that.
+
+**Upcoming vs past is derived, not flagged.** There is **no `placeholder` column** (retired
+2026-06-30 — it was an Airtable-era "is this date real yet?" flag, obsoleted by the predictive
+last-Tuesday schedule). A meeting is *upcoming* until `start_time` (or a 6pm default) **plus a ~3h
+buffer** has passed — so the current meeting rolls to "past" the evening it happens, not at
+midnight — and the next meeting is simply the earliest one not yet past. Both `agent/clock.py` and
+`website/lib/clock.js` implement this identically. To move to the next meeting, just schedule it
+with a book; the old one rolls off on its own.
 
 ### Books-to-Meetings is many-to-many
 

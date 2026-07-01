@@ -89,7 +89,6 @@ def _meeting_doc(m: dict) -> dict:
         "type": m["type"],
         "location": m["location"],
         "notes": m["notes"],
-        "placeholder": bool(m["placeholder"]),
     }
 
 

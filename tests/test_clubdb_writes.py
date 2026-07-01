@@ -50,7 +50,7 @@ def test_upsert_book_dedupes_repeated_authors(fresh_db):
     assert res["author_ids"] == list(dict.fromkeys(res["author_ids"]))  # no dup ids returned
 
 
-def test_schedule_meeting_persists_picker_and_placeholder(monkeypatch, tmp_path):
+def test_schedule_meeting_persists_picker_and_meeting(monkeypatch, tmp_path):
     data = tmp_path / "data"
     for d in ("books", "meetings", "authors", "members"):
         (data / d).mkdir(parents=True)
@@ -76,7 +76,7 @@ def test_schedule_meeting_persists_picker_and_placeholder(monkeypatch, tmp_path)
 
     with db.connect() as conn:
         meeting = conn.execute(
-            "SELECT m.id, m.placeholder, m.date FROM club_meetings m "
+            "SELECT m.id, m.date FROM club_meetings m "
             "JOIN club_meeting_books mb ON mb.meeting_id = m.id "
             "JOIN club_books b ON b.id = mb.book_id WHERE b.slug = 'the-next-pick'"
         ).fetchone()
@@ -84,7 +84,7 @@ def test_schedule_meeting_persists_picker_and_placeholder(monkeypatch, tmp_path)
             "SELECT bp.member_id FROM club_book_pickers bp JOIN club_books b ON b.id = bp.book_id "
             "WHERE b.slug = 'the-next-pick'"
         ).fetchone()
-    assert meeting is not None and meeting["placeholder"] == 1
+    assert meeting is not None and meeting["date"][:10] == "2026-09-01"
     assert picker["member_id"] == 61
 
     # Corpus meeting file regenerated, picker set on the book file.

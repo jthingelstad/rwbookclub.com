@@ -7,8 +7,8 @@ module.exports = function () {
   const books = buildBooks();
   if (!books.length) return null;
 
-  // Only books that have been read. Past placeholders are still read books; the
-  // placeholder flag also means "tentative date" for future meetings.
+  // Only books that have been read — a meeting counts as read once it's no longer upcoming
+  // (derived from its local date+time; see website/lib/clock).
   const read = books.filter((b) => b.meetingDate && !b.isUpcoming);
 
   // ── Books by year (year read) ────────────────────────────────────────

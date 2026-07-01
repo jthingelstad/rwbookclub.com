@@ -1322,13 +1322,6 @@ body.stats-page .page {
   color: var(--ink-faint);
   letter-spacing: 0.03em;
 }
-.timeline-tentative {
-  display: inline-block;
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--accent);
-}
 .timeline-body { margin: 0; }
 .timeline-title {
   font-family: var(--serif);

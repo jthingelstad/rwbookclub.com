@@ -74,8 +74,7 @@ CREATE TABLE IF NOT EXISTS club_meetings (
     start_time  TEXT,                       -- LOCAL start time 'HH:MM' (America/Chicago), NULL if TBD
     type_json   TEXT,                       -- JSON array of meeting types
     location    TEXT,                       -- host-set venue (free text)
-    notes       TEXT,
-    placeholder INTEGER NOT NULL DEFAULT 0
+    notes       TEXT
 );
 
 CREATE TABLE IF NOT EXISTS club_meeting_books (
@@ -233,6 +232,10 @@ def _migrate_club(conn: sqlite3.Connection) -> None:
     cols = {r["name"] for r in conn.execute("PRAGMA table_info(club_meetings)")}
     if "start_time" not in cols:
         conn.execute("ALTER TABLE club_meetings ADD COLUMN start_time TEXT")
+    # placeholder is retired: whether a meeting is upcoming or past is derived from its date+time
+    # (see agent.clock), so the flag is dead weight. Drop it from existing DBs.
+    if "placeholder" in cols:
+        conn.execute("ALTER TABLE club_meetings DROP COLUMN placeholder")
 
     chi = ZoneInfo(MEETING_TZ)
     rows = conn.execute(
@@ -796,10 +799,9 @@ def set_meeting_hosts(conn: sqlite3.Connection, meeting_id: int, member_ids: lis
 
 def update_meeting(conn: sqlite3.Connection, meeting_id: int, *, date: str | None = None,
                    start_time: str | None = None, location: str | None = None,
-                   notes: str | None = None, types: list[str] | None = None,
-                   placeholder: bool | None = None) -> None:
-    """Edit an existing meeting's scalar fields. Only provided (non-None) fields are changed; pass
-    placeholder=False to mark a tentative meeting as held."""
+                   notes: str | None = None, types: list[str] | None = None) -> None:
+    """Edit an existing meeting's scalar fields. Only provided (non-None) fields are changed.
+    Whether a meeting is upcoming or past is derived from its date+time, not stored."""
     sets, vals = [], []
     for key, val in (("date", date), ("start_time", start_time), ("location", location),
                      ("notes", notes)):
@@ -809,9 +811,6 @@ def update_meeting(conn: sqlite3.Connection, meeting_id: int, *, date: str | Non
     if types is not None:
         sets.append("type_json = ?")
         vals.append(json.dumps(types))
-    if placeholder is not None:
-        sets.append("placeholder = ?")
-        vals.append(1 if placeholder else 0)
     if not sets:
         return
     vals.append(meeting_id)
@@ -831,14 +830,14 @@ TOPICS = [
 
 
 def create_meeting(conn: sqlite3.Connection, *, date_iso: str, book_id: int | None = None,
-                   types: list[str] | None = None, placeholder: bool = True) -> int:
+                   types: list[str] | None = None) -> int:
     """Create a meeting. `book_id` is optional — a bookless social/picking meeting has none; use
     set_meeting_books for two or more."""
     mid = _next_id(conn, "club_meetings")
     conn.execute(
-        "INSERT INTO club_meetings(id, date, type_json, location, notes, placeholder) "
-        "VALUES (?, ?, ?, NULL, NULL, ?)",
-        (mid, date_iso, json.dumps(types or ["Book"]), 1 if placeholder else 0),
+        "INSERT INTO club_meetings(id, date, type_json, location, notes) "
+        "VALUES (?, ?, ?, NULL, NULL)",
+        (mid, date_iso, json.dumps(types or ["Book"])),
     )
     if book_id is not None:
         conn.execute(

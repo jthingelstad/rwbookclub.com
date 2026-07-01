@@ -25,7 +25,7 @@ permalink: /meetings/
           {% for mt in bucket.meetings %}
             <li class="timeline-row{% if mt.nonBookTypes.length and not mt.bookRefs.length %} timeline-row--social{% endif %}">
               <p class="timeline-date">
-                {{ mt.date | longDate }}{% if mt.placeholder %} <span class="timeline-tentative">tentative</span>{% endif %}
+                {{ mt.date | longDate }}
               </p>
               <div class="timeline-body">
                 {% if mt.bookRefs.length %}

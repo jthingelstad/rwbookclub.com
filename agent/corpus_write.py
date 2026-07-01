@@ -100,7 +100,7 @@ def schedule_meeting(book_query: str, date_iso: str, picker_query: str) -> dict:
         if book_id is None or member_id is None:
             raise WriteError("Book or member is not in the club database yet.")
         clubdb.set_book_picker(conn, book_id, member_id)
-        meeting_id = clubdb.create_meeting(conn, date_iso=iso, book_id=book_id, placeholder=True)
+        meeting_id = clubdb.create_meeting(conn, date_iso=iso, book_id=book_id)
         corpus_gen.write_book_file(conn, book_id, DATA_DIR)
         corpus_gen.write_meeting_file(conn, meeting_id, DATA_DIR)
     # Chronicle hook: drop a meeting_scheduled event on the club timeline at the meeting's

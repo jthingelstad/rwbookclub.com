@@ -5,22 +5,22 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 
-def _fake_book(title, slug, *, picker=None, date=None, placeholder=False):
+def _fake_book(title, slug, *, picker=None, date=None, upcoming=False):
     return {
         "slug": slug, "title": title, "authors": ["A"],
-        "meetingDate": date, "placeholder": placeholder, "pickerName": picker,
-        "isUpcoming": placeholder,
-        "isRead": bool(date and not placeholder),
+        "meetingDate": date, "pickerName": picker,
+        "isUpcoming": upcoming,
+        "isRead": bool(date and not upcoming),
     }
 
 
 class TestDueNotifications:
     def test_meeting_reminder_within_window(self, monkeypatch):
-        """A placeholder meeting 2 days out should produce a reminder."""
+        """An upcoming meeting 2 days out should produce a reminder."""
         from agent import scheduler
         now = datetime(2026, 6, 28, 12, 0, tzinfo=timezone.utc)
         books = [_fake_book("Patterns in Nature", "patterns", picker="Tom",
-                            date="2026-06-30T00:00:00Z", placeholder=True)]
+                            date="2026-06-30T00:00:00Z", upcoming=True)]
         monkeypatch.setattr(scheduler.cr, "books", lambda: books)
         due = scheduler.due_notifications(now, set())
         keys = [n.key for n in due]
@@ -32,21 +32,21 @@ class TestDueNotifications:
         assert "Patterns in Nature" in note.fallback
 
     def test_meeting_reminder_outside_window(self, monkeypatch):
-        """A placeholder meeting 10 days out should NOT produce a reminder yet."""
+        """An upcoming meeting 10 days out should NOT produce a reminder yet."""
         from agent import scheduler
         now = datetime(2026, 6, 1, 12, 0, tzinfo=timezone.utc)
         books = [_fake_book("Far Future", "far", picker="Tom",
-                            date="2026-06-30T00:00:00Z", placeholder=True)]
+                            date="2026-06-30T00:00:00Z", upcoming=True)]
         monkeypatch.setattr(scheduler.cr, "books", lambda: books)
         due = scheduler.due_notifications(now, set())
         assert not [n for n in due if n.key.startswith("meeting-")]
 
     def test_review_nudge_recent_read(self, monkeypatch):
-        """A non-placeholder book read within 30 days should produce a review nudge."""
+        """A past (read) book within 30 days should produce a review nudge."""
         from agent import scheduler
         now = datetime(2026, 6, 28, 12, 0, tzinfo=timezone.utc)
         books = [_fake_book("Just Read", "just-read", picker="Erik",
-                            date="2026-06-20T00:00:00Z", placeholder=False)]
+                            date="2026-06-20T00:00:00Z", upcoming=False)]
         monkeypatch.setattr(scheduler.cr, "books", lambda: books)
         due = scheduler.due_notifications(now, set())
         assert any(n.key == "review-nudge-just-read" for n in due)
