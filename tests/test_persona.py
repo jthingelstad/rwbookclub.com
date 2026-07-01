@@ -26,15 +26,16 @@ def test_charter_uses_section_headings_not_file_titles():
 def test_charter_leads_the_system_prompt():
     from agent import oliver
 
-    blocks = oliver._system_blocks()
-    assert len(blocks) == 2
+    blocks = oliver._system_blocks()  # default medium="discord"
+    assert len(blocks) == 3           # charter + per-medium block + club overview
     block0 = blocks[0]["text"]
     assert block0.startswith("# WHO YOU ARE")
     assert "witty but not snarky" in block0          # charter voice
     assert "OPERATING MECHANICS" in block0           # operational scaffolding kept
     assert "Triumph of the City" in block0           # answer-shape example kept
-    # The dynamic club overview keeps the cache breakpoint.
-    assert blocks[1]["cache_control"]["type"] == "ephemeral"
+    # The charter is cache-anchored (cached once, shared across mediums); so is the club overview.
+    assert blocks[0]["cache_control"]["type"] == "ephemeral"
+    assert blocks[-1]["cache_control"]["type"] == "ephemeral"
 
 
 def test_meeting_date_grounding_rule_present():

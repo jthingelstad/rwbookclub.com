@@ -417,6 +417,7 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
         else:
             reply = await asyncio.to_thread(
                 oliver.answer, prompt, channel_id, msg.speaker, f"email:{msg.from_email.lower()}", msg.id,
+                medium="email", max_tokens=oliver.EMAIL_MAX_TOKENS,
             )
         sent = await asyncio.to_thread(
             outbound.send,
@@ -489,6 +490,7 @@ async def on_message(message: discord.Message) -> None:
                 reply = await asyncio.to_thread(
                     oliver.answer, question, str(message.channel.id),
                     message.author.display_name, str(message.author.id), str(message.id),
+                    medium="discord",
                 )
             except Exception:
                 log.exception("Oliver failed to answer")

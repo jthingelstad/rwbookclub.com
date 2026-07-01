@@ -38,6 +38,9 @@ MODEL = "claude-sonnet-5"          # user-facing agent loop
 OPUS_MODEL = "claude-opus-4-8"       # opt-in for one-off, quality-critical generation (topic email)
 SUMMARY_MODEL = "claude-sonnet-5"  # rolling internal summarization
 MAX_TOKENS = 2048
+# Email replies get more headroom than Discord chat: a substantive reply (e.g. weighing a few book
+# options) truncated mid-draft at 2048 and had to be re-sent in pieces.
+EMAIL_MAX_TOKENS = 6000
 MAX_TOOL_ROUNDS = 8
 SUMMARIZE_THRESHOLD = 24   # un-summarized turns before folding into the rolling summary
 KEEP_RECENT = 8           # turns left out of the summary (still shown verbatim)
@@ -190,7 +193,11 @@ OPERATIONAL_PROMPT = (
     "BY email, do NOT call send_email — just write the reply text normally; the runtime sends it "
     "by email automatically, and only when the sender/addressing passes the email safety policy. "
     "Never reply to no-reply, system, invite, bounce, or unknown senders. Keep email brief "
-    "and club-relevant; don't sign off — your signature is added automatically.\n\n"
+    "and club-relevant; don't sign off — your signature is added automatically. You never post to "
+    "the mailing list on another member's behalf, and don't offer to: if someone asks you to send "
+    "or post something to the group for them, warmly decline that part and suggest they post it "
+    "themselves (or bring it to #ask-oliver) — never draft it as them, sign as them, or narrate "
+    "your runtime, threads, or send mechanics.\n\n"
     "EMAIL ARCHIVE. You have searchable access to the club's Google Groups mailing-list "
     "history from 2016 onward via search_mail_archive and get_mail_thread. Use it when a "
     "member asks what the club said, planned, nominated, voted on, or decided over email. "
@@ -258,11 +265,43 @@ def _get_client() -> anthropic.Anthropic:
     return _client
 
 
-def _system_blocks() -> list[dict]:
-    return [
-        {"type": "text", "text": persona.CHARTER + "\n\n" + OPERATIONAL_PROMPT},
-        {"type": "text", "text": kb.club_context(), "cache_control": {"type": "ephemeral"}},
+def _medium_block(medium: str) -> str:
+    """Per-request guidance so Oliver writes for the surface it's on. Email and Discord read very
+    differently; a medium-agnostic prompt makes email replies come out like reports. `medium="raw"`
+    (or anything else) adds no framing — for callers whose prompt already fully specifies the format
+    (e.g. the intentionally-sectioned topic + release-notes emails via generate())."""
+    if medium == "email":
+        return (
+            "THIS MESSAGE — EMAIL. You are writing an actual email, as Oliver. Write it as a warm, "
+            "personal note: open with a short greeting to the recipient by first name, then write in "
+            "natural, flowing prose. Do NOT write a briefing or report — no '---' dividers, no "
+            "'##'/'**' section headers, no encyclopedic point-by-point book breakdowns. Keep it "
+            "conversational and club-appropriate. Output ONLY the email body in your voice; do not "
+            "narrate the mechanism, the thread, or your runtime constraints. A signature is appended "
+            "automatically, so don't sign off. If this is a public mailing-list reply (the message "
+            "is tagged '[Mailing-list email]'), address the whole club rather than one person."
+        )
+    if medium == "discord":
+        return (
+            "THIS MESSAGE — DISCORD. You are replying in a Discord chat. Write a short, natural chat "
+            "message: no greeting, no sign-off, and minimal markdown — avoid section headers and "
+            "long bulleted lists."
+        )
+    return ""
+
+
+def _system_blocks(medium: str = "discord") -> list[dict]:
+    # The charter is large and stable, so give it its own cache breakpoint: it's cached once and
+    # shared across mediums, while the small per-medium block + club_context are the variable tail.
+    blocks = [
+        {"type": "text", "text": persona.CHARTER + "\n\n" + OPERATIONAL_PROMPT,
+         "cache_control": {"type": "ephemeral"}},
     ]
+    mb = _medium_block(medium)
+    if mb:
+        blocks.append({"type": "text", "text": mb})
+    blocks.append({"type": "text", "text": kb.club_context(), "cache_control": {"type": "ephemeral"}})
+    return blocks
 
 
 def _resolve_member(speaker: str | None, speaker_user_id: str | None = None) -> str | None:
@@ -356,6 +395,8 @@ def answer_mailing_list_email(msg, *, channel_id: str, speaker: str | None = Non
         speaker=speaker,
         speaker_user_id=speaker_user_id,
         source_message_id=source_message_id,
+        medium="email",
+        max_tokens=EMAIL_MAX_TOKENS,
     )
     stripped = body.strip().strip("`").strip()
     if stripped.startswith(NO_REPLY_PREFIX):
@@ -367,12 +408,16 @@ def answer_mailing_list_email(msg, *, channel_id: str, speaker: str | None = Non
 def answer(question: str, channel_id: str = "default", speaker: str | None = None,
            speaker_user_id: str | None = None, source_message_id: str | None = None,
            *, use_history: bool = True, persist: bool = True, max_tokens: int = MAX_TOKENS,
-           model: str = MODEL, effort: str = "medium", timeout: float | None = None) -> str:
+           model: str = MODEL, effort: str = "medium", timeout: float | None = None,
+           medium: str = "discord") -> str:
     """Answer one message. Synchronous — call via asyncio.to_thread from the bot.
 
     use_history/persist default True for the conversational path. Set both False for a
     stateless one-off generation (see generate()) — no prior turns are read and nothing
     is logged, so the call neither sees nor pollutes any channel's memory.
+
+    `medium` ("discord" or "email") shapes the voice for the surface — email replies read as warm
+    personal notes, Discord replies as short chat messages.
     """
     client = _get_client()
     if timeout is not None:  # long-running one-offs (generate) need more than the chat cap
@@ -391,7 +436,7 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
         resp = client.messages.create(
             model=model,
             max_tokens=max_tokens,
-            system=_system_blocks(),
+            system=_system_blocks(medium),
             tools=TOOLS,
             thinking={"type": "adaptive"},
             output_config={"effort": effort},
@@ -430,7 +475,7 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
                     "briefly and helpfully; never go silent on them."}]})
                 try:
                     resp = client.messages.create(
-                        model=model, max_tokens=max_tokens, system=_system_blocks(),
+                        model=model, max_tokens=max_tokens, system=_system_blocks(medium),
                         thinking={"type": "adaptive"}, output_config={"effort": effort},
                         messages=messages,  # no tools → the model must reply in text
                     )
@@ -455,7 +500,7 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
                     try:
                         resp = client.messages.create(
                             model=model, max_tokens=max_tokens,
-                            system=_system_blocks(), tools=TOOLS,
+                            system=_system_blocks(medium), tools=TOOLS,
                             thinking={"type": "adaptive"},
                             output_config={"effort": effort},
                             messages=messages,
@@ -509,8 +554,10 @@ def generate(prompt: str, *, model: str = OPUS_MODEL, effort: str = "high") -> s
     # Opus at high effort spends a lot of the budget on adaptive thinking, so give it real
     # headroom (16K) or the three-section email truncates mid-draft, and a generous timeout
     # (well past the 120s chat cap) so a multi-minute run completes.
+    # medium="raw": the topic + release-notes prompts fully specify their (intentionally sectioned)
+    # email format, so add no email/discord voice framing that would fight those instructions.
     return answer(prompt, channel_id="scheduler:generate", use_history=False, persist=False,
-                  max_tokens=16000, model=model, effort=effort, timeout=600.0)
+                  max_tokens=16000, model=model, effort=effort, timeout=600.0, medium="raw")
 
 
 def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -> str:
@@ -550,7 +597,7 @@ def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -
         resp = _get_client().messages.create(
             model=MODEL,
             max_tokens=COMPOSE_MAX_TOKENS,
-            system=_system_blocks(),
+            system=_system_blocks(medium),
             messages=[{"role": "user", "content": prompt}],
         )
         return _text_of(resp.content).strip() or fallback

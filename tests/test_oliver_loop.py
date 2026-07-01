@@ -68,7 +68,9 @@ def _isolate(monkeypatch, client, dispatched):
     """Patch out everything in answer() except the loop: client, dispatch, and
     the DB/corpus-touching prompt builders."""
     monkeypatch.setattr(oliver, "_get_client", lambda: client)
-    monkeypatch.setattr(oliver, "_system_blocks", lambda: [{"type": "text", "text": "SYS"}])
+    # Echo the medium so tests can assert it's threaded through to every create() call.
+    monkeypatch.setattr(oliver, "_system_blocks",
+                        lambda medium="discord": [{"type": "text", "text": f"SYS:{medium}"}])
     monkeypatch.setattr(oliver, "_question_block", lambda *a, **k: "Q")
     monkeypatch.setattr(oliver, "_resolve_member", lambda *a, **k: None)
     monkeypatch.setattr(oliver, "dispatch",
@@ -128,3 +130,25 @@ def test_normal_answer_returns_in_one_call(monkeypatch):
     assert reply == "Tuesday the 30th — see you there."
     assert len(client.calls) == 1
     assert dispatched == []
+
+
+def test_medium_threads_to_every_create_call(monkeypatch):
+    """The `medium` must reach _system_blocks on every model call in the loop — including the
+    forced-final and nudge retries — so email replies never fall back to the Discord voice."""
+    # tool_use → cap-forced final; exercises two create() calls.
+    script = [_Resp("tool_use", [_ToolUse()]) for _ in range(oliver.MAX_TOOL_ROUNDS)]
+    script.append(_Resp("end_turn", [_Text("done")]))
+    client = _ScriptedClient(script)
+    _isolate(monkeypatch, client, [])
+
+    oliver.answer("q", use_history=False, persist=False, medium="email")
+
+    systems = [c["system"][0]["text"] for c in client.calls]
+    assert systems and all(s == "SYS:email" for s in systems)  # email on every call, incl. forced final
+
+
+def test_medium_defaults_to_discord(monkeypatch):
+    client = _ScriptedClient([_Resp("end_turn", [_Text("hi")])])
+    _isolate(monkeypatch, client, [])
+    oliver.answer("q", use_history=False, persist=False)
+    assert client.calls[0]["system"][0]["text"] == "SYS:discord"

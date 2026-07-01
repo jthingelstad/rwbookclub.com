@@ -44,6 +44,9 @@ def test_mailing_list_no_reply_sentinel(monkeypatch):
     assert result.reason == "bare_mention"
     assert calls[0][1]["channel_id"] == "email:list:t1"
     assert calls[0][1]["source_message_id"] == "m1"
+    # A mailing-list reply is an email — forward the email voice + headroom.
+    assert calls[0][1]["medium"] == "email"
+    assert calls[0][1]["max_tokens"] == oliver.EMAIL_MAX_TOKENS
     assert "reply exactly `[[NO_REPLY: short_reason]]`" in calls[0][0]
 
 
