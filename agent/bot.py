@@ -507,8 +507,15 @@ async def on_message(message: discord.Message) -> None:
                     message.author.display_name, str(message.author.id), str(message.id),
                     medium="discord",
                 )
-            except Exception:
+            except Exception as e:
                 log.exception("Oliver failed to answer")
+                # Surface to #oliver-log too — publish/email/archive failures already do, but an
+                # interactive answer failure was only hitting stderr, so an admin never saw it.
+                db.add_activity(
+                    "warning", "Oliver failed to answer a message",
+                    f"Channel: {message.channel.id}\nAsker: {message.author.display_name}\n"
+                    f"Error: {type(e).__name__}: {e}",
+                )
                 reply = "Sorry — I hit a snag answering that. Try me again in a moment."
 
     # Post the reply. message.reply can fail if the original was deleted, the bot
