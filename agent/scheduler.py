@@ -13,8 +13,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from zoneinfo import ZoneInfo
 
+from agent import clock
 from agent import corpus_read as cr
 
 FOUNDED_YEAR = 2003
@@ -42,7 +42,7 @@ def _parse(dt: str | None) -> datetime | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=ZoneInfo("America/Chicago"))
+        parsed = parsed.replace(tzinfo=clock.tz())  # club tz (config.CLUB_TIMEZONE), not a literal
     return parsed
 
 

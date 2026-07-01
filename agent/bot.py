@@ -260,7 +260,7 @@ async def post_activity() -> None:
         except Exception as e:
             db.mark_activity_failed(event["id"], f"{type(e).__name__}: {e}")
             log.exception("Failed to post activity event %s", event["id"])
-            return
+            continue  # don't let one poison event block newer ones (it retries until attempts run out)
 
 
 @post_activity.before_loop

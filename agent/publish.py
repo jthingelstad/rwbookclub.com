@@ -98,7 +98,8 @@ def _deploy_gh_pages(message: str) -> None:
     (the `gh-pages` npm package leaks repo-root files from its cache clone)."""
     git = _bin("git")
     origin = subprocess.run([git, "remote", "get-url", "origin"], cwd=REPO_ROOT,
-                            capture_output=True, text=True, check=True, env=_ENV).stdout.strip()
+                            capture_output=True, text=True, check=True, env=_ENV,
+                            timeout=DEPLOY_TIMEOUT).stdout.strip()
     (SITE_DIR / ".nojekyll").touch()  # tell GitHub Pages to serve the tree as-is (no Jekyll)
 
     def g(*args: str) -> None:
