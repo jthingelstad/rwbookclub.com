@@ -204,6 +204,19 @@ def test_topics_constant():
     assert "Technology" in clubdb.TOPICS and len(clubdb.TOPICS) == 11
 
 
+def test_meeting_id_or_404_rejects_non_int():
+    import pytest
+    from agent.webapp import routes_admin
+
+    class _Req:
+        def __init__(self, val):
+            self.match_info = {"id": val}
+
+    with pytest.raises(aiohttp.web.HTTPNotFound):  # non-numeric id → 404, not a raw 500
+        routes_admin._meeting_id_or_404(_Req("not-a-number"))
+    assert routes_admin._meeting_id_or_404(_Req("42")) == 42
+
+
 def test_events_view_filters():
     from agent.webapp import routes_admin
     jamie = _jamie_id()

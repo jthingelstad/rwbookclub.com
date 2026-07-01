@@ -39,7 +39,10 @@ def apply_identity_op(slug: str, op: str, val: str, label: str | None = None,
     """Apply one profile identity mutation for `slug`. Shared by the member profile page
     and the admin member editor. Returns True when the change is public (websites).
 
-    `new_value` is only used by edit-website (the new URL); `val` is the existing URL being edited."""
+    URL scheme safety (rejecting javascript:/data:/… so nothing dangerous reaches an href on the
+    public site) is enforced in db.link_member_website / db.update_member_website, which raise
+    ValueError — callers catch it. `new_value` is only used by edit-website (the new URL); `val`
+    is the existing URL being edited."""
     if op == "add-website" and val:
         db.link_member_website(val, slug, linked_by="webapp", label=label)
         return True

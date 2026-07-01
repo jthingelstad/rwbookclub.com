@@ -157,14 +157,28 @@ def _all_meetings() -> list[dict]:
         return clubdb.all_meetings(conn)
 
 
-async def meetings_page(request: web.Request) -> web.Response:
+async def _render_meetings(request: web.Request, *, status: int = 200,
+                           error: str | None = None) -> web.Response:
     meetings = await asyncio.to_thread(_all_meetings)
     books = await asyncio.to_thread(lambda: sorted(
         ({"slug": b["slug"], "title": b["title"]} for b in _all_books()), key=lambda b: b["title"].lower()))
     members = await asyncio.to_thread(_members)
     meetings = sorted(meetings, key=lambda m: (m.get("date") or ""), reverse=True)
-    return render("admin_meetings.html", request, meetings=meetings, books=books,
-                  members=members, meeting_types=clubdb.MEETING_TYPES)
+    return render("admin_meetings.html", request, status=status, error=error, meetings=meetings,
+                  books=books, members=members, meeting_types=clubdb.MEETING_TYPES)
+
+
+async def meetings_page(request: web.Request) -> web.Response:
+    return await _render_meetings(request)
+
+
+def _meeting_id_or_404(request: web.Request) -> int:
+    """Parse the {id} path arg as an int, or 404 — the route pattern matches any string, so a
+    non-numeric id would otherwise raise ValueError → a raw 500."""
+    try:
+        return int(request.match_info["id"])
+    except (KeyError, ValueError):
+        raise web.HTTPNotFound(text="No such meeting.")
 
 
 def _add_meeting(date: str, book_slugs: list[str], picker_slug: str | None,
@@ -197,10 +211,17 @@ async def meeting_add(request: web.Request) -> web.Response:
     books = form.getall("books", []) if hasattr(form, "getall") else []
     hosts = form.getall("hosts", []) if hasattr(form, "getall") else []
     types = form.getall("types", []) if hasattr(form, "getall") else []
-    created = await asyncio.to_thread(_add_meeting, form.get("date", ""), books,
-                                      form.get("picker") or None, hosts, types)
-    if created:
-        state.mark_dirty()
+    try:
+        created = await asyncio.to_thread(_add_meeting, form.get("date", ""), books,
+                                          form.get("picker") or None, hosts, types)
+    except Exception as e:  # noqa: BLE001 — surface the reason instead of a raw 500
+        log.exception("add-meeting failed")
+        return await _render_meetings(request, status=400,
+                                      error=f"Couldn't add the meeting: {type(e).__name__}: {e}")
+    if not created:
+        return await _render_meetings(request, status=400,
+                                      error="A meeting needs a date (YYYY-MM-DD).")
+    state.mark_dirty()
     raise web.HTTPFound("/webapp/admin/meetings")
 
 
@@ -223,8 +244,8 @@ def _meeting_book_pickers(book_slugs: list[str]) -> dict[str, list[str]]:
     return out
 
 
-async def meeting_edit(request: web.Request) -> web.Response:
-    mid = int(request.match_info["id"])
+async def _render_meeting_edit(request: web.Request, mid: int, *, status: int = 200,
+                               error: str | None = None) -> web.Response:
     meeting = await asyncio.to_thread(_meeting_by_id, mid)
     if meeting is None:
         return web.Response(status=404, text="No such meeting.")
@@ -232,8 +253,13 @@ async def meeting_edit(request: web.Request) -> web.Response:
     books = await asyncio.to_thread(_sorted_books)
     pickers = await asyncio.to_thread(_meeting_book_pickers, meeting["book_slugs"])
     titles = {b["slug"]: b["title"] for b in books}
-    return render("admin_meeting.html", request, meeting=meeting, members=members, books=books,
-                  titles=titles, book_pickers=pickers, meeting_types=clubdb.MEETING_TYPES)
+    return render("admin_meeting.html", request, status=status, error=error, meeting=meeting,
+                  members=members, books=books, titles=titles, book_pickers=pickers,
+                  meeting_types=clubdb.MEETING_TYPES)
+
+
+async def meeting_edit(request: web.Request) -> web.Response:
+    return await _render_meeting_edit(request, _meeting_id_or_404(request))
 
 
 def _save_meeting(meeting_id: int, form, host_slugs: list[str], book_slugs: list[str],
@@ -268,22 +294,32 @@ def _save_meeting(meeting_id: int, form, host_slugs: list[str], book_slugs: list
 
 
 async def meeting_save(request: web.Request) -> web.Response:
-    mid = int(request.match_info["id"])
+    mid = _meeting_id_or_404(request)
     form = _form(request)
     host_slugs = form.getall("hosts", []) if hasattr(form, "getall") else []
     book_slugs = form.getall("books", []) if hasattr(form, "getall") else []
     picker_slugs = form.getall("pickers", []) if hasattr(form, "getall") else []
     types = form.getall("types", []) if hasattr(form, "getall") else []
-    await asyncio.to_thread(_save_meeting, mid, form, host_slugs, book_slugs, picker_slugs, types)
+    try:
+        await asyncio.to_thread(_save_meeting, mid, form, host_slugs, book_slugs, picker_slugs, types)
+    except Exception as e:  # noqa: BLE001 — surface the reason instead of a raw 500
+        log.exception("save-meeting failed for id=%s", mid)
+        return await _render_meeting_edit(request, mid, status=400,
+                                          error=f"Couldn't save the meeting: {type(e).__name__}: {e}")
     state.mark_dirty()
     raise web.HTTPFound("/webapp/admin/meetings")
 
 
 # ── Members ──────────────────────────────────────────────────────────────────
-async def members_page(request: web.Request) -> web.Response:
+async def _render_members(request: web.Request, *, status: int = 200,
+                          error: str | None = None) -> web.Response:
     members = await asyncio.to_thread(_members)
     members = sorted(members, key=lambda m: ((not m["current"]), m["name"].lower()))
-    return render("admin_members.html", request, members=members)
+    return render("admin_members.html", request, status=status, error=error, members=members)
+
+
+async def members_page(request: web.Request) -> web.Response:
+    return await _render_members(request)
 
 
 def _member_action(op: str, name: str, slug: str) -> bool:
@@ -300,8 +336,13 @@ def _member_action(op: str, name: str, slug: str) -> bool:
 
 async def member_action(request: web.Request) -> web.Response:
     form = _form(request)
-    changed = await asyncio.to_thread(_member_action, form.get("op", ""),
-                                      form.get("name", ""), form.get("slug", ""))
+    try:
+        changed = await asyncio.to_thread(_member_action, form.get("op", ""),
+                                          form.get("name", ""), form.get("slug", ""))
+    except Exception as e:  # noqa: BLE001 — surface the reason instead of a raw 500
+        log.exception("member action failed")
+        return await _render_members(request, status=400,
+                                     error=f"Couldn't complete that: {type(e).__name__}: {e}")
     if changed:
         state.mark_dirty()  # member currency drives whole swaths of the site
     raise web.HTTPFound("/webapp/admin/members")
