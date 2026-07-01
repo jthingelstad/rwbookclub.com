@@ -302,3 +302,26 @@ def roll_call_email_body(member_name: str, status: dict, *, note: str | None = N
         f"{counts['unsure']} unsure, {counts['pending']} pending. "
         f"We need {counts['quorumRequired']} yes responses."
     )
+
+
+def reading_checkin_email_body(member_name: str, meeting: dict, *, note: str | None = None) -> str:
+    """Plain-text reading check-in asking one member where they are in the book. Shared by the
+    command path (commands.py) and the request_reading_update tool (tools.py) so the two copies
+    can't drift — same reasoning as roll_call_email_body above. Shows the friendly date + time +
+    location like the roll-call email does."""
+    title = (meeting.get("book") or {}).get("title") or "the current book"
+    meeting_when = friendly_when(meeting["date"], meeting.get("startTime"))
+    timing = days_until_text(meeting["date"])
+    if timing:
+        meeting_when += f" ({timing})"
+    if meeting.get("location"):
+        meeting_when += f", at {meeting['location']}"
+    extra = f"\n\n{note.strip()}" if note else ""
+    return (
+        f"Hi {member_name},\n\n"
+        f"Quick reading check-in for {title}. The meeting is {meeting_when}. "
+        "Where are you in the book, and do you feel on track?\n\n"
+        "Reply with something short like \"halfway and on track\", "
+        "\"page 120, behind\", or \"finished\" and I'll update the tracker."
+        f"{extra}"
+    )

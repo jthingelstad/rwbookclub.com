@@ -323,22 +323,6 @@ async def _roll_call_reminder(status: dict) -> str:
     )
 
 
-def _reading_checkin_body(member_name: str, meeting: dict, *, note: str | None = None) -> str:
-    book = meeting.get("book") or {}
-    title = book.get("title") or "the current book"
-    timing = _days_until_text(meeting["date"])
-    meeting_when = f"{meeting['date']}" + (f" ({timing})" if timing else "")
-    extra = f"\n\n{note.strip()}" if note else ""
-    return (
-        f"Hi {member_name},\n\n"
-        f"Quick reading check-in for {title}. The meeting is {meeting_when}. "
-        "Where are you in the book, and do you feel on track?\n\n"
-        "Reply with something short like \"halfway and on track\", "
-        "\"page 120, behind\", or \"finished\" and I'll update the tracker."
-        f"{extra}"
-    )
-
-
 async def _send_roll_call_email_to_member(member: dict, status: dict) -> dict | None:
     email = db.email_for_member(member["slug"])
     if not email:
@@ -408,7 +392,7 @@ async def _send_reading_checkin_email_to_member(member: dict, meeting: dict,
             ),
             "extra note": note,
         },
-        fallback=_reading_checkin_body(member["name"], meeting, note=note),
+        fallback=meeting_rules.reading_checkin_email_body(member["name"], meeting, note=note),
         medium="email",
     )
     meeting_id = meeting["meetingId"]

@@ -777,17 +777,8 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                     "reason": f"{member['name']} is already marked finished for {title}",
                     "readingStatus": _reading_status_snapshot(meeting),
                 })
-            timing = _days_until_text(meeting["date"])
-            meeting_when = f"{meeting['date']}" + (f" ({timing})" if timing else "")
-            extra = f"\n\n{tool_input['note'].strip()}" if tool_input.get("note") else ""
-            body = (
-                f"Hi {member['name']},\n\n"
-                f"Quick reading check-in for {title}. The meeting is {meeting_when}. "
-                "Where are you in the book, and do you feel on track?\n\n"
-                "Reply with something short like \"halfway and on track\", "
-                "\"page 120, behind\", or \"finished\" and I'll update the tracker."
-                f"{extra}"
-            )
+            body = meeting_rules.reading_checkin_email_body(
+                member["name"], meeting, note=tool_input.get("note"))
             subject = f"Reading check-in: {title}"
             sent = outbound.send(to=[email["email"]], subject=subject, body=body)
             db.record_reading_request(meeting_id, member_id, surface="email")
@@ -922,6 +913,5 @@ def _meeting_readiness_snapshot() -> dict:
 
 # Roll-call email text is shared with the command path; it lives in meeting_rules so the
 # wording can't drift between the two senders.
-_days_until_text = meeting_rules.days_until_text
 _roll_call_subject = meeting_rules.roll_call_subject
 _roll_call_email_body = meeting_rules.roll_call_email_body

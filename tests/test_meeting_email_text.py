@@ -59,3 +59,22 @@ def test_days_until_text():
     # Relative phrasing is exercised; exact day depends on today, so just assert shape.
     out = meeting_rules.days_until_text("2099-01-01")
     assert out.startswith("in ") and out.endswith(" days")
+
+
+def test_reading_checkin_email_body_shared_shape():
+    # The command path and the request_reading_update tool both call this one helper.
+    meeting = {"date": "2026-07-28", "startTime": "18:30", "location": "Broder's",
+               "book": {"title": "Stiff"}}
+    body = meeting_rules.reading_checkin_email_body("Erik", meeting)
+    assert body.startswith("Hi Erik,")
+    assert "Quick reading check-in for Stiff" in body
+    assert "Tuesday, July 28 at 6:30 PM" in body   # friendly date + time, not the ISO form
+    assert "at Broder's" in body                     # location when set
+    assert "finished" in body                        # the reply-guidance line
+
+
+def test_reading_checkin_email_body_appends_note():
+    meeting = {"date": "2026-07-28", "book": {"title": "Stiff"}}
+    body = meeting_rules.reading_checkin_email_body("Erik", meeting, note="Bring snacks.")
+    assert "Bring snacks." in body
+    assert "Bring snacks." not in meeting_rules.reading_checkin_email_body("Erik", meeting)
