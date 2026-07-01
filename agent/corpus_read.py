@@ -581,7 +581,7 @@ def upcoming_meetings() -> list[dict]:
     ]
     future.sort(key=lambda b: b.get("meetingDate") or "")
     return [
-        {"title": b.get("title"), "authors": b.get("authors") or [],
+        {"slug": b.get("slug"), "title": b.get("title"), "authors": b.get("authors") or [],
          "meetingDate": b.get("meetingDate"), "pickedBy": b.get("pickerName"),
          "topic": b.get("topic")}
         for b in future

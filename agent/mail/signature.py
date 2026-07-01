@@ -7,10 +7,11 @@ the facts are always accurate — and the fun fact rotates for variety.
 
 from __future__ import annotations
 
+import html
 import random
 from datetime import date
 
-from agent import clock
+from agent import clock, config
 from agent import corpus_read as cr
 from agent.club import meeting_rules
 
@@ -47,25 +48,60 @@ def _fun_facts(stats: dict, books: list[dict], today: date) -> list[str]:
     return facts
 
 
-def email_signature(*, today: date | None = None, rng: random.Random | None = None) -> str:
-    """A short sign-off: '— Oliver', the next read, and one rotating fun fact.
-
-    `today`/`rng` are injectable for deterministic tests; both default to live values.
-    """
+def _sig_snapshot(*, today: date | None = None, rng: random.Random | None = None) -> dict:
+    """One snapshot of the sign-off data (next read + one rotating fact) so the plain-text and
+    HTML signatures always show the same thing. `today`/`rng` are injectable for tests."""
     today = today or clock.club_today()
     rng = rng or random
-    lines = ["— Oliver"]
-
     upcoming = cr.upcoming_meetings()
-    if upcoming:
-        nxt = upcoming[0]
-        when = meeting_rules.friendly_date(nxt.get("meetingDate"))
-        picker = f", picked by {nxt['pickedBy']}" if nxt.get("pickedBy") else ""
-        tail = f" on {when}" if when else ""
-        lines.append(f"📚 Next up: {nxt['title']}{picker}{tail}.")
-
     facts = _fun_facts(cr.club_stats(), cr.books(), today)
-    if facts:
-        lines.append(rng.choice(facts))
+    return {"next": upcoming[0] if upcoming else None,
+            "fact": rng.choice(facts) if facts else None}
 
+
+def _next_up_text(nxt: dict) -> str:
+    when = meeting_rules.friendly_date(nxt.get("meetingDate"))
+    picker = f", picked by {nxt['pickedBy']}" if nxt.get("pickedBy") else ""
+    tail = f" on {when}" if when else ""
+    return f"📚 Next up: {nxt['title']}{picker}{tail}."
+
+
+def _text_from_snapshot(snap: dict) -> str:
+    lines = ["— Oliver"]
+    if snap["next"]:
+        lines.append(_next_up_text(snap["next"]))
+    if snap["fact"]:
+        lines.append(snap["fact"])
     return "\n".join(lines)
+
+
+def email_signature_html(snap: dict) -> str:
+    """A small styled HTML sign-off — links Oliver to the site and the next book to its page — so
+    the signature owns its own HTML formatting instead of leaning on the renderer's nl2br."""
+    site = config.SITE_URL
+    lines = [f'<p>— <a href="{site}/">Oliver</a></p>']
+    nxt = snap["next"]
+    if nxt:
+        title = f"<em>{html.escape(nxt.get('title') or '')}</em>"
+        slug = nxt.get("slug")
+        title_html = f'<a href="{site}/books/{slug}/">{title}</a>' if slug else title
+        when = meeting_rules.friendly_date(nxt.get("meetingDate"))
+        picker = f", picked by {html.escape(nxt['pickedBy'])}" if nxt.get("pickedBy") else ""
+        tail = f" on {html.escape(when)}" if when else ""
+        lines.append(f"<p>📚 Next up: {title_html}{picker}{tail}.</p>")
+    if snap["fact"]:
+        lines.append(f'<p class="oliver-sig-fact">{html.escape(snap["fact"])}</p>')
+    return '<div class="oliver-sig">' + "".join(lines) + "</div>"
+
+
+def email_signature(*, today: date | None = None, rng: random.Random | None = None) -> str:
+    """Plain-text sign-off (the text/plain part + previews): '— Oliver', the next read, one fact."""
+    return _text_from_snapshot(_sig_snapshot(today=today, rng=rng))
+
+
+def email_signatures(*, today: date | None = None,
+                     rng: random.Random | None = None) -> tuple[str, str]:
+    """(plain_text, html) sign-offs from ONE snapshot — the send path uses this so both MIME parts
+    show the same next book and fun fact."""
+    snap = _sig_snapshot(today=today, rng=rng)
+    return _text_from_snapshot(snap), email_signature_html(snap)

@@ -38,3 +38,24 @@ def test_raw_html_is_neutralized():
 def test_ampersand_in_prose_renders_once():
     assert "Tom &amp; Jerry" in email_render.text_to_html("Tom & Jerry")
     assert "&amp;amp;" not in email_render.text_to_html("Tom & Jerry")
+
+
+def test_single_newline_is_not_a_hard_break():
+    # nl2br is OFF: a stray mid-sentence newline (the model sometimes echoes search-result line
+    # breaks) no longer becomes a visible <br> — it renders as a space, one paragraph.
+    html = email_render.text_to_html("From a search,\nit concerns AI.")
+    assert "<br" not in html
+    assert "From a search," in html and "it concerns AI." in html
+    assert html.count("<p>") == 1
+
+
+def test_blank_line_still_starts_a_new_paragraph():
+    html = email_render.text_to_html("First para.\n\nSecond para.")
+    assert "<p>First para.</p>" in html and "<p>Second para.</p>" in html
+
+
+def test_signature_html_is_injected_inside_the_wrapper():
+    html = email_render.text_to_html("Body.", signature_html='<div class="oliver-sig">S</div>')
+    assert "<p>Body.</p>" in html
+    # The signature HTML rides inside the .oliver-email wrapper, verbatim (not markdown-rendered).
+    assert '<div class="oliver-sig">S</div></div></body>' in html

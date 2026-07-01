@@ -35,6 +35,36 @@ def test_signature_without_upcoming_still_signs_with_a_fact(monkeypatch):
     assert "179 books read together since 2003" in sig
 
 
+def test_html_signature_has_links_and_escapes(monkeypatch):
+    _setup(
+        monkeypatch,
+        upcoming=[{"slug": "stiff", "title": "Stiff & Bones",
+                   "meetingDate": "2026-07-28T00:00:00Z", "pickedBy": "Tom"}],
+        stats={"totalRead": 179}, books=[],
+    )
+    _text, html = signature.email_signatures(today=date(2026, 6, 25), rng=random.Random(0))
+    assert 'class="oliver-sig"' in html
+    assert 'href="https://rwbookclub.com/">Oliver</a>' in html        # Oliver → the club site
+    assert 'href="https://rwbookclub.com/books/stiff/"' in html        # book title → its page
+    assert "<em>Stiff &amp; Bones</em>" in html                        # title italicized + escaped
+    assert "picked by Tom" in html and "July 28" in html
+
+
+def test_text_and_html_signatures_share_one_snapshot(monkeypatch):
+    # Both MIME parts must show the same rotating fact (built from a single snapshot).
+    import html as _html
+    _setup(
+        monkeypatch,
+        upcoming=[{"slug": "stiff", "title": "Stiff",
+                   "meetingDate": "2026-07-28T00:00:00Z", "pickedBy": "Tom"}],
+        stats={"totalRead": 179, "nonfiction": 158, "fiction": 21, "totalPages": 50000},
+        books=[],
+    )
+    text, html = signature.email_signatures(today=date(2026, 6, 25), rng=random.Random(0))
+    fact = text.splitlines()[-1]
+    assert _html.escape(fact) in html
+
+
 def test_fun_facts_years_ago_this_month(monkeypatch):
     facts = signature._fun_facts(
         {"totalRead": 1},
