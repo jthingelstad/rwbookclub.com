@@ -15,6 +15,7 @@ import logging
 from datetime import datetime, timedelta
 
 import discord
+import requests
 from discord.ext import tasks
 
 from agent import (clock, clubdb, config, context as kb, corpus_read, corpus_write, db, oliver,
@@ -68,6 +69,68 @@ async def _drain_publishes() -> None:
                     "Run `python -m agent.publish` manually, or check the logs.",
                 )
                 break
+
+
+# ── Self-healing publish (meeting rollover needs no human) ───────────────────
+# The deployed site is built at a moment in time. If a book is added but its deferred publish is
+# lost (e.g. the bot restarts before the web app idles out), or a meeting simply rolls over so the
+# next book changes, gh-pages goes stale. Each build stamps /next.json with the book it thinks is
+# next; this check compares that to the live corpus and republishes on a mismatch — on startup and
+# hourly, so rollover is fully automatic.
+_NEXT_MARKER_URL = config.SITE_URL + "/next.json"
+
+
+def _expected_next_book_slug() -> str | None:
+    """The earliest still-upcoming book per the live corpus — what a fresh build would stamp into
+    /next.json (same rule the site's journey/homepage use). None if there's no upcoming book."""
+    upcoming = [b for b in corpus_read.books() if b.get("isUpcoming") and b.get("meetingDate")]
+    if not upcoming:
+        return None
+    upcoming.sort(key=lambda b: b.get("meetingDate") or "")
+    return upcoming[0].get("slug")
+
+
+def _deployed_next_book_slug() -> tuple[bool, str | None]:
+    """Read /next.json off the live site. Returns (reachable, nextBookSlug). reachable=False on a
+    network error (can't tell — caller skips); a 404 is reachable with slug=None (a pre-marker
+    build, i.e. genuinely stale)."""
+    try:
+        r = requests.get(_NEXT_MARKER_URL, timeout=15)
+    except requests.RequestException:
+        return (False, None)
+    if r.status_code == 404:
+        return (True, None)
+    if not r.ok:
+        return (False, None)
+    try:
+        return (True, (r.json() or {}).get("nextBookSlug"))
+    except ValueError:
+        return (True, None)
+
+
+async def ensure_site_reflects_next_book() -> bool:
+    """If the deployed site doesn't show the correct next book, trigger a publish. Returns True if
+    it did. Safe to call repeatedly (startup + hourly); skips when a publish is already pending or
+    the marker can't be read, so it never thrashes."""
+    expected = await asyncio.to_thread(_expected_next_book_slug)
+    if expected is None:
+        return False  # nothing upcoming to verify
+    if _publish_dirty or (_publisher_task is not None and not _publisher_task.done()):
+        return False  # a publish is already in flight — it will carry the current state
+    reachable, deployed = await asyncio.to_thread(_deployed_next_book_slug)
+    if not reachable:
+        log.warning("site self-heal: couldn't read %s; skipping this cycle", _NEXT_MARKER_URL)
+        return False
+    if deployed == expected:
+        return False  # site is current
+    log.info("site self-heal: deployed next book %r != expected %r — publishing", deployed, expected)
+    db.add_activity(
+        "site_selfheal", "Auto-publishing to fix a stale site",
+        f"The live site's next book is {deployed or '(none — old build)'} but it should be "
+        f"“{expected}”. Rebuilding and deploying so the site reflects the current meeting — "
+        "no action needed.")
+    schedule_publish()
+    return True
 
 
 # ── Admin gate ───────────────────────────────────────────────────────────────
@@ -1190,6 +1253,13 @@ async def run_scheduler() -> int:
         return 0
     posted = 0
     now = _club_now()
+
+    # 0. Self-heal the deployed site if it doesn't reflect the current next book (a lost deferred
+    # publish, or a meeting rollover). Runs on startup (first tick) + hourly — no human needed.
+    try:
+        await ensure_site_reflects_next_book()
+    except Exception:
+        log.exception("site self-heal check failed")
 
     # 1. Corpus-derived notifications → main channel.
     main = _client.get_channel(config.MAIN_CHANNEL_ID) if config.MAIN_CHANNEL_ID else None

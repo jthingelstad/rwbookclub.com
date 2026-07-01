@@ -40,6 +40,10 @@ CHANNEL_NAMES = {
 MAX_DISCORD_LEN = 2000
 CLUB_TIMEZONE = os.environ.get("CLUB_TIMEZONE", "America/Chicago")
 
+# Public site origin (the gh-pages deploy target, served by GitHub Pages). Used by the
+# self-healing publish check to read the deployed /next.json marker. No trailing slash.
+SITE_URL = (os.environ.get("SITE_URL") or "https://rwbookclub.com").rstrip("/")
+
 # Member web app (served locally inside the bot process, reached over Tailscale Funnel).
 # WEBAPP_BASE_URL is the public Funnel origin (no trailing slash); WEBAPP_PORT is the
 # loopback port the in-process aiohttp server binds. Funnel maps the public 443 → this port.

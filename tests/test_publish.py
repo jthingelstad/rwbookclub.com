@@ -165,3 +165,85 @@ def test_publisher_surfaces_failure_as_warning(monkeypatch):
 
     asyncio.run(run())
     assert any(a[0] == "warning" for a in activities)
+
+
+# ── Self-healing publish on meeting rollover ─────────────────────────────────
+class _Resp:
+    def __init__(self, status, payload=None):
+        self.status_code = status
+        self.ok = 200 <= status < 300
+        self._payload = payload
+
+    def json(self):
+        if self._payload is None:
+            raise ValueError("no json")
+        return self._payload
+
+
+def test_deployed_next_book_slug_reads_marker(monkeypatch):
+    monkeypatch.setattr(commands.requests, "get", lambda *a, **k: _Resp(200, {"nextBookSlug": "blindsight"}))
+    assert commands._deployed_next_book_slug() == (True, "blindsight")
+
+
+def test_deployed_next_book_slug_404_is_reachable_but_missing(monkeypatch):
+    monkeypatch.setattr(commands.requests, "get", lambda *a, **k: _Resp(404))
+    assert commands._deployed_next_book_slug() == (True, None)  # pre-marker build → stale
+
+
+def test_deployed_next_book_slug_network_error_unreachable(monkeypatch):
+    def boom(*a, **k):
+        raise commands.requests.RequestException("no net")
+    monkeypatch.setattr(commands.requests, "get", boom)
+    assert commands._deployed_next_book_slug() == (False, None)  # can't tell → caller skips
+
+
+def test_expected_next_book_slug_is_the_upcoming_book(fresh_db, reset_books_cache):
+    # Under the frozen test clock, the fixture's upcoming meeting is A World Appears.
+    assert commands._expected_next_book_slug() == "a-world-appears"
+
+
+def _selfheal_env(monkeypatch, *, deployed, expected="blindsight"):
+    _reset_publisher(monkeypatch)
+    published = []
+    monkeypatch.setattr(commands, "_expected_next_book_slug", lambda: expected)
+    monkeypatch.setattr(commands, "_deployed_next_book_slug", lambda: deployed)
+    monkeypatch.setattr(commands, "schedule_publish", lambda: published.append(True))
+    monkeypatch.setattr(commands.db, "add_activity", lambda *a, **k: None)
+    return published
+
+
+def test_selfheal_publishes_when_deployed_next_book_is_stale(monkeypatch):
+    published = _selfheal_env(monkeypatch, deployed=(True, "a-world-appears"))  # old next book
+    assert asyncio.run(commands.ensure_site_reflects_next_book()) is True
+    assert published == [True]
+
+
+def test_selfheal_publishes_when_marker_missing(monkeypatch):
+    published = _selfheal_env(monkeypatch, deployed=(True, None))  # 404 / pre-marker build
+    assert asyncio.run(commands.ensure_site_reflects_next_book()) is True
+    assert published == [True]
+
+
+def test_selfheal_noop_when_site_is_current(monkeypatch):
+    published = _selfheal_env(monkeypatch, deployed=(True, "blindsight"))
+    assert asyncio.run(commands.ensure_site_reflects_next_book()) is False
+    assert published == []
+
+
+def test_selfheal_skips_when_unreachable(monkeypatch):
+    published = _selfheal_env(monkeypatch, deployed=(False, None))
+    assert asyncio.run(commands.ensure_site_reflects_next_book()) is False
+    assert published == []
+
+
+def test_selfheal_skips_when_publish_already_pending(monkeypatch):
+    published = _selfheal_env(monkeypatch, deployed=(True, None))
+    monkeypatch.setattr(commands, "_publish_dirty", True)  # a publish is already in flight
+    assert asyncio.run(commands.ensure_site_reflects_next_book()) is False
+    assert published == []
+
+
+def test_selfheal_noop_when_no_upcoming_book(monkeypatch):
+    published = _selfheal_env(monkeypatch, deployed=(True, None), expected=None)
+    assert asyncio.run(commands.ensure_site_reflects_next_book()) is False
+    assert published == []
