@@ -411,6 +411,8 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
         f"[Email from {msg.speaker} <{msg.from_email}>]\n"
         f"Subject: {msg.subject or '(no subject)'}\n\n{msg.text}"
     )
+    # Compose the reply. A failure here is genuinely retryable (nothing was sent yet), so mark
+    # failed and let the next poll re-claim.
     try:
         if mailing_list_result is not None:
             reply = mailing_list_result.body
@@ -419,6 +421,12 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
                 oliver.answer, prompt, channel_id, msg.speaker, f"email:{msg.from_email.lower()}", msg.id,
                 medium="email", max_tokens=oliver.EMAIL_MAX_TOKENS,
             )
+    except Exception as e:
+        db.mark_email_processed(msg.id, status="failed", error=f"answer:{type(e).__name__}: {e}")
+        log.exception("Failed to compose reply to inbound email %s", msg.id)
+        return
+    # Send exactly once. If the send itself fails, nothing went out — mark failed and retry.
+    try:
         sent = await asyncio.to_thread(
             outbound.send,
             to=decision.reply_to or [msg.from_email],
@@ -427,17 +435,24 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
             in_reply_to=msg.message_id,
             references=msg.references,
         )
+    except Exception as e:
+        db.mark_email_processed(msg.id, status="failed", error=f"send:{type(e).__name__}: {e}")
+        log.exception("Failed to send reply to inbound email %s", msg.id)
+        return
+    # The reply is out. Lock in "processed" immediately — BEFORE the JMAP mark-seen network call
+    # and the activity write — so a failure in that post-send bookkeeping can never leave the row
+    # re-claimable (status='failed'), which would make the next poll send the member a 2nd reply.
+    db.mark_email_processed(msg.id, reply_email_id=sent.get("emailId"))
+    try:
         await asyncio.to_thread(email_jmap.mark_seen, msg.id, answered=True)
-        db.mark_email_processed(msg.id, reply_email_id=sent.get("emailId"))
         db.add_activity(
             "email_sent",
             "Email reply sent",
             f"To: {msg.from_email}\nSubject: {msg.reply_subject}\nEmail ID: {sent.get('emailId')}",
         )
-        log.info("Replied to email %s from %s", msg.id, msg.from_email)
-    except Exception as e:
-        db.mark_email_processed(msg.id, status="failed", error=f"{type(e).__name__}: {e}")
-        log.exception("Failed to handle inbound email %s", msg.id)
+    except Exception:
+        log.exception("Replied to email %s but post-send bookkeeping failed", msg.id)
+    log.info("Replied to email %s from %s", msg.id, msg.from_email)
 
 
 async def _is_reply_to_bot(message: discord.Message) -> bool:
