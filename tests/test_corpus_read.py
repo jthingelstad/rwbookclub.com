@@ -30,10 +30,11 @@ class TestParseFrontmatter:
 class TestUpcomingMeetingsFilter:
     def test_all_returned_are_future(self):
         """T1.4 regression: past placeholders must be filtered out."""
-        from datetime import datetime, timezone
-        from agent.corpus_read import upcoming_meetings
+        from agent.corpus_read import _today_iso, upcoming_meetings
 
-        today_iso = datetime.now(timezone.utc).date().isoformat()
+        # "Today" is the club's LOCAL day (meeting dates are local) — same basis the code uses,
+        # so this stays correct in the local evening when UTC has already rolled to tomorrow.
+        today_iso = _today_iso()
         for m in upcoming_meetings():
             md = (m.get("meetingDate") or "")[:10]
             assert md >= today_iso, f"past placeholder leaked: {m['title']} {md}"

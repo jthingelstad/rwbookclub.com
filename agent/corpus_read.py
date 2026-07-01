@@ -13,9 +13,11 @@ import json
 from collections import Counter
 from datetime import datetime, timezone
 from statistics import mean
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import yaml
 
+from agent import config
 from corpus.paths import DATA_DIR
 
 
@@ -102,7 +104,14 @@ def _books_signature() -> tuple:
 
 
 def _today_iso() -> str:
-    return datetime.now(timezone.utc).date().isoformat()
+    """Today's date in the club's LOCAL timezone (America/Chicago). Meeting dates are stored
+    local, so 'upcoming' must be judged against the local day — using UTC flips tonight's meeting
+    to 'past' at local evening (midnight UTC hits ~6-7pm CST), i.e. mid-meeting on meeting night."""
+    try:
+        tz = ZoneInfo(config.CLUB_TIMEZONE)
+    except ZoneInfoNotFoundError:
+        tz = timezone.utc
+    return datetime.now(tz).date().isoformat()
 
 
 def books() -> list[dict]:
