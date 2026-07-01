@@ -29,6 +29,14 @@ eleventyExcludeFromCollections: true
     <loc>{{ site.url }}/lists/</loc>
     <lastmod>{{ latest }}</lastmod>
   </url>
+  <url>
+    <loc>{{ site.url }}/authors/</loc>
+    <lastmod>{{ latest }}</lastmod>
+  </url>
+  <url>
+    <loc>{{ site.url }}/meetings/</loc>
+    <lastmod>{{ latest }}</lastmod>
+  </url>
   {%- for book in books %}
   <url>
     <loc>{{ site.url }}/books/{{ book.slug }}/</loc>
@@ -46,6 +54,12 @@ eleventyExcludeFromCollections: true
   {%- for l in lists %}
   <url>
     <loc>{{ site.url }}/lists/{{ l.slug }}/</loc>
+    <lastmod>{{ latest }}</lastmod>
+  </url>
+  {%- endfor %}
+  {%- for a in authors %}
+  <url>
+    <loc>{{ site.url }}/authors/{{ a.slug }}/</loc>
     <lastmod>{{ latest }}</lastmod>
   </url>
   {%- endfor %}
