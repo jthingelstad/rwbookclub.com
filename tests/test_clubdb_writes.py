@@ -84,7 +84,8 @@ def test_schedule_meeting_persists_picker_and_meeting(monkeypatch, tmp_path):
             "SELECT bp.member_id FROM club_book_pickers bp JOIN club_books b ON b.id = bp.book_id "
             "WHERE b.slug = 'the-next-pick'"
         ).fetchone()
-    assert meeting is not None and meeting["date"][:10] == "2026-09-01"
+    # Stored as the bare LOCAL date — no 'T00:00:00Z' UTC-instant form (the date-column contract).
+    assert meeting is not None and meeting["date"] == "2026-09-01"
     assert picker["member_id"] == 61
 
     # Corpus meeting file regenerated, picker set on the book file.

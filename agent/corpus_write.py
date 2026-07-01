@@ -90,9 +90,8 @@ def schedule_meeting(book_query: str, date_iso: str, picker_query: str) -> dict:
     if not member:
         raise WriteError(f"No club member matching {picker_query!r}.")
     day = (date_iso or "").strip()[:10]
-    if not day:
+    if len(day) != 10:
         raise WriteError("A meeting needs a date (YYYY-MM-DD).")
-    iso = f"{day}T00:00:00.000Z" if len(day) == 10 else date_iso
 
     with db.connect() as conn:
         book_id = clubdb.book_id_for_slug(conn, book["slug"])
@@ -100,7 +99,10 @@ def schedule_meeting(book_query: str, date_iso: str, picker_query: str) -> dict:
         if book_id is None or member_id is None:
             raise WriteError("Book or member is not in the club database yet.")
         clubdb.set_book_picker(conn, book_id, member_id)
-        meeting_id = clubdb.create_meeting(conn, date_iso=iso, book_id=book_id)
+        # Store the bare LOCAL date (YYYY-MM-DD) — the club_meetings.date contract. The old
+        # 'day + T00:00:00.000Z' form injected a UTC instant that broke naive date parsing
+        # downstream (e.g. datetime.fromisoformat in the scheduler).
+        meeting_id = clubdb.create_meeting(conn, date_iso=day, book_id=book_id)
         corpus_gen.write_book_file(conn, book_id, DATA_DIR)
         corpus_gen.write_meeting_file(conn, meeting_id, DATA_DIR)
     # Chronicle hook: drop a meeting_scheduled event on the club timeline at the meeting's
