@@ -568,7 +568,10 @@ def _member_lenses() -> dict:
         hist = cr.member_history(slug) or {}
         lenses[slug] = {
             "name": m.get("name"),
-            "memories": [x["note"] for x in db.get_memories(subject=slug, limit=10)],
+            # The FULL active memory set, not a newest-N window: after archive mining, a member's
+            # decisive note (e.g. Loren's Harari skepticism) can be years old — a partial lens
+            # produced a live forecast that contradicted recorded taste.
+            "memories": [x["note"] for x in db.get_memories(subject=slug, limit=40)],
             "recentPicks": [{"title": p.get("title"), "year": p.get("year")}
                             for p in (hist.get("picks") or [])[:3]],
         }
