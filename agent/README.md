@@ -43,7 +43,10 @@ agent/
   tools (`current_club_state`, `current_meeting_status`, `identity_status`,
   `recent_feedback`, `recent_channel_context`), relationship tools (`related_books`,
   `compare_books`, `review_summary`), email (`send_email`, `email_status`), proposal staging
-  (`propose_action`, `open_proposals`), plus `remember`, `recall`, `set_reminder`, and explicit
+  (`propose_action`, `open_proposals`), the Book Cloud (`book_cloud_add`, `book_cloud_recent` —
+  books members reference but haven't read, reason-first, private SQLite), the picking funnel
+  (`pick_prospects` → `pick_fit` — discover then evaluate pick candidates against member tastes,
+  shelf-neighbor verdicts, and the cloud), plus `remember`, `recall`, `set_reminder`, and explicit
   self-reported `record_availability` (SQLite).
 - **Reviews / ratings / lists / profile**: members manage these in the **web app** (`/oliver webapp`,
   see below), which writes `club_reviews` / `club_lists` / `member_identities` and regenerates the

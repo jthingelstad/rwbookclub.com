@@ -471,7 +471,236 @@ TOOLS = [
             "required": ["category", "kind", "date", "summary"],
         },
     },
+    {
+        "name": "book_cloud_add",
+        "description": "Quietly record a book a member genuinely referenced — named, compared, "
+                       "recommended, objected to — into the club's private Book Cloud. The REASON "
+                       "it came up is the whole point ('mentioned in chat' is a failed reason); a "
+                       "reference is not a nomination unless the member says so. Silent "
+                       "bookkeeping: never reply, ask a follow-up, or interrogate intent just "
+                       "because a book was named.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string"},
+                "reason": {"type": "string",
+                           "description": "Why it came up — the specific connection, comparison, or context."},
+                "author": {"type": "string"},
+                "reason_kind": {"type": "string",
+                                "enum": ["nomination", "comparison", "objection", "recommendation",
+                                         "side_reference", "joke", "pick_candidate"]},
+            },
+            "required": ["title", "reason"],
+        },
+    },
+    {
+        "name": "book_cloud_recent",
+        "description": "Read the club's private Book Cloud — books members have referenced but "
+                       "(usually) not read. Default: raw recent mentions, newest first. Pass "
+                       "titles=true for the aggregated orbit view (one row per title: first/last "
+                       "mention, who, how often, recent reasons). Frame results as books orbiting "
+                       "the conversation — not a queue, ranking, or commitment.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Optional filter over title/author/reason."},
+                "titles": {"type": "boolean", "description": "Aggregated one-row-per-title view."},
+                "member": {"type": "string", "description": "With titles=true: only titles this member slug has mentioned."},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+            },
+        },
+    },
+    {
+        "name": "pick_fit",
+        "description": "EVALUATE a book-pick CANDIDATE against this club: whether we've read it, "
+                       "its own Book Cloud history (who floated it, when, why), its nearest "
+                       "neighbors on our shelf with the club's actual verdicts (ratings AND "
+                       "discussion quality), every member's taste lens, and our coverage. Use it "
+                       "for each serious candidate when someone is weighing a pick. It does NOT "
+                       "include current reception/adaptation news — web_search that separately. "
+                       "Never invent member reactions beyond the lens data returned.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string"},
+                "author": {"type": "string", "description": "Helps disambiguate the lookup."},
+                "isbn": {"type": "string"},
+            },
+            "required": ["title"],
+        },
+    },
+    {
+        "name": "pick_prospects",
+        "description": "DISCOVER where a member should even look for their next pick: their taste "
+                       "profile (memories + their reviews of everyone's picks), the Book Cloud's "
+                       "unread orbit (titles the club has floated but never read — theirs and the "
+                       "club's), loved authors with unread notable works, the club's coverage "
+                       "gaps, and targeted web_search angles. Use it FIRST when someone wants "
+                       "help finding candidates, then web_search the angles, then pick_fit the "
+                       "best 2-3.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "member": {"type": "string",
+                           "description": "Member slug; defaults to whoever is asking."},
+                "direction": {"type": "string",
+                              "description": "Optional steer, e.g. 'fiction' or 'something in the history lane'."},
+            },
+        },
+    },
 ]
+
+
+def _surface_from_ctx(ctx: dict) -> str:
+    channel = str(ctx.get("channel_id") or "")
+    return ("mailing_list" if channel.startswith("email:list:")
+            else "email" if channel.startswith("email:") else "discord")
+
+
+def _member_lenses() -> dict:
+    """Every current member's taste lens: reflection memories + recent picks. The who-will-love-it
+    / who-will-fight-it evidence for pick advice — reactions must come from HERE, never invented."""
+    lenses = {}
+    for m in cr.members():
+        if not m.get("isCurrent"):
+            continue
+        slug = m["slug"]
+        hist = cr.member_history(slug) or {}
+        lenses[slug] = {
+            "name": m.get("name"),
+            "memories": [x["note"] for x in db.get_memories(subject=slug, limit=10)],
+            "recentPicks": [{"title": p.get("title"), "year": p.get("year")}
+                            for p in (hist.get("picks") or [])[:3]],
+        }
+    return lenses
+
+
+def _pick_fit(tool_input: dict, ctx: dict) -> dict:
+    """One-call evaluation dossier for a pick candidate. Read-only except one Book Cloud INSERT
+    recording that the candidate was considered (so evaluations enrich the cloud)."""
+    from agent.enrich import openlibrary as enrich_ol
+
+    title = tool_input["title"].strip()
+    author = (tool_input.get("author") or "").strip() or None
+    out: dict = {"candidate": {"title": title, "authors": [author] if author else [],
+                               "resolved": "unresolved"}}
+    subjects: list[str] = []
+
+    corpus_hit = cr.find_book(title)
+    if corpus_hit:
+        subjects = corpus_hit.get("subjects") or []
+        out["candidate"] = {
+            "title": corpus_hit.get("title"), "authors": corpus_hit.get("authors") or [],
+            "year": corpus_hit.get("year"), "subjects": subjects, "resolved": "corpus",
+        }
+        if corpus_hit.get("isRead"):
+            out["alreadyRead"] = {  # re-picks are a special headline case
+                "yearRead": (corpus_hit.get("meetingDate") or "")[:4],
+                "picker": corpus_hit.get("pickerName"),
+                "reviewSummary": cr.review_summary(corpus_hit["slug"]),
+            }
+        else:
+            out["alreadyScheduled"] = {"meetingDate": corpus_hit.get("meetingDate"),
+                                       "picker": corpus_hit.get("pickerName")}
+    else:
+        try:
+            doc = enrich_ol.search_best_match(title, [author] if author else [])
+        except Exception:  # noqa: BLE001 — OL down must not sink the dossier
+            doc = None
+        if doc:
+            subjects = enrich_ol.clean_subjects(doc.get("subject"))
+            out["candidate"] = {
+                "title": doc.get("title") or title,
+                "authors": doc.get("author_name") or ([author] if author else []),
+                "year": doc.get("first_publish_year"),
+                "pages": doc.get("number_of_pages_median"),
+                "subjects": subjects,
+                "ratingsAverage": doc.get("ratings_average"),
+                "ratingsCount": doc.get("ratings_count"),
+                "olKey": doc.get("key"),
+                "resolved": "openlibrary",
+            }
+
+    cand_authors = out["candidate"].get("authors") or []
+    # This title's own cloud history — who floated it, when, why.
+    norm = title.lower().strip()
+    out["cloudHistory"] = next(
+        (r for r in db.book_cloud_titles(query=title, limit=5)
+         if (r.get("title") or "").lower().strip() == norm), None)
+    # Nearest neighbors on the shelf, each with the club's actual verdict.
+    neighbors = cr.affinity_to_history(subjects, cand_authors, title=title)
+    for n in neighbors:
+        rs = cr.review_summary(n["slug"]) or {}
+        n["clubVerdict"] = {"ratingAverage": rs.get("ratingAverage"),
+                            "discussionAverage": rs.get("discussionAverage"),
+                            "dnfCount": rs.get("dnfCount"),
+                            "excerpt": (rs.get("excerpts") or [None])[0]}
+    out["nearestInHistory"] = neighbors
+    out["memberLenses"] = _member_lenses()
+    stats = cr.club_stats()
+    out["coverage"] = {"topics": stats.get("topics"), "fiction": stats.get("fiction"),
+                       "nonfiction": stats.get("nonfiction")}
+    out["clubLore"] = [x["note"] for x in db.get_memories(scope="club", limit=17)]
+    out["note"] = ("Current reception/adaptation news is NOT included — web_search it. Never "
+                   "state a member reaction that isn't grounded in memberLenses.")
+    if "alreadyRead" not in out:  # considering a candidate enriches the cloud
+        who = ctx.get("member_slug")
+        db.add_book_cloud_entry(
+            title=out["candidate"].get("title") or title,
+            author=(cand_authors or [None])[0],
+            book_slug=(corpus_hit or {}).get("slug"),
+            reason=f"evaluated as a pick candidate{' for ' + who if who else ''}",
+            reason_kind="pick_candidate",
+            mentioned_by=who, mentioned_by_name=ctx.get("speaker"),
+            surface=_surface_from_ctx(ctx), channel_id=ctx.get("channel_id"),
+            source_message_id=ctx.get("source_message_id"),
+        )
+    return out
+
+
+def _pick_prospects(tool_input: dict, ctx: dict) -> dict:
+    """One-call discovery dossier: where should this member even look for a pick?"""
+    member = (tool_input.get("member") or ctx.get("member_slug") or "").strip() or None
+    direction = (tool_input.get("direction") or "").strip() or None
+    out: dict = {"member": member, "direction": direction}
+
+    if member:
+        hist = cr.member_history(member) or {}
+        out["memberTaste"] = {
+            "memories": [x["note"] for x in db.get_memories(subject=member, limit=12)],
+            # Their reviews across ALL reads (incl. others' picks) — a richer taste signal
+            # than their own picks alone.
+            "reviews": [{"book": r.get("book"), "rating": r.get("rating"), "dnf": r.get("dnf"),
+                         "wouldRecommend": r.get("wouldRecommend")}
+                        for r in (hist.get("reviews") or [])[:12]],
+            "recentPicks": [{"title": p.get("title"), "year": p.get("year")}
+                            for p in (hist.get("picks") or [])[:5]],
+        }
+
+    # The cloud's unread orbit — titles floated but never read, theirs vs the club's.
+    read_slugs = {b["slug"] for b in cr.books() if b.get("isRead")}
+    unread = [r for r in db.book_cloud_titles(limit=60)
+              if not (r.get("book_slug") and r["book_slug"] in read_slugs)]
+    out["cloudProspects"] = {
+        "yours": [r for r in unread if member and member in (r.get("mentioners") or [])][:12],
+        "clubOrbit": [r for r in unread
+                      if not (member and member in (r.get("mentioners") or []))][:12],
+        "totalUnreadInCloud": len(unread),
+    }
+    out["lovedAuthorsUnread"] = cr.unread_notable_works(limit=8)
+    stats = cr.club_stats()
+    topics_sorted = sorted(stats.get("topics") or [], key=lambda t: t[1])
+    out["coverageGaps"] = {"leastReadTopics": topics_sorted[:5],
+                           "fiction": stats.get("fiction"), "nonfiction": stats.get("nonfiction")}
+    angles = [f"new book by {a['author']} 2025 2026"
+              for a in (out["lovedAuthorsUnread"] or [])[:2]]
+    angles += [f"notable acclaimed {t} books 2024 2025 2026" for t, _n in topics_sorted[:2]]
+    if direction:
+        angles.append(f"best recent {direction} books for a book club 2025 2026")
+    out["searchAngles"] = angles
+    out["note"] = ("These are leads, not results — web_search the angles for current candidates, "
+                   "then pick_fit the best 2-3.")
+    return out
 
 
 def _dump(obj) -> str:
@@ -692,6 +921,32 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 source_message_id=ctx.get("source_message_id"),
             )
             return _dump({"saved": True, "id": mid, "scope": scope})
+        if name == "book_cloud_add":
+            # Mentioner/surface/provenance come from ctx, never model input (identity map rule).
+            surface = _surface_from_ctx(ctx)
+            entry_id = db.add_book_cloud_entry(
+                title=tool_input["title"],
+                reason=tool_input["reason"],
+                author=tool_input.get("author"),
+                reason_kind=tool_input.get("reason_kind"),
+                book_slug=(cr.find_book(tool_input["title"]) or {}).get("slug"),
+                mentioned_by=ctx.get("member_slug"),
+                mentioned_by_name=ctx.get("speaker"),
+                surface=surface,
+                channel_id=ctx.get("channel_id"),
+                source_message_id=ctx.get("source_message_id"),
+            )
+            return _dump({"saved": True, "id": entry_id})
+        if name == "book_cloud_recent":
+            limit = max(1, min(int(tool_input.get("limit", 20)), 50))
+            if tool_input.get("titles"):
+                return _dump(db.book_cloud_titles(query=tool_input.get("query"),
+                                                  member=tool_input.get("member"), limit=limit))
+            return _dump(db.recent_book_cloud(limit=limit, query=tool_input.get("query")))
+        if name == "pick_fit":
+            return _dump(_pick_fit(tool_input, ctx))
+        if name == "pick_prospects":
+            return _dump(_pick_prospects(tool_input, ctx))
         if name == "recall":
             return _dump(db.get_memories(subject=tool_input.get("subject"), query=tool_input.get("query")))
         if name == "set_reminder":

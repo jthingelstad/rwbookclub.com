@@ -38,6 +38,28 @@ CREATE TABLE IF NOT EXISTS memories (
 );
 CREATE INDEX IF NOT EXISTS idx_memories_subject ON memories(subject);
 
+-- The Book Cloud: books the club orbits (mentions, comparisons, nominations, jokes) — usually
+-- NOT books it has read. No dedupe: same title mentioned twice for two reasons = two rows; the
+-- REASON is the cultural payload ("mentioned in chat" is a failed reason). Mentioner is resolved
+-- from ctx via the identity map, never taken from model input. Private SQLite only — never
+-- rendered to the corpus or website. (Designed in AGENT-TEAM/work/2026-06-26-build-book-cloud.md.)
+CREATE TABLE IF NOT EXISTS book_cloud (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    title             TEXT NOT NULL,         -- mentioned book title (free text; often not a corpus book)
+    author            TEXT,                  -- when known
+    book_slug         TEXT,                  -- set only on a confident match to a corpus book; else NULL
+    mentioned_by      TEXT,                  -- member slug (identity map); NULL if speaker unlinked
+    mentioned_by_name TEXT,                  -- display-name fallback, provenance only
+    surface           TEXT NOT NULL,         -- 'discord' | 'email' | 'mailing_list'
+    channel_id        TEXT,
+    source_message_id TEXT,
+    reason            TEXT NOT NULL,         -- WHY it came up — the cultural payload
+    reason_kind       TEXT,                  -- advisory: nomination|comparison|objection|recommendation|side_reference|joke|pick_candidate
+    created_at        TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_book_cloud_created ON book_cloud(created_at);
+CREATE INDEX IF NOT EXISTS idx_book_cloud_title   ON book_cloud(title);
+
 -- One identity map for every way we recognize / reach a member: Discord ids, email
 -- addresses, and phone numbers (the single handle store). Keyed by member_id FK — slug is
 -- never stored here. club_members is the person; member_identities holds their handles.
@@ -832,6 +854,73 @@ def delete_memory(memory_id: int) -> bool:
             (memory_id,),
         )
         return cur.rowcount > 0
+
+
+# ── Book Cloud ────────────────────────────────────────────────────────────────
+def add_book_cloud_entry(*, title: str, reason: str, surface: str,
+                         author: str | None = None, book_slug: str | None = None,
+                         mentioned_by: str | None = None, mentioned_by_name: str | None = None,
+                         channel_id: str | None = None, source_message_id: str | None = None,
+                         reason_kind: str | None = None, created_at: str | None = None) -> int:
+    """Unconditional INSERT (no dedupe — the reason is the unit of value). `created_at` may be
+    supplied so the archive seeding can BACKDATE mentions to their real sent date, keeping
+    first/last-mention aggregation historically true."""
+    if not (title or "").strip() or not (reason or "").strip():
+        raise ValueError("a book_cloud entry needs both a title and a reason")
+    with connect() as conn:
+        cur = conn.execute(
+            "INSERT INTO book_cloud (title, author, book_slug, mentioned_by, mentioned_by_name, "
+            "surface, channel_id, source_message_id, reason, reason_kind, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))",
+            (title.strip(), author, book_slug, mentioned_by, mentioned_by_name, surface,
+             channel_id, source_message_id, reason.strip(), reason_kind, created_at),
+        )
+        return cur.lastrowid
+
+
+def recent_book_cloud(*, limit: int = 20, query: str | None = None) -> list[dict]:
+    """Raw cloud rows, newest first; `query` is a LIKE over title/author/reason."""
+    sql = ("SELECT id, title, author, book_slug, mentioned_by, mentioned_by_name, surface, "
+           "reason, reason_kind, created_at FROM book_cloud")
+    args: list = []
+    if query:
+        sql += " WHERE title LIKE ? OR author LIKE ? OR reason LIKE ?"
+        args += [f"%{query}%"] * 3
+    sql += " ORDER BY id DESC LIMIT ?"
+    args.append(max(1, min(int(limit), 50)))
+    with connect() as conn:
+        return [dict(r) for r in conn.execute(sql, args)]
+
+
+def book_cloud_titles(*, query: str | None = None, member: str | None = None,
+                      limit: int = 50) -> list[dict]:
+    """The AGGREGATED cloud — one row per (normalized) title: first/last mention, count, who,
+    recent reasons. This is the 'books orbiting the club' view (raw rows stay un-deduped)."""
+    sql = ("SELECT lower(trim(title)) AS k, MAX(title) AS title, MAX(author) AS author, "
+           "MAX(book_slug) AS book_slug, MIN(created_at) AS first_mentioned, "
+           "MAX(created_at) AS last_mentioned, COUNT(*) AS mention_count "
+           "FROM book_cloud")
+    args: list = []
+    where = []
+    if query:
+        where.append("(title LIKE ? OR author LIKE ? OR reason LIKE ?)")
+        args += [f"%{query}%"] * 3
+    if member:
+        where.append("k IN (SELECT lower(trim(title)) FROM book_cloud WHERE mentioned_by = ?)")
+        args.append(member)
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " GROUP BY k ORDER BY last_mentioned DESC LIMIT ?"
+    args.append(max(1, min(int(limit), 200)))
+    with connect() as conn:
+        rows = [dict(r) for r in conn.execute(sql, args)]
+        for r in rows:
+            detail = conn.execute(
+                "SELECT mentioned_by, reason FROM book_cloud WHERE lower(trim(title)) = ? "
+                "ORDER BY id DESC LIMIT 6", (r.pop("k"),)).fetchall()
+            r["mentioners"] = sorted({d["mentioned_by"] for d in detail if d["mentioned_by"]})
+            r["recentReasons"] = [d["reason"] for d in detail[:3]]
+    return rows
 
 
 # ── Member identity map (one table: Discord ids + emails → member_id) ─────────

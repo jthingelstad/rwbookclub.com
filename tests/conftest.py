@@ -106,7 +106,7 @@ def fresh_db():
     """Truncate every table; yields the db module."""
     from agent import db as _db
     tables = [
-        "memories", "conversations", "channel_summaries", "job_state", "reminders",
+        "memories", "book_cloud", "conversations", "channel_summaries", "job_state", "reminders",
         "usage_log", "notifications_sent", "responses", "feedback",
         "member_identities", "events", "meeting_member_status", "proposals",
         "inbound_emails",

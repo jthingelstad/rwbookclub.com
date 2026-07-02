@@ -480,6 +480,85 @@ def related_books(slug_or_title: str, limit: int = 8) -> dict | None:
     }
 
 
+def affinity_to_history(subjects: list[str], authors: list[str], *, title: str = "",
+                        synopsis: str = "", fiction: bool | None = None,
+                        limit: int = 5) -> list[dict]:
+    """Score an ARBITRARY candidate (usually a book the club has NOT read) against every READ
+    book, using related_books' exact weights — shared author +60, shared subjects min(n*12,48),
+    fiction match +5, title/synopsis token overlap min(n*3,18) (no topic weight: external
+    candidates carry OL subjects, not our topic taxonomy). Threshold 24, like the site's related
+    scoring. Returns the nearest shelf-neighbors with reasons — the 'how does this sit against
+    what we've read' evidence for pick evaluation."""
+    base_subjects = {_norm(s) for s in (subjects or []) if s}
+    base_authors = {_norm(a) for a in (authors or []) if a}
+    base_tokens = {t for t in _norm(f"{title} {synopsis}").split() if len(t) > 4}
+    scored = []
+    for other in books():
+        if not other.get("isRead"):
+            continue
+        score, reasons = 0, []
+        other_authors = {_norm(a): a for a in (other.get("authors") or [])}
+        shared_authors = sorted(other_authors[k] for k in base_authors & set(other_authors))
+        if shared_authors:
+            score += 60
+            reasons.append("same author: " + ", ".join(shared_authors))
+        other_subjects = {_norm(s): s for s in (other.get("subjects") or [])}
+        shared_subjects = sorted(other_subjects[k] for k in base_subjects & set(other_subjects))
+        if shared_subjects:
+            score += min(len(shared_subjects) * 12, 48)
+            reasons.append("shared subjects: " + ", ".join(shared_subjects[:3]))
+        if fiction is not None and bool(other.get("fiction")) == fiction:
+            score += 5
+        other_tokens = {
+            t for t in _norm(" ".join([other.get("title") or "", other.get("synopsis") or ""])).split()
+            if len(t) > 4
+        }
+        overlap = sorted(base_tokens & other_tokens)
+        if overlap:
+            score += min(len(overlap) * 3, 18)
+            reasons.append("shared language: " + ", ".join(overlap[:3]))
+        if score >= 24:
+            scored.append((score, other, reasons))
+    scored.sort(key=lambda x: (-x[0], -(x[1].get("year") or 0)))
+    return [
+        {"slug": o["slug"], "title": o.get("title"), "authors": o.get("authors") or [],
+         "yearRead": (o.get("meetingDate") or "")[:4] or None, "picker": o.get("pickerName"),
+         "score": score, "reasons": reasons[:3]}
+        for score, o, reasons in scored[:limit]
+    ]
+
+
+def unread_notable_works(limit: int = 10) -> list[dict]:
+    """Authors the club has read who have enrichment-known notable works the club has NOT read —
+    concrete pick leads ('you loved Ishiguro twice; this one is sitting right there'). Each author
+    is annotated with the club's verdicts on their read books."""
+    read_titles = {_norm(b.get("title") or "") for b in books() if b.get("isRead")}
+    out = []
+    for a in authors():
+        works = a.get("notableWorks") or []
+        if not works:
+            continue
+        name = a.get("name")
+        read_by_author = [b for b in books()
+                          if b.get("isRead") and name in (b.get("authors") or [])]
+        if not read_by_author:
+            continue
+        unread = [w for w in works if _norm(w) not in read_titles][:4]
+        if not unread:
+            continue
+        verdicts = []
+        for b in read_by_author:
+            rs = review_summary(b["slug"]) or {}
+            verdicts.append({"title": b.get("title"), "yearRead": (b.get("meetingDate") or "")[:4],
+                             "ratingAverage": rs.get("ratingAverage"),
+                             "discussionAverage": rs.get("discussionAverage")})
+        out.append({"author": name, "readCount": len(read_by_author), "clubVerdicts": verdicts,
+                    "unreadNotableWorks": unread})
+    # Most-read (best-known) authors first — those leads carry the most club evidence.
+    out.sort(key=lambda x: (-x["readCount"], x["author"] or ""))
+    return out[:limit]
+
+
 def compare_books(book_refs: list[str]) -> dict:
     found = [find_book(ref) for ref in book_refs[:5]]
     books_found = [b for b in found if b]
