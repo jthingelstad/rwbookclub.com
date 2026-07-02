@@ -180,15 +180,20 @@ def consolidate(lines: list[str], *, scope: str, subject: str | None = None,
     readonly = [m for m in memories if m.get("source") != SOURCE]
     allowed_ids = {m["id"] for m in updatable}
 
-    raw = oliver.complete(system, _prompt(label, lines, updatable, readonly, era_note),
-                          model=oliver.MODEL, thinking=False, effort=None,
-                          usage_channel=None if dry_run else usage_channel)
-    plan = _parse(raw)
+    plan = None
+    for attempt in (1, 2):  # format breaks are stochastic — one retry recovers most of them
+        raw = oliver.complete(system, _prompt(label, lines, updatable, readonly, era_note),
+                              model=oliver.MODEL, thinking=False, effort=None,
+                              usage_channel=None if dry_run else usage_channel)
+        plan = _parse(raw)
+        if plan is not None:
+            break
+        log.warning("reflection: unparseable output for %s (attempt %d): %r",
+                    who, attempt, (raw or "")[:400])
     if plan is None:
-        log.warning("reflection: unparseable output for %s; skipping", who)
         if not dry_run:
             db.add_activity("warning", "Reflection skipped a subject",
-                            f"Subject: {who}\nReason: unparseable model output")
+                            f"Subject: {who}\nReason: unparseable model output (2 attempts)")
         return {"skipped": "unparseable"}
 
     adds = [str(n).strip() for n in plan["add"] if str(n).strip()][:cap]
