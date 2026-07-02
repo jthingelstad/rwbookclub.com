@@ -46,6 +46,21 @@ def test_question_block_primes_cross_medium(fresh_db):
     db.log_message("email:t1", "assistant", "Blindsight and Nexus", member_slug="jamie")
     block = oliver._question_block("what were those books?", "Jamie", "jamie", None, channel_id="999")
     assert "Recently with them elsewhere" in block and "email" in block
+    assert "(today)" in block                                  # thread age surfaces for staleness rules
+
+
+def test_question_block_priming_shows_stale_age(fresh_db):
+    db.log_message("email:t1", "user", "book ideas", speaker="Jamie", member_slug="jamie")
+    with db.connect() as c:  # backdate the thread 5 days
+        c.execute("UPDATE conversations SET created_at = datetime('now', '-5 days')")
+    block = oliver._question_block("hi", "Jamie", "jamie", None, channel_id="999")
+    assert "(5 days ago)" in block
+
+
+def test_age_text_edges():
+    assert oliver._age_text(None) == "some time ago"
+    assert oliver._age_text("not-a-date") == "some time ago"
+    assert oliver._age_text("2020-01-01 00:00:00").endswith("days ago")
     # Unrecognized speaker → no member → no priming (and no per-answer lookup cost).
     plain = oliver._question_block("hi", "Randomvisitor", None, None, channel_id="999")
     assert "Recently with them elsewhere" not in plain

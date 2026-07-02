@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 import anthropic
@@ -188,7 +189,11 @@ OPERATIONAL_PROMPT = (
     "or list books yet — ask one short, warm question: where do they want to take the club? A "
     "topic to explore, a question to push on, a mood? You may offer two or three sparks "
     "(an under-explored lane from our coverage, a thread the club keeps circling) but keep the "
-    "question open — their curiosity drives, not your inventory.\n"
+    "question open — their curiosity drives, not your inventory. If you have an earlier "
+    "pick-help thread with them (check its age in the [Recently with them elsewhere] note): "
+    "resumed within a couple of days, just continue it; 2-7 days old, ASK whether they want to "
+    "pick that thread back up or start fresh; older than a week, start fresh with the direction "
+    "question and leave the old thread alone unless they raise it.\n"
     "2. DIRECTION IN HAND (stated or answered): the direction leads. Call "
     "pick_prospects(direction=…), then web_search its direction angles for FRESH candidates — "
     "books we have never mentioned are fully in scope and usually the best answer. The cloud and "
@@ -400,6 +405,20 @@ def _history(channel_id: str) -> tuple[list[dict], str | None]:
     return msgs, summary
 
 
+def _age_text(created_at: str | None) -> str:
+    """'today' / 'yesterday' / 'N days ago' for a conversation timestamp (UTC audit instant —
+    coarse day-granularity age is what the staleness rules key on, so UTC vs club-tz drift of a
+    few hours doesn't matter)."""
+    try:
+        then = datetime.fromisoformat(str(created_at).replace("Z", "+00:00"))
+        if then.tzinfo is None:
+            then = then.replace(tzinfo=timezone.utc)
+    except (ValueError, TypeError):
+        return "some time ago"
+    days = max(0, (datetime.now(timezone.utc) - then).days)
+    return "today" if days == 0 else "yesterday" if days == 1 else f"{days} days ago"
+
+
 def _question_block(question: str, speaker: str | None, member_slug: str | None,
                     summary: str | None, channel_id: str | None = None) -> str:
     parts: list[str] = []
@@ -417,7 +436,8 @@ def _question_block(question: str, speaker: str | None, member_slug: str | None,
         # (member=<slug>) to pull the full thread if they reference it.
         recent = db.recent_threads_for_member(member_slug, exclude_channel=channel_id, limit=3)
         if recent:
-            bits = "; ".join(f"{r['medium']} — \"{r['snippet']}\"" for r in recent)
+            bits = "; ".join(
+                f"{r['medium']} ({_age_text(r.get('last_at'))}) — \"{r['snippet']}\"" for r in recent)
             parts.append(f"[Recently with them elsewhere: {bits}]")
     club = db.get_memories(scope="club", limit=6)  # 6 (was 3): archive-mined lore + weekly club lane
     if club:

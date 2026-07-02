@@ -123,6 +123,7 @@ def test_doctrines_present_in_system_prompt():
     assert "BOOK CLOUD." in p and "not a queue" in p
     assert "PICK HELP." in p and "THE MEETING THE BOOK WOULD PRODUCE" in p
     assert "TOPIC-FIRST" in p and "ASK BEFORE ADVISING" in p   # ask where they want to go, first
+    assert "2-7 days old" in p and "older than a week, start fresh" in p  # thread staleness ladder
     assert "seasoning, not the meal" in p                      # cloud/known-author leads demoted
     assert "would LEARN" in p and "never invent a reaction" in p
     names = {t.get("name") for t in tools.TOOLS}
