@@ -14,21 +14,20 @@
     <label>Date</label><input type="date" name="date" value="{{ meeting.date or '' }}">
     <label>Start time <span class="muted">(local, America/Chicago)</span></label><input type="time" name="start_time" value="{{ meeting.start_time or '' }}">
 
-    <label>Book &amp; picker <span class="muted">— most meetings have one of each</span></label>
+    <label>Book(s)</label>
     <div id="book-rows">
       {% for slug in meeting.book_slugs or [''] %}
       <div class="book-row row" style="gap:.4rem; margin-bottom:.4rem">
         <input type="text" class="book-search" list="books-dl" placeholder="Search a book…" style="flex:2"
                value="{{ titles.get(slug, '') if slug else '' }}">
         <input type="hidden" name="books" class="book-slug" value="{{ slug }}">
-        <select name="pickers" class="picker-sel" style="flex:1">{{ member_options(members, (book_pickers.get(slug) or [''])[0]) }}</select>
         <button type="button" class="rm-row" title="Remove this book">✕</button>
       </div>
       {% endfor %}
     </div>
     <button type="button" id="add-book">+ add another book</button>
 
-    <label style="margin-top:1.2rem">Host(s) <span class="muted">— usually one</span></label>
+    <label style="margin-top:1.2rem">Host <span class="muted">— the host picks the book(s); this sets who picked</span></label>
     <div id="host-rows">
       {% for slug in meeting.host_slugs or [''] %}
       <div class="host-row row" style="gap:.4rem; margin-bottom:.4rem">
@@ -60,7 +59,6 @@
     const rows = document.getElementById('book-rows');
     const row = rows.firstElementChild.cloneNode(true);
     row.querySelector('.book-search').value = ''; row.querySelector('.book-slug').value = '';
-    row.querySelector('.picker-sel').value = '';
     rows.appendChild(row); wire(row.querySelector('.book-search'));
   });
   document.getElementById('add-host').addEventListener('click', () => {

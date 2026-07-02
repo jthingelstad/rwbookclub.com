@@ -72,20 +72,26 @@ root `.env` (see `.env.example`); never commit `.env` or hard-code the bot token
 
 ## Conventions and Gotchas
 
-### Picker (book) vs host (meeting) — distinct, usually the same
+### Picker is derived from host — one source of truth
 
-These are **two distinct relationships** (don't conflate them, despite the Airtable field
-named `Host` and the old "Host = Picker" shorthand):
+The club's model: a meeting is hosted by a **single member** who picks its **0..n books** and
+owns its logistics (venue/time). So **the picker of a book *is* the host of the meeting it was
+discussed at** — there's one fact, stored once, at the meeting level.
 
-- **picker** = who *chose the book* — a **book-level** relationship (`club_book_pickers`,
-  M:N, ordered). A book can have **multiple pickers** (e.g. a long book split first-half /
-  second-half between two members). Surfaced as `book.picker[]` in the corpus.
-- **host** = who *ran/hosted the meeting* (and sets its location + time) — a **meeting-level**
-  relationship (`club_meeting_hosts`, M:N, ordered). Surfaced as `meeting.host[]`.
+- **host** = the member who hosted a meeting (and thereby picked its books) — the **single
+  stored** relationship (`club_meeting_hosts`, M:N to allow the rare co-host). Surfaced as
+  `meeting.host[]`. Edit it (webapp meeting editor / `clubdb.set_meeting_hosts`) to change who
+  picked. This is the **only** place picks are corrected.
+- **picker** = **DERIVED**, not stored: `club_book_pickers` is a **VIEW** =
+  `club_meeting_books ⋈ club_meeting_hosts` (a book's picker(s) are the host(s) of its
+  meeting(s)). Still surfaced as `book.picker[]` in the corpus, unchanged for downstream.
 
-**Default:** a meeting's host is the picker of the book discussed. But they can diverge — one
-host can run a meeting that discusses **two books with two different pickers**. They agree in
-all current historical data, but the model stores them independently.
+Consequences: a book **re-read at a later meeting** gains that meeting's host as an additional
+picker, so **"picks" counts pick-events** and summing picks across members can exceed the number
+of distinct books read (this is intended — see the stats page). Historically `picker` was a
+separate `club_book_pickers` *table* materialized from host (they were identical for all 176
+books); it was collapsed to the view in `_migrate_club` so the two can never diverge. There is
+no `set_book_picker` — set the meeting host instead.
 
 ### Time & timezone — the club runs on US Central (America/Chicago)
 

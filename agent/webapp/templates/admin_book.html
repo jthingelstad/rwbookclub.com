@@ -21,10 +21,8 @@
     <label>Open Library key</label><input type="text" name="ol_key" value="{{ book.ol_key or '' }}">
     <label>Authors <span class="muted">(comma-separated)</span></label>
     <input type="text" name="authors" value="{{ book.authors|join(', ') }}">
-    <label>Picked by <span class="muted">(who chose it — usually one, occasionally two)</span></label>
-    <select name="pickers" multiple size="4">
-      {% for m in members %}<option value="{{ m.slug }}" {{ 'selected' if m.slug in book.pickers }}>{{ m.name }}{{ '' if m.current else ' (former)' }}</option>{% endfor %}
-    </select>
+    <label>Picked by <span class="muted">(derived from the meeting host — edit it on the meeting)</span></label>
+    <p class="muted" style="margin:.2rem 0 .6rem">{{ book.pickers|join(', ') if book.pickers else '—' }}</p>
     <label>Synopsis</label><textarea name="synopsis">{{ book.synopsis or '' }}</textarea>
     <p style="margin-top:1rem"><button class="primary" type="submit">Save book</button></p>
   </form>

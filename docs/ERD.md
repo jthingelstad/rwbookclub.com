@@ -103,6 +103,7 @@ erDiagram
         int author_id PK,FK
         int ordinal
     }
+    %% club_book_pickers is a VIEW (derived from club_meeting_books ⋈ club_meeting_hosts), not a table
     club_book_pickers {
         int book_id PK,FK
         int member_id PK,FK
@@ -142,10 +143,14 @@ erDiagram
     }
 ```
 
-**Notes.** *picker* (who chose the book, `club_book_pickers`) and *host* (who ran the meeting,
-`club_meeting_hosts`) are deliberately distinct M:N relationships — usually the same person, modeled
-independently. Books↔meetings is M:N (`club_meeting_books`) for the rare two-books-one-meeting case.
-`*_enrichment` are 1:1 sidecars (PK = the parent's id, `CASCADE`) regenerable by `agent/enrich/`.
+**Notes.** *picker* is **derived**: `club_book_pickers` is a **VIEW**
+(`club_meeting_books ⋈ club_meeting_hosts`), not a base table — a book's picker(s) are the host(s)
+of the meeting(s) it was discussed at, so picker ≡ host by construction (the club's single host per
+meeting picks its books). *host* (`club_meeting_hosts`, M:N to allow a rare co-host) is the one
+**stored** fact; correct a pick by editing the meeting's host. Books↔meetings is M:N
+(`club_meeting_books`) for the rare two-books-one-meeting case — and a book re-read at a later meeting
+gains that meeting's host as an additional picker (so pick counts are pick-events). `*_enrichment`
+are 1:1 sidecars (PK = the parent's id, `CASCADE`) regenerable by `agent/enrich/`.
 
 ---
 

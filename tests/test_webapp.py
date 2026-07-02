@@ -238,37 +238,40 @@ def test_events_view_filters():
     assert "social" in routes_admin._event_categories()
 
 
-def test_meeting_save_pairs_books_and_pickers():
+def test_meeting_save_sets_host_and_derives_picker():
+    """The meeting edit form sets the host; the book's picker is derived from it (view)."""
     from agent.webapp import routes_admin
     with db.connect() as conn:
-        mid = clubdb.all_meetings(conn)[0]["id"]
-    # one book row → one picker; parallel arrays as the edit form posts them
-    form = {"date": "2026-07-01", "start_time": "18:00", "held": "1"}
+        # a fresh book living only on the meeting we edit → clean derivation
+        bid = clubdb._next_id(conn, "club_books")
+        conn.execute("INSERT INTO club_books(id, slug, title) VALUES (?,?,?)",
+                     (bid, "derive-test-book", "Derive Test Book"))
+        mid = clubdb.create_meeting(conn, date_iso="2026-07-01", book_id=None)
+    form = {"date": "2026-07-01", "start_time": "18:00"}
     routes_admin._save_meeting(mid, form, host_slugs=["jamie"],
-                               book_slugs=["heart-of-darkness"], picker_slugs=["erik"],
-                               types=["Book"])
+                               book_slugs=["derive-test-book"], types=["Book"])
     with db.connect() as conn:
         m = next(x for x in clubdb.all_meetings(conn) if x["id"] == mid)
-        bid = clubdb.book_id_for_slug(conn, "heart-of-darkness")
-        assert m["book_slugs"] == ["heart-of-darkness"] and m["host_slugs"] == ["jamie"]
-        assert clubdb.book_picker_slugs(conn, bid) == ["erik"]
-    # clearing the picker (explicit "— none —") removes it
-    routes_admin._save_meeting(mid, form, host_slugs=["jamie"],
-                               book_slugs=["heart-of-darkness"], picker_slugs=[""],
-                               types=["Book"])
+        assert m["book_slugs"] == ["derive-test-book"] and m["host_slugs"] == ["jamie"]
+        assert clubdb.book_picker_slugs(conn, bid) == ["jamie"]   # derived from the host
+    # clearing the host clears the derived picker
+    routes_admin._save_meeting(mid, form, host_slugs=[],
+                               book_slugs=["derive-test-book"], types=["Book"])
     with db.connect() as conn:
-        bid = clubdb.book_id_for_slug(conn, "heart-of-darkness")
         assert clubdb.book_picker_slugs(conn, bid) == []
 
 
-def test_set_book_pickers_multi():
+def test_multi_picker_derives_from_two_meetings():
+    """A book discussed at two meetings has both meetings' hosts as pickers (pick-events)."""
     with db.connect() as conn:
-        bid = clubdb.book_id_for_slug(conn, "heart-of-darkness")
-        ids = [clubdb.member_id_for_slug(conn, s) for s in ("jamie", "erik")]
-        clubdb.set_book_pickers(conn, bid, ids)
-        assert clubdb.book_picker_slugs(conn, bid) == ["jamie", "erik"]
-        clubdb.set_book_pickers(conn, bid, [])
-        assert clubdb.book_picker_slugs(conn, bid) == []
+        bid = clubdb._next_id(conn, "club_books")
+        conn.execute("INSERT INTO club_books(id, slug, title) VALUES (?,?,?)",
+                     (bid, "two-meeting-book", "Two Meeting Book"))
+        m1 = clubdb.create_meeting(conn, date_iso="2020-01-01", book_id=bid)
+        m2 = clubdb.create_meeting(conn, date_iso="2021-01-01", book_id=bid)
+        clubdb.set_meeting_hosts(conn, m1, [clubdb.member_id_for_slug(conn, "jamie")])
+        clubdb.set_meeting_hosts(conn, m2, [clubdb.member_id_for_slug(conn, "erik")])
+        assert sorted(clubdb.book_picker_slugs(conn, bid)) == ["erik", "jamie"]
 
 
 def test_create_and_retire_member():
@@ -397,7 +400,7 @@ def test_routes_end_to_end(monkeypatch):
                 for path, needle in [("/webapp/admin/books", "Edit book data"),
                                      ("/webapp/admin/books/heart-of-darkness", "Open Library key"),
                                      ("/webapp/admin/meetings", "Schedule a meeting"),
-                                     (f"/webapp/admin/meetings/{mid}", "Host(s)")]:
+                                     (f"/webapp/admin/meetings/{mid}", "the host picks")]:
                     async with s.get(base + path, headers=ahdr) as r:
                         assert r.status == 200, path
                         assert needle in await r.text(), path
@@ -491,12 +494,16 @@ def test_routes_end_to_end(monkeypatch):
                            (bid, _jamie_id())).fetchone()
         meetings = {m["date"]: m for m in clubdb.all_meetings(conn)}
         pickers = clubdb.book_picker_slugs(conn, clubdb.book_id_for_slug(conn, "enshittification"))
+        # picker is derived from the host(s) of the meeting(s) the book is on
+        ensh_hosts = sorted({h for m in clubdb.all_meetings(conn)
+                             if "enshittification" in (m["book_slugs"] or [])
+                             for h in (m["host_slugs"] or [])})
         wtm = [m for m in clubdb.all_members(conn) if m["slug"] == "web-test-member"]
         e2e = next(x for x in clubdb.all_lists(conn) if x["slug"] == "jamie-e2e-list")
     assert row["rating"] == 4
     assert meetings["2026-10-01"]["book_slugs"] == ["heart-of-darkness", "enshittification"]
     assert meetings["2026-10-02"]["book_slugs"] == []  # bookless meeting created
-    assert pickers == ["jamie", "erik"]                # two pickers set via the book editor
+    assert sorted(pickers) == ensh_hosts               # picker is derived from the meeting host(s)
     assert wtm and wtm[0]["is_current"] == 0           # member added then retired
     assert [e["book_slug"] for e in e2e["entries"]] == ["enshittification", "heart-of-darkness"]  # reordered
     primary = next((h["identifier"] for h in db.member_handles("jamie", "email") if h["is_primary"]), None)

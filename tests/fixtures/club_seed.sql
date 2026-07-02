@@ -15,7 +15,7 @@ INSERT INTO club_members (id, slug, name, is_current) VALUES (10, 'nick', 'Nick'
 INSERT INTO club_members (id, slug, name, is_current) VALUES (11, 'scott', 'Scott', 0);
 INSERT INTO club_members (id, slug, name, is_current) VALUES (12, 'tom', 'Tom', 1);
 
--- club_authors (177 rows)
+-- club_authors (178 rows)
 INSERT INTO club_authors (id, slug, name, bio) VALUES (1, 'cory-doctorow', 'Cory Doctorow', 'From his website: Cory Doctorow (craphound.com) is a science fiction author, activist, journalist and blogger -- the co-editor of Boing Boing (boingboing.net) and the author of the bestselling Tor Teens/HarperCollins UK novel LITTLE BROTHER. He is the former European director of the Electronic Frontier Foundation and co-founded the UK Open Rights Group. Born in Toronto, Canada, he now lives in London. 2 Creative Commons-licensed photos: cindiann: http://www.flickr.com/photos/trucolorsfly/2625294688/ & Joi Ito, Creative Commons Attribution 3.0.');
 INSERT INTO club_authors (id, slug, name, bio) VALUES (2, 'joseph-conrad', 'Joseph Conrad', 'Joseph Conrad was a Polish-born British novelist, who became a British subject in 1886. He is regarded as one of the greatest novelists in English though he did not speak the language fluently until he was in his twenties (and then always with a marked Polish accent). He wrote stories and novels, predominantly with a nautical or seaboard setting, that depict trials of the human spirit by the demands of duty and honor.');
 INSERT INTO club_authors (id, slug, name, bio) VALUES (3, 'hannah-arendt', 'Hannah Arendt', 'German-American philosopher and political theorist.');
@@ -193,8 +193,9 @@ INSERT INTO club_authors (id, slug, name, bio) VALUES (174, 'daniel-suarez', 'Da
 INSERT INTO club_authors (id, slug, name, bio) VALUES (175, 'david-m-gwynn', 'David M. Gwynn', NULL);
 INSERT INTO club_authors (id, slug, name, bio) VALUES (176, 'richard-powers', 'Richard Powers', 'Richard Powers is an American novelist whose works explore the effects of modern science and technology. His novel The Echo Maker won the 2006 National Book Award for Fiction. He has also won many other awards over the course of his career, including a MacArthur Fellowship. As of 2024, Powers has published fourteen novels and has taught at the University of Illinois and Stanford University. He won the 2019 Pulitzer Prize for Fiction for The Overstory.');
 INSERT INTO club_authors (id, slug, name, bio) VALUES (177, 'philip-ball', 'Philip Ball', 'Philip Ball is a British science writer. For over twenty years he has been an editor of the journal Nature, for which he continues to write regularly.');
+INSERT INTO club_authors (id, slug, name, bio) VALUES (178, 'peter-watts', 'Peter Watts', NULL);
 
--- club_books (179 rows)
+-- club_books (180 rows)
 INSERT INTO club_books (id, slug, title, subtitle, topic, fiction, publication_year, page_count, isbn13, ol_key, synopsis, subjects_json) VALUES (1, 'enshittification', 'Enshittification', NULL, 'Technology', 0, 2025, 352, '9781836742227', '/works/OL42455337W', 'It’s not your imagination. Life online really does get worse by the day, and that is by intent. Misogyny, conspiratorialism, surveillance, manipulation, fraud, and AI slop are drowning the internet. For the monopolists who dominate online – X, TikTok, Amazon, Meta, Apple – this is all part of the playbook. The process is what leading tech critic Cory Doctorow has dubbed ‘enshittification’. First, the platform attracts users with some bait, such as free access; then the activity is monetized, bringing in the business customers and degrading the user experience; then, once everyone is trapped and competitors eradicated, the platform wrings out all the value and transfers it to their executives and shareholders. As a result, online public squares have become places of torment, and online retailers are hellish dumpster fires. The virtual gathering places where we once imagined the world’s problems might be resolved are now a sewer of hatred and abuse – thoroughly enshittified. Doctorow enumerates the symptoms, lays out the diagnosis, and identifies the best responses to these diseased platforms: the monopolies online must be shattered. Companies too big to fail or to jail – and much too big to care – must be cut down to size. Only an attack on corporate power will permit effective regulation and real privacy. Tech unions must protect the workers who should, in turn, defend us against their bosses’ sadism and greed.', '["genre:technological non-fiction literature", "enshittification"]');
 INSERT INTO club_books (id, slug, title, subtitle, topic, fiction, publication_year, page_count, isbn13, ol_key, synopsis, subjects_json) VALUES (2, 'heart-of-darkness', 'Heart of Darkness', NULL, 'Science Fiction & Fiction', 1, 1902, 120, '9780613837712', '/works/OL38663W', 'Heart of Darkness (1899) is a novella by Polish-English novelist Joseph Conrad, about a voyage up the Congo River into the Congo Free State, in the heart of Africa, by the story''s narrator Charles Marlow. Marlow tells his story to friends aboard a boat anchored on the River Thames. Joseph Conrad is one of the greatest English writers, and Heart of Darkness is considered his best. His readers are brought to face our psychological selves to answer, ‘Who is the true savage?’. Originally published in 1902, Heart of Darkness remains one of this century’s most enduring works of fiction. Written several years after Joseph Conrad’s grueling sojourn in the Belgian Congo, the novel is a complex meditation on colonialism, evil, and the thin line between civilization and barbarity.', '["Romance", "Degeneration", "Description and travel", "Diaries", "Sailors", "Short stories", "English literature", "Suffering", "Trading posts", "Classic Literature", "Travel", "Discovery and exploration"]');
 INSERT INTO club_books (id, slug, title, subtitle, topic, fiction, publication_year, page_count, isbn13, ol_key, synopsis, subjects_json) VALUES (3, 'the-origins-of-totalitarianism', 'The Origins of Totalitarianism', NULL, 'Politics & Social Sciences', 0, 1951, 440, '9780063354487', '/works/OL10460640W', 'The Origins of Totalitarianism begins with the rise of anti-Semitism in central and western Europe in the 1800s and continues with an examination of European colonial imperialism from 1884 to the outbreak of World War I. Arendt explores the institutions and operations of totalitarian movements, focusing on the two genuine forms of totalitarian government in her time—Nazi Germany and Stalinist Russia—which she adroitly recognizes were two sides of the same coin, rather than opposing philosophies of Right and Left. From this vantage point, she discusses the evolution of classes into masses, the role of propaganda in dealing with the nontotalitarian world, the use of terror, and the nature of isolation and loneliness as preconditions for total domination.', '["Antisemitism", "Imperialism", "Totalitarianism", "Philosophy, german", "Antisémitisme", "Impérialisme", "Totalitarisme", "Histoire", "Juifs", "POLITICAL SCIENCE", "Essays", "Government"]');
@@ -420,8 +421,23 @@ INSERT INTO club_books (id, slug, title, subtitle, topic, fiction, publication_y
 When neuroscientists began studying consciousness in the early 1990s, they sought to explain how and why three pounds of spongy gray matter could generate a subjective point of view—assuming that the brain is the source of our perceived reality. Pollan takes us to the cutting edge of the field, where scientists are entertaining more radical (and less materialist) theories of consciousness. He introduces us to “plant neurobiologists” searching for the first flicker of consciousness in plants, scientists striving to engineer feelings into AI, and psychologists and novelists seeking to capture the felt experience of our slippery stream of consciousness.
 
 In Pollan’s dazzling exploration of consciousness, he discovers a world far deeper and stranger than our everyday reality. Eye-opening and mind-expanding, A World Appears takes us into the laboratories of our own minds, ultimately showing us how we might make better use of the gift of awareness to more meaningfully connect with the world and our deepest selves.', NULL);
+INSERT INTO club_books (id, slug, title, subtitle, topic, fiction, publication_year, page_count, isbn13, ol_key, synopsis, subjects_json) VALUES (180, 'blindsight', 'Blindsight', NULL, NULL, 0, 2006, 384, '9781977668066', '/works/OL8514692W', '*Two months since the stars fell...*
 
--- club_book_authors (191 rows)
+Two months since sixty-five thousand alien objects clenched around the Earth like a luminous fist, screaming to the heavens as the atmosphere burned them to ash. Two months since that moment of brief, bright surveillance by agents unknown. 
+
+Two months of silence while a world holds its breath. 
+
+Now some half-derelict space probe, sparking fitfully past Neptune''s orbit, hears a whisper from the edge of the solar system: a faint signal sweeping the cosmos like a lighthouse beam. Whatever''s out there isn''t talking to us. It''s talking to some distant star, perhaps. Or perhaps to something closer, something *en route.* 
+
+So who do you send to force introductions on an intelligence with motives unknown, maybe unknowable? Who do you send to meet the alien when the alien doesn''t want to meet? 
+
+You send a linguist with multiple personalities, her brain surgically partitioned into separate, sentient processing cores. You send a biologist so radically interfaced with machinery that he sees X-rays and tastes ultrasound, so compromised by grafts and splices that he no longer feels his own flesh. You send a pacifist warrior in the faint hope she won''t be needed, and a fainter hope that she''ll do any good if she is needed. You send a monster to command them all, an extinct hominid predator once called "vampire," recalled from the grave with the voodoo of recombinant genetics and the blood of sociopaths. And you send a synthesist—an informational topologist with half his mind gone—as an interface between *here* and *there,* a conduit through which the Dead Center might hope to understand the Bleeding Edge. 
+
+You send them all to the edge of interstellar space, praying you can trust such freaks and retrofits with the fate of a world. You fear they may be more alien than the thing they''ve been sent to find. 
+
+But you''d give anything for that to be true, if you only knew what was waiting for them....', '[]');
+
+-- club_book_authors (192 rows)
 INSERT INTO club_book_authors (book_id, author_id, ordinal) VALUES (102, 88, 0);
 INSERT INTO club_book_authors (book_id, author_id, ordinal) VALUES (57, 41, 0);
 INSERT INTO club_book_authors (book_id, author_id, ordinal) VALUES (57, 159, 1);
@@ -613,8 +629,9 @@ INSERT INTO club_book_authors (book_id, author_id, ordinal) VALUES (54, 40, 0);
 INSERT INTO club_book_authors (book_id, author_id, ordinal) VALUES (53, 171, 0);
 INSERT INTO club_book_authors (book_id, author_id, ordinal) VALUES (169, 152, 0);
 INSERT INTO club_book_authors (book_id, author_id, ordinal) VALUES (43, 37, 0);
+INSERT INTO club_book_authors (book_id, author_id, ordinal) VALUES (180, 178, 0);
 
--- club_meetings (184 rows)
+-- club_meetings (187 rows)
 INSERT INTO club_meetings (id, date, type_json, location, notes, start_time) VALUES (1, '2025-11-25', '["Book"]', 'Waterbury Restaurant', NULL, '18:30');
 INSERT INTO club_meetings (id, date, type_json, location, notes, start_time) VALUES (2, '2025-09-30', '["Book"]', 'Waterbury Restaurant', NULL, '18:30');
 INSERT INTO club_meetings (id, date, type_json, location, notes, start_time) VALUES (3, '2025-08-26', '["Book"]', 'Waterbury Restaurant', NULL, '18:30');
@@ -798,9 +815,12 @@ INSERT INTO club_meetings (id, date, type_json, location, notes, start_time) VAL
 INSERT INTO club_meetings (id, date, type_json, location, notes, start_time) VALUES (181, '2003-04-18', '["Book"]', NULL, NULL, '18:00');
 INSERT INTO club_meetings (id, date, type_json, location, notes, start_time) VALUES (182, '2026-01-27', '["Book"]', NULL, NULL, '19:00');
 INSERT INTO club_meetings (id, date, type_json, location, notes, start_time) VALUES (183, '2026-05-26', '["Book"]', NULL, NULL, '18:30');
-INSERT INTO club_meetings (id, date, type_json, location, notes, start_time) VALUES (184, '2026-06-30', '["Book"]', NULL, NULL, '18:30');
+INSERT INTO club_meetings (id, date, type_json, location, notes, start_time) VALUES (184, '2026-06-30', '["Book"]', 'Broder’s', NULL, '18:30');
+INSERT INTO club_meetings (id, date, type_json, location, notes, start_time) VALUES (185, '2026-07-28', '["Book"]', NULL, NULL, '18:30');
+INSERT INTO club_meetings (id, date, type_json, location, notes, start_time) VALUES (186, '2026-08-25', '["Book"]', NULL, NULL, '18:30');
+INSERT INTO club_meetings (id, date, type_json, location, notes, start_time) VALUES (187, '2026-09-29', '["Book"]', NULL, NULL, '18:30');
 
--- club_meeting_books (181 rows)
+-- club_meeting_books (182 rows)
 INSERT INTO club_meeting_books (meeting_id, book_id, ordinal) VALUES (181, 175, 0);
 INSERT INTO club_meeting_books (meeting_id, book_id, ordinal) VALUES (180, 174, 0);
 INSERT INTO club_meeting_books (meeting_id, book_id, ordinal) VALUES (179, 173, 0);
@@ -981,194 +1001,10 @@ INSERT INTO club_meeting_books (meeting_id, book_id, ordinal) VALUES (2, 2, 0);
 INSERT INTO club_meeting_books (meeting_id, book_id, ordinal) VALUES (1, 1, 0);
 INSERT INTO club_meeting_books (meeting_id, book_id, ordinal) VALUES (182, 177, 0);
 INSERT INTO club_meeting_books (meeting_id, book_id, ordinal) VALUES (183, 178, 0);
+INSERT INTO club_meeting_books (meeting_id, book_id, ordinal) VALUES (185, 180, 0);
 INSERT INTO club_meeting_books (meeting_id, book_id, ordinal) VALUES (184, 179, 0);
 
--- club_book_pickers (183 rows)
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (102, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (102, 4, 1);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (57, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (117, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (88, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (26, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (15, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (179, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (155, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (18, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (19, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (63, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (69, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (75, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (67, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (135, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (111, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (86, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (7, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (144, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (141, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (92, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (33, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (35, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (158, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (154, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (23, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (138, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (4, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (51, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (104, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (45, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (45, 4, 1);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (122, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (125, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (56, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (108, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (11, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (156, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (9, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (165, 3, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (121, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (129, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (44, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (71, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (21, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (1, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (25, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (83, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (83, 4, 1);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (101, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (161, 3, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (164, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (50, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (41, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (153, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (46, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (46, 4, 1);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (163, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (148, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (2, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (116, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (66, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (128, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (139, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (49, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (5, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (58, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (42, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (115, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (123, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (100, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (27, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (99, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (48, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (31, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (10, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (13, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (17, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (130, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (142, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (174, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (14, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (24, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (112, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (79, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (62, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (134, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (12, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (170, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (178, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (59, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (124, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (171, 1, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (90, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (172, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (89, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (36, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (107, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (76, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (29, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (166, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (52, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (47, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (65, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (136, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (61, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (152, 3, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (72, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (126, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (119, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (80, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (137, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (173, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (22, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (143, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (110, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (127, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (160, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (176, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (176, 4, 1);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (91, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (60, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (85, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (20, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (120, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (28, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (37, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (77, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (95, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (175, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (149, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (132, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (87, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (40, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (40, 6, 1);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (114, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (68, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (106, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (103, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (147, 3, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (131, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (39, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (39, 6, 1);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (151, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (3, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (177, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (167, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (162, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (8, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (94, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (70, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (34, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (150, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (38, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (159, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (109, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (97, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (81, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (157, 3, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (64, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (30, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (96, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (74, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (140, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (105, 8, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (84, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (93, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (6, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (98, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (16, 6, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (133, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (113, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (146, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (32, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (55, 9, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (145, 4, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (118, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (168, 11, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (54, 12, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (53, 10, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (169, 2, 0);
-INSERT INTO club_book_pickers (book_id, member_id, ordinal) VALUES (43, 10, 0);
-
--- club_meeting_hosts (191 rows)
+-- club_meeting_hosts (194 rows)
 INSERT INTO club_meeting_hosts (meeting_id, member_id, ordinal) VALUES (181, 8, 0);
 INSERT INTO club_meeting_hosts (meeting_id, member_id, ordinal) VALUES (180, 8, 0);
 INSERT INTO club_meeting_hosts (meeting_id, member_id, ordinal) VALUES (179, 8, 0);
@@ -1359,9 +1195,12 @@ INSERT INTO club_meeting_hosts (meeting_id, member_id, ordinal) VALUES (2, 10, 0
 INSERT INTO club_meeting_hosts (meeting_id, member_id, ordinal) VALUES (1, 12, 0);
 INSERT INTO club_meeting_hosts (meeting_id, member_id, ordinal) VALUES (182, 4, 0);
 INSERT INTO club_meeting_hosts (meeting_id, member_id, ordinal) VALUES (183, 12, 0);
+INSERT INTO club_meeting_hosts (meeting_id, member_id, ordinal) VALUES (185, 9, 0);
+INSERT INTO club_meeting_hosts (meeting_id, member_id, ordinal) VALUES (187, 4, 0);
+INSERT INTO club_meeting_hosts (meeting_id, member_id, ordinal) VALUES (186, 10, 0);
 INSERT INTO club_meeting_hosts (meeting_id, member_id, ordinal) VALUES (184, 6, 0);
 
--- club_reviews (8 rows)
+-- club_reviews (97 rows)
 INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (1, 4, 6, 5, 0, NULL, 0, NULL, NULL, '2026-04-09T18:36:15.000Z');
 INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (4, 7, 6, 5, 0, NULL, 0, NULL, NULL, '2026-04-09T18:43:24.000Z');
 INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (5, 3, 6, NULL, 1, NULL, 0, NULL, NULL, '2026-04-10T02:20:12.000Z');
@@ -1370,14 +1209,110 @@ INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_qualit
 INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (8, 39, 6, 5, 0, NULL, 0, NULL, NULL, '2026-04-10T02:21:19.000Z');
 INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (9, 30, 6, 5, 0, 5, 1, NULL, 'This is one of my favorite books that we have ever read as a book club. I''ve come back to this book over and over again with concepts and models that apply to everyday things that I’m encountering. I''ve recommended it to dozens of people. Very good read!', '2026-04-10T02:21:45.000Z');
 INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (10, 87, 6, 5, 0, 4, 1, NULL, 'Page turner of a book. Great read!', '2026-04-10T03:39:09.000Z');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (11, 117, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T11:48:11.311952+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (12, 26, 6, 2, 0, NULL, 0, NULL, NULL, '2026-06-28T11:48:15.891360+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (13, 69, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T11:48:25.211449+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (14, 73, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T11:48:32.329104+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (15, 56, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T11:48:45.007083+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (16, 71, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T11:48:55.910811+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (17, 1, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T11:49:00.925701+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (18, 25, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T11:49:03.831655+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (19, 50, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T11:49:09.850671+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (20, 5, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T11:49:25.610389+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (21, 42, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T11:49:29.725721+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (22, 27, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T11:49:37.499901+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (23, 82, 6, 1, 0, NULL, 0, NULL, NULL, '2026-06-28T11:49:43.857222+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (24, 10, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T11:49:48.936492+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (25, 13, 6, 2, 0, NULL, 0, NULL, NULL, '2026-06-28T11:49:52.136888+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (26, 14, 6, 1, 0, NULL, 0, NULL, NULL, '2026-06-28T11:49:59.111334+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (27, 112, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T11:50:02.541936+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (28, 178, 6, 2, 0, NULL, 0, NULL, NULL, '2026-06-28T11:50:10.570694+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (29, 29, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T11:50:20.146126+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (30, 126, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T11:50:31.828149+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (31, 119, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T11:50:34.470369+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (32, 80, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T11:50:37.136407+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (33, 22, 6, 2, 0, NULL, 0, NULL, NULL, '2026-06-28T11:50:44.290346+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (34, 110, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T11:50:53.312869+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (35, 85, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T11:51:04.408920+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (36, 37, 6, NULL, 1, NULL, 0, NULL, NULL, '2026-06-28T11:51:13.869570+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (37, 132, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T11:51:22.780695+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (38, 114, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T11:51:27.180286+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (39, 106, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T11:51:33.239509+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (40, 131, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T11:51:38.607667+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (41, 151, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T11:51:40.939062+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (42, 177, 6, NULL, 1, NULL, 0, NULL, NULL, '2026-06-28T11:51:45.259641+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (43, 105, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T11:52:06.699295+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (44, 93, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T11:52:10.710419+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (45, 6, 6, NULL, 1, NULL, 0, NULL, NULL, '2026-06-28T11:52:14.209306+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (46, 53, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T11:52:27.152248+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (47, 54, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T11:52:29.752120+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (48, 168, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T11:52:32.892259+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (49, 118, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T11:52:36.749422+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (50, 55, 6, NULL, 1, NULL, 0, NULL, NULL, '2026-06-28T11:52:41.141801+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (51, 43, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T11:52:51.189950+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (52, 133, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T11:52:59.622193+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (53, 16, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T11:53:04.032296+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (54, 102, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T13:14:32.130322+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (55, 57, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T13:14:40.357641+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (56, 15, 6, NULL, 1, NULL, 0, NULL, NULL, '2026-06-28T13:14:53.308920+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (57, 179, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T13:14:55.648331+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (58, 18, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T13:14:59.994597+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (59, 135, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T13:15:10.841727+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (60, 111, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T13:15:12.452756+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (61, 86, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T13:15:15.792993+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (62, 23, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T13:15:27.428169+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (63, 2, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T21:36:56.259389+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (64, 8, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T21:37:04.438955+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (65, 9, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:37:06.803345+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (66, 21, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T21:37:27.941519+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (67, 24, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T21:37:30.936978+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (68, 31, 6, NULL, 1, NULL, 0, NULL, NULL, '2026-06-28T21:37:36.532549+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (69, 32, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:37:38.976794+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (70, 40, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T21:37:49.175456+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (71, 44, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T21:37:54.620389+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (72, 45, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:37:59.004542+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (73, 46, 6, 2, 0, NULL, 0, NULL, NULL, '2026-06-28T21:37:59.606163+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (74, 49, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T21:38:04.824911+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (75, 58, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:38:14.187184+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (76, 66, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:38:24.459913+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (77, 70, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:38:32.457391+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (78, 72, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:38:36.430320+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (79, 75, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T21:38:43.255455+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (80, 76, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:38:47.121246+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (81, 83, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:38:58.987827+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (82, 84, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T21:39:00.146365+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (83, 89, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:39:04.595544+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (84, 92, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:39:10.943796+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (85, 95, 6, 2, 0, NULL, 0, NULL, NULL, '2026-06-28T21:39:13.902135+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (86, 97, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:39:17.077213+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (87, 98, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:39:19.928416+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (88, 176, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:39:27.039043+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (89, 108, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T21:39:31.523605+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (90, 109, 6, 5, 0, NULL, 0, NULL, NULL, '2026-06-28T21:39:34.885603+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (91, 113, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:39:39.538916+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (92, 115, 6, 3, 0, NULL, 0, NULL, NULL, '2026-06-28T21:39:42.356078+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (93, 116, 6, 4, 0, NULL, 0, NULL, NULL, '2026-06-28T21:39:43.795408+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (94, 179, 4, 4, 0, NULL, 0, NULL, NULL, '2026-06-30T23:52:20.937710+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (95, 178, 4, 3, 0, NULL, 0, NULL, NULL, '2026-06-30T23:52:24.156000+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (96, 177, 4, 4, 0, NULL, 0, NULL, NULL, '2026-06-30T23:52:27.091566+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (97, 177, 9, 4, 0, NULL, 0, NULL, NULL, '2026-06-30T23:52:28.354106+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (98, 1, 4, 5, 0, NULL, 0, NULL, NULL, '2026-06-30T23:52:29.973002+00:00');
+INSERT INTO club_reviews (id, book_id, member_id, rating, dnf, discussion_quality, would_recommend, favorite_quote, body, created_at) VALUES (99, 179, 9, 3, 0, NULL, 0, NULL, NULL, '2026-06-30T23:52:33.314014+00:00');
 
--- club_lists (1 rows)
-INSERT INTO club_lists (id, slug, name, scope, owner_id, description, created_at) VALUES (1, 'books-of-the-year', 'Books of the Year', 'club', NULL, 'The club''s Book of the Year picks.', '2026-06-27T23:42:37.368204+00:00');
+-- club_lists (2 rows)
+INSERT INTO club_lists (id, slug, name, scope, owner_id, description, created_at) VALUES (1, 'books-of-the-year', 'Books of the Year', 'club', NULL, 'The club''s Book of the Year picks.', '2026-06-27T23:48:10.060013+00:00');
+INSERT INTO club_lists (id, slug, name, scope, owner_id, description, created_at) VALUES (2, 'jamie-impactful', 'Impactful', 'member', 6, NULL, '2026-06-28T11:45:47.903265+00:00');
 
--- club_list_books (1 rows)
+-- club_list_books (7 rows)
 INSERT INTO club_list_books (list_id, book_id, ordinal, note) VALUES (1, 69, 0, '2016');
+INSERT INTO club_list_books (list_id, book_id, ordinal, note) VALUES (2, 117, 1, NULL);
+INSERT INTO club_list_books (list_id, book_id, ordinal, note) VALUES (2, 30, 0, NULL);
+INSERT INTO club_list_books (list_id, book_id, ordinal, note) VALUES (2, 69, 2, NULL);
+INSERT INTO club_list_books (list_id, book_id, ordinal, note) VALUES (2, 73, 3, NULL);
+INSERT INTO club_list_books (list_id, book_id, ordinal, note) VALUES (2, 119, 4, NULL);
+INSERT INTO club_list_books (list_id, book_id, ordinal, note) VALUES (2, 105, 5, NULL);
 
--- club_book_enrichment (179 rows)
+-- club_book_enrichment (180 rows)
 INSERT INTO club_book_enrichment (book_id, ol_cover_id, edition_count, languages_json, ratings_average, ratings_count, wikidata_id, wikipedia_url, goodreads_id, series, awards_json, ol_key, synopsis, publication_year, page_count, isbn13, subjects_json, enriched_at, enrichment_json) VALUES (1, 15216130, 6, '["eng"]', 5.0, 2, 'Q138795546', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-26T14:48:59+00:00', '{"openlibrary": {"ol_key": "/works/OL42455337W", "ol_cover_id": 15216130, "edition_count": 6, "languages": ["eng"], "subjects": ["genre:technological non-fiction literature", "enshittification"], "synopsis": "**It’s not your imagination. Life online really does get worse by the day, and that is by intent.**\r\n\r\nMisogyny, conspiratorialism, surveillance, manipulation, fraud, and AI slop are drowning the internet. For the monopolists who dominate online – X, TikTok, Amazon, Meta, Apple – this is all part of the playbook. The process is what leading tech critic Cory Doctorow has dubbed ‘enshittification’. First, the platform attracts users with some bait, such as free access; then the activity is monetized, bringing in the business customers and degrading the user experience; then, once everyone is trapped and competitors eradicated, the platform wrings out all the value and transfers it to their executives and shareholders.\r\n\r\nAs a result, online public squares have become places of torment, and online retailers are hellish dumpster fires. The virtual gathering places where we once imagined the world’s problems might be resolved are now a sewer of hatred and abuse – thoroughly enshittified.\r\n\r\nDoctorow enumerates the symptoms, lays out the diagnosis, and identifies the best responses to these diseased platforms: the monopolies online must be shattered. Companies too big to fail or to jail – and much too big to care – must be cut down to size. Only an attack on corporate power will permit effective regulation and real privacy. Tech unions must protect the workers who should, in turn, defend us against their bosses’ sadism and greed.", "publication_year": 2025, "page_count": 352, "isbn13": "9781836742227", "ratings_average": 5.0, "ratings_count": 2}, "wikidata": {"wikidata_id": "Q138795546", "awards": [], "series": null, "goodreads_id": null, "wikipedia_title": null, "wikipedia_url": null}}');
 INSERT INTO club_book_enrichment (book_id, ol_cover_id, edition_count, languages_json, ratings_average, ratings_count, wikidata_id, wikipedia_url, goodreads_id, series, awards_json, ol_key, synopsis, publication_year, page_count, isbn13, subjects_json, enriched_at, enrichment_json) VALUES (2, 12307847, 553, '["eng", "spa"]', 3.58, 134, 'Q129778', 'https://en.wikipedia.org/wiki/Heart_of_Darkness', NULL, NULL, '["20th Century''s Greatest Hits: 100 English-Language Books of Fiction"]', NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-26T14:49:03+00:00', '{"openlibrary": {"ol_key": "/works/OL38663W", "ol_cover_id": 12307847, "edition_count": 553, "languages": ["eng", "spa"], "subjects": ["form:novella", "genre:historical fiction", "Romance", "Degeneration", "Description and travel", "Diaries", "Sailors", "Short stories", "English literature", "Suffering", "Trading posts", "Classic Literature"], "synopsis": "Heart of Darkness (1899) is a novella by Polish-English novelist Joseph Conrad, about a voyage up the Congo River into the Congo Free State, in the heart of Africa, by the story''s narrator Charles Marlow. Marlow tells his story to friends aboard a boat anchored on the River Thames. Joseph Conrad is one of the greatest English writers, and Heart of Darkness is considered his best.  His readers are brought to face our psychological selves to answer, ‘Who is the true savage?’. Originally published in 1902, Heart of Darkness remains one of this century’s most enduring works of fiction. Written several years after Joseph Conrad’s grueling sojourn in the Belgian Congo, the novel is a complex meditation on colonialism, evil, and the thin line between civilization and barbarity.", "publication_year": 1899, "page_count": 136, "isbn13": "9780613837712", "ratings_average": 3.58, "ratings_count": 134}, "wikidata": {"wikidata_id": "Q129778", "awards": ["20th Century''s Greatest Hits: 100 English-Language Books of Fiction"], "series": null, "goodreads_id": null, "wikipedia_title": "Heart of Darkness", "wikipedia_url": "https://en.wikipedia.org/wiki/Heart_of_Darkness"}}');
 INSERT INTO club_book_enrichment (book_id, ol_cover_id, edition_count, languages_json, ratings_average, ratings_count, wikidata_id, wikipedia_url, goodreads_id, series, awards_json, ol_key, synopsis, publication_year, page_count, isbn13, subjects_json, enriched_at, enrichment_json) VALUES (3, 10793645, 64, '["dut", "eng", "srp", "fre", "ger", "spa", "ara"]', 4.57, 7, 'Q1327843', 'https://en.wikipedia.org/wiki/The_Origins_of_Totalitarianism', NULL, NULL, '["Le Monde''s 100 Books of the Century"]', NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-26T14:49:06+00:00', '{"openlibrary": {"ol_key": "/works/OL10460640W", "ol_cover_id": 10793645, "edition_count": 64, "languages": ["dut", "eng", "srp", "fre", "ger", "spa", "ara"], "subjects": ["Antisemitism", "Imperialism", "Totalitarianism", "Philosophy, german", "Antisémitisme", "Impérialisme", "Totalitarisme", "Histoire", "Juifs", "POLITICAL SCIENCE", "Essays", "Government"], "synopsis": "**Hannah Arendt''s definitive work on totalitarianism and an essential component of any study of twentieth-century political history**\r\n\r\nThe Origins of Totalitarianism begins with the rise of anti-Semitism in central and western Europe in the 1800s and continues with an examination of European colonial imperialism from 1884 to the outbreak of World War I. Arendt explores the institutions and operations of totalitarian movements, focusing on the two genuine forms of totalitarian government in her time—Nazi Germany and Stalinist Russia—which she adroitly recognizes were two sides of the same coin, rather than opposing philosophies of Right and Left. From this vantage point, she discusses the evolution of classes into masses, the role of propaganda in dealing with the nontotalitarian world, the use of terror, and the nature of isolation and loneliness as preconditions for total domination.", "publication_year": 1951, "page_count": 527, "isbn13": "9780063354487", "ratings_average": 4.57, "ratings_count": 7}, "wikidata": {"wikidata_id": "Q1327843", "awards": ["Le Monde''s 100 Books of the Century"], "series": null, "goodreads_id": null, "wikipedia_title": "The Origins of Totalitarianism", "wikipedia_url": "https://en.wikipedia.org/wiki/The_Origins_of_Totalitarianism"}}');
@@ -1557,8 +1492,9 @@ INSERT INTO club_book_enrichment (book_id, ol_cover_id, edition_count, languages
 INSERT INTO club_book_enrichment (book_id, ol_cover_id, edition_count, languages_json, ratings_average, ratings_count, wikidata_id, wikipedia_url, goodreads_id, series, awards_json, ol_key, synopsis, publication_year, page_count, isbn13, subjects_json, enriched_at, enrichment_json) VALUES (177, 8758252, 19, '["eng"]', 4.19, 27, 'Q56277009', 'https://en.wikipedia.org/wiki/The_Overstory', NULL, NULL, '["Pulitzer Prize for Fiction"]', NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-26T14:58:08+00:00', '{"openlibrary": {"ol_key": "/works/OL19074847W", "ol_cover_id": 8758252, "edition_count": 19, "languages": ["eng"], "subjects": ["trees", "forest", "conservation", "environment", "activism", "Forest conservation", "Forests and forestry", "American fiction (fictional works by one author)", "Fiction, political", "nyt:hardcover-fiction=2018-05-06", "New York Times bestseller", "New York Times reviewed"], "synopsis": "*The Overstory* unfolds in concentric rings of interlocking fable that range from antebellum New York to the late-twentieth-century Timber Wars of the Pacific Northwest and beyond. An Air Force loadmaster in the Vietnam War is shot out of the sky, then saved by falling into a banyan. An artist inherits a hundred years of photographic portraits, all of the same doomed American chestnut. A hard-partying undergraduate in the late 1980s electrocutes herself, dies, and is sent back into life by creatures of air and light. A hearing- and speech-impaired scientist discovers that trees are communicating with one another. These and five other strangers, each summoned in different ways by trees, are brought together in a last stand to save the continent''s few remaining acres of virgin forest.\r\n\r\nThere is a world alongside ours—vast, slow, interconnected, resourceful, magnificently inventive, and almost invisible to us. This is the story of a handful of people who learn how to see that world and who are drawn up into its unfolding catastrophe.", "publication_year": 2018, "page_count": 531, "isbn13": "978-0393356687", "ratings_average": 4.19, "ratings_count": 27}, "wikidata": {"wikidata_id": "Q56277009", "awards": ["Pulitzer Prize for Fiction"], "series": null, "goodreads_id": null, "wikipedia_title": "The Overstory", "wikipedia_url": "https://en.wikipedia.org/wiki/The_Overstory"}}');
 INSERT INTO club_book_enrichment (book_id, ol_cover_id, edition_count, languages_json, ratings_average, ratings_count, wikidata_id, wikipedia_url, goodreads_id, series, awards_json, ol_key, synopsis, publication_year, page_count, isbn13, subjects_json, enriched_at, enrichment_json) VALUES (178, 12893968, 4, '["eng"]', 3.5, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-26T14:58:11+00:00', '{"openlibrary": {"ol_key": "/works/OL6334653W", "ol_cover_id": 12893968, "edition_count": 4, "languages": ["eng"], "subjects": ["Morphology", "Nature", "Philosophy of nature", "Morfologie (biologie)", "Synergetik", "Morphologie", "Selbstorganisation", "Morphologie (Biologie)", "Philosophie de la nature", "Musterbildung"], "synopsis": null, "publication_year": 2016, "page_count": 288, "isbn13": "978-0226332420", "ratings_average": 3.5, "ratings_count": 2}, "wikidata": {}}');
 INSERT INTO club_book_enrichment (book_id, ol_cover_id, edition_count, languages_json, ratings_average, ratings_count, wikidata_id, wikipedia_url, goodreads_id, series, awards_json, ol_key, synopsis, publication_year, page_count, isbn13, subjects_json, enriched_at, enrichment_json) VALUES (179, 15182394, 1, NULL, NULL, NULL, 'Q138543703', 'https://en.wikipedia.org/wiki/A_World_Appears', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-06-26T14:58:14+00:00', '{"openlibrary": {"ol_key": "/works/OL45011996W", "ol_cover_id": 15182394, "edition_count": 1, "languages": [], "subjects": [], "synopsis": null, "publication_year": 2026, "page_count": 320, "isbn13": "978-1984881991", "ratings_average": null, "ratings_count": null}, "wikidata": {"wikidata_id": "Q138543703", "awards": [], "series": null, "goodreads_id": null, "wikipedia_title": "A World Appears", "wikipedia_url": "https://en.wikipedia.org/wiki/A_World_Appears"}}');
+INSERT INTO club_book_enrichment (book_id, ol_cover_id, edition_count, languages_json, ratings_average, ratings_count, wikidata_id, wikipedia_url, goodreads_id, series, awards_json, ol_key, synopsis, publication_year, page_count, isbn13, subjects_json, enriched_at, enrichment_json) VALUES (180, 524560, 20, '["eng", "chi"]', 4.09, 67, 'Q2511421', 'https://en.wikipedia.org/wiki/Blindsight_%28Watts_novel%29', NULL, 'Firefall', '["Seiun Award for Best Translated Long Work"]', NULL, NULL, NULL, NULL, NULL, '["Vampires", "Artifical Hibernation", "Science Fiction", "Human-alien encounters", "Life on other planets", "Neurology", "Linguists", "Fiction, science fiction, general", "Fiction, science fiction, space opera"]', '2026-07-01T03:06:05+00:00', '{"openlibrary": {"ol_key": "/works/OL8514692W", "ol_cover_id": 524560, "edition_count": 20, "languages": ["eng", "chi"], "subjects": ["Vampires", "Artifical Hibernation", "Science Fiction", "Human-alien encounters", "Life on other planets", "Neurology", "Linguists", "Fiction, science fiction, general", "Fiction, science fiction, space opera"], "synopsis": "*Two months since the stars fell...*\r\n\r\nTwo months since sixty-five thousand alien objects clenched around the Earth like a luminous fist, screaming to the heavens as the atmosphere burned them to ash. Two months since that moment of brief, bright surveillance by agents unknown. \r\n\r\nTwo months of silence while a world holds its breath. \r\n\r\nNow some half-derelict space probe, sparking fitfully past Neptune''s orbit, hears a whisper from the edge of the solar system: a faint signal sweeping the cosmos like a lighthouse beam. Whatever''s out there isn''t talking to us. It''s talking to some distant star, perhaps. Or perhaps to something closer, something *en route.* \r\n\r\nSo who do you send to force introductions on an intelligence with motives unknown, maybe unknowable? Who do you send to meet the alien when the alien doesn''t want to meet? \r\n\r\nYou send a linguist with multiple personalities, her brain surgically partitioned into separate, sentient processing cores. You send a biologist so radically interfaced with machinery that he sees X-rays and tastes ultrasound, so compromised by grafts and splices that he no longer feels his own flesh. You send a pacifist warrior in the faint hope she won''t be needed, and a fainter hope that she''ll do any good if she is needed. You send a monster to command them all, an extinct hominid predator once called \"vampire,\" recalled from the grave with the voodoo of recombinant genetics and the blood of sociopaths. And you send a synthesist—an informational topologist with half his mind gone—as an interface between *here* and *there,* a conduit through which the Dead Center might hope to understand the Bleeding Edge. \r\n\r\nYou send them all to the edge of interstellar space, praying you can trust such freaks and retrofits with the fate of a world. You fear they may be more alien than the thing they''ve been sent to find. \r\n\r\nBut you''d give anything for that to be true, if you only knew what was waiting for them....", "publication_year": 2006, "page_count": 384, "isbn13": "9781977668066", "ratings_average": 4.09, "ratings_count": 67}, "wikidata": {"wikidata_id": "Q2511421", "awards": ["Seiun Award for Best Translated Long Work"], "series": "Firefall", "goodreads_id": null, "wikipedia_title": "Blindsight (Watts novel)", "wikipedia_url": "https://en.wikipedia.org/wiki/Blindsight_%28Watts_novel%29"}}');
 
--- club_author_enrichment (177 rows)
+-- club_author_enrichment (178 rows)
 INSERT INTO club_author_enrichment (author_id, bio, birth_year, death_year, nationality, ol_author_key, wikidata_id, wikipedia_url, website, notable_works_json, photo_credit, enriched_at, enrichment_json) VALUES (1, NULL, 1971, NULL, 'Canada', '/authors/OL1394244A', 'Q110436', 'https://en.wikipedia.org/wiki/Cory_Doctorow', 'https://craphound.com', '["Down and Out in the Magic Kingdom", "Little Brother", "A Place So Foreign and Eight More", "Makers", "enshittification"]', NULL, '2026-06-26T14:58:16+00:00', '{"openlibrary": {"bio": "From his website: Cory Doctorow (craphound.com) is a science fiction author, activist, journalist and blogger -- the co-editor of Boing Boing (boingboing.net) and the author of the bestselling Tor Teens/HarperCollins UK novel LITTLE BROTHER. He is the former European director of the Electronic Frontier Foundation and co-founded the UK Open Rights Group. Born in Toronto, Canada, he now lives in London.\r\n\r\n\r\n2 Creative Commons-licensed photos: cindiann: http://www.flickr.com/photos/trucolorsfly/2625294688/ & Joi Ito, Creative Commons Attribution 3.0.", "birth_year": 1971, "death_year": null, "website": "https://craphound.com", "wikidata_id": "Q110436", "ol_photo_id": 14855835}, "wikidata": {"wikidata_id": "Q110436", "birth_year": 1971, "death_year": null, "nationality": "Canada", "notable_works": ["Down and Out in the Magic Kingdom", "Little Brother", "A Place So Foreign and Eight More", "Makers", "enshittification"], "awards": ["EFF Award", "Astounding Award for Best New Writer", "Locus Award for Best First Novel", "John W. Campbell Memorial Award for Best Science Fiction Novel", "Theodore Sturgeon Award", "Fulbright Scholarship", "Prometheus Award", "Prometheus Award", "Prometheus Award", "Inkpot Award"], "website": "https://www.craphound.com/", "goodreads_id": "12581", "image_filename": "Cory Doctorow by Gage Skidmore.jpg", "wikipedia_title": "Cory Doctorow", "wikipedia_url": "https://en.wikipedia.org/wiki/Cory_Doctorow"}, "wikipedia": {"thumbnail_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Re_publica_faces_2019_%2832858497617%29.jpg/330px-Re_publica_faces_2019_%2832858497617%29.jpg", "wikipedia_url": "https://en.wikipedia.org/wiki/Cory_Doctorow"}}');
 INSERT INTO club_author_enrichment (author_id, bio, birth_year, death_year, nationality, ol_author_key, wikidata_id, wikipedia_url, website, notable_works_json, photo_credit, enriched_at, enrichment_json) VALUES (2, NULL, 1857, 1924, 'Russian Empire', '/authors/OL19441A', 'Q82925', 'https://en.wikipedia.org/wiki/Joseph_Conrad', NULL, '["The Lagoon", "The Nigger of the ''Narcissus''", "Heart of Darkness", "Lord Jim", "Amy Foster", "Typhoon"]', NULL, '2026-06-26T14:58:18+00:00', '{"openlibrary": {"bio": "Joseph Conrad was a Polish-born British novelist, who became a British subject in 1886. He is regarded as one of the greatest novelists in English though he did not speak the language fluently until he was in his twenties (and then always with a marked Polish accent). He wrote stories and novels, predominantly with a nautical or seaboard setting, that depict trials of the human spirit by the demands of duty and honor. ([Source][1].)\r\n\r\n[1]:https://en.wikipedia.org/wiki/Joseph_Conrad", "birth_year": 1857, "death_year": 1924, "website": null, "wikidata_id": "Q82925", "ol_photo_id": 14608214}, "wikidata": {"wikidata_id": "Q82925", "birth_year": 1857, "death_year": 1924, "nationality": "Russian Empire", "notable_works": ["The Lagoon", "The Nigger of the ''Narcissus''", "Heart of Darkness", "Lord Jim", "Amy Foster", "Typhoon"], "awards": [], "website": null, "goodreads_id": "3345", "image_filename": "Joseph Conrad-remastered to black and white.png", "wikipedia_title": "Joseph Conrad", "wikipedia_url": "https://en.wikipedia.org/wiki/Joseph_Conrad"}, "wikipedia": {"thumbnail_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Joseph_Conrad-remastered_to_black_and_white.png/330px-Joseph_Conrad-remastered_to_black_and_white.png", "wikipedia_url": "https://en.wikipedia.org/wiki/Joseph_Conrad"}}');
 INSERT INTO club_author_enrichment (author_id, bio, birth_year, death_year, nationality, ol_author_key, wikidata_id, wikipedia_url, website, notable_works_json, photo_credit, enriched_at, enrichment_json) VALUES (3, NULL, 1906, 1975, 'Prussia', '/authors/OL142235A', 'Q60025', 'https://en.wikipedia.org/wiki/Hannah_Arendt', NULL, '["The Origins of Totalitarianism", "The Human Condition", "Eichmann in Jerusalem", "On Revolution", "Rahel Varnhagen", "Natality"]', NULL, '2026-06-26T14:58:20+00:00', '{"openlibrary": {"bio": "German-American philosopher and political theorist", "birth_year": 1906, "death_year": 1975, "website": null, "wikidata_id": "Q60025", "ol_photo_id": 12993472}, "wikidata": {"wikidata_id": "Q60025", "birth_year": 1906, "death_year": 1975, "nationality": "Prussia", "notable_works": ["The Origins of Totalitarianism", "The Human Condition", "Eichmann in Jerusalem", "On Revolution", "Rahel Varnhagen", "Natality"], "awards": ["Guggenheim Fellowship", "Fellow of the American Academy of Arts and Sciences", "Sigmund Freud Prize", "Emerson-Thoreau Medal", "Sonning Prize", "honorary doctorate from Princeton University", "Benjamin E. Lippincott Award"], "website": null, "goodreads_id": "12806", "image_filename": "Hannah Arendt 1975 (cropped).jpg", "wikipedia_title": "Hannah Arendt", "wikipedia_url": "https://en.wikipedia.org/wiki/Hannah_Arendt"}, "wikipedia": {"thumbnail_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Hannah_Arendt_auf_dem_1._Kulturkritikerkongress%2C_Barbara_Niggl_Radloff%2C_FM-2019-1-5-9-16_%28cropped%29.jpg/330px-Hannah_Arendt_auf_dem_1._Kulturkritikerkongress%2C_Barbara_Niggl_Radloff%2C_FM-2019-1-5-9-16_%28cropped%29.jpg", "wikipedia_url": "https://en.wikipedia.org/wiki/Hannah_Arendt"}}');
@@ -1740,3 +1676,4 @@ INSERT INTO club_author_enrichment (author_id, bio, birth_year, death_year, nati
 INSERT INTO club_author_enrichment (author_id, bio, birth_year, death_year, nationality, ol_author_key, wikidata_id, wikipedia_url, website, notable_works_json, photo_credit, enriched_at, enrichment_json) VALUES (175, NULL, 1975, NULL, NULL, '/authors/OL2668642A', 'Q76227477', NULL, NULL, NULL, NULL, '2026-06-26T15:06:38+00:00', '{"openlibrary": {"bio": null, "birth_year": null, "death_year": null, "website": null, "wikidata_id": null, "ol_photo_id": null}, "wikidata": {"wikidata_id": "Q76227477", "birth_year": 1975, "death_year": null, "nationality": null, "notable_works": [], "awards": [], "website": null, "goodreads_id": null, "image_filename": null, "wikipedia_title": null, "wikipedia_url": null}, "wikipedia": {}}');
 INSERT INTO club_author_enrichment (author_id, bio, birth_year, death_year, nationality, ol_author_key, wikidata_id, wikipedia_url, website, notable_works_json, photo_credit, enriched_at, enrichment_json) VALUES (176, NULL, 1957, NULL, 'United States', '/authors/OL873686A', 'Q638179', 'https://en.wikipedia.org/wiki/Richard_Powers', 'http://www.richardpowers.net', '["Three Farmers on Their Way to a Dance", "The Echo Maker", "Galatea 2.2", "Operation Wandering Soul"]', 'Open Library', '2026-06-26T15:06:41+00:00', '{"openlibrary": {"bio": null, "birth_year": 1957, "death_year": null, "website": null, "wikidata_id": "Q638179", "ol_photo_id": 6388822}, "wikidata": {"wikidata_id": "Q638179", "birth_year": 1957, "death_year": null, "nationality": "United States", "notable_works": ["Three Farmers on Their Way to a Dance", "The Echo Maker", "Galatea 2.2", "Operation Wandering Soul"], "awards": ["MacArthur Fellows Program", "National Book Award", "Pulitzer Prize for Fiction", "William Dean Howells Medal of the American Academy of Arts and Letters", "Society of American Historians Prize for Historical Fiction", "Dos Passos Prize", "Grand Prix de Littérature Américaine"], "website": "http://www.richardpowers.net", "goodreads_id": "11783", "image_filename": "Richard Powers (author).jpg", "wikipedia_title": "Richard Powers", "wikipedia_url": "https://en.wikipedia.org/wiki/Richard_Powers"}, "wikipedia": {"thumbnail_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Richard_Powers_%28author%29.jpg/330px-Richard_Powers_%28author%29.jpg", "wikipedia_url": "https://en.wikipedia.org/wiki/Richard_Powers"}}');
 INSERT INTO club_author_enrichment (author_id, bio, birth_year, death_year, nationality, ol_author_key, wikidata_id, wikipedia_url, website, notable_works_json, photo_credit, enriched_at, enrichment_json) VALUES (177, NULL, 1962, NULL, 'United Kingdom', '/authors/OL1656486A', 'Q908187', 'https://en.wikipedia.org/wiki/Philip_Ball', 'https://philipball.co.uk/', NULL, NULL, '2026-06-26T15:06:43+00:00', '{"openlibrary": {"bio": null, "birth_year": null, "death_year": null, "website": null, "wikidata_id": null, "ol_photo_id": null}, "wikidata": {"wikidata_id": "Q908187", "birth_year": 1962, "death_year": null, "nationality": "United Kingdom", "notable_works": [], "awards": ["Royal Society Science Books Prize", "James T. Grady-James H. Stack Award for Interpreting Chemistry", "Kelvin Prize", "Wilkins-Bernal-Medawar Lecture"], "website": "https://philipball.co.uk/", "goodreads_id": "22032", "image_filename": null, "wikipedia_title": "Philip Ball", "wikipedia_url": "https://en.wikipedia.org/wiki/Philip_Ball"}, "wikipedia": {"thumbnail_url": null, "wikipedia_url": "https://en.wikipedia.org/wiki/Philip_Ball"}}');
+INSERT INTO club_author_enrichment (author_id, bio, birth_year, death_year, nationality, ol_author_key, wikidata_id, wikipedia_url, website, notable_works_json, photo_credit, enriched_at, enrichment_json) VALUES (178, 'Peter Watts is a Canadian science fiction author and marine-mammal biologist.', 1958, NULL, 'Canada', '/authors/OL2850261A', 'Q983672', 'https://en.wikipedia.org/wiki/Peter_Watts_%28author%29', 'https://rifters.com', '["Blindsight"]', NULL, '2026-07-01T03:06:08+00:00', '{"openlibrary": {"bio": "Peter Watts is a Canadian science fiction author and marine-mammal biologist.", "birth_year": 1958, "death_year": null, "website": "https://rifters.com", "wikidata_id": "Q983672", "ol_photo_id": 6451171}, "wikidata": {"wikidata_id": "Q983672", "birth_year": 1958, "death_year": null, "nationality": "Canada", "notable_works": ["Blindsight"], "awards": ["Hugo Award for Best Novelette", "Shirley Jackson Award"], "website": "https://rifters.com/", "goodreads_id": "27167", "image_filename": "Acceptance speech Peter Watts.jpg", "wikipedia_title": "Peter Watts (author)", "wikipedia_url": "https://en.wikipedia.org/wiki/Peter_Watts_%28author%29"}, "wikipedia": {"thumbnail_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Peter_Watts_fulbeskuren.png/330px-Peter_Watts_fulbeskuren.png", "wikipedia_url": "https://en.wikipedia.org/wiki/Peter_Watts_(author)"}}');

@@ -85,19 +85,9 @@ CREATE TABLE IF NOT EXISTS club_meeting_books (
 );
 CREATE INDEX IF NOT EXISTS idx_club_meeting_books_book ON club_meeting_books(book_id);
 
--- Book-level picker (Airtable Books.Picked by) — the canonical picker; generates
--- the corpus book.picker[]. Kept distinct from meeting host below.
-CREATE TABLE IF NOT EXISTS club_book_pickers (
-    book_id   INTEGER NOT NULL REFERENCES club_books(id) ON DELETE CASCADE,
-    member_id INTEGER NOT NULL REFERENCES club_members(id) ON DELETE CASCADE,
-    ordinal   INTEGER NOT NULL DEFAULT 0,
-    PRIMARY KEY (book_id, member_id)
-);
-CREATE INDEX IF NOT EXISTS idx_club_book_pickers_member ON club_book_pickers(member_id);
-
--- Meeting-level host (Airtable Meetings.Host) — who hosted/ran a given meeting.
--- The correct grain for the future picking-rotation feature; not the same as the
--- book-level picker (a book can span two host meetings).
+-- Meeting-level host (Airtable Meetings.Host) — the single member who hosted a
+-- meeting and picked its book(s). This is the one source of truth for "who picked":
+-- book pickers are DERIVED from it (see the club_book_pickers VIEW below).
 CREATE TABLE IF NOT EXISTS club_meeting_hosts (
     meeting_id INTEGER NOT NULL REFERENCES club_meetings(id) ON DELETE CASCADE,
     member_id  INTEGER NOT NULL REFERENCES club_members(id) ON DELETE CASCADE,
@@ -105,6 +95,18 @@ CREATE TABLE IF NOT EXISTS club_meeting_hosts (
     PRIMARY KEY (meeting_id, member_id)
 );
 CREATE INDEX IF NOT EXISTS idx_club_meeting_hosts_member ON club_meeting_hosts(member_id);
+
+-- Book picker is DERIVED from the meeting host: a book's picker(s) are the host(s)
+-- of the meeting(s) it was discussed at. Historically 'picker' was stored in its own
+-- table and always equalled the host (materialized from it); collapsed to this view so
+-- the two can never diverge. A book re-read across two meetings has both meetings' hosts
+-- as pickers (pick-events; summing picks across members can exceed distinct books read).
+-- Correct a picker by editing the meeting's host. See CLAUDE.md.
+CREATE VIEW IF NOT EXISTS club_book_pickers AS
+    SELECT mb.book_id, mh.member_id, MIN(mh.ordinal) AS ordinal
+    FROM club_meeting_books mb
+    JOIN club_meeting_hosts mh ON mh.meeting_id = mb.meeting_id
+    GROUP BY mb.book_id, mh.member_id;
 
 CREATE TABLE IF NOT EXISTS club_reviews (
     id                 INTEGER PRIMARY KEY,  -- the review's stable id (the corpus `id`; minted via _next_id)
@@ -195,7 +197,8 @@ CREATE TABLE IF NOT EXISTS club_author_enrichment (
 # All club tables, for count/validation helpers and teardown in tests.
 CLUB_TABLES = [
     "club_members", "club_authors", "club_books", "club_book_authors",
-    "club_meetings", "club_meeting_books", "club_book_pickers", "club_meeting_hosts",
+    "club_meetings", "club_meeting_books", "club_meeting_hosts",
+    # club_book_pickers is a VIEW derived from club_meeting_hosts — not a base table.
     "club_reviews", "club_lists", "club_list_books",
     # Enrichment sidecars last → reversed() deletes them before their parent tables.
     "club_book_enrichment", "club_author_enrichment",
@@ -264,6 +267,38 @@ def _migrate_club(conn: sqlite3.Connection) -> None:
                 "VALUES (?, ?, ?)",
                 (r["meeting_id"], p["member_id"], ordinal),
             )
+
+    # 3b. One-time: collapse club_book_pickers (table) into a VIEW derived from the meeting
+    #     host. Picker was always materialized from host and equal to it; make host the single
+    #     source so the two can never diverge. Runs only while club_book_pickers is still a base
+    #     table — the host backfill (step 3) above has already made hosts complete. Idempotent:
+    #     once it's a view, this is skipped. Ships with the code that stops writing pickers, so
+    #     schema + code go live together at the deploy restart.
+    bp = conn.execute(
+        "SELECT type FROM sqlite_master WHERE name = 'club_book_pickers'"
+    ).fetchone()
+    if bp and bp["type"] == "table":
+        mismatch = conn.execute(
+            "SELECT count(*) c FROM ("
+            " SELECT book_id, member_id FROM club_book_pickers"
+            " EXCEPT"
+            " SELECT mb.book_id, mh.member_id FROM club_meeting_books mb"
+            " JOIN club_meeting_hosts mh ON mh.meeting_id = mb.meeting_id)"
+        ).fetchone()["c"]
+        if mismatch:
+            import logging
+            logging.getLogger("agent.clubdb").warning(
+                "picker->host collapse: %d stored picker(s) diverged from the meeting "
+                "host and will now follow host", mismatch,
+            )
+        conn.execute("DROP TABLE club_book_pickers")
+        conn.execute(
+            "CREATE VIEW club_book_pickers AS "
+            "SELECT mb.book_id, mh.member_id, MIN(mh.ordinal) AS ordinal "
+            "FROM club_meeting_books mb "
+            "JOIN club_meeting_hosts mh ON mh.meeting_id = mb.meeting_id "
+            "GROUP BY mb.book_id, mh.member_id"
+        )
 
     # 4. One-time: retire club_awards. Migrate each award's book(s) into a "Books of the Year"
     #    CLUB list (note = year), then drop the three award tables. club_lists is created by
@@ -763,22 +798,9 @@ def reorder_list_books(conn: sqlite3.Connection, list_id: int,
     return True
 
 
-def set_book_picker(conn: sqlite3.Connection, book_id: int, member_id: int) -> None:
-    conn.execute("DELETE FROM club_book_pickers WHERE book_id = ?", (book_id,))
-    conn.execute(
-        "INSERT INTO club_book_pickers(book_id, member_id, ordinal) VALUES (?, ?, 0)",
-        (book_id, member_id),
-    )
-
-
-def set_book_pickers(conn: sqlite3.Connection, book_id: int, member_ids: list[int]) -> None:
-    """Replace a book's picker(s), ordered. A book can have multiple pickers (e.g. a long book split
-    between two members). Pass [] for no picker. Mirrors set_meeting_hosts."""
-    conn.execute("DELETE FROM club_book_pickers WHERE book_id = ?", (book_id,))
-    conn.executemany(
-        "INSERT INTO club_book_pickers(book_id, member_id, ordinal) VALUES (?, ?, ?)",
-        [(book_id, mid, i) for i, mid in enumerate(member_ids)],
-    )
+# NOTE: there is no set_book_picker(s) — a book's picker is DERIVED from the host(s) of the
+# meeting(s) it's on (the club_book_pickers view). To change who picked a book, change the
+# meeting's host via set_meeting_hosts().
 
 
 def book_picker_slugs(conn: sqlite3.Connection, book_id: int) -> list[str]:
