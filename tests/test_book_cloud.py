@@ -64,6 +64,54 @@ def test_book_cloud_add_links_corpus_slug_when_read(fresh_db):
     assert db.recent_book_cloud()[0]["book_slug"] == "watchmen"
 
 
+def test_recent_book_cloud_member_and_kind_filters(fresh_db):
+    db.add_book_cloud_entry(title="A", reason="r1", surface="discord", mentioned_by="tom",
+                            reason_kind="nomination")
+    db.add_book_cloud_entry(title="B", reason="r2", surface="discord", mentioned_by="jamie",
+                            reason_kind="joke")
+    assert [r["title"] for r in db.recent_book_cloud(member="tom")] == ["A"]
+    assert [r["title"] for r in db.recent_book_cloud(kind="joke")] == ["B"]
+    assert db.recent_book_cloud(member="tom", kind="joke") == []
+
+
+def test_admin_bookcloud_view_helper(fresh_db):
+    from agent.webapp import routes_admin
+    db.add_book_cloud_entry(title="Piranesi", reason="light fiction lead", surface="discord",
+                            mentioned_by="loren")
+    db.add_book_cloud_entry(title="Watchmen", reason="mention of a read book", surface="discord",
+                            book_slug="watchmen", mentioned_by="tom", reason_kind="comparison")
+    titles = routes_admin._bookcloud_view(view="titles", q="", member="", kind="",
+                                          unread=True, limit=50)
+    assert [r["title"] for r in titles["rows"]] == ["Piranesi"]      # read title filtered
+    everything = routes_admin._bookcloud_view(view="titles", q="", member="", kind="",
+                                              unread=False, limit=50)
+    read_flags = {r["title"]: r["isRead"] for r in everything["rows"]}
+    assert read_flags == {"Piranesi": False, "Watchmen": True}       # flagged, not hidden
+    raw = routes_admin._bookcloud_view(view="mentions", q="", member="tom", kind="comparison",
+                                       unread=True, limit=50)
+    assert [r["title"] for r in raw["rows"]] == ["Watchmen"]         # raw view: member+kind filters
+    assert routes_admin._bookcloud_kinds() == ["comparison"]
+
+
+def test_admin_bookcloud_template_renders(fresh_db):
+    from agent.webapp.render import _env
+    db.add_book_cloud_entry(title="Piranesi", author="Susanna Clarke",
+                            reason="suggested as light fiction", surface="mailing_list",
+                            mentioned_by="loren", reason_kind="recommendation")
+    tpl = _env.get_template("admin_bookcloud.html")
+    common = {"is_admin": True, "csrf": "t", "member_name": "Jamie", "publish_pending": False,
+              "members": [{"slug": "loren", "name": "Loren", "current": True}],
+              "kinds": ["recommendation"]}
+    html = tpl.render(rows=db.book_cloud_titles(),
+                      f={"view": "titles", "q": "", "member": "", "kind": "", "unread": True,
+                         "limit": 200}, **common)
+    assert "Piranesi" in html and "suggested as light fiction" in html and "loren" in html
+    html2 = tpl.render(rows=db.recent_book_cloud(),
+                       f={"view": "mentions", "q": "", "member": "", "kind": "", "unread": True,
+                          "limit": 200}, **common)
+    assert "Piranesi" in html2 and "mailing_list" in html2
+
+
 def test_book_cloud_recent_dispatch_modes(fresh_db):
     db.add_book_cloud_entry(title="A", reason="r1", surface="discord")
     db.add_book_cloud_entry(title="A", reason="r2", surface="discord")

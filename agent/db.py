@@ -878,16 +878,27 @@ def add_book_cloud_entry(*, title: str, reason: str, surface: str,
         return cur.lastrowid
 
 
-def recent_book_cloud(*, limit: int = 20, query: str | None = None) -> list[dict]:
-    """Raw cloud rows, newest first; `query` is a LIKE over title/author/reason."""
+def recent_book_cloud(*, limit: int = 20, query: str | None = None,
+                      member: str | None = None, kind: str | None = None) -> list[dict]:
+    """Raw cloud rows, newest first; `query` is a LIKE over title/author/reason; `member`/`kind`
+    filter by mentioner slug and reason_kind (the admin webapp view uses all three)."""
     sql = ("SELECT id, title, author, book_slug, mentioned_by, mentioned_by_name, surface, "
            "reason, reason_kind, created_at FROM book_cloud")
+    where: list[str] = []
     args: list = []
     if query:
-        sql += " WHERE title LIKE ? OR author LIKE ? OR reason LIKE ?"
+        where.append("(title LIKE ? OR author LIKE ? OR reason LIKE ?)")
         args += [f"%{query}%"] * 3
+    if member:
+        where.append("mentioned_by = ?")
+        args.append(member)
+    if kind:
+        where.append("reason_kind = ?")
+        args.append(kind)
+    if where:
+        sql += " WHERE " + " AND ".join(where)
     sql += " ORDER BY id DESC LIMIT ?"
-    args.append(max(1, min(int(limit), 50)))
+    args.append(max(1, min(int(limit), 500)))
     with connect() as conn:
         return [dict(r) for r in conn.execute(sql, args)]
 

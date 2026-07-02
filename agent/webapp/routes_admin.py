@@ -443,6 +443,51 @@ async def event_delete(request: web.Request) -> web.Response:
     raise web.HTTPFound(ret)
 
 
+# ── Book Cloud ───────────────────────────────────────────────────────────────
+def _bookcloud_view(*, view: str, q: str, member: str, kind: str, unread: bool,
+                    limit: int) -> dict:
+    """Filtered Book Cloud data for the admin page. `view` is 'titles' (aggregated orbit — one row
+    per title with first/last mention, who, count) or 'mentions' (raw rows, newest first).
+    `unread` (titles view) drops titles matching books the club has read."""
+    read_slugs = {b["slug"] for b in cr.books() if b.get("isRead")}
+    if view == "mentions":
+        rows = db.recent_book_cloud(limit=limit, query=q or None, member=member or None,
+                                    kind=kind or None)
+        return {"view": "mentions", "rows": rows}
+    titles = db.book_cloud_titles(query=q or None, member=member or None, limit=limit)
+    for t in titles:
+        t["isRead"] = bool(t.get("book_slug") and t["book_slug"] in read_slugs)
+    if unread:
+        titles = [t for t in titles if not t["isRead"]]
+    return {"view": "titles", "rows": titles}
+
+
+def _bookcloud_kinds() -> list[str]:
+    with db.connect() as conn:
+        return [r["reason_kind"] for r in conn.execute(
+            "SELECT DISTINCT reason_kind FROM book_cloud "
+            "WHERE reason_kind IS NOT NULL ORDER BY reason_kind")]
+
+
+async def bookcloud_page(request: web.Request) -> web.Response:
+    p = request.query
+    view = "mentions" if p.get("view") == "mentions" else "titles"
+    q, member, kind = p.get("q", "").strip(), p.get("member", ""), p.get("kind", "")
+    unread = p.get("include_read") != "1"    # titles view defaults to unread-only
+    try:
+        limit = min(max(int(p.get("limit") or 200), 1), 500)
+    except ValueError:
+        limit = 200
+    data = await asyncio.to_thread(_bookcloud_view, view=view, q=q, member=member,
+                                   kind=kind, unread=unread, limit=limit)
+    kinds = await asyncio.to_thread(_bookcloud_kinds)
+    members = sorted(await asyncio.to_thread(_members), key=lambda m: m["name"].lower())
+    return render("admin_bookcloud.html", request, rows=data["rows"], kinds=kinds,
+                  members=members,
+                  f={"view": data["view"], "q": q, "member": member, "kind": kind,
+                     "unread": unread, "limit": limit})
+
+
 # ── Club lists ───────────────────────────────────────────────────────────────
 # Two pages, like the member side: the index (manage club lists) and a per-list detail page (manage
 # its books). Item ops post to the shared /webapp/lists/act (authorized as a club list for admins).
@@ -481,4 +526,5 @@ def add_routes(app: web.Application) -> None:
         web.get("/webapp/admin/lists/{slug}", list_detail),
         web.get("/webapp/admin/events", events_page),
         web.post("/webapp/admin/events/delete", event_delete),
+        web.get("/webapp/admin/bookcloud", bookcloud_page),
     ])
