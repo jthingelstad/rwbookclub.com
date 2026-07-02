@@ -182,8 +182,11 @@ def consolidate(lines: list[str], *, scope: str, subject: str | None = None,
 
     plan = None
     for attempt in (1, 2):  # format breaks are stochastic — one retry recovers most of them
+        # max_tokens=16000: Sonnet 5's always-on adaptive thinking counts toward max_tokens, and a
+        # rich chunk can burn >4K thinking before the JSON — 15 mining calls truncated at the old
+        # 4096 default, which was the real source of the "unparseable" outputs.
         raw = oliver.complete(system, _prompt(label, lines, updatable, readonly, era_note),
-                              model=oliver.MODEL, thinking=False, effort=None,
+                              model=oliver.MODEL, thinking=False, effort=None, max_tokens=16000,
                               usage_channel=None if dry_run else usage_channel)
         plan = _parse(raw)
         if plan is not None:
