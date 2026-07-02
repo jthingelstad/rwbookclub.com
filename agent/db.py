@@ -74,6 +74,13 @@ CREATE TABLE IF NOT EXISTS channel_summaries (
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Generic per-job state (cursors/watermarks) for scheduled jobs, e.g. the weekly reflection pass.
+CREATE TABLE IF NOT EXISTS job_state (
+    key        TEXT PRIMARY KEY,
+    value      TEXT NOT NULL,                     -- JSON blob owned by the job
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS reminders (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     due_at     TEXT NOT NULL,
@@ -1318,6 +1325,31 @@ def search_mail_archive(query: str, *, member_slug: str | None = None,
         return [dict(r) for r in conn.execute(sql, args)]
 
 
+def mail_messages_since(sent_at: str, *, exclude_from: str | None = None,
+                        limit: int = 500) -> list[dict]:
+    """Member-authored archive mail newer than `sent_at`, oldest first — the reflection job's
+    mailing-list feed. Only member-linked senders; `exclude_from` drops Oliver's own outbound."""
+    sql = (
+        "SELECT m.message_id, m.subject, m.from_email, cm.slug AS member_slug, m.sent_at, "
+        "m.body_clean FROM mail_messages m JOIN club_members cm ON cm.id = m.member_id "
+        "WHERE m.sent_at > ?"
+    )
+    args: list = [sent_at]
+    if exclude_from:
+        sql += " AND m.from_email != ?"; args.append(exclude_from.lower())
+    sql += " ORDER BY m.sent_at ASC LIMIT ?"
+    args.append(limit)
+    with connect() as conn:
+        return [dict(r) for r in conn.execute(sql, args)]
+
+
+def latest_mail_sent_at() -> str | None:
+    """MAX(sent_at) in the archive — used to initialize the reflection mail cursor forward-only."""
+    with connect() as conn:
+        row = conn.execute("SELECT MAX(sent_at) AS m FROM mail_messages").fetchone()
+    return row["m"] if row and row["m"] else None
+
+
 def get_mail_thread(thread_id: str, *, limit: int = 50) -> dict | None:
     limit = max(1, min(int(limit), 100))
     with connect() as conn:
@@ -1375,6 +1407,38 @@ def messages_after(channel_id: str, after_id: int, limit: int = 200) -> list[dic
             (channel_id, after_id, limit),
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+def conversations_after_global(after_id: int, limit: int = 2000) -> list[dict]:
+    """Turns with id > after_id across ALL channels, oldest first — the reflection job's feed."""
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT id, channel_id, role, speaker, content, member_slug, created_at "
+            "FROM conversations WHERE id > ? ORDER BY id ASC LIMIT ?",
+            (after_id, limit),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_job_state(key: str) -> dict | None:
+    """A scheduled job's persisted state blob (JSON), or None if the job has never run."""
+    with connect() as conn:
+        row = conn.execute("SELECT value FROM job_state WHERE key = ?", (key,)).fetchone()
+    if not row:
+        return None
+    try:
+        return json.loads(row["value"])
+    except (ValueError, TypeError):
+        return None
+
+
+def set_job_state(key: str, value: dict) -> None:
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO job_state (key, value, updated_at) VALUES (?, ?, ?) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
+            (key, json.dumps(value, ensure_ascii=False), _now()),
+        )
 
 
 def recent_messages(channel_id: str, limit: int = 12) -> list[dict]:

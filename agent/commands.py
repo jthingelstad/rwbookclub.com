@@ -19,7 +19,7 @@ import requests
 from discord.ext import tasks
 
 from agent import (clock, clubdb, config, context as kb, corpus_read, corpus_write, db, oliver,
-                   publish, scheduler, webapp)
+                   publish, reflection, scheduler, webapp)
 from agent.mail import email_jmap, mail_archive, outbound
 from agent.club import (meeting_campaign, meeting_emails, meeting_rules,
                         openlibrary, release_notes)
@@ -418,6 +418,8 @@ async def _send_reading_checkin_email_to_member(member: dict, meeting: dict,
 # Oliver runs meeting prep once a day, at this local hour, so the per-member evaluation (and its
 # decision calls) happen on a daily cadence rather than on every hourly scheduler tick.
 MEETING_OUTREACH_HOUR = 9  # America/Chicago
+REFLECTION_WEEKDAY = 6     # Sunday
+REFLECTION_HOUR = 5        # 5am club time — quiet, far from member-facing outreach
 
 
 async def _run_meeting_outreach(meeting: dict, status: dict) -> int:
@@ -1309,6 +1311,17 @@ async def run_scheduler() -> int:
         await ensure_site_reflects_next_book()
     except Exception:
         log.exception("site self-heal check failed")
+
+    # 0b. Weekly reflective memory (Sunday early morning): distill the week's conversations into
+    # durable member memories. Internal + audited in #oliver-log. The hourly loop ticks once inside
+    # the gate hour; if a restart double-fires it, the advanced watermark makes the second run a
+    # quiet no-op — and a failed run keeps its watermark so it retries next week.
+    if (config.OLIVER_REFLECTION_ENABLED and now.weekday() == REFLECTION_WEEKDAY
+            and now.hour == REFLECTION_HOUR):
+        try:
+            await asyncio.to_thread(reflection.run)
+        except Exception:
+            log.exception("weekly reflection failed")
 
     # 1. Corpus-derived notifications → main channel.
     main = _client.get_channel(config.MAIN_CHANNEL_ID) if config.MAIN_CHANNEL_ID else None

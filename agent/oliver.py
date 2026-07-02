@@ -366,7 +366,9 @@ def _question_block(question: str, speaker: str | None, member_slug: str | None,
         who = f"{speaker} (member: {member_slug})" if member_slug else f"{speaker} (not a recognized member)"
         parts.append(f"[Speaker: {who}]")
     if member_slug:
-        mems = db.get_memories(subject=member_slug, limit=5)
+        # 8 (was 5): weekly reflection consolidates toward ~12 active per member; newest-first at 5
+        # could starve stable facts.
+        mems = db.get_memories(subject=member_slug, limit=8)
         if mems:
             parts.append("[You remember about them: " + "; ".join(m["note"] for m in mems) + "]")
         # Proactively surface this member's recent threads on OTHER mediums so you're not blindsided
@@ -653,7 +655,8 @@ def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -
 
 
 def complete(system: str, user: str, *, model: str = OPUS_MODEL, max_tokens: int = 4096,
-             effort: str | None = "medium", thinking: bool = True, timeout: float = 600.0) -> str:
+             effort: str | None = "medium", thinking: bool = True, timeout: float = 600.0,
+             usage_channel: str | None = None) -> str:
     """A raw, tool-less, stateless completion against a caller-supplied system prompt.
 
     Neither `compose` (Sonnet, 400-token cap, charter system prompt) nor `generate` (full tool
@@ -676,6 +679,11 @@ def complete(system: str, user: str, *, model: str = OPUS_MODEL, max_tokens: int
         if effort:
             kwargs["output_config"] = {"effort": effort}
     resp = _get_client().with_options(timeout=timeout).messages.create(**kwargs)
+    if usage_channel:  # scheduled/batch callers (e.g. reflection) account their tokens like chat does
+        u = resp.usage
+        db.log_usage(usage_channel, model, input_tokens=u.input_tokens, output_tokens=u.output_tokens,
+                     cache_read=u.cache_read_input_tokens or 0,
+                     cache_creation=u.cache_creation_input_tokens or 0, rounds=1)
     return _text_of(resp.content).strip()
 
 

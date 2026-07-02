@@ -75,6 +75,10 @@ CLUB_EMAIL_CADENCE_ENABLED = os.environ.get("CLUB_EMAIL_CADENCE_ENABLED", "0") i
 # experimental club-wide blast, so trial it self-only (/oliver postscript) until the drafts are
 # trusted, then enable (CLUB_POSTSCRIPT_ENABLED=1).
 CLUB_POSTSCRIPT_ENABLED = os.environ.get("CLUB_POSTSCRIPT_ENABLED", "0") in {"1", "true", "True"}
+# Weekly reflective-memory pass (Sunday early morning): distills recent conversations into durable
+# member memories. Internal — no member-facing output; audited in #oliver-log and inspectable via
+# /oliver memory search. ON by default; set OLIVER_REFLECTION_ENABLED=0 to disable.
+OLIVER_REFLECTION_ENABLED = os.environ.get("OLIVER_REFLECTION_ENABLED", "1") not in {"0", "false", "False"}
 OLIVER_EMAIL_INBOX_PARENT = os.environ.get("OLIVER_EMAIL_INBOX_PARENT", "Inbox")
 OLIVER_EMAIL_INBOX_FOLDER = os.environ.get("OLIVER_EMAIL_INBOX_FOLDER", "Oliver")
 OLIVER_EMAIL_SENT_PARENT = os.environ.get("OLIVER_EMAIL_SENT_PARENT", "Sent")
