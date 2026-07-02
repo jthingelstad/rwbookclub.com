@@ -35,6 +35,7 @@ SOURCE = "reflection"          # provenance marker on memories this job owns
 MIN_TURNS = 3                  # skip a member with fewer new conversation turns (unless they mailed)
 MAX_TURNS_PER_MEMBER = 200     # cap material per member per run (weekly volume is far below this)
 MEMORY_CAP = 12                # soft target for active reflection memories per member
+CLUB_MEMORY_CAP = 15           # soft target for active club-lore notes
 _JSON_RE = re.compile(r"\{.*\}", re.S)
 
 SYSTEM = (
@@ -60,6 +61,34 @@ SYSTEM = (
     f"- Consolidate: keep the set under about {MEMORY_CAP} notes. Merge overlapping notes via "
     "update, retire anything stale or superseded. Prefer updating an UPDATABLE note over adding "
     "a near-duplicate.\n"
+    "- You may ONLY update/retire notes listed as UPDATABLE (your own past notes). READ-ONLY "
+    "notes are shown for context so you don't duplicate them.\n"
+    "- If the material reveals nothing durable, return empty lists — that is a fine answer.\n\n"
+    "OUTPUT: strict JSON only, no prose, no code fences:\n"
+    '{"add": ["note", ...], "update": [{"id": 123, "note": "revised"}, ...], "retire": [124, ...]}'
+)
+
+CLUB_SYSTEM = (
+    "You are Oliver, the R/W Book Club's assistant, consolidating what you durably know about THE "
+    "CLUB ITSELF from recent conversations among its members.\n\n"
+    "You maintain a small set of club-lore notes. Given the existing notes and a transcript of "
+    "recent exchanges, decide what to ADD, UPDATE, or RETIRE so the set stays small, current, and "
+    "true.\n\n"
+    "RULES:\n"
+    "- CLUB-level facts only: traditions and rituals (e.g. a December social meeting), running "
+    "jokes, recurring or never-settled debates, decisions and norms the group made, memorable "
+    "shared moments. NOT one member's personal taste (member notes cover those).\n"
+    "- Every note must be grounded in what was actually said — never an inference beyond it.\n"
+    "- Privacy boundary: club-operational facts and clearly-shared celebratory moments only; "
+    "NEVER health, finances, relationships, conflict between members, or anything sensitive.\n"
+    "- Do NOT store facts the club record already holds (what was read when, who picked what, "
+    "meeting dates) — corpus tools know those. Store what the record can't: culture, humor, "
+    "arguments, norms.\n"
+    "- Ignore anything that reads like a test, hypothetical, or role-play; when unsure, leave it "
+    "out.\n"
+    "- Phrase notes neutrally and durably. One fact per note, under 140 characters.\n"
+    f"- Consolidate: keep the set under about {CLUB_MEMORY_CAP} notes. Merge overlapping notes "
+    "via update, retire anything stale or superseded.\n"
     "- You may ONLY update/retire notes listed as UPDATABLE (your own past notes). READ-ONLY "
     "notes are shown for context so you don't duplicate them.\n"
     "- If the material reveals nothing durable, return empty lists — that is a fine answer.\n\n"
@@ -99,8 +128,11 @@ def _gather(state: dict) -> tuple[dict[str, list[str]], int, str]:
     return per_member, max_conv, max_mail
 
 
-def _member_prompt(slug: str, lines: list[str], updatable: list[dict], readonly: list[dict]) -> str:
-    parts = [f"Member: {slug}\n"]
+def _prompt(label: str, lines: list[str], updatable: list[dict], readonly: list[dict],
+            era_note: str | None = None) -> str:
+    parts = [f"{label}\n"]
+    if era_note:
+        parts.append(f"NOTE ON ERA: {era_note}\n")
     if updatable:
         parts.append("UPDATABLE notes (yours; may update/retire by id):")
         parts += [f"  id={m['id']}: {m['note']}" for m in updatable]
@@ -109,7 +141,7 @@ def _member_prompt(slug: str, lines: list[str], updatable: list[dict], readonly:
         parts += [f"  - {m['note']}" for m in readonly]
     truncated = len(lines) > MAX_TURNS_PER_MEMBER
     shown = lines[-MAX_TURNS_PER_MEMBER:]
-    parts.append(f"\nRecent material ({len(shown)} entries"
+    parts.append(f"\nMaterial ({len(shown)} entries"
                  + (", truncated to the most recent" if truncated else "") + "):")
     parts += [f"  {ln[:600]}" for ln in shown]
     return "\n".join(parts)
@@ -129,36 +161,47 @@ def _parse(raw: str) -> dict | None:
             "retire": out.get("retire") or []}
 
 
-def _reflect_member(slug: str, lines: list[str], *, dry_run: bool) -> dict:
-    """One member's consolidation. Returns counts {'add': n, 'update': n, 'retire': n} or
-    {'skipped': reason}. Provenance is enforced HERE, not just in the prompt."""
-    memories = db.get_memories(subject=slug, limit=50)
+def consolidate(lines: list[str], *, scope: str, subject: str | None = None,
+                era_note: str | None = None, dry_run: bool = False,
+                usage_channel: str | None = "reflection") -> dict:
+    """One consolidation pass for a member (scope='member', subject=slug) or club lore
+    (scope='club'). Returns counts {'add': n, 'update': n, 'retire': n} or {'skipped': reason}.
+    Provenance is enforced HERE, not just in the prompt: update/retire only touch memories this
+    job authored (source='reflection')."""
+    if scope == "club":
+        system, cap = CLUB_SYSTEM, CLUB_MEMORY_CAP
+        memories = db.get_memories(scope="club", limit=50)
+        label, who = "Subject: the R/W Book Club itself", "club"
+    else:
+        system, cap = SYSTEM, MEMORY_CAP
+        memories = db.get_memories(subject=subject, limit=50)
+        label, who = f"Member: {subject}", str(subject)
     updatable = [m for m in memories if m.get("source") == SOURCE]
     readonly = [m for m in memories if m.get("source") != SOURCE]
     allowed_ids = {m["id"] for m in updatable}
 
-    raw = oliver.complete(SYSTEM, _member_prompt(slug, lines, updatable, readonly),
+    raw = oliver.complete(system, _prompt(label, lines, updatable, readonly, era_note),
                           model=oliver.MODEL, thinking=False, effort=None,
-                          usage_channel=None if dry_run else "reflection")
+                          usage_channel=None if dry_run else usage_channel)
     plan = _parse(raw)
     if plan is None:
-        log.warning("reflection: unparseable output for %s; skipping", slug)
+        log.warning("reflection: unparseable output for %s; skipping", who)
         if not dry_run:
-            db.add_activity("warning", "Reflection skipped a member",
-                            f"Member: {slug}\nReason: unparseable model output")
+            db.add_activity("warning", "Reflection skipped a subject",
+                            f"Subject: {who}\nReason: unparseable model output")
         return {"skipped": "unparseable"}
 
-    adds = [str(n).strip() for n in plan["add"] if str(n).strip()][:MEMORY_CAP]
+    adds = [str(n).strip() for n in plan["add"] if str(n).strip()][:cap]
     updates = [u for u in plan["update"]
                if isinstance(u, dict) and u.get("id") in allowed_ids and str(u.get("note", "")).strip()]
     retires = [i for i in plan["retire"] if i in allowed_ids]
     dropped = (len(plan["update"]) - len(updates)) + (len(plan["retire"]) - len(retires))
     if dropped:
         log.warning("reflection: dropped %d update/retire ops targeting non-reflection memories "
-                    "for %s", dropped, slug)
+                    "for %s", dropped, who)
 
     if dry_run:
-        print(f"\n== {slug} ==")
+        print(f"\n== {who}{f' ({era_note})' if era_note else ''} ==")
         for n in adds:
             print(f"  + {n}")
         for u in updates:
@@ -169,12 +212,16 @@ def _reflect_member(slug: str, lines: list[str], *, dry_run: bool) -> dict:
             print("  (no changes)")
     else:
         for n in adds:
-            db.add_memory(n, scope="member", subject=slug, source=SOURCE)
+            db.add_memory(n, scope=scope, subject=subject, source=SOURCE)
         for u in updates:
             db.update_memory(int(u["id"]), str(u["note"]).strip())
         for i in retires:
             db.delete_memory(int(i))
     return {"add": len(adds), "update": len(updates), "retire": len(retires)}
+
+
+def _reflect_member(slug: str, lines: list[str], *, dry_run: bool) -> dict:
+    return consolidate(lines, scope="member", subject=slug, dry_run=dry_run)
 
 
 def run(*, dry_run: bool = False) -> dict:
@@ -201,7 +248,18 @@ def run(*, dry_run: bool = False) -> dict:
         except Exception:
             log.exception("reflection failed for %s", slug)
             results[slug] = {"skipped": "error"}
-    ok = [s for s, r in results.items() if "skipped" not in r]
+    # Club lane: one extra pass over the whole week's material (all members together) for
+    # club-level lore — traditions, jokes, recurring debates — kept alive weekly after the
+    # one-time archive-mining seed.
+    club_lines = [ln for lines in per_member.values() for ln in lines]
+    try:
+        results["club"] = consolidate(club_lines, scope="club", dry_run=dry_run)
+    except Exception:
+        log.exception("reflection club lane failed")
+        results["club"] = {"skipped": "error"}
+    # Watermark advances on member success only, so a failed member's material retries next week
+    # (the club lane re-seeing a week of material is harmless — consolidation won't duplicate).
+    ok = [s for s, r in results.items() if s != "club" and "skipped" not in r]
     if not dry_run:
         if ok:  # advance only if at least one member succeeded; failures retry next week
             db.set_job_state(JOB_KEY, {**state, "conv_id": max_conv, "mail_sent_at": max_mail})

@@ -113,6 +113,49 @@ def test_first_run_mail_cursor_is_forward_only(fresh_db, monkeypatch):
     assert state["mail_sent_at"] == "2020-01-01T00:00:00Z"  # cursor seeded at archive max
 
 
+def test_consolidate_club_scope(fresh_db, monkeypatch):
+    monkeypatch.setattr(reflection.oliver, "complete", lambda *a, **k: json.dumps(
+        {"add": ["The December meeting is traditionally social, no book"], "update": [], "retire": []}))
+    out = reflection.consolidate(["[mailing list] jamie — Dec: let's do the usual social"],
+                                 scope="club")
+    assert out == {"add": 1, "update": 0, "retire": 0}
+    club = db.get_memories(scope="club")
+    assert club[0]["subject"] is None and club[0]["source"] == reflection.SOURCE
+    assert "December meeting" in club[0]["note"]
+
+
+def test_club_provenance_protected(fresh_db, monkeypatch):
+    protected = db.add_memory("Admin-curated club fact", scope="club", source="admin")
+    monkeypatch.setattr(reflection.oliver, "complete", lambda *a, **k: json.dumps(
+        {"add": [], "update": [{"id": protected, "note": "OVERWRITTEN"}], "retire": [protected]}))
+    out = reflection.consolidate(["material"], scope="club")
+    assert out == {"add": 0, "update": 0, "retire": 0}          # both ops dropped
+    assert db.get_memories(scope="club")[0]["note"] == "Admin-curated club fact"
+
+
+def test_weekly_run_includes_club_lane(fresh_db, monkeypatch):
+    _log_turns("jamie", 4)
+    calls = []
+
+    def fake_complete(system, user, **kw):
+        calls.append(system)
+        if "THE CLUB ITSELF" in system:
+            return json.dumps({"add": ["Running joke: GEB is eternally deferred"],
+                               "update": [], "retire": []})
+        return json.dumps({"add": ["Likes big-idea nonfiction"], "update": [], "retire": []})
+
+    monkeypatch.setattr(reflection.oliver, "complete", fake_complete)
+    out = reflection.run()
+    assert out["results"]["jamie"]["add"] == 1
+    assert out["results"]["club"]["add"] == 1                   # club lane ran
+    assert len(calls) == 2                                      # one member call + one club call
+    assert db.get_memories(scope="club")[0]["note"].startswith("Running joke")
+    with db.connect() as c:
+        body = c.execute("SELECT body FROM activity_events WHERE kind='reflection' "
+                         "ORDER BY id DESC LIMIT 1").fetchone()["body"]
+    assert "club: +1" in body                                   # audit line includes the club lane
+
+
 def test_dry_run_writes_nothing(fresh_db, monkeypatch, capsys):
     _log_turns("jamie", 4)
     monkeypatch.setattr(reflection.oliver, "complete", lambda *a, **k: json.dumps(

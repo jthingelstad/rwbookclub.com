@@ -1350,6 +1350,26 @@ def latest_mail_sent_at() -> str | None:
     return row["m"] if row and row["m"] else None
 
 
+def mail_messages_between(start: str, end: str, *, member_slug: str | None = None,
+                          exclude_from: str | None = None, limit: int = 500) -> list[dict]:
+    """Member-authored archive mail with start < sent_at <= end, oldest first — the archive
+    miner's per-year feed (member-filtered for the member lane, unfiltered for the club lane)."""
+    sql = (
+        "SELECT m.message_id, m.subject, m.from_email, cm.slug AS member_slug, m.sent_at, "
+        "m.body_clean FROM mail_messages m JOIN club_members cm ON cm.id = m.member_id "
+        "WHERE m.sent_at > ? AND m.sent_at <= ?"
+    )
+    args: list = [start, end]
+    if member_slug:
+        sql += " AND cm.slug = ?"; args.append(member_slug)
+    if exclude_from:
+        sql += " AND m.from_email != ?"; args.append(exclude_from.lower())
+    sql += " ORDER BY m.sent_at ASC LIMIT ?"
+    args.append(limit)
+    with connect() as conn:
+        return [dict(r) for r in conn.execute(sql, args)]
+
+
 def get_mail_thread(thread_id: str, *, limit: int = 50) -> dict | None:
     limit = max(1, min(int(limit), 100))
     with connect() as conn:

@@ -378,7 +378,7 @@ def _question_block(question: str, speaker: str | None, member_slug: str | None,
         if recent:
             bits = "; ".join(f"{r['medium']} — \"{r['snippet']}\"" for r in recent)
             parts.append(f"[Recently with them elsewhere: {bits}]")
-    club = db.get_memories(scope="club", limit=3)
+    club = db.get_memories(scope="club", limit=6)  # 6 (was 3): archive-mined lore + weekly club lane
     if club:
         parts.append("[Club lore you've noted: " + "; ".join(m["note"] for m in club) + "]")
     if summary:
