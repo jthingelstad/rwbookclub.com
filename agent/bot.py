@@ -490,6 +490,7 @@ async def on_message(message: discord.Message) -> None:
     content = message.content or ""
 
     mode = _channel_mode(cid, config.ASK_CHANNEL_ID, config.MONITORED_CHANNEL_IDS)
+    name_only = False  # name appeared, but no @-mention and not a reply — maybe ABOUT, not TO
     # #ask-oliver: answer everything. (No ask-channel configured → answer everywhere, dev.)
     if mode == "answer":
         question = content.strip()
@@ -497,12 +498,14 @@ async def on_message(message: discord.Message) -> None:
     elif mode == "monitored":
         is_mention = client.user.mentioned_in(message) and not message.mention_everyone
         has_name = bool(NAME_RE.search(content))
-        if not _is_addressed(is_mention, has_name, await _is_reply_to_bot(message)):
+        is_reply = await _is_reply_to_bot(message)
+        if not _is_addressed(is_mention, has_name, is_reply):
             if content.strip():
                 member_slug = db.member_slug_for_user(str(message.author.id))
                 db.log_message(str(cid), "user", content.strip(),
                                speaker=message.author.display_name, member_slug=member_slug)
             return
+        name_only = has_name and not is_mention and not is_reply
         question = _strip_address(content, client.user.id)
     else:
         return
@@ -513,10 +516,16 @@ async def on_message(message: discord.Message) -> None:
     async with _channel_locks[message.channel.id]:
         async with message.channel.typing():
             try:
+                # A name-only trigger (no @-mention, not a reply) runs through the restraint gate:
+                # members often talk ABOUT Oliver to each other, and the model judges whether it
+                # was actually addressed — the NO_REPLY sentinel means stay silent. persist=False
+                # on this path so the gate note / sentinel never pollute channel memory; we log
+                # manually per outcome below.
+                prompt = (oliver.PASSING_MENTION_NOTE + question) if name_only else question
                 reply = await asyncio.to_thread(
-                    oliver.answer, question, str(message.channel.id),
+                    oliver.answer, prompt, str(message.channel.id),
                     message.author.display_name, str(message.author.id), str(message.id),
-                    medium="discord",
+                    medium="discord", persist=not name_only,
                 )
             except Exception as e:
                 log.exception("Oliver failed to answer")
@@ -528,6 +537,21 @@ async def on_message(message: discord.Message) -> None:
                     f"Error: {type(e).__name__}: {e}",
                 )
                 reply = "Sorry — I hit a snag answering that. Try me again in a moment."
+
+    if name_only:
+        if reply.strip().strip("`").startswith(oliver.NO_REPLY_PREFIX):
+            # The member was talking about Oliver, not to it — stay silent; keep their message as
+            # plain channel context (same as any unaddressed message).
+            member_slug = db.member_slug_for_user(str(message.author.id))
+            db.log_message(str(cid), "user", content.strip(),
+                           speaker=message.author.display_name, member_slug=member_slug)
+            return
+        # It was a genuine ask after all — persist the exchange (the gated call used
+        # persist=False), logging the member's ORIGINAL message, not the gate-note prompt.
+        member_slug = db.member_slug_for_user(str(message.author.id))
+        db.log_message(str(cid), "user", question,
+                       speaker=message.author.display_name, member_slug=member_slug)
+        db.log_message(str(cid), "assistant", reply, member_slug=member_slug)
 
     # Post the reply. message.reply can fail if the original was deleted, the bot
     # lacks Send Messages / Read Message History, or Discord HTTPs out — try a plain

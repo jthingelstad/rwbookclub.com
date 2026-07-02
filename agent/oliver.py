@@ -46,6 +46,17 @@ MAX_TOOL_ROUNDS = 8
 SUMMARIZE_THRESHOLD = 24   # un-summarized turns before folding into the rolling summary
 KEEP_RECENT = 8           # turns left out of the summary (still shown verbatim)
 NO_REPLY_PREFIX = "[[NO_REPLY:"
+# Prepended when Oliver's NAME merely appeared in a monitored-channel message (no @-mention, not a
+# reply to Oliver): members often talk ABOUT Oliver to each other, and jumping in is intrusive.
+# Mirrors the mailing-list restraint gate — the model judges, the bot honors the sentinel.
+PASSING_MENTION_NOTE = (
+    "[Channel note: your name appeared in this message, but you were NOT @-mentioned and it is "
+    "not a reply to you — the member may be talking ABOUT you to the other members, not TO you. "
+    "If they are not actually asking you for something, reply exactly "
+    f"`{NO_REPLY_PREFIX} short_reason]]` and nothing else — a passing reference, praise, an "
+    "announcement about you, or member-to-member conversation deserves your silence. Err on "
+    "silence. Only answer if the message genuinely addresses you.]\n\n"
+)
 COMPOSE_MAX_TOKENS = 400  # proactive/voiced surfaces are short
 
 log = logging.getLogger("oliver")

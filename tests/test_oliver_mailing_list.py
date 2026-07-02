@@ -88,6 +88,16 @@ def test_mailing_list_prompt_uses_unquoted_visible_text(monkeypatch):
     assert "Anything I should answer?" not in calls[0]
 
 
+def test_passing_mention_note_shape():
+    # The Discord name-only restraint gate reuses the mailing-list sentinel contract.
+    note = oliver.PASSING_MENTION_NOTE
+    assert oliver.NO_REPLY_PREFIX in note
+    assert "Err on silence" in note and "talking ABOUT you" in note
+    # The bot's sentinel check must tolerate backtick-wrapped output (models do this).
+    for raw in ("[[NO_REPLY: passing_reference]]", "`[[NO_REPLY: praise]]`"):
+        assert raw.strip().strip("`").startswith(oliver.NO_REPLY_PREFIX)
+
+
 def test_explicit_member_identity_token_resolves_member():
     assert oliver._resolve_member("R/W Book Club", "member:jamie") == "jamie"
     assert oliver._resolve_member("R/W Book Club", "member:not-a-member") is None
