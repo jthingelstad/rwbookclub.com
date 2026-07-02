@@ -531,13 +531,13 @@ TOOLS = [
     },
     {
         "name": "pick_prospects",
-        "description": "DISCOVER where a member should even look for their next pick: their taste "
-                       "profile (memories + their reviews of everyone's picks), the Book Cloud's "
-                       "unread orbit (titles the club has floated but never read — theirs and the "
-                       "club's), loved authors with unread notable works, the club's coverage "
-                       "gaps, and targeted web_search angles. Use it FIRST when someone wants "
-                       "help finding candidates, then web_search the angles, then pick_fit the "
-                       "best 2-3.",
+        "description": "DISCOVER pick candidates for a member. Works best WITH a direction — this "
+                       "club picks topic-first, so if the member hasn't said where they want to "
+                       "go, ask them before calling this. Returns: their taste profile, "
+                       "direction-led web_search angles (fresh, never-mentioned books are usually "
+                       "the best answer), the club's coverage gaps, and — as supporting color, "
+                       "not the main course — the Book Cloud's unread orbit and loved authors "
+                       "with unread works. Then web_search the angles and pick_fit the best 2-3.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -695,14 +695,26 @@ def _pick_prospects(tool_input: dict, ctx: dict) -> dict:
     topics_sorted = sorted(stats.get("topics") or [], key=lambda t: t[1])
     out["coverageGaps"] = {"leastReadTopics": topics_sorted[:5],
                            "fiction": stats.get("fiction"), "nonfiction": stats.get("nonfiction")}
-    angles = [f"new book by {a['author']} 2025 2026"
-              for a in (out["lovedAuthorsUnread"] or [])[:2]]
-    angles += [f"notable acclaimed {t} books 2024 2025 2026" for t, _n in topics_sorted[:2]]
+    # Direction leads: when the member has said where they want to go, the fresh-search angles
+    # for that lane come FIRST — the cloud/author leads are supporting color, not the shortlist.
+    angles: list[str] = []
     if direction:
-        angles.append(f"best recent {direction} books for a book club 2025 2026")
+        angles += [
+            f"best acclaimed {direction} books 2024 2025 2026",
+            f"award-winning {direction} books recent",
+            f"{direction} book accessible deep exploration general readers",
+        ]
+    angles += [f"notable acclaimed {t} books 2024 2025 2026" for t, _n in topics_sorted[:2]]
+    angles += [f"new book by {a['author']} 2025 2026"
+               for a in (out["lovedAuthorsUnread"] or [])[:2]]
     out["searchAngles"] = angles
-    out["note"] = ("These are leads, not results — web_search the angles for current candidates, "
-                   "then pick_fit the best 2-3.")
+    out["note"] = (
+        ("The direction drives: web_search the direction angles FIRST for fresh, never-mentioned "
+         "candidates — cloudProspects and lovedAuthorsUnread are supporting color, only where "
+         "they fit the direction. Then pick_fit the best 2-3."
+         if direction else
+         "These are leads, not results — fresh candidates via web_search are fully in scope and "
+         "often the best answer; web_search the angles, then pick_fit the best 2-3."))
     return out
 
 

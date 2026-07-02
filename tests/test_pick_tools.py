@@ -109,15 +109,21 @@ def test_pick_prospects_defaults_to_asker_and_splits_cloud(fresh_db):
     assert any("new book by" in a for a in out["searchAngles"])
 
 
-def test_pick_prospects_direction_angle(fresh_db):
-    out = json.loads(dispatch("pick_prospects", {"direction": "fiction"}, {"channel_id": "123"}))
-    assert any("fiction" in a for a in out["searchAngles"])
+def test_pick_prospects_direction_angles_lead(fresh_db):
+    out = json.loads(dispatch("pick_prospects", {"direction": "urban history"}, {"channel_id": "123"}))
+    assert "urban history" in out["searchAngles"][0]           # direction angles come FIRST
+    assert sum("urban history" in a for a in out["searchAngles"]) >= 3
+    assert "direction drives" in out["note"]                   # fresh-first guidance
+    plain = json.loads(dispatch("pick_prospects", {}, {"channel_id": "123"}))
+    assert "fresh candidates" in plain["note"].lower() or "fresh" in plain["note"]
 
 
 def test_doctrines_present_in_system_prompt():
     p = oliver.OPERATIONAL_PROMPT
     assert "BOOK CLOUD." in p and "not a queue" in p
     assert "PICK HELP." in p and "THE MEETING THE BOOK WOULD PRODUCE" in p
-    assert "pick_prospects first" in p and "never invent a reaction" in p
+    assert "TOPIC-FIRST" in p and "ASK BEFORE ADVISING" in p   # ask where they want to go, first
+    assert "seasoning, not the meal" in p                      # cloud/known-author leads demoted
+    assert "would LEARN" in p and "never invent a reaction" in p
     names = {t.get("name") for t in tools.TOOLS}
     assert {"book_cloud_add", "book_cloud_recent", "pick_fit", "pick_prospects"} <= names
