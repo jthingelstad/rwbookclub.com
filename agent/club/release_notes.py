@@ -32,7 +32,9 @@ Build-time preview / test:
 from __future__ import annotations
 
 import argparse
+import logging
 import re
+import subprocess
 
 from agent import clock, db, oliver, publish
 from agent import corpus_read as cr
@@ -244,6 +246,45 @@ def release_notes_email(*, days: int | None = None, since_commit: str | None = N
     subject = _extract_subject(out) or f"Under my hood: what changed — {_friendly_date(clock.club_today_iso())}"
     return {"subject": subject, "body": body, "window": material["window"],
             "release_name": material["release_name"]}
+
+
+log = logging.getLogger("oliver.release_notes")
+
+
+def _tag_slug(name: str) -> str:
+    return re.sub(r"-{2,}", "-", re.sub(r"[^a-z0-9]+", "-", name.lower())).strip("-")
+
+
+def create_github_release(*, name: str, commit: str, body: str) -> str | None:
+    """Tag `commit` and publish a GitHub release for a christened release — the permanent code
+    reference for what shipped. Returns the release URL, or None on any failure: the club email
+    has already gone out by the time this runs, so GitHub is strictly best-effort (log + activity
+    warning, never raise). An existing tag is reused (e.g. one cut by hand); an existing release
+    for the tag is returned as-is."""
+    tag = _tag_slug(name) if name else f"release-{clock.club_today_iso()}"
+    title = name or tag
+    try:
+        git = publish._bin("git")
+        gh = publish._bin("gh")
+        if not publish.git_output(["tag", "-l", tag]).strip():
+            publish._run([git, "tag", "-a", tag, commit, "-m", f"{title} — Oliver release"], timeout=15)
+            publish._run([git, "push", "origin", tag], timeout=60)
+        view = subprocess.run([gh, "release", "view", tag, "--json", "url", "-q", ".url"],
+                              cwd=publish.REPO_ROOT, capture_output=True, text=True,
+                              timeout=30, env=publish._ENV)
+        if view.returncode == 0 and view.stdout.strip():
+            return view.stdout.strip()  # already published (e.g. cut by hand) — reuse
+        made = subprocess.run([gh, "release", "create", tag, "--title", title, "--notes-file", "-"],
+                              cwd=publish.REPO_ROOT, capture_output=True, text=True,
+                              timeout=60, env=publish._ENV, input=body)
+        if made.returncode != 0:
+            raise RuntimeError((made.stderr or made.stdout or "")[-500:])
+        return made.stdout.strip() or None
+    except Exception as e:  # noqa: BLE001 — best-effort by contract
+        log.exception("GitHub release for %r failed", tag)
+        db.add_activity("warning", "GitHub release failed",
+                        f"Tag: {tag}\nCommit: {commit}\n{type(e).__name__}: {e}")
+        return None
 
 
 def _main() -> None:

@@ -204,3 +204,62 @@ def test_club_context_carries_current_release(fresh_db):
     ctx = context.club_context()
     assert 'running the release named "Blistering Blindsight"' in ctx
     assert "Friday, July 3" in ctx
+
+
+# --- GitHub release (tag + gh) on a christened list send ---
+
+
+def test_tag_slug():
+    assert rn._tag_slug("Quiet Quicksilver") == "quiet-quicksilver"
+    assert rn._tag_slug("Blistering — Blindsight!") == "blistering-blindsight"
+
+
+def _gh_world(monkeypatch, *, tag_exists, view_rc, create_rc=0):
+    calls = []
+    monkeypatch.setattr(rn.publish, "_bin", lambda name: name)
+    monkeypatch.setattr(rn.publish, "git_output", lambda args, **kw: "tagname" if tag_exists else "")
+
+    def fake_prun(cmd, timeout, cwd=None):
+        calls.append(("run", cmd))
+
+    monkeypatch.setattr(rn.publish, "_run", fake_prun)
+
+    def fake_sub(cmd, **kw):
+        calls.append(("sub", cmd))
+        class R:  # noqa: N801
+            pass
+        r = R()
+        if "view" in cmd:
+            r.returncode = view_rc
+            r.stdout = "https://github.com/x/releases/tag/t\n" if view_rc == 0 else ""
+            r.stderr = ""
+        else:
+            r.returncode = create_rc
+            r.stdout = "https://github.com/x/releases/tag/new\n" if create_rc == 0 else ""
+            r.stderr = "boom" if create_rc else ""
+        return r
+
+    monkeypatch.setattr(rn.subprocess, "run", fake_sub)
+    return calls
+
+
+def test_github_release_creates_tag_and_release(monkeypatch, fresh_db):
+    calls = _gh_world(monkeypatch, tag_exists=False, view_rc=1)
+    url = rn.create_github_release(name="Quiet Quicksilver", commit="abc123", body="notes body")
+    assert url == "https://github.com/x/releases/tag/new"
+    run_cmds = [c for kind, c in calls if kind == "run"]
+    assert any("tag" in c for c in run_cmds) and any("push" in c for c in run_cmds)
+
+
+def test_github_release_reuses_existing(monkeypatch, fresh_db):
+    calls = _gh_world(monkeypatch, tag_exists=True, view_rc=0)
+    url = rn.create_github_release(name="Quiet Quicksilver", commit="abc123", body="x")
+    assert url == "https://github.com/x/releases/tag/t"
+    assert not [c for kind, c in calls if kind == "run"]  # no tag/push when the tag exists
+
+
+def test_github_release_failure_is_swallowed(monkeypatch, fresh_db):
+    _gh_world(monkeypatch, tag_exists=False, view_rc=1, create_rc=1)
+    assert rn.create_github_release(name="Quiet Quicksilver", commit="abc123", body="x") is None
+    acts = fresh_db.pending_activity(limit=5)
+    assert any("GitHub release failed" in a["title"] for a in acts)

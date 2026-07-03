@@ -678,12 +678,19 @@ async def release_notes_cmd(interaction: discord.Interaction, days: int | None =
             # release-notes scopes from (so it auto-covers everything shipped since). A named
             # list send is what christens the release — the name becomes current_release().
             head = release_notes.head_commit()
+            gh_url = None
             if head:
                 db.record_release_notes_sent(head, scope=scope, subject=email["subject"],
                                              window=email.get("window"), release_name=name)
+                # The permanent code reference: tag + GitHub release named after the christening.
+                # Best-effort (the email already went); failures land in #oliver-log.
+                gh_url = await asyncio.to_thread(
+                    release_notes.create_github_release,
+                    name=name or "", commit=head, body=email["body"])
+            gh_line = f"\nGitHub release: {gh_url}" if gh_url else ""
             await interaction.followup.send(
                 f"📣 Sent release notes ({scope}) to the club list and mirrored to the main "
-                f"channel.\nSubject: *{email['subject']}*{christened}", ephemeral=True)
+                f"channel.\nSubject: *{email['subject']}*{christened}{gh_line}", ephemeral=True)
         else:
             slug = db.member_slug_for_user(str(interaction.user.id))
             rec = db.email_for_member(slug) if slug else None
