@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 from aiohttp import web
 
 from agent import config
-from agent.webapp import routes_admin, routes_member, sessions, state
+from agent.webapp import routes_admin, routes_member, routes_oliver_pages, sessions, state
 from agent.webapp.render import render
 
 log = logging.getLogger("oliver.webapp")
@@ -55,8 +55,10 @@ _SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "no-referrer",
+    # No 'unsafe-inline' anywhere: all CSS/JS is served from /webapp/static/, so this CSP is a
+    # real XSS control on the public Funnel endpoint, not a documented backstop.
     "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; "
-                               "style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; "
+                               "style-src 'self'; script-src 'self'; "
                                "frame-ancestors 'none'",
 }
 
@@ -81,7 +83,7 @@ async def _mw(request: web.Request, handler):
     _last_activity = _now()
     path = request.path
 
-    if path == "/healthz":
+    if path == "/healthz" or path.startswith("/webapp/static/"):
         return await handler(request)
     # Token-exchange entry is the one authenticated-by-token (not cookie) route.
     if path == "/webapp" and request.query.get("t"):
@@ -105,7 +107,16 @@ async def _mw(request: web.Request, handler):
                 return web.json_response({"error": "bad csrf"}, status=403)
             return web.Response(status=403, text="Bad CSRF token — reload and try again.")
 
-    return await handler(request)
+    resp = await handler(request)
+    # Sliding renewal: an ACTIVE visit never expires mid-edit (abandoned ones still die on TTL).
+    fresh = sessions.refresh_if_stale(session)
+    if fresh:
+        try:
+            resp.set_cookie(sessions.COOKIE_NAME, fresh, httponly=True, secure=True,
+                            samesite="Lax", max_age=int(sessions._SESSION_TTL.total_seconds()))
+        except AttributeError:
+            pass  # streamed/exception responses without set_cookie — renew on the next request
+    return resp
 
 
 # ── Core routes (entry, home, publish, health) ───────────────────────────────
@@ -129,7 +140,9 @@ async def entry(request: web.Request) -> web.Response:
             httponly=True, secure=True, samesite="Lax", max_age=int(sessions._SESSION_TTL.total_seconds()),
         )
         raise resp
-    return render("home.html", request)
+    session = request.get("session") or {}
+    ctx = await asyncio.to_thread(routes_member.home_context, session.get("slug", ""))
+    return render("home.html", request, **ctx)
 
 
 async def publish_now(request: web.Request) -> web.Response:
@@ -157,8 +170,12 @@ def _build_app() -> web.Application:
         web.get("/webapp", entry),
         web.post("/webapp/publish", publish_now),
     ])
+    from pathlib import Path
+    app.router.add_static("/webapp/static/", Path(__file__).parent / "static")
     routes_member.add_routes(app)
     routes_admin.add_routes(app)
+    routes_oliver_pages.add_member_routes(app)
+    routes_oliver_pages.add_admin_routes(app)
     return app
 
 

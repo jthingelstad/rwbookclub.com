@@ -3,19 +3,52 @@
 {% block title %}Home{% endblock %}
 {% block content %}
   <h1>Hi {{ member_name }} 👋</h1>
-  <p class="muted">Manage your book club data here. Changes save instantly to Oliver; the public site
-  updates when you hit <strong>Publish</strong> (or automatically a few minutes after you're done).</p>
-  <div class="card"><a href="/webapp/ratings"><strong>⭐ Rate books</strong></a><br>
-    <span class="muted">Quick 1–5 / DNF across every book — one click each.</span></div>
-  <div class="card"><a href="/webapp/reviews"><strong>✍️ Write a review</strong></a><br>
-    <span class="muted">A full review (Markdown) for a book.</span></div>
-  <div class="card"><a href="/webapp/lists"><strong>📋 Your lists</strong></a><br>
-    <span class="muted">Curate lists of club books.</span></div>
-  <div class="card"><a href="/webapp/profile"><strong>👤 Profile</strong></a><br>
-    <span class="muted">Your websites, email, and phone.</span></div>
-  {% if is_admin %}
-  <h2>Admin</h2>
-  <div class="card"><a href="/webapp/admin/books">📚 Edit book data</a> ·
-    <a href="/webapp/admin/meetings">🗓️ Meetings &amp; hosts</a></div>
+
+  {% if meeting and meeting.book %}
+  <div class="card">
+    <strong>📅 Next meeting:</strong> <em>{{ meeting.book.title }}</em>
+    <span class="muted">— {{ meeting.date }}{% if meeting.pickerNames %},
+      picked by {{ meeting.pickerNames | join(' & ') }}{% endif %}</span>
+  </div>
   {% endif %}
+
+  {% if unrated %}
+  <h2>⭐ You haven't rated these yet</h2>
+  <p class="muted">One click each — they save instantly.</p>
+  <table>
+    <tbody id="unrated">
+      {% for b in unrated %}
+      <tr>
+        <td>{{ b.title }}{% if b.year %} <span class="muted">· {{ b.year }}</span>{% endif %}</td>
+        <td class="right nowrap">
+          <span class="stars" data-slug="{{ b.slug }}">
+            {% for i in range(1, 6) %}<span class="star off" data-v="{{ i }}">★</span>{% endfor %}
+          </span>
+          <button class="dnf" data-slug="{{ b.slug }}">DNF</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted">The full grid is under <a href="/webapp/ratings">Ratings</a>.</p>
+  {% else %}
+  <p class="ok">⭐ You're all caught up on ratings.</p>
+  {% endif %}
+
+  {% if review_debt %}
+  <div class="card">✍️ You owe <strong>{{ review_debt }}</strong> review{{ '' if review_debt == 1 else 's' }}
+    — <a href="/webapp/reviews">pick one off the list</a>.</div>
+  {% endif %}
+
+  <h2>Everything else</h2>
+  <p>
+    <a href="/webapp/ratings">⭐ Ratings</a> ·
+    <a href="/webapp/reviews">✍️ Reviews</a> ·
+    <a href="/webapp/lists">📋 Lists</a> ·
+    <a href="/webapp/memories">🧠 What Oliver knows about me</a> ·
+    <a href="/webapp/bookcloud">☁️ Book cloud</a> ·
+    <a href="/webapp/profile">👤 Profile</a>
+  </p>
+  <p class="muted">Changes save instantly to Oliver; the public site updates when you hit
+    <strong>Publish</strong> (or automatically a few minutes after you're done).</p>
 {% endblock %}

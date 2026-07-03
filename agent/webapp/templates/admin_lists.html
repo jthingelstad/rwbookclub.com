@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "_list_card.html" import list_summary %}
-{% set nav = "club-lists" %}
+{% set nav = "admin-lists" %}
 {% block title %}Club lists (admin){% endblock %}
 {% block content %}
   <h1>Club lists</h1>
@@ -15,6 +15,6 @@
     <input type="hidden" name="return" value="/webapp/admin/lists">
     <label>Name</label><input type="text" name="name" required>
     <label>Description</label><input type="text" name="description">
-    <p style="margin-top:.8rem"><button class="primary">Create club list</button></p>
+    <p class="mt-8"><button class="primary">Create club list</button></p>
   </form>
 {% endblock %}

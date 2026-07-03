@@ -75,7 +75,7 @@ def test_recent_book_cloud_member_and_kind_filters(fresh_db):
 
 
 def test_admin_bookcloud_view_helper(fresh_db):
-    from agent.webapp import routes_admin
+    from agent.webapp import routes_oliver_pages as routes_admin
     db.add_book_cloud_entry(title="Piranesi", reason="light fiction lead", surface="discord",
                             mentioned_by="loren")
     db.add_book_cloud_entry(title="Watchmen", reason="mention of a read book", surface="discord",

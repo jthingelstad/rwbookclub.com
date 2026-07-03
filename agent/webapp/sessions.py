@@ -122,6 +122,24 @@ def make_session(member: dict) -> str:
     return f"{raw}.{sig}"
 
 
+def refresh_if_stale(session: dict) -> str | None:
+    """A re-signed cookie with a fresh expiry when the session is past half its TTL, else None.
+
+    Sliding renewal WITHIN an active visit: someone composing for 40 minutes never gets cut off
+    mid-save, while an abandoned session still dies _SESSION_TTL after its last request. The
+    payload (identity, admin flag, CSRF secret) is unchanged — only `exp` moves."""
+    try:
+        exp = datetime.fromisoformat(session["exp"])
+    except (KeyError, ValueError, TypeError):
+        return None
+    if exp - _now() > _SESSION_TTL / 2:
+        return None
+    payload = {**session, "exp": (_now() + _SESSION_TTL).isoformat()}
+    raw = _b64e(json.dumps(payload, separators=(",", ":")).encode())
+    sig = _b64e(hmac.new(_secret(), raw.encode(), hashlib.sha256).digest())
+    return f"{raw}.{sig}"
+
+
 def read_session(cookie: str | None) -> dict | None:
     """Verify a session cookie's signature + expiry; return the payload dict or None."""
     if not cookie or "." not in cookie:

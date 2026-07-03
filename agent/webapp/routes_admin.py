@@ -1,4 +1,5 @@
-"""Admin-facing routes: edit book data, add/edit meetings, change hosts. Gated by the admin flag in
+"""Admin-facing routes for the CLUB RECORD: books, meetings, members, club lists.
+Oliver's-brain pages (events, book cloud, memories) live in routes_oliver_pages. Gated by the admin flag in
 the session (enforced in the server middleware for any /webapp/admin path). Reuses `clubdb.upsert_book`
 / `corpus_write.schedule_meeting` and the new `clubdb.update_meeting`/`set_meeting_hosts` writers."""
 
@@ -16,6 +17,7 @@ from agent.club import openlibrary
 from agent.webapp import state
 from agent.webapp.render import render
 from agent.webapp.routes_member import apply_identity_op
+from agent.webapp.routes_oliver_pages import _members
 from corpus.paths import DATA_DIR
 
 log = logging.getLogger("oliver.webapp")
@@ -25,10 +27,6 @@ def _form(request: web.Request):
     return request.get("form") or {}
 
 
-def _members() -> list[dict]:
-    with db.connect() as conn:
-        return [{"slug": m["slug"], "name": m["name"], "id": m["id"], "current": bool(m["is_current"])}
-                for m in clubdb.all_members(conn)]
 
 
 # ── Book data ────────────────────────────────────────────────────────────────
@@ -409,148 +407,6 @@ async def member_save(request: web.Request) -> web.Response:
     raise web.HTTPFound(f"/webapp/admin/members/{slug}")
 
 
-# ── Club events (read-only, filterable) ──────────────────────────────────────
-def _event_categories() -> list[str]:
-    with db.connect() as conn:
-        return [r["category"] for r in conn.execute(
-            "SELECT DISTINCT category FROM events ORDER BY category")]
-
-
-def _load_events(category: str, member_slug: str, since: str, until: str, limit: int) -> list[dict]:
-    member_id = None
-    if member_slug:
-        with db.connect() as conn:
-            member_id = clubdb.member_id_for_slug(conn, member_slug)
-    return db.timeline(category=category or None, member_id=member_id,
-                       since=since or None, until=until or None, limit=limit)
-
-
-async def events_page(request: web.Request) -> web.Response:
-    q = request.query
-    category, member = q.get("category", ""), q.get("member", "")
-    since, until = q.get("since", ""), q.get("until", "")
-    try:
-        limit = min(max(int(q.get("limit") or 200), 1), 1000)
-    except ValueError:
-        limit = 200
-    events = await asyncio.to_thread(_load_events, category, member, since, until, limit)
-    categories = await asyncio.to_thread(_event_categories)
-    members = await asyncio.to_thread(_members)
-    members = sorted(members, key=lambda m: m["name"].lower())
-    return render("admin_events.html", request, events=events, categories=categories,
-                  members=members, query_string=request.query_string,
-                  f={"category": category, "member": member,
-                     "since": since, "until": until, "limit": limit})
-
-
-async def event_delete(request: web.Request) -> web.Response:
-    """POST /webapp/admin/events/delete — remove one timeline event by id (admin housekeeping).
-    Redirects back to the events view, preserving the active filters via the `return` field."""
-    form = _form(request)
-    try:
-        event_id = int(form.get("id", ""))
-    except ValueError:
-        raise web.HTTPFound("/webapp/admin/events")
-    await asyncio.to_thread(db.delete_event, event_id)
-    ret = (form.get("return") or "").strip()
-    if not ret.startswith("/webapp/admin/events"):
-        ret = "/webapp/admin/events"
-    raise web.HTTPFound(ret)
-
-
-# ── Book Cloud ───────────────────────────────────────────────────────────────
-def _bookcloud_view(*, view: str, q: str, member: str, kind: str, unread: bool,
-                    limit: int) -> dict:
-    """Filtered Book Cloud data for the admin page. `view` is 'titles' (aggregated orbit — one row
-    per title with first/last mention, who, count) or 'mentions' (raw rows, newest first).
-    `unread` (titles view) drops titles matching books the club has read."""
-    read_slugs = {b["slug"] for b in cr.books() if b.get("isRead")}
-    if view == "mentions":
-        rows = db.recent_book_cloud(limit=limit, query=q or None, member=member or None,
-                                    kind=kind or None)
-        return {"view": "mentions", "rows": rows}
-    titles = db.book_cloud_titles(query=q or None, member=member or None, limit=limit)
-    for t in titles:
-        t["isRead"] = bool(t.get("book_slug") and t["book_slug"] in read_slugs)
-    if unread:
-        titles = [t for t in titles if not t["isRead"]]
-    return {"view": "titles", "rows": titles}
-
-
-def _bookcloud_kinds() -> list[str]:
-    with db.connect() as conn:
-        return [r["reason_kind"] for r in conn.execute(
-            "SELECT DISTINCT reason_kind FROM book_cloud "
-            "WHERE reason_kind IS NOT NULL ORDER BY reason_kind")]
-
-
-async def bookcloud_page(request: web.Request) -> web.Response:
-    p = request.query
-    view = "mentions" if p.get("view") == "mentions" else "titles"
-    q, member, kind = p.get("q", "").strip(), p.get("member", ""), p.get("kind", "")
-    unread = p.get("include_read") != "1"    # titles view defaults to unread-only
-    try:
-        limit = min(max(int(p.get("limit") or 200), 1), 500)
-    except ValueError:
-        limit = 200
-    data = await asyncio.to_thread(_bookcloud_view, view=view, q=q, member=member,
-                                   kind=kind, unread=unread, limit=limit)
-    kinds = await asyncio.to_thread(_bookcloud_kinds)
-    members = sorted(await asyncio.to_thread(_members), key=lambda m: m["name"].lower())
-    return render("admin_bookcloud.html", request, rows=data["rows"], kinds=kinds,
-                  members=members,
-                  f={"view": data["view"], "q": q, "member": member, "kind": kind,
-                     "unread": unread, "limit": limit})
-
-
-# ── Memories ─────────────────────────────────────────────────────────────────
-# Oliver's durable memory store (member tastes + club lore, mostly reflection-groomed). This page
-# replaced the retired `/oliver memory search/edit/forget` commands: search/filter the whole set,
-# fix a note inline, retire what's wrong. Provenance (source) is read-only.
-def _memory_sources() -> list[str]:
-    with db.connect() as conn:
-        return [r["source"] for r in conn.execute(
-            "SELECT DISTINCT source FROM memories WHERE status = 'active' AND source IS NOT NULL "
-            "ORDER BY source")]
-
-
-async def memories_page(request: web.Request) -> web.Response:
-    p = request.query
-    q, subject, scope, source = (p.get("q", "").strip(), p.get("subject", "").strip(),
-                                 p.get("scope", ""), p.get("source", ""))
-    try:
-        limit = min(max(int(p.get("limit") or 200), 1), 500)
-    except ValueError:
-        limit = 200
-    rows = await asyncio.to_thread(
-        db.get_memories, subject=subject or None, scope=scope or None,
-        query=q or None, source=source or None, limit=limit)
-    total = await asyncio.to_thread(db.count_memories)
-    sources = await asyncio.to_thread(_memory_sources)
-    members = sorted(await asyncio.to_thread(_members), key=lambda m: m["name"].lower())
-    return render("admin_memories.html", request, rows=rows, total=total, sources=sources,
-                  members=members,
-                  f={"q": q, "subject": subject, "scope": scope, "source": source, "limit": limit})
-
-
-async def memory_action(request: web.Request) -> web.Response:
-    form = _form(request)
-    op = form.get("op", "")
-    try:
-        memory_id = int(form.get("id") or 0)
-    except ValueError:
-        memory_id = 0
-    if op == "edit" and memory_id and (form.get("note") or "").strip():
-        await asyncio.to_thread(db.update_memory, memory_id, form["note"].strip())
-    elif op == "retire" and memory_id:
-        await asyncio.to_thread(db.delete_memory, memory_id)
-    # Memories are private (never rendered to the public site) — no mark_dirty.
-    ret = (form.get("return") or "").strip()
-    if not ret.startswith("/webapp/admin/memories"):
-        ret = "/webapp/admin/memories"
-    raise web.HTTPFound(ret)
-
-
 # ── Club lists ───────────────────────────────────────────────────────────────
 # Two pages, like the member side: the index (manage club lists) and a per-list detail page (manage
 # its books). Item ops post to the shared /webapp/lists/act (authorized as a club list for admins).
@@ -587,9 +443,4 @@ def add_routes(app: web.Application) -> None:
         web.post("/webapp/admin/members/{slug}", member_save),
         web.get("/webapp/admin/lists", lists_page),
         web.get("/webapp/admin/lists/{slug}", list_detail),
-        web.get("/webapp/admin/events", events_page),
-        web.post("/webapp/admin/events/delete", event_delete),
-        web.get("/webapp/admin/bookcloud", bookcloud_page),
-        web.get("/webapp/admin/memories", memories_page),
-        web.post("/webapp/admin/memories/act", memory_action),
     ])

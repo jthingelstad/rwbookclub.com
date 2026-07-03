@@ -9,7 +9,7 @@ from datetime import timedelta
 import aiohttp
 
 from agent import clubdb, config, db, webapp
-from agent.webapp import server, sessions
+from agent.webapp import routes_oliver_pages, server, sessions
 
 
 def _jamie_id() -> int:
@@ -158,6 +158,36 @@ def test_new_webapp_templates_render():
     assert "no SMS link" in members_page and "Discord linked" in members_page
 
 
+def test_refresh_if_stale_slides_only_near_expiry():
+    fresh = sessions.make_session(
+        {"member_id": 1, "slug": "jamie", "name": "Jamie", "is_admin": False})
+    payload = sessions.read_session(fresh)
+    assert sessions.refresh_if_stale(payload) is None  # brand-new: nothing to do
+    # Age it: rewrite exp to 5 minutes out (past half of the 30-min TTL).
+    from datetime import timedelta
+    payload["exp"] = (sessions._now() + timedelta(minutes=5)).isoformat()
+    renewed = sessions.refresh_if_stale(payload)
+    assert renewed is not None
+    renewed_payload = sessions.read_session(renewed)
+    assert renewed_payload["slug"] == "jamie"
+    assert renewed_payload["csrf"] == payload["csrf"]  # identity + CSRF unchanged, only exp moves
+
+
+def test_member_templates_render():
+    from agent.webapp.render import _env
+    base_ctx = {"csrf": "tok", "member_name": "Oliver", "is_admin": False,
+                "assets_v": "x", "site_dirty": False}
+    mem = _env.get_template("memories.html").render(
+        rows=[{"id": 1, "note": "Enjoys hard SF", "created_at": "2026-07-01T00:00:00+00:00"}],
+        **base_ctx)
+    assert "What Oliver knows about you" in mem and "/webapp/memories/act" in mem
+    cloud = _env.get_template("bookcloud.html").render(
+        rows=[], kinds=[], members=[], action="/webapp/bookcloud",
+        f={"view": "titles", "q": "", "member": "", "kind": "", "unread": True, "limit": 200},
+        **base_ctx)
+    assert "The Book Cloud" in cloud and 'action="/webapp/bookcloud"' in cloud
+
+
 def test_memories_filters_and_count(fresh_db):
     fresh_db.add_memory("Enjoys hard SF", scope="member", subject="jamie", source="reflection")
     fresh_db.add_memory("December social meeting", scope="club", source="reflection")
@@ -256,24 +286,23 @@ def test_meeting_id_or_404_rejects_non_int():
 
 
 def test_events_view_filters():
-    from agent.webapp import routes_admin
     jamie = _jamie_id()
     db.record_event(actor="admin", kind="note", category="social", member_id=jamie,
                     detail="game night", occurred_at="2026-05-01 12:00:00")
     db.record_event(actor="admin", kind="note", category="club",
                     detail="anniversary", occurred_at="2026-05-02 12:00:00")
     # category filter
-    social = routes_admin._load_events("social", "", "", "", 100)
+    social = routes_oliver_pages._load_events("social", "", "", "", 100)
     assert social and all(e["category"] == "social" for e in social)
     # member filter resolves slug → id; club-wide event is excluded
-    mine = routes_admin._load_events("", "jamie", "", "", 100)
+    mine = routes_oliver_pages._load_events("", "jamie", "", "", 100)
     assert all(e["member_id"] == jamie for e in mine)
     assert any(e["detail"] == "game night" for e in mine)
     # date window
-    windowed = routes_admin._load_events("", "", "2026-05-02", "2026-05-03", 100)
+    windowed = routes_oliver_pages._load_events("", "", "2026-05-02", "2026-05-03", 100)
     assert all("2026-05-02" <= e["occurred_at"][:10] <= "2026-05-03" for e in windowed)
     # categories list reflects real data
-    assert "social" in routes_admin._event_categories()
+    assert "social" in routes_oliver_pages._event_categories()
 
 
 def test_meeting_save_sets_host_and_derives_picker():
@@ -418,14 +447,39 @@ def test_routes_end_to_end(monkeypatch):
                 async with s.get(f"{base}/webapp?t={tok}", allow_redirects=False) as r:
                     assert r.status == 302
                     assert any("oliver_session=" in c for c in r.headers.getall("Set-Cookie", []))
+                # static assets serve without a session; CSP is inline-free everywhere
+                async with s.get(base + "/webapp/static/webapp.css") as r:
+                    assert r.status == 200
+                async with s.get(base + "/webapp/ratings", headers=hdr) as r:
+                    csp = r.headers["Content-Security-Policy"]
+                    assert "unsafe-inline" not in csp and "script-src 'self'" in csp
                 # member pages render
                 for path, needle in [("/webapp/ratings", "Rate books"),
                                      ("/webapp/reviews", "Write a review"),
                                      ("/webapp/lists", "Your lists"),
-                                     ("/webapp/profile", "Your profile")]:
+                                     ("/webapp/profile", "Your profile"),
+                                     ("/webapp/memories", "What Oliver knows about you"),
+                                     ("/webapp/bookcloud", "The Book Cloud")]:
                     async with s.get(base + path, headers=hdr) as r:
                         assert r.status == 200, path
                         assert needle in await r.text(), path
+                # markdown preview renders server-side with raw HTML neutralized
+                async with s.post(base + "/webapp/preview", headers=dict(hdr, **{"X-Requested-With": "fetch"}),
+                                  data={"csrf": csrf, "text": "**bold** <script>x</script>"}) as r:
+                    j = await r.json()
+                    assert "<strong>bold</strong>" in j["html"] and "<script>" not in j["html"]
+                # a member can retire THEIR OWN memory, but never someone else's
+                mine = db.add_memory("jamie test note", scope="member", subject="jamie", source="reflection")
+                theirs = db.add_memory("erik test note", scope="member", subject="erik", source="reflection")
+                async with s.post(base + "/webapp/memories/act", headers=hdr, allow_redirects=False,
+                                  data={"csrf": csrf, "id": str(theirs)}) as r:
+                    assert r.status == 302
+                assert db.get_memories(subject="erik", query="erik test note")  # untouched
+                async with s.post(base + "/webapp/memories/act", headers=hdr, allow_redirects=False,
+                                  data={"csrf": csrf, "id": str(mine)}) as r:
+                    assert r.status == 302
+                assert not db.get_memories(subject="jamie", query="jamie test note")  # gone
+                db.delete_memory(theirs)  # cleanup
                 # admin route refused for a non-admin session
                 async with s.get(base + "/webapp/admin/books", headers=hdr) as r:
                     assert r.status == 403

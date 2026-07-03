@@ -1,34 +1,26 @@
 {% extends "base.html" %}
-{% set nav = "books" %}
+{% set nav = "admin-books" %}
 {% block title %}Books (admin){% endblock %}
 {% block content %}
   <h1>Edit book data</h1>
   <form method="post" action="/webapp/admin/books/add" class="card">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <label>Add a book <span class="muted">— fetches metadata from Open Library</span></label>
-    <div class="row" style="gap:.4rem">
-      <input type="text" name="title" placeholder="Title" required style="flex:3">
-      <input type="text" name="isbn" placeholder="ISBN (optional)" style="flex:1">
+    <div class="row gap-4">
+      <input class="grow3" type="text" name="title" placeholder="Title" required>
+      <input class="grow" type="text" name="isbn" placeholder="ISBN (optional)">
       <button class="primary">Add</button>
     </div>
   </form>
-  <input class="filter" type="text" id="filter" placeholder="Filter books…" autocomplete="off">
+  <input class="filter" type="text" id="filter" data-quickfilter="#list tr" placeholder="Filter books…" autocomplete="off">
   <table>
     <tbody id="list">
       {% for b in books %}
-      <tr data-title="{{ b.title|lower }}">
+      <tr data-q="{{ b.title|lower }}">
         <td><a href="/webapp/admin/books/{{ b.slug }}">{{ b.title }}</a></td>
-        <td class="muted" style="text-align:right">{{ b.topic or '—' }}</td>
+        <td class="muted right">{{ b.topic or '—' }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-{% endblock %}
-{% block script %}
-  const filter = document.getElementById('filter');
-  filter.addEventListener('input', () => {
-    const q = filter.value.toLowerCase();
-    document.querySelectorAll('#list tr').forEach(tr =>
-      { tr.style.display = tr.dataset.title.includes(q) ? '' : 'none'; });
-  });
 {% endblock %}

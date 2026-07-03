@@ -1,98 +1,10 @@
 {% extends "base.html" %}
-{% set nav = "bookcloud" %}
+{% set nav = "admin-bookcloud" %}
 {% block title %}Book cloud (admin){% endblock %}
 {% block content %}
   <h1>Book cloud</h1>
   <p class="muted">Books the club orbits but (mostly) hasn't read — every mention carries who,
     when, and <em>why</em> it came up. Fed by conversations, the mailing-list archive, and pick
     evaluations. Private: never rendered to the public site.</p>
-
-  <form method="get" action="/webapp/admin/bookcloud" class="card">
-    <div class="row" style="gap:.5rem; flex-wrap:wrap; align-items:flex-end">
-      <div style="flex:2; min-width:12rem">
-        <label style="margin:0 0 .2rem">Search (title / author / reason)</label>
-        <input type="text" name="q" value="{{ f.q }}" placeholder="e.g. Power Broker, consciousness, nominated…">
-      </div>
-      <div style="flex:1; min-width:9rem">
-        <label style="margin:0 0 .2rem">Mentioned by</label>
-        <select name="member">
-          <option value="">Anyone</option>
-          {% for m in members %}<option value="{{ m.slug }}" {{ 'selected' if m.slug == f.member }}>{{ m.name }}{{ '' if m.current else ' (former)' }}</option>{% endfor %}
-        </select>
-      </div>
-      <div style="flex:1; min-width:9rem">
-        <label style="margin:0 0 .2rem">View</label>
-        <select name="view">
-          <option value="titles" {{ 'selected' if f.view == 'titles' }}>Titles (aggregated)</option>
-          <option value="mentions" {{ 'selected' if f.view == 'mentions' }}>Mentions (raw)</option>
-        </select>
-      </div>
-      <div style="flex:1; min-width:8rem">
-        <label style="margin:0 0 .2rem">Kind <span class="muted">(raw view)</span></label>
-        <select name="kind">
-          <option value="">All</option>
-          {% for k in kinds %}<option value="{{ k }}" {{ 'selected' if k == f.kind }}>{{ k }}</option>{% endfor %}
-        </select>
-      </div>
-      <div style="min-width:8rem">
-        <label style="margin:0 0 .2rem"><input type="checkbox" name="include_read" value="1"
-          {{ 'checked' if not f.unread }} style="width:auto"> Include read</label>
-      </div>
-      <div style="width:5.5rem">
-        <label style="margin:0 0 .2rem">Limit</label>
-        <input type="number" name="limit" value="{{ f.limit }}" min="1" max="500">
-      </div>
-      <div><button class="primary">Apply</button>
-        <a class="btn" href="/webapp/admin/bookcloud">Clear</a></div>
-    </div>
-  </form>
-
-  <p class="muted">{{ rows|length }} {{ 'title' if f.view == 'titles' else 'mention' }}{{ '' if rows|length == 1 else 's' }}{% if rows|length >= f.limit %} (limit reached — narrow the filters){% endif %}.</p>
-  <input class="filter" type="text" id="textfilter" placeholder="Filter loaded rows…" autocomplete="off">
-
-  {% if f.view == 'titles' %}
-  <table>
-    <thead><tr><th>Title</th><th>Mentions</th><th>First → last</th><th>Who</th><th>Recent reasons</th></tr></thead>
-    <tbody id="rows">
-      {% for r in rows %}
-      <tr data-q="{{ (r.title ~ ' ' ~ (r.author or '') ~ ' ' ~ (r.mentioners|join(' ')) ~ ' ' ~ (r.recentReasons|join(' ')))|lower }}">
-        <td><strong>{{ r.title }}</strong>{% if r.author %} <span class="muted">— {{ r.author }}</span>{% endif %}
-          {% if r.isRead %} <span class="muted" style="font-size:.75rem">[read]</span>{% endif %}</td>
-        <td>×{{ r.mention_count }}</td>
-        <td class="muted" style="white-space:nowrap">{{ r.first_mentioned[:10] }} → {{ r.last_mentioned[:10] }}</td>
-        <td>{{ r.mentioners|join(', ') or '—' }}</td>
-        <td class="muted" style="word-break:break-word">{% for reason in r.recentReasons %}{{ reason }}{% if not loop.last %} · {% endif %}{% endfor %}</td>
-      </tr>
-      {% else %}<tr><td colspan="5" class="muted">Nothing matches these filters.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <table>
-    <thead><tr><th>When</th><th>Title</th><th>Who</th><th>Kind</th><th>Reason</th><th>Surface</th></tr></thead>
-    <tbody id="rows">
-      {% for r in rows %}
-      <tr data-q="{{ (r.title ~ ' ' ~ (r.author or '') ~ ' ' ~ (r.mentioned_by or '') ~ ' ' ~ r.reason ~ ' ' ~ (r.reason_kind or ''))|lower }}">
-        <td class="muted" style="white-space:nowrap">{{ r.created_at[:10] }}</td>
-        <td><strong>{{ r.title }}</strong>{% if r.author %} <span class="muted">— {{ r.author }}</span>{% endif %}</td>
-        <td>{{ r.mentioned_by or r.mentioned_by_name or '—' }}</td>
-        <td class="muted">{{ r.reason_kind or '—' }}</td>
-        <td style="word-break:break-word">{{ r.reason }}</td>
-        <td class="muted">{{ r.surface }}</td>
-      </tr>
-      {% else %}<tr><td colspan="6" class="muted">Nothing matches these filters.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% endif %}
-{% endblock %}
-{% block script %}
-  const tf = document.getElementById('textfilter');
-  tf.addEventListener('input', () => {
-    const q = tf.value.toLowerCase();
-    document.querySelectorAll('#rows tr').forEach(tr => {
-      if (!tr.dataset.q) return;
-      tr.style.display = tr.dataset.q.includes(q) ? '' : 'none';
-    });
-  });
+{% include "_bookcloud_table.html" %}
 {% endblock %}

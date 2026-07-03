@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% set nav = "meetings" %}
+{% set nav = "admin-meetings" %}
 {% block title %}Meetings (admin){% endblock %}
 {% block content %}
   <h1>Meetings</h1>
@@ -17,7 +17,7 @@
     <label>Host <span class="muted">(who's running it)</span></label>
     <select name="hosts"><option value="">—</option>{% for m in members %}{% if m.current %}<option value="{{ m.slug }}">{{ m.name }}</option>{% endif %}{% endfor %}</select>
     <p class="muted">For the rare multi-book meeting, schedule it then add books on the edit page.</p>
-    <p style="margin-top:.8rem"><button class="primary">Schedule</button></p>
+    <p class="mt-8"><button class="primary">Schedule</button></p>
   </form>
 
   <h2>All meetings</h2>
@@ -26,17 +26,12 @@
     <tr>
       <td><a href="/webapp/admin/meetings/{{ m.id }}">{{ m.date or 'TBD' }}</a></td>
       <td class="muted">{{ m.book_slugs|join(', ') }}</td>
-      <td class="muted" style="text-align:right">{{ m.host_slugs|join(', ') or 'no host' }}</td>
+      <td class="muted right">{{ m.host_slugs|join(', ') or 'no host' }}</td>
     </tr>
     {% endfor %}
   </table>
 {% endblock %}
-{% block script %}
-  const T2S = {};
-  {% for b in books %}T2S[{{ b.title|tojson }}] = {{ b.slug|tojson }};
-  {% endfor %}
-  const search = document.getElementById('book-search'), slug = document.getElementById('book-slug');
-  function resolve() { slug.value = T2S[search.value] || ''; }
-  search.addEventListener('change', resolve);
-  document.getElementById('addform').addEventListener('submit', resolve);
+
+{% block data %}
+<script type="application/json" id="t2s">{ {% for b in books %}{{ b.title|tojson }}: {{ b.slug|tojson }}{{ "," if not loop.last }}{% endfor %} }</script>
 {% endblock %}

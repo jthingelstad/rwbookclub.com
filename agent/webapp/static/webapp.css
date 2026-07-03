@@ -1,0 +1,139 @@
+/* Oliver's web app — custom layer over Pico v2 (classless).
+   Pico owns typography, forms, buttons, tables, and dark mode; this file owns the app chrome
+   (header/nav/toast), the widgets Pico has no opinion on (stars, DNF, drag), and the utility
+   classes that replaced the old inline style="" attributes (CSP forbids those now). */
+
+:root {
+  /* The club's book-brown as Pico's primary, both modes. */
+  --pico-primary: #6b4f3b;
+  --pico-primary-background: #6b4f3b;
+  --pico-primary-border: #6b4f3b;
+  --pico-primary-hover: #57402f;
+  --pico-primary-hover-background: #57402f;
+  --pico-primary-underline: rgba(107, 79, 59, .5);
+  --pico-primary-focus: rgba(107, 79, 59, .35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme=light]) {
+    --pico-primary: #c9a184;
+    --pico-primary-background: #6b4f3b;
+    --pico-primary-border: #6b4f3b;
+    --pico-primary-hover: #dbb89e;
+    --pico-primary-hover-background: #57402f;
+    --pico-primary-underline: rgba(201, 161, 132, .5);
+    --pico-primary-focus: rgba(201, 161, 132, .35);
+  }
+}
+
+body { margin: 0; }
+main { max-width: 46rem; margin: 1.5rem auto; padding: 0 1rem; }
+h1 { font-size: 1.5rem; margin: .2rem 0 1rem; }
+h2 { font-size: 1.1rem; margin: 1.5rem 0 .5rem; }
+
+/* ── Header / nav ──────────────────────────────────────────────────────── */
+header.top {
+  position: sticky; top: 0; z-index: 40;
+  background: var(--pico-card-background-color);
+  border-bottom: 1px solid var(--pico-muted-border-color);
+  padding: .6rem 1rem;
+  display: flex; gap: .25rem .6rem; align-items: center; flex-wrap: wrap;
+}
+header.top a {
+  color: var(--pico-color); text-decoration: none;
+  padding: .35rem .55rem; border-radius: 6px; font-size: .95rem;
+}
+header.top a.active, header.top a:hover { background: var(--pico-secondary-focus); }
+header.top .sp { flex: 1; }
+header.top .who { color: var(--pico-muted-color); font-size: .85rem; }
+header.top button { margin: 0; padding: .35rem .8rem; font-size: .9rem; width: auto; }
+@media (max-width: 520px) {
+  header.top .who { display: none; }   /* the member name yields; Publish never does */
+  header.top .sp { display: none; }
+  header.top { gap: .1rem .2rem; }
+  header.top a { padding: .3rem .35rem; font-size: .85rem; }
+  header.top button { padding: .3rem .6rem; font-size: .85rem; }
+  details.admin-nav > summary { padding: .3rem .35rem; font-size: .85rem; }
+  /* Publish leads the row on phones — it can never be pushed off-screen again. */
+  header.top > a:first-child { order: -2; }
+  #publishBtn { order: -1; margin-right: .3rem; }
+}
+
+/* Admin links live in a native <details> disclosure so the nav fits every width. */
+details.admin-nav { position: relative; margin: 0; }
+details.admin-nav > summary {
+  list-style: none; cursor: pointer; padding: .35rem .55rem; border-radius: 6px;
+  font-size: .95rem; color: var(--pico-color);
+}
+details.admin-nav > summary::-webkit-details-marker { display: none; }
+details.admin-nav > summary::after { display: none; }  /* Pico's accordion chevron */
+details.admin-nav > summary:hover, details.admin-nav[open] > summary {
+  background: var(--pico-secondary-focus);
+}
+details.admin-nav > nav {
+  position: absolute; right: 0; top: calc(100% + .3rem); z-index: 50;
+  display: flex; flex-direction: column; min-width: 11rem;
+  background: var(--pico-card-background-color);
+  border: 1px solid var(--pico-muted-border-color); border-radius: 8px;
+  padding: .3rem; box-shadow: 0 6px 24px rgba(0, 0, 0, .12);
+}
+
+/* Publish button dirty dot */
+#publishBtn.dirty::after { content: " •"; color: #d4a017; font-weight: 700; }
+
+/* ── Components ────────────────────────────────────────────────────────── */
+.muted { color: var(--pico-muted-color); font-size: .9rem; }
+.card {
+  background: var(--pico-card-background-color);
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: 10px; padding: 1rem; margin: .75rem 0;
+}
+.card > label:first-child { margin-top: 0; }
+.row { display: flex; gap: .5rem; align-items: center; }
+.filters { display: flex; gap: .5rem; flex-wrap: wrap; align-items: flex-end; }
+.filters label { margin: 0 0 .2rem; }
+label { font-weight: 600; font-size: .9rem; }
+input, select, textarea { margin-bottom: 0; }
+textarea { min-height: 8rem; }
+.err {
+  background: #fdeceb; border: 1px solid #e0a0a0; color: #b3261e;
+  padding: .6rem .8rem; border-radius: 7px;
+}
+.ok { color: #1a7f37; }
+.filter { margin: .5rem 0 1rem; }
+
+.stars { font-size: 1.35rem; letter-spacing: .1rem; cursor: pointer; user-select: none; white-space: nowrap; }
+.stars .on { color: #d4a017; } .stars .off { color: var(--pico-muted-border-color); }
+.dnf { font-size: .8rem; padding: .2rem .5rem; width: auto; margin: 0; }
+.dnf.active { background: var(--pico-contrast); color: var(--pico-contrast-inverse); border-color: var(--pico-contrast); }
+
+.toast {
+  position: fixed; bottom: 1.2rem; left: 50%; transform: translateX(-50%) translateY(1rem);
+  background: #1a1a1a; color: #fff; padding: .55rem 1rem; border-radius: 8px; font-size: .9rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .18); opacity: 0; pointer-events: none;
+  transition: opacity .18s, transform .18s; z-index: 60;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.err { background: #b3261e; }
+
+tr.dragging { opacity: .45; }
+td.drag { width: 1.2rem; cursor: grab; color: var(--pico-muted-color); user-select: none; }
+td.drag:active { cursor: grabbing; }
+
+/* ── Utilities (replacing the old inline style attributes) ─────────────── */
+.grow { flex: 1; } .grow2 { flex: 2; } .grow3 { flex: 3; }
+.minw8 { min-width: 8rem; } .minw9 { min-width: 9rem; } .minw12 { min-width: 12rem; }
+.w-auto { width: auto; } .w-limit { width: 5.5rem; }
+.right { text-align: right; } .nowrap { white-space: nowrap; } .break { word-break: break-word; }
+.vtop { vertical-align: top; } .inline { display: inline; }
+.tiny { font-size: .8rem; } .dim { opacity: .25; }
+.mt0 { margin-top: 0; } .mt-2 { margin-top: .2rem; } .mt-3 { margin-top: .3rem; }
+.mt-4 { margin-top: .4rem; } .mt-5 { margin-top: .5rem; } .mt-6 { margin-top: .6rem; }
+.mt-8 { margin-top: .8rem; } .mt-10 { margin-top: 1rem; } .mt-12 { margin-top: 1.2rem; }
+.mb-4 { margin-bottom: .4rem; }
+.gap-4 { gap: .4rem; } .gap-5 { gap: .5rem; } .gap-10 { gap: 1rem; }
+.m-note { margin: .2rem 0 .6rem; }
+.linklike {
+  border: none; background: none; color: var(--pico-muted-color);
+  font-size: .85rem; padding: .2rem; width: auto; margin: 0; cursor: pointer;
+}
+.small-note { margin-top: .2rem; font-size: .85rem; padding: .25rem .4rem; color: var(--pico-muted-color); }

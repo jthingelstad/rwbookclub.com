@@ -1,24 +1,24 @@
 {% extends "base.html" %}
-{% set nav = "members" %}
+{% set nav = "admin-members" %}
 {% block title %}Members (admin){% endblock %}
 {% block content %}
   <h1>Members</h1>
   <form method="post" action="/webapp/admin/members" class="card">
     <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="add">
     <label>Add a member</label>
-    <div class="row"><input type="text" name="name" placeholder="Name" style="flex:1"><button class="primary">Add</button></div>
+    <div class="row"><input type="text" name="name" placeholder="Name" class="grow" ><button class="primary">Add</button></div>
   </form>
   <table>
     {% for m in members %}
     <tr>
       <td><a href="/webapp/admin/members/{{ m.slug }}">{{ m.name }}</a>{% if not m.current %} <span class="muted">· former</span>{% endif %}</td>
-      <td class="muted" style="font-size:.8rem; white-space:nowrap">
+      <td class="muted tiny nowrap" >
         {# Reachability at a glance (replaces the old /oliver contact list audit) — dim what's missing #}
-        <span {% if not m.coverage.discord %}style="opacity:.25" title="no Discord link"{% else %}title="Discord linked"{% endif %}>💬</span>
-        <span {% if not m.coverage.email %}style="opacity:.25" title="no email link"{% else %}title="email linked"{% endif %}>✉️</span>
-        <span {% if not m.coverage.sms %}style="opacity:.25" title="no SMS link"{% else %}title="SMS linked"{% endif %}>📱</span>
+        <span {% if not m.coverage.discord %}class="dim" title="no Discord link"{% else %}title="Discord linked"{% endif %}>💬</span>
+        <span {% if not m.coverage.email %}class="dim" title="no email link"{% else %}title="email linked"{% endif %}>✉️</span>
+        <span {% if not m.coverage.sms %}class="dim" title="no SMS link"{% else %}title="SMS linked"{% endif %}>📱</span>
       </td>
-      <td style="text-align:right">
+      <td class="right" >
         <a class="btn" href="/webapp/admin/members/{{ m.slug }}">Edit</a>
       </td>
     </tr>

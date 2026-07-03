@@ -5,9 +5,9 @@
   <h1>Rate books</h1>
   <p class="muted">Most-recently-discussed first. Click a star for 1–5, or DNF. Saves instantly;
     hit Publish when you're done.</p>
-  <div class="row filter" style="gap:.5rem">
-    <input type="text" id="filter" placeholder="Filter books…" autocomplete="off" style="flex:1">
-    <select id="year" style="width:auto">
+  <div class="row filter gap-5">
+    <input class="grow" type="text" id="filter" data-quickfilter="#grid tr" placeholder="Filter books…" autocomplete="off">
+    <select class="w-auto" id="year">
       <option value="">All years</option>
       {% for y in years %}<option value="{{ y }}">{{ y }}</option>{% endfor %}
     </select>
@@ -15,9 +15,9 @@
   <table>
     <tbody id="grid">
       {% for b in books %}
-      <tr data-title="{{ b.title|lower }}" data-year="{{ b.year or '' }}">
+      <tr data-q="{{ b.title|lower }}" data-year="{{ b.year or '' }}">
         <td>{{ b.title }}{% if b.year %} <span class="muted">· {{ b.year }}</span>{% endif %}</td>
-        <td style="text-align:right; white-space:nowrap">
+        <td class="right nowrap">
           <span class="stars" data-slug="{{ b.slug }}">
             {% for i in range(1, 6) %}<span class="star {{ 'on' if b.rating and i <= b.rating else 'off' }}" data-v="{{ i }}">★</span>{% endfor %}
           </span>
@@ -27,40 +27,4 @@
       {% endfor %}
     </tbody>
   </table>
-{% endblock %}
-{% block script %}
-  const filter = document.getElementById('filter'), yearSel = document.getElementById('year');
-  function applyFilter() {
-    const q = filter.value.toLowerCase(), y = yearSel.value;
-    document.querySelectorAll('#grid tr').forEach(tr => {
-      const ok = tr.dataset.title.includes(q) && (!y || tr.dataset.year === y);
-      tr.style.display = ok ? '' : 'none';
-    });
-  }
-  filter.addEventListener('input', applyFilter);
-  yearSel.addEventListener('change', applyFilter);
-  function paint(slug, rating, dnf) {
-    const wrap = document.querySelector('.stars[data-slug="' + CSS.escape(slug) + '"]');
-    wrap.querySelectorAll('.star').forEach(s =>
-      s.className = 'star ' + ((!dnf && rating && +s.dataset.v <= rating) ? 'on' : 'off'));
-    const d = document.querySelector('.dnf[data-slug="' + CSS.escape(slug) + '"]');
-    d.classList.toggle('active', !!dnf);
-  }
-  async function save(params, onOk) {
-    try {
-      const r = await post('/webapp/ratings/set', params);
-      if (r.ok) { onOk(); toast('Saved ✓'); }
-      else { const j = await r.json().catch(() => ({})); toast(j.error || 'Could not save', false); }
-    } catch (e) { toast('Could not save — network error', false); }
-  }
-  document.getElementById('grid').addEventListener('click', (e) => {
-    const star = e.target.closest('.star'); const dnfBtn = e.target.closest('.dnf');
-    if (star) {
-      const slug = star.parentElement.dataset.slug, v = +star.dataset.v;
-      save({ book_slug: slug, rating: v }, () => paint(slug, v, false));
-    } else if (dnfBtn) {
-      const slug = dnfBtn.dataset.slug, makeDnf = !dnfBtn.classList.contains('active');
-      save({ book_slug: slug, dnf: makeDnf ? '1' : '' }, () => paint(slug, null, makeDnf));
-    }
-  });
 {% endblock %}

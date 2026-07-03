@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% set nav = "books" %}
+{% set nav = "admin-books" %}
 {% block title %}Edit · {{ book.title }}{% endblock %}
 {% block content %}
   <p class="muted"><a href="/webapp/admin/books">← all books</a></p>
@@ -14,7 +14,7 @@
       <option value="">—</option>
       {% for t in topics %}<option value="{{ t }}" {{ 'selected' if book.topic == t }}>{{ t }}</option>{% endfor %}
     </select>
-    <label class="row"><input type="checkbox" name="fiction" value="1" style="width:auto" {{ 'checked' if book.fiction }}> &nbsp;Fiction</label>
+    <label class="row"><input class="w-auto" type="checkbox" name="fiction" value="1" {{ 'checked' if book.fiction }}> &nbsp;Fiction</label>
     <label>First published (year)</label><input type="number" name="publication_year" value="{{ book.publication_year or '' }}">
     <label>Page count</label><input type="number" name="page_count" value="{{ book.page_count or '' }}">
     <label>ISBN-13</label><input type="text" name="isbn13" value="{{ book.isbn13 or '' }}">
@@ -22,8 +22,8 @@
     <label>Authors <span class="muted">(comma-separated)</span></label>
     <input type="text" name="authors" value="{{ book.authors|join(', ') }}">
     <label>Picked by <span class="muted">(derived from the meeting host — edit it on the meeting)</span></label>
-    <p class="muted" style="margin:.2rem 0 .6rem">{{ book.pickers|join(', ') if book.pickers else '—' }}</p>
+    <p class="muted m-note">{{ book.pickers|join(', ') if book.pickers else '—' }}</p>
     <label>Synopsis</label><textarea name="synopsis">{{ book.synopsis or '' }}</textarea>
-    <p style="margin-top:1rem"><button class="primary" type="submit">Save book</button></p>
+    <p class="mt-10"><button class="primary" type="submit">Save book</button></p>
   </form>
 {% endblock %}

@@ -72,6 +72,24 @@ def apply_identity_op(slug: str, op: str, val: str, label: str | None = None,
     return False
 
 
+def home_context(member_slug: str) -> dict:
+    """The home dashboard's data: the next meeting, the member's unrated recent reads (inline
+    star rows reuse the ratings endpoint), and their review debt (cr.pending_reviews — the same
+    logic Oliver's pending_reviews tool answers with)."""
+    from agent.club import meeting_rules
+    meeting = meeting_rules.next_meeting()
+    mine = _member_ratings(member_slug)
+    recent_read = sorted((b for b in cr.books() if b.get("isRead")),
+                         key=lambda b: b.get("meetingDate") or "", reverse=True)
+    unrated = [
+        {"slug": b["slug"], "title": b["title"], "year": (b.get("meetingDate") or "")[:4]}
+        for b in recent_read
+        if not (mine.get(b["slug"]) or {}).get("rating") and not (mine.get(b["slug"]) or {}).get("dnf")
+    ][:5]
+    pending = cr.pending_reviews(member_slug) or {}
+    return {"meeting": meeting, "unrated": unrated, "review_debt": pending.get("count") or 0}
+
+
 def _load_books() -> list[dict]:
     with db.connect() as conn:
         books = clubdb.all_books(conn)

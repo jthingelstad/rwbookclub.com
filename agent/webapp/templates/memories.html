@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% set nav = "member-memories" %}
+{% block title %}What Oliver knows about me{% endblock %}
+{% block content %}
+  <h1>What Oliver knows about you</h1>
+  <p class="muted">Oliver keeps a small, groomed set of notes on your reading tastes so his
+    answers and pick advice fit you. Most come from his weekly reflection on the club's
+    conversations; some go back through a decade of the mailing list. This is all of it —
+    nothing hidden. If a note is wrong or you'd rather he not carry it, retire it and it's gone
+    from his memory.</p>
+
+  {% if rows %}
+  <input class="filter" type="text" id="textfilter" data-quickfilter="#rows tr"
+         placeholder="Filter notes…" autocomplete="off">
+  <table>
+    <thead><tr><th>Note</th><th>Since</th><th></th></tr></thead>
+    <tbody id="rows">
+      {% for r in rows %}
+      <tr data-q="{{ r.note|lower }}">
+        <td class="break">{{ r.note }}</td>
+        <td class="muted nowrap">{{ (r.created_at or '')[:10] }}</td>
+        <td class="right">
+          <form method="post" action="/webapp/memories/act" class="inline">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <input type="hidden" name="id" value="{{ r.id }}">
+            <button class="btn" title="Oliver forgets this permanently">Retire</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted">{{ rows|length }} note{{ '' if rows|length == 1 else 's' }}. Retiring is
+    permanent — Oliver won't re-learn a note unless you say the thing again.</p>
+  {% else %}
+  <p class="muted">Oliver has no notes about you yet — talk books with him and this page fills in.</p>
+  {% endif %}
+{% endblock %}

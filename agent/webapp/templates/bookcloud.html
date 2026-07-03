@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% set nav = "member-bookcloud" %}
+{% block title %}Book cloud{% endblock %}
+{% block content %}
+  <h1>The Book Cloud</h1>
+  <p class="muted">Every book this club has circled but (mostly) never read — who brought it up,
+    when, and why. Oliver keeps it so a good idea from 2019 is never lost. It feeds his pick
+    advice; nothing here is a commitment, a queue, or a ranking. Private to the club — never on
+    the public site.</p>
+{% include "_bookcloud_table.html" %}
+{% endblock %}

@@ -1,0 +1,77 @@
+  <form method="get" action="{{ action }}" class="card">
+    <div class="row filters">
+      <div class="grow2 minw12">
+        <label>Search (title / author / reason)</label>
+        <input type="text" name="q" value="{{ f.q }}" placeholder="e.g. Power Broker, consciousness, nominated…">
+      </div>
+      <div class="grow minw9">
+        <label>Mentioned by</label>
+        <select name="member">
+          <option value="">Anyone</option>
+          {% for m in members %}<option value="{{ m.slug }}" {{ 'selected' if m.slug == f.member }}>{{ m.name }}{{ '' if m.current else ' (former)' }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="grow minw9">
+        <label>View</label>
+        <select name="view">
+          <option value="titles" {{ 'selected' if f.view == 'titles' }}>Titles (aggregated)</option>
+          <option value="mentions" {{ 'selected' if f.view == 'mentions' }}>Mentions (raw)</option>
+        </select>
+      </div>
+      <div class="grow minw8">
+        <label>Kind <span class="muted">(raw view)</span></label>
+        <select name="kind">
+          <option value="">All</option>
+          {% for k in kinds %}<option value="{{ k }}" {{ 'selected' if k == f.kind }}>{{ k }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="minw8">
+        <label><input class="w-auto" type="checkbox" name="include_read" value="1" {{ 'checked' if not f.unread }}> Include read</label>
+      </div>
+      <div class="w-limit">
+        <label>Limit</label>
+        <input type="number" name="limit" value="{{ f.limit }}" min="1" max="500">
+      </div>
+      <div><button class="primary">Apply</button>
+        <a class="btn" href="{{ action }}">Clear</a></div>
+    </div>
+  </form>
+
+  <p class="muted">{{ rows|length }} {{ 'title' if f.view == 'titles' else 'mention' }}{{ '' if rows|length == 1 else 's' }}{% if rows|length >= f.limit %} (limit reached — narrow the filters){% endif %}.</p>
+  <input class="filter" type="text" id="textfilter" data-quickfilter="#rows tr" placeholder="Filter loaded rows…" autocomplete="off">
+
+  {% if f.view == 'titles' %}
+  <table>
+    <thead><tr><th>Title</th><th>Mentions</th><th>First → last</th><th>Who</th><th>Recent reasons</th></tr></thead>
+    <tbody id="rows">
+      {% for r in rows %}
+      <tr data-q="{{ (r.title ~ ' ' ~ (r.author or '') ~ ' ' ~ (r.mentioners|join(' ')) ~ ' ' ~ (r.recentReasons|join(' ')))|lower }}">
+        <td><strong>{{ r.title }}</strong>{% if r.author %} <span class="muted">— {{ r.author }}</span>{% endif %}
+          {% if r.isRead %} <span class="muted tiny">[read]</span>{% endif %}</td>
+        <td>×{{ r.mention_count }}</td>
+        <td class="muted nowrap">{{ r.first_mentioned[:10] }} → {{ r.last_mentioned[:10] }}</td>
+        <td>{{ r.mentioners|join(', ') or '—' }}</td>
+        <td class="muted break">{% for reason in r.recentReasons %}{{ reason }}{% if not loop.last %} · {% endif %}{% endfor %}</td>
+      </tr>
+      {% else %}<tr><td colspan="5" class="muted">Nothing matches these filters.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <table>
+    <thead><tr><th>When</th><th>Title</th><th>Who</th><th>Kind</th><th>Reason</th><th>Surface</th></tr></thead>
+    <tbody id="rows">
+      {% for r in rows %}
+      <tr data-q="{{ (r.title ~ ' ' ~ (r.author or '') ~ ' ' ~ (r.mentioned_by or '') ~ ' ' ~ r.reason ~ ' ' ~ (r.reason_kind or ''))|lower }}">
+        <td class="muted nowrap">{{ r.created_at[:10] }}</td>
+        <td><strong>{{ r.title }}</strong>{% if r.author %} <span class="muted">— {{ r.author }}</span>{% endif %}</td>
+        <td>{{ r.mentioned_by or r.mentioned_by_name or '—' }}</td>
+        <td class="muted">{{ r.reason_kind or '—' }}</td>
+        <td class="break">{{ r.reason }}</td>
+        <td class="muted">{{ r.surface }}</td>
+      </tr>
+      {% else %}<tr><td colspan="6" class="muted">Nothing matches these filters.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}

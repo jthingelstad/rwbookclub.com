@@ -12,24 +12,24 @@
 {% macro list_summary(lst, csrf, detail_base, ret) %}
   <div class="card">
     <div class="row">
-      <strong style="flex:1"><a href="{{ detail_base }}{{ lst.slug }}">{{ lst.name }}</a></strong>
+      <strong class="grow"><a href="{{ detail_base }}{{ lst.slug }}">{{ lst.name }}</a></strong>
       <span class="muted">{{ lst.books|length }} book{{ '' if lst.books|length == 1 else 's' }}</span>
       <a class="btn" href="{{ detail_base }}{{ lst.slug }}">Manage items →</a>
-      <form method="post" action="/webapp/lists/act" style="display:inline" onsubmit="return confirm('Delete this list?')">
+      <form class="inline" method="post" action="/webapp/lists/act" onsubmit="return confirm('Delete this list?')">
         <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="return" value="{{ ret }}">
         <input type="hidden" name="op" value="delete">
         <input type="hidden" name="list" value="{{ lst.slug }}">
         <button class="danger">Delete</button></form>
     </div>
-    {% if lst.description %}<p class="muted" style="margin:.4rem 0 0">{{ lst.description }}</p>{% endif %}
-    <details style="margin-top:.5rem"><summary class="muted">Rename / edit description</summary>
-      <form method="post" action="/webapp/lists/act" style="margin-top:.5rem">
+    {% if lst.description %}<p class="muted mt-4">{{ lst.description }}</p>{% endif %}
+    <details class="mt-5"><summary class="muted">Rename / edit description</summary>
+      <form class="mt-5" method="post" action="/webapp/lists/act">
         <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="return" value="{{ ret }}">
         <input type="hidden" name="op" value="edit">
         <input type="hidden" name="list" value="{{ lst.slug }}">
         <input type="text" name="name" value="{{ lst.name }}" placeholder="name">
-        <input type="text" name="description" value="{{ lst.description or '' }}" placeholder="description" style="margin-top:.4rem">
-        <button class="primary" style="margin-top:.4rem">Save</button>
+        <input class="mt-4" type="text" name="description" value="{{ lst.description or '' }}" placeholder="description">
+        <button class="primary mt-4">Save</button>
       </form>
     </details>
   </div>
@@ -42,15 +42,13 @@
     <table data-list-table data-list="{{ lst.slug }}" data-ret="{{ ret }}">
       {% for e in lst.books %}
       <tr data-slug="{{ e.book }}">
-        <td class="drag" draggable="true" title="Drag to reorder" style="width:1.2rem; cursor:grab; color:#aaa; user-select:none">⠿</td>
+        <td class="drag" draggable="true" title="Drag to reorder">⠿</td>
         <td>
           <div>{{ titles.get(e.book, e.book) }}</div>
-          <input type="text" class="note-input" data-slug="{{ e.book }}" value="{{ e.note or '' }}"
-                 placeholder="add a note…" autocomplete="off"
-                 style="margin-top:.2rem; font-size:.85rem; padding:.25rem .4rem; color:var(--soft)">
+          <input type="text" class="note-input small-note" data-slug="{{ e.book }}" value="{{ e.note or '' }}" placeholder="add a note…" autocomplete="off">
         </td>
-        <td style="text-align:right; white-space:nowrap; vertical-align:top">
-          <form method="post" action="/webapp/lists/act" style="display:inline">
+        <td class="right nowrap vtop">
+          <form class="inline" method="post" action="/webapp/lists/act">
             <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="return" value="{{ ret }}">
             <input type="hidden" name="op" value="remove-book">
             <input type="hidden" name="list" value="{{ lst.slug }}"><input type="hidden" name="book" value="{{ e.book }}">
@@ -58,12 +56,12 @@
       {% else %}<tr><td colspan="3" class="muted">No books on this list yet.</td></tr>
       {% endfor %}
     </table>
-    <form method="post" action="/webapp/lists/act" class="row" style="margin-top:.5rem">
+    <form method="post" action="/webapp/lists/act" class="row mt-5">
       <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="return" value="{{ ret }}">
       <input type="hidden" name="op" value="add-book">
       <input type="hidden" name="list" value="{{ lst.slug }}">
-      <select name="book" style="flex:2">{{ book_options(books) }}</select>
-      <input type="text" name="note" placeholder="note (optional)" style="flex:2">
+      <select class="grow2" name="book">{{ book_options(books) }}</select>
+      <input class="grow2" type="text" name="note" placeholder="note (optional)">
       <button class="primary">Add</button>
     </form>
   </div>

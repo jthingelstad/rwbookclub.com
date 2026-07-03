@@ -3,135 +3,46 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="csrf" content="{{ csrf }}">
   <title>{% block title %}R/W Book Club{% endblock %} · Oliver</title>
-  <style>
-    :root { --ink:#1a1a1a; --soft:#666; --rule:#e2e2e2; --accent:#6b4f3b; --bg:#fafaf8; }
-    * { box-sizing: border-box; }
-    body { font: 16px/1.55 -apple-system, system-ui, sans-serif; color: var(--ink);
-           background: var(--bg); margin: 0; }
-    header.top { position: sticky; top: 0; background: #fff; border-bottom: 1px solid var(--rule);
-                 padding: .6rem 1rem; display: flex; gap: .25rem 1rem; align-items: center; flex-wrap: wrap; }
-    header.top a { color: var(--ink); text-decoration: none; padding: .35rem .55rem; border-radius: 6px; font-size: .95rem; }
-    header.top a.active, header.top a:hover { background: #f0ece6; }
-    header.top .sp { flex: 1; }
-    header.top .who { color: var(--soft); font-size: .85rem; }
-    main { max-width: 46rem; margin: 1.5rem auto; padding: 0 1rem; }
-    h1 { font-size: 1.5rem; margin: .2rem 0 1rem; }
-    h2 { font-size: 1.1rem; margin: 1.5rem 0 .5rem; }
-    .muted { color: var(--soft); font-size: .9rem; }
-    a.btn, button { font: inherit; padding: .5rem .9rem; border: 1px solid #bbb; border-radius: 7px;
-                    background: #fff; cursor: pointer; text-decoration: none; color: var(--ink); display: inline-block; }
-    button.primary, a.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-    button.danger { color: #b3261e; border-color: #e0a0a0; }
-    input[type=text], input[type=url], input[type=email], input[type=tel], input[type=number],
-    input[type=date], input[type=time], input[type=search],
-    textarea, select { font: inherit; padding: .5rem; border: 1px solid #bbb; border-radius: 7px; width: 100%; }
-    textarea { min-height: 8rem; }
-    label { display: block; margin: .8rem 0 .25rem; font-weight: 600; font-size: .9rem; }
-    .row { display: flex; gap: .5rem; align-items: center; }
-    .card { background: #fff; border: 1px solid var(--rule); border-radius: 10px; padding: 1rem; margin: .75rem 0; }
-    table { border-collapse: collapse; width: 100%; }
-    td, th { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid var(--rule); vertical-align: middle; }
-    .err { background: #fdeceb; border: 1px solid #e0a0a0; color: #b3261e; padding: .6rem .8rem; border-radius: 7px; }
-    .ok { color: #1a7f37; }
-    .stars { font-size: 1.35rem; letter-spacing: .1rem; cursor: pointer; user-select: none; white-space: nowrap; }
-    .stars .on { color: #d4a017; } .stars .off { color: #ccc; }
-    .dnf { font-size: .8rem; padding: .2rem .5rem; }
-    .dnf.active { background: #444; color: #fff; border-color: #444; }
-    .filter { margin: .5rem 0 1rem; }
-    .toast { position: fixed; bottom: 1.2rem; left: 50%; transform: translateX(-50%) translateY(1rem);
-             background: #1a1a1a; color: #fff; padding: .55rem 1rem; border-radius: 8px; font-size: .9rem;
-             box-shadow: 0 4px 16px rgba(0,0,0,.18); opacity: 0; pointer-events: none;
-             transition: opacity .18s, transform .18s; z-index: 50; }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    .toast.err { background: #b3261e; }
-    tr.dragging { opacity: .45; }
-    td.drag:active { cursor: grabbing; }
-  </style>
+  <link rel="stylesheet" href="/webapp/static/pico.min.css?v={{ assets_v }}">
+  <link rel="stylesheet" href="/webapp/static/webapp.css?v={{ assets_v }}">
 </head>
-<body>
+<body data-page="{% block page %}{{ nav or '' }}{% endblock %}">
   <header class="top">
     <a href="/webapp" class="{{ 'active' if nav=='home' else '' }}">🏠</a>
     <a href="/webapp/ratings" class="{{ 'active' if nav=='ratings' else '' }}">Ratings</a>
     <a href="/webapp/reviews" class="{{ 'active' if nav=='reviews' else '' }}">Reviews</a>
     <a href="/webapp/lists" class="{{ 'active' if nav=='lists' else '' }}">Lists</a>
+    <a href="/webapp/memories" class="{{ 'active' if nav=='member-memories' else '' }}">Memories</a>
+    <a href="/webapp/bookcloud" class="{{ 'active' if nav=='member-bookcloud' else '' }}">Book cloud</a>
     <a href="/webapp/profile" class="{{ 'active' if nav=='profile' else '' }}">Profile</a>
     {% if is_admin %}
-    <a href="/webapp/admin/books" class="{{ 'active' if nav=='books' else '' }}">Books</a>
-    <a href="/webapp/admin/meetings" class="{{ 'active' if nav=='meetings' else '' }}">Meetings</a>
-    <a href="/webapp/admin/members" class="{{ 'active' if nav=='members' else '' }}">Members</a>
-    <a href="/webapp/admin/lists" class="{{ 'active' if nav=='club-lists' else '' }}">Club lists</a>
-    <a href="/webapp/admin/events" class="{{ 'active' if nav=='events' else '' }}">Events</a>
-    <a href="/webapp/admin/bookcloud" class="{{ 'active' if nav=='bookcloud' else '' }}">Book cloud</a>
-    <a href="/webapp/admin/memories" class="{{ 'active' if nav=='memories' else '' }}">Memories</a>
+    <details class="admin-nav">
+      <summary>Admin ▾</summary>
+      <nav>
+        <a href="/webapp/admin/books" class="{{ 'active' if nav=='admin-books' else '' }}">Books</a>
+        <a href="/webapp/admin/meetings" class="{{ 'active' if nav=='admin-meetings' else '' }}">Meetings</a>
+        <a href="/webapp/admin/members" class="{{ 'active' if nav=='admin-members' else '' }}">Members</a>
+        <a href="/webapp/admin/lists" class="{{ 'active' if nav=='admin-lists' else '' }}">Club lists</a>
+        <a href="/webapp/admin/events" class="{{ 'active' if nav=='admin-events' else '' }}">Events</a>
+        <a href="/webapp/admin/bookcloud" class="{{ 'active' if nav=='admin-bookcloud' else '' }}">Book cloud</a>
+        <a href="/webapp/admin/memories" class="{{ 'active' if nav=='admin-memories' else '' }}">Memories</a>
+      </nav>
+    </details>
     {% endif %}
     <span class="sp"></span>
     <span class="who">{{ member_name }}</span>
-    <button id="publishBtn" title="Push your changes to the live site">Publish</button>
+    <button id="publishBtn" class="{{ 'dirty' if site_dirty else '' }}"
+            title="Push your changes to the live site">Publish</button>
   </header>
   <main>
     {% if error %}<p class="err">{{ error }}</p>{% endif %}
     {% block content %}{% endblock %}
   </main>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script>
-    const CSRF = {{ csrf|tojson }};
-    let _toastTimer;
-    function toast(msg, ok = true) {
-      const t = document.getElementById('toast');
-      t.textContent = msg; t.className = 'toast show' + (ok ? '' : ' err');
-      clearTimeout(_toastTimer);
-      _toastTimer = setTimeout(() => { t.className = 'toast'; }, 2200);
-    }
-    async function post(url, data) {
-      const body = new URLSearchParams(Object.assign({ csrf: CSRF }, data || {}));
-      return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded',
-        'X-Requested-With': 'fetch' }, body });
-    }
-    const pb = document.getElementById('publishBtn');
-    if (pb) pb.addEventListener('click', async () => {
-      pb.textContent = 'Publishing…'; pb.disabled = true;
-      try { const r = await post('/webapp/publish'); const j = await r.json();
-        if (r.ok) { pb.textContent = j.published ? 'Published ✓' : 'Up to date';
-                    toast(j.published ? 'Published to the live site ✓' : 'Already up to date'); }
-        else { pb.textContent = 'Publish failed'; toast(j.error || 'Publish failed', false); }
-      } catch (e) { pb.textContent = 'Publish failed'; toast('Publish failed — network error', false); }
-      setTimeout(() => { pb.textContent = 'Publish'; pb.disabled = false; }, 4000);
-    });
-    // List drag-to-reorder + inline note editing (member Lists + admin Club lists). No-op elsewhere.
-    document.querySelectorAll('table[data-list-table]').forEach(tbl => {
-      const listSlug = tbl.dataset.list, ret = tbl.dataset.ret || '';
-      const bodyOf = (tr) => tr.parentElement;
-      let dragRow = null;
-      tbl.querySelectorAll('td.drag[draggable]').forEach(h => {
-        const tr = h.closest('tr');
-        h.addEventListener('dragstart', (e) => { dragRow = tr; tr.classList.add('dragging');
-          e.dataTransfer.effectAllowed = 'move'; });
-        h.addEventListener('dragend', () => { if (dragRow) dragRow.classList.remove('dragging');
-          const moved = dragRow; dragRow = null; if (moved) persist(); });
-      });
-      tbl.addEventListener('dragover', (e) => {
-        if (!dragRow) return; e.preventDefault();
-        const rows = [...bodyOf(dragRow).querySelectorAll('tr:not(.dragging)')];
-        const after = rows.find(r => { const b = r.getBoundingClientRect(); return e.clientY < b.top + b.height / 2; });
-        if (after) bodyOf(dragRow).insertBefore(dragRow, after); else bodyOf(dragRow).appendChild(dragRow);
-      });
-      async function persist() {
-        const order = [...tbl.querySelectorAll('tr[data-slug]')].map(r => r.dataset.slug).join(',');
-        try { const r = await post('/webapp/lists/act', { op: 'reorder', list: listSlug, order, return: ret });
-          toast(r.ok ? 'Order saved ✓' : 'Could not save order', r.ok);
-        } catch (e) { toast('Could not save order', false); }
-      }
-      tbl.querySelectorAll('.note-input').forEach(inp => {
-        inp.addEventListener('change', async () => {
-          try { const r = await post('/webapp/lists/act',
-              { op: 'set-note', list: listSlug, book: inp.dataset.slug, note: inp.value, return: ret });
-            toast(r.ok ? 'Note saved ✓' : 'Could not save note', r.ok);
-          } catch (e) { toast('Could not save note', false); }
-        });
-      });
-    });
-    {% block script %}{% endblock %}
-  </script>
+  {% block data %}{% endblock %}
+  <script src="/webapp/static/webapp.js?v={{ assets_v }}" defer></script>
 </body>
 </html>
