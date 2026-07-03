@@ -109,7 +109,7 @@ def fresh_db():
         "memories", "book_cloud", "conversations", "channel_summaries", "job_state", "reminders",
         "usage_log", "notifications_sent", "responses", "feedback",
         "member_identities", "events", "meeting_member_status", "proposals",
-        "inbound_emails",
+        "inbound_emails", "webapp_tokens",
         "activity_events",
         "mail_message_fts", "mail_messages", "mail_threads",
     ]

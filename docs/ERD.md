@@ -80,7 +80,6 @@ erDiagram
         text date  "nullable"
         text start_time
         text location
-        int placeholder
     }
     club_reviews {
         int id PK
@@ -271,6 +270,9 @@ the club record by design — these are operational and disposable).
 | `notifications_sent` | `key` | Scheduler dedup keys (e.g. `topic-email-{meetingKey}`). |
 | `activity_events` | `id` | Outbound activity-log queue → the Oliver-log webhook. |
 | `usage_log` | `id` | Per-turn token/cost accounting (`model`, tokens, `rounds`). |
+| `book_cloud` | `id` (idx `title`, `created_at`) | Books the club mentions but hasn't read — who/when/why per mention (no dedupe). |
+| `job_state` | `key` | Cursors/watermarks for recurring jobs (weekly reflection, archive miners). |
+| `webapp_tokens` | `token` | Single-use web-app login tokens (minted by /oliver my-club, consumed on first tap). |
 
 ---
 

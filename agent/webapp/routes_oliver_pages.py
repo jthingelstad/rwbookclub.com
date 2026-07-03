@@ -18,16 +18,17 @@ from agent import clubdb, db
 from agent import corpus_read as cr
 from agent.mail.email_render import _render_markdown
 from agent.webapp.render import render
-
-
-def _form(request: web.Request):
-    return request.get("form") or {}
+from agent.webapp.routes_member import _form
 
 
 def _members() -> list[dict]:
     with db.connect() as conn:
         return [{"slug": m["slug"], "name": m["name"], "id": m["id"], "current": bool(m["is_current"])}
                 for m in clubdb.all_members(conn)]
+
+
+async def _sorted_members() -> list[dict]:
+    return sorted(await asyncio.to_thread(_members), key=lambda m: m["name"].lower())
 
 
 # ── Club events (admin, read-only + delete) ──────────────────────────────────
@@ -56,7 +57,7 @@ async def events_page(request: web.Request) -> web.Response:
         limit = 200
     events = await asyncio.to_thread(_load_events, category, member, since, until, limit)
     categories = await asyncio.to_thread(_event_categories)
-    members = sorted(await asyncio.to_thread(_members), key=lambda m: m["name"].lower())
+    members = await _sorted_members()
     return render("admin_events.html", request, events=events, categories=categories,
                   members=members, query_string=request.query_string,
                   f={"category": category, "member": member,
@@ -116,7 +117,7 @@ async def _render_bookcloud(request: web.Request, template: str, action: str) ->
     data = await asyncio.to_thread(_bookcloud_view, view=view, q=q, member=member,
                                    kind=kind, unread=unread, limit=limit)
     kinds = await asyncio.to_thread(_bookcloud_kinds)
-    members = sorted(await asyncio.to_thread(_members), key=lambda m: m["name"].lower())
+    members = await _sorted_members()
     return render(template, request, rows=data["rows"], kinds=kinds, members=members,
                   action=action,
                   f={"view": data["view"], "q": q, "member": member, "kind": kind,
@@ -154,7 +155,7 @@ async def memories_page(request: web.Request) -> web.Response:
         query=q or None, source=source or None, limit=limit)
     total = await asyncio.to_thread(db.count_memories)
     sources = await asyncio.to_thread(_memory_sources)
-    members = sorted(await asyncio.to_thread(_members), key=lambda m: m["name"].lower())
+    members = await _sorted_members()
     return render("admin_memories.html", request, rows=rows, total=total, sources=sources,
                   members=members,
                   f={"q": q, "subject": subject, "scope": scope, "source": source, "limit": limit})

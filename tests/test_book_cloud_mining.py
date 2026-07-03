@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 
 from agent import db
-from agent.script import mine_archive_book_cloud as miner
+from agent.script.archive import mine_archive_book_cloud as miner
 
 
 def _mail(mid: str, slug: str, sent_at: str, body: str):

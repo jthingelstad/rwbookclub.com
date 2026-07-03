@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
+import pathlib
 import re
 import subprocess
 import sys
@@ -620,9 +622,33 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent) -> None:
         log.exception("Failed to add ✅ confirmation for message %s", msg_id)
 
 
+_LOG_DIR = pathlib.Path(__file__).parent / "logs"
+_LOG_MAX_BYTES = 5_000_000
+
+
+def _rotate_launchd_log(name: str, fd: int) -> None:
+    """Startup log rotation. launchd appends stdout/stderr to agent/logs/ forever with no
+    rotation; at each start, if a file has grown past the cap, keep ONE prior generation (.1)
+    and repoint the inherited fd at a fresh file. The dup2 is required — renaming alone would
+    leave launchd's open fd writing into the renamed inode. Runs only in main() (never at
+    import: tests import this module, and dup2 on fd 1 would hijack pytest's stdout)."""
+    path = _LOG_DIR / name
+    try:
+        if not path.exists() or path.stat().st_size <= _LOG_MAX_BYTES:
+            return
+        path.replace(path.with_name(name + ".1"))
+        fresh = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
+        os.dup2(fresh, fd)
+        os.close(fresh)
+    except OSError:
+        pass  # rotation is best-effort; never block startup over it
+
+
 def main() -> None:
     if not config.TOKEN:
         raise SystemExit("DISCORD_BOT_TOKEN is not set (add it to the root .env).")
+    _rotate_launchd_log("oliver.log", 1)
+    _rotate_launchd_log("oliver.err", 2)
     client.run(config.TOKEN, log_handler=None)
 
 

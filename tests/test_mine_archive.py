@@ -34,7 +34,7 @@ _REPLY = json.dumps([
 
 
 def test_parse_events_strips_fences():
-    from agent.script import mine_archive_events as m
+    from agent.script.archive import mine_archive_events as m
     fenced = "```json\n[{\"kind\": \"dinner\"}]\n```"
     assert m._parse_events(fenced) == [{"kind": "dinner"}]
     assert m._parse_events("no json here") == []
@@ -42,7 +42,7 @@ def test_parse_events_strips_fences():
 
 def test_mine_writes_candidates_and_skips_unknown_kinds(tmp_path, fresh_db, monkeypatch):
     from agent import oliver
-    from agent.script import mine_archive_events as m
+    from agent.script.archive import mine_archive_events as m
 
     _seed_thread(fresh_db, "t1", "April pick", [("Jamie", "2018-04-01 09:00:00", "I pick Sapiens")])
     monkeypatch.setattr(oliver, "complete", lambda *a, **k: _REPLY)
@@ -62,7 +62,7 @@ def test_mine_writes_candidates_and_skips_unknown_kinds(tmp_path, fresh_db, monk
 
 def test_mine_is_resumable(tmp_path, fresh_db, monkeypatch):
     from agent import oliver
-    from agent.script import mine_archive_events as m
+    from agent.script.archive import mine_archive_events as m
 
     _seed_thread(fresh_db, "t1", "One", [("Jamie", "2018-04-01 09:00:00", "x")])
     calls = []
@@ -75,7 +75,7 @@ def test_mine_is_resumable(tmp_path, fresh_db, monkeypatch):
 
 def test_load_only_inserts_approved_and_is_idempotent(tmp_path, fresh_db):
     from agent import clubdb
-    from agent.script import mine_archive_events as m
+    from agent.script.archive import mine_archive_events as m
 
     jamie = clubdb.lookup_member_id("jamie")
     out = tmp_path / "mined.jsonl"
@@ -122,7 +122,7 @@ def _review_file(tmp_path):
 
 
 def test_approve_bulk_sets_safe_categories_only(tmp_path, fresh_db):
-    from agent.script import mine_archive_events as m
+    from agent.script.archive import mine_archive_events as m
     out = _review_file(tmp_path)
     # Ask to approve selection + member_life; member_life must be refused as privacy-sensitive.
     result = m.approve(out_path=out, categories={"selection", "member_life"})
@@ -134,14 +134,14 @@ def test_approve_bulk_sets_safe_categories_only(tmp_path, fresh_db):
 
 
 def test_approve_refuses_sensitive_outright(tmp_path, fresh_db):
-    from agent.script import mine_archive_events as m
+    from agent.script.archive import mine_archive_events as m
     out = _review_file(tmp_path)
     assert m.approve(out_path=out, categories={"social"})["approved"] == 0
     assert all(not json.loads(x)["approve"] for x in out.read_text().splitlines())
 
 
 def test_stats_summarizes_without_mutating(tmp_path, fresh_db):
-    from agent.script import mine_archive_events as m
+    from agent.script.archive import mine_archive_events as m
     out = _review_file(tmp_path)
     before = out.read_text()
     s = m.stats(out_path=out)
@@ -150,7 +150,7 @@ def test_stats_summarizes_without_mutating(tmp_path, fresh_db):
 
 
 def test_load_multi_member_event_is_group_scoped(tmp_path, fresh_db):
-    from agent.script import mine_archive_events as m
+    from agent.script.archive import mine_archive_events as m
     out = tmp_path / "mined.jsonl"
     out.write_text(json.dumps({
         "approve": True, "source": "mail:t2#0", "thread_id": "t2", "category": "social",

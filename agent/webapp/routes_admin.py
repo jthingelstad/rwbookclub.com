@@ -16,15 +16,11 @@ from agent import corpus_read as cr
 from agent.club import openlibrary
 from agent.webapp import state
 from agent.webapp.render import render
-from agent.webapp.routes_member import apply_identity_op
+from agent.webapp.routes_member import _form, apply_identity_op
 from agent.webapp.routes_oliver_pages import _members
 from corpus.paths import DATA_DIR
 
 log = logging.getLogger("oliver.webapp")
-
-
-def _form(request: web.Request):
-    return request.get("form") or {}
 
 
 

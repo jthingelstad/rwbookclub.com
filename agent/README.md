@@ -14,7 +14,7 @@ agent/
 ├── clubdb.py       # the authoritative club_* tables + read/write helpers
 ├── corpus_gen.py   # generate the (private, gitignored) corpus from the DB
 ├── corpus_read.py  # query/join layer over the generated corpus
-├── corpus_write.py # add-book / schedule_meeting → DB upsert + corpus regen (web app writers)
+├── corpus_write.py # web-app write path: club_* DB upsert → corpus regen + validate
 ├── webapp/         # member + admin web editor (aiohttp + Jinja2, Tailscale Funnel, token→cookie auth)
 ├── publish.py      # local build + deploy of the site to the gh-pages branch
 ├── scheduler.py    # pure due_notifications (reminders / nudges / milestones)

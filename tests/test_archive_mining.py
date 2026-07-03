@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from agent import db
-from agent.script import mine_archive_memories as miner
+from agent.script.archive import mine_archive_memories as miner
 
 
 def _mail(mid: str, slug: str, email: str, sent_at: str, body: str = "I loved that book."):

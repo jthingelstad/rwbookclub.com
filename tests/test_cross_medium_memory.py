@@ -92,7 +92,7 @@ def test_outbound_email_archived_two_sided(fresh_db):
 
 
 def test_backfill_resolves_speaker_names(fresh_db):
-    from agent.script.backfill_conversation_members import backfill
+    from agent.script.archive.backfill_conversation_members import backfill
     db.log_message("email:t9", "user", "hello there", speaker="Jamie Thingelstad")  # full display name
     db.log_message("email:t9", "assistant", "hi Jamie")                             # inherits
     db.log_message("777", "user", "yo", speaker="Erik")
