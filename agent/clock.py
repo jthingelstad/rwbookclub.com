@@ -49,6 +49,61 @@ def club_today_iso() -> str:
     return club_today().isoformat()
 
 
+def _easter(year: int) -> date:
+    """Easter Sunday (Gregorian) — the anonymous computus algorithm."""
+    a = year % 19
+    b, c = divmod(year, 100)
+    d, e = divmod(b, 4)
+    g = (8 * b + 13) // 25
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = divmod(c, 4)
+    m = (a + 11 * h) // 319
+    r = (2 * e + 2 * i - k - h + m + 32) % 7
+    month = (h - m + r + 90) // 25
+    day = (h - m + r + month + 19) % 32
+    return date(year, month, day)
+
+
+def _nth_weekday(year: int, month: int, weekday: int, n: int) -> date:
+    """The nth <weekday> (Mon=0) of a month; n=-1 for the last one."""
+    if n > 0:
+        first = date(year, month, 1)
+        offset = (weekday - first.weekday()) % 7
+        return first + timedelta(days=offset + 7 * (n - 1))
+    nxt = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
+    last = nxt - timedelta(days=1)
+    return last - timedelta(days=(last.weekday() - weekday) % 7)
+
+
+def us_holiday(d: date) -> str | None:
+    """The greeting-worthy US holiday on `d`, or None. The set is the social canon the club
+    would actually wish each other — not the full federal calendar."""
+    fixed = {
+        (1, 1): "New Year's Day",
+        (2, 14): "Valentine's Day",
+        (3, 17): "St. Patrick's Day",
+        (6, 19): "Juneteenth",
+        (7, 4): "Independence Day",
+        (10, 31): "Halloween",
+        (11, 11): "Veterans Day",
+        (12, 24): "Christmas Eve",
+        (12, 25): "Christmas Day",
+        (12, 31): "New Year's Eve",
+    }
+    name = fixed.get((d.month, d.day))
+    if name:
+        return name
+    if d == _easter(d.year):
+        return "Easter"
+    if d == _nth_weekday(d.year, 5, 0, -1):
+        return "Memorial Day"
+    if d == _nth_weekday(d.year, 9, 0, 1):
+        return "Labor Day"
+    if d == _nth_weekday(d.year, 11, 3, 4):
+        return "Thanksgiving"
+    return None
+
+
 def _hh_mm(start_time: str | None) -> tuple[int, int]:
     if start_time:
         try:

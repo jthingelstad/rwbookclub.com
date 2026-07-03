@@ -19,10 +19,12 @@ from pathlib import Path
 import anthropic
 from dotenv import load_dotenv
 
+from agent import clock
 from agent import context as kb
 from agent import corpus_read as cr
 from agent import db
 from agent import persona
+from agent.club import meeting_rules
 from agent.mail import email_policy
 from agent.tools import TOOLS, dispatch
 
@@ -80,6 +82,13 @@ OPERATIONAL_PROMPT = (
     "training. If a tool returns empty or 'no such X,' say so plainly; do not fall back on "
     "what you think you remember about the club. WORLD FACTS — an author's wider bibliography, "
     "public history, plot context — you can speak from general knowledge.\n\n"
+    "YOUR CLOCK. Every message carries a [Now: …] line — the club-local date and time, the "
+    "countdown to the next meeting, and any holiday today or tomorrow. Trust it: for \"what day "
+    "is it\" or \"how long until the meeting,\" answer straight from the line, no tool call. Let "
+    "it shape natural timing (\"Happy 4th!\" on the day, \"Merry Christmas\" in a first exchange "
+    "or an email opening; a nod to the meeting being days away when it fits). Never recite the "
+    "line back, never force a holiday greeting into every reply — once per person per occasion "
+    "is warm; every message is a novelty hat.\n\n"
     "WHAT THE TOOLS ACTUALLY GIVE YOU. State only what a field contains; don't derive facts the "
     "payload doesn't hold. get_author lists the author's books the club has IN ITS HISTORY — but "
     "it does NOT tell you which YEAR the club met on each, nor who PICKED it. A book's publication "
@@ -430,9 +439,53 @@ def _age_text(created_at: str | None) -> str:
     return "today" if days == 0 else "yesterday" if days == 1 else f"{days} days ago"
 
 
+def _now_line() -> str:
+    """One `[Now: …]` priming line: club-local date and time, the countdown to the next meeting,
+    and any greeting-worthy holiday today or tomorrow. Injected per turn (never in the cached
+    system prefix), so Oliver always knows what day it is without a tool call."""
+    from datetime import date as _date, timedelta
+
+    now = clock.club_now()
+    today = now.date()
+    bits = [f"Now: {now.strftime('%A, %B')} {now.day}, {now.year}, "
+            f"{now.strftime('%I:%M %p').lstrip('0')} in Minneapolis."]
+
+    try:
+        meeting = meeting_rules.next_meeting()
+    except Exception:  # noqa: BLE001 — the clock line must never take down an answer
+        meeting = None
+    if meeting and meeting.get("book") and meeting.get("date"):
+        when = meeting_rules.friendly_when(meeting["date"], meeting.get("startTime"))
+        try:
+            days = (_date.fromisoformat(meeting["date"]) - today).days
+        except (ValueError, TypeError):
+            days = None
+        if days == 0:
+            distance = "TODAY"
+        elif days == 1:
+            distance = "tomorrow"
+        elif days is not None and days > 1:
+            distance = f"{days} days away"
+        else:
+            distance = None
+        clause = f"Next meeting: {meeting['book']['title']} — {when}"
+        if distance:
+            clause += f", {distance}"
+        bits.append(clause + ".")
+
+    holiday = clock.us_holiday(today)
+    if holiday:
+        bits.append(f"Today is {holiday}.")
+    else:
+        tomorrow = clock.us_holiday(today + timedelta(days=1))
+        if tomorrow:
+            bits.append(f"Tomorrow is {tomorrow}.")
+    return "[" + " ".join(bits) + "]"
+
+
 def _question_block(question: str, speaker: str | None, member_slug: str | None,
                     summary: str | None, channel_id: str | None = None) -> str:
-    parts: list[str] = []
+    parts: list[str] = [_now_line()]
     if speaker:
         who = f"{speaker} (member: {member_slug})" if member_slug else f"{speaker} (not a recognized member)"
         parts.append(f"[Speaker: {who}]")
