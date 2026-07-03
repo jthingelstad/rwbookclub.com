@@ -17,37 +17,39 @@
   <body{% if bodyClass %} class="{{ bodyClass }}"{% endif %}>
     <a class="skip" href="#main">Skip to content</a>
     <div class="page">
+      {#- Four destinations; the wordmark is the fifth (home — the journey). Library views
+          (books/authors/meetings/lists/stats) share the Books slot and get a browse row below. -#}
+      {%- set navBooks = section == "library" -%}
       <header class="masthead">
         <a class="masthead-link" href="/">
           <span class="wordmark">{{ site.title }}</span>
         </a>
         <nav class="masthead-nav">
-          <a href="/">Journey</a>
+          <a href="/books/" {% if navBooks %}class="active" aria-current="true"{% endif %}>Books</a>
           <span aria-hidden="true">·</span>
-          <a href="/books/">All books</a>
+          <a href="/members/" {% if page.url.startsWith("/members/") %}class="active" aria-current="true"{% endif %}>Members</a>
           <span aria-hidden="true">·</span>
-          <a href="/authors/">Authors</a>
+          <a href="/oliver/" {% if page.url == "/oliver/" %}class="active" aria-current="true"{% endif %}>Oliver</a>
           <span aria-hidden="true">·</span>
-          <a href="/meetings/">Meetings</a>
-          <span aria-hidden="true">·</span>
-          <a href="/stats/">Stats</a>
-          <span aria-hidden="true">·</span>
-          <a href="/about/">About</a>
-          <span aria-hidden="true">·</span>
-          <a href="/members/">Members</a>
-          <span aria-hidden="true">·</span>
-          <a href="/oliver/">Oliver</a>
-          <span aria-hidden="true">·</span>
-          <a href="/lists/">Lists</a>
-          <span aria-hidden="true">·</span>
-          <a href="/feed.xml">Feed</a>
+          <a href="/about/" {% if page.url == "/about/" %}class="active" aria-current="true"{% endif %}>About</a>
         </nav>
       </header>
+      {%- if section == "library" %}
+      <nav class="section-nav" aria-label="Browse the library">
+        <span class="section-nav-label">Browse</span>
+        <a href="/books/" {% if page.url.startsWith("/books/") %}class="active"{% endif %}>All books</a>
+        <a href="/authors/" {% if page.url.startsWith("/authors/") %}class="active"{% endif %}>Authors</a>
+        <a href="/meetings/" {% if page.url.startsWith("/meetings/") %}class="active"{% endif %}>Meetings</a>
+        <a href="/lists/" {% if page.url.startsWith("/lists/") %}class="active"{% endif %}>Lists</a>
+        <a href="/stats/" {% if page.url.startsWith("/stats/") %}class="active"{% endif %}>Stats</a>
+      </nav>
+      {%- endif %}
       <main id="main">
         {{ content | safe }}
       </main>
       <footer class="site-footer">
         <p>Reading together since {{ site.founded }}.</p>
+        {#- The footer is the full sitemap — everything, including the quiet corners. -#}
         <nav>
           <a href="/">Journey</a>
           <span aria-hidden="true">·</span>
@@ -57,15 +59,15 @@
           <span aria-hidden="true">·</span>
           <a href="/meetings/">Meetings</a>
           <span aria-hidden="true">·</span>
-          <a href="/stats/">Stats</a>
+          <a href="/lists/">Lists</a>
           <span aria-hidden="true">·</span>
-          <a href="/about/">About</a>
+          <a href="/stats/">Stats</a>
           <span aria-hidden="true">·</span>
           <a href="/members/">Members</a>
           <span aria-hidden="true">·</span>
           <a href="/oliver/">Oliver</a>
           <span aria-hidden="true">·</span>
-          <a href="/lists/">Lists</a>
+          <a href="/about/">About</a>
           <span aria-hidden="true">·</span>
           <a href="/feed.xml">Feed</a>
         </nav>

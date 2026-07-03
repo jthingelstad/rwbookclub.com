@@ -1421,3 +1421,40 @@ body.stats-page .page {
   .oliver .oliver-portrait { width: 160px; height: 160px; }
   .oliver-features { grid-template-columns: 1fr; }
 }
+
+/* ─── Section nav (the library's browse row) ─────────────────────────── */
+.masthead-nav a.active {
+  color: var(--accent);
+}
+.section-nav {
+  margin: calc(-1 * var(--gap-lg) + 1rem) 0 var(--gap-lg);
+  font-size: var(--type-small);
+  color: var(--ink-faint);
+  display: flex;
+  gap: 0.9rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.section-nav-label {
+  font-size: var(--type-kicker);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.section-nav a {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.section-nav a:hover { text-decoration: underline; }
+.section-nav a.active {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* Mobile masthead: stack the wordmark above the nav and let links wrap naturally —
+   the baseline flex row could clip links off-screen at phone widths. */
+@media (max-width: 560px) {
+  .masthead { display: block; }
+  .masthead-nav { text-align: left; margin-top: 0.5rem; }
+  .section-nav { gap: 0.6rem; row-gap: 0.2rem; }
+}
