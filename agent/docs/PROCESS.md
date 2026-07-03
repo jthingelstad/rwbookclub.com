@@ -117,7 +117,7 @@ After a book, members record in the web app (Ratings / Reviews tabs):
 - a favorite quote and a written review.
 
 Oliver's role here is to **nudge and point** — remind members to rate/review and
-send them to `/oliver webapp` — not to collect reviews in chat. Private
+send them to `/oliver my-club` — not to collect reviews in chat. Private
 qualitative feedback a member shares conversationally still belongs in Oliver's
 memory. Not finishing a book is a strongly negative signal in this club.
 

@@ -14,7 +14,7 @@ agent/
 ├── clubdb.py       # the authoritative club_* tables + read/write helpers
 ├── corpus_gen.py   # generate the (private, gitignored) corpus from the DB
 ├── corpus_read.py  # query/join layer over the generated corpus
-├── corpus_write.py # add-book / schedule_meeting → DB upsert + corpus regen (web app + /oliver library)
+├── corpus_write.py # add-book / schedule_meeting → DB upsert + corpus regen (web app writers)
 ├── webapp/         # member + admin web editor (aiohttp + Jinja2, Tailscale Funnel, token→cookie auth)
 ├── publish.py      # local build + deploy of the site to the gh-pages branch
 ├── scheduler.py    # pure due_notifications (reminders / nudges / milestones)
@@ -48,15 +48,15 @@ agent/
   (`pick_prospects` → `pick_fit` — discover then evaluate pick candidates against member tastes,
   shelf-neighbor verdicts, and the cloud), plus `remember`, `recall`, `set_reminder`, and explicit
   self-reported `record_availability` (SQLite).
-- **Reviews / ratings / lists / profile**: members manage these in the **web app** (`/oliver webapp`,
+- **Reviews / ratings / lists / profile**: members manage these in the **web app** (`/oliver my-club`,
   see below), which writes `club_reviews` / `club_lists` / `member_identities` and regenerates the
   corpus. Identity comes from the Discord-user → member map (carried into a signed web session), not
   mutable display names.
-- **Operations** (admin), organized into `/oliver` subcommand groups: `/oliver library add-book`
-  (Open Library → book file + cover); `/oliver meeting roll-call`/`dashboard`/`check-in`;
-  `/oliver contact` admin identity links; `/oliver admin` (stats, feedback, proposals, tick);
-  `/oliver memory` maintenance. Admin **book/meeting/host editing** is in the web app. Writes go through `corpus_write.py`
-  and validate the corpus before commit.
+- **Operations** (admin), organized into `/oliver` subcommand groups: `/oliver meeting`
+  roll-call/dashboard/check-in; `/oliver admin` (status, feedback, proposals, resolve,
+  release-notes, link-member, reattribute-mail, tick). Admin **book/meeting/member editing and
+  memory grooming** live in the web app. Writes go through `corpus_write.py` and validate the
+  corpus before commit.
 - **Feedback** (any member): react 👍 or 👎 to any of Oliver's replies. The bot logs the
   reaction (user, message, question that prompted it) to SQLite and confirms with ✅. Use
   `/oliver admin feedback` for a quick summary plus the most recent 👍/👎 with context.
@@ -143,7 +143,7 @@ Thing pattern). Backup wiring is a deployment step, not in the repo.
 
 `/oliver` is organized into subcommand groups by purpose (Discord's 2-level nesting:
 `/oliver <group> <subcommand> [options]`). Quick top-level commands: `/oliver ping`, `/oliver whoami`,
-and `/oliver webapp` (see "Member + admin web app" below).
+and `/oliver my-club` (see "Member + admin web app" below).
 
 Structured, public, deliberate editing — **book ratings/reviews, lists, profile/contact, and admin
 data management** — moved to the web app. Discord stays primary for the conversational, private,
@@ -156,18 +156,18 @@ in-the-moment things (attendance, reading status, private meeting feedback).
   reading nudge.
 - **`/oliver timeline`** — `show [member|category]` (members) views the club event log; `log date:
   category: text: [member]` (admin) records an event.
-- **`/oliver contact`** — admins link anyone (`link-member`/`link-email`/`link-sms`) and `list` all
-  links. (Members manage their own websites/emails/phones in the web app → Profile.)
-- **`/oliver memory`** (admin) — `search [subject|query]`, `edit id: note:`, `forget id:`.
-- **`/oliver library`** (admin) — `add-book title: [isbn]` fetches metadata from Open Library.
-  (Scheduling/editing meetings moved to the web app → Meetings.)
-- **`/oliver admin`** — `stats`, `feedback`, `proposals`, `resolve id: decision:<accept|dismiss>`,
-  `release-notes [to]`, `reattribute-mail`, `tick` (run the scheduler now).
+- **`/oliver admin`** — `status` (release/models/data/memory card), `feedback`, `proposals`,
+  `resolve id: decision:<accept|dismiss>`, `release-notes [to]`, `link-member member: user:`
+  (needs Discord's user picker — the one identity op still in Discord), `reattribute-mail`,
+  `tick` (run the scheduler now).
+- Retired in the 2026-07 command review (webapp owns them now): the `contact` group
+  (email/SMS linking + audit → member editor + Members-page coverage badges), the `memory`
+  group (→ admin Memories page), and `library add-book` (→ admin Books → Add).
 
-## Member + admin web app (`/oliver webapp`)
+## Member + admin web app (`/oliver my-club`)
 
 A real web editor served **inside the bot process** (`agent/webapp/`, aiohttp + Jinja2) and reached
-over **Tailscale Funnel**. `/oliver webapp` mints a single-use token (the Discord identity link *is*
+over **Tailscale Funnel**. `/oliver my-club` mints a single-use token (the Discord identity link *is*
 the auth); the member opens the URL, the server exchanges the token for a signed session cookie, and
 they edit on a page. The server starts on demand and idles off after ~15 min; changes go live on a
 **Publish** button or on idle shutdown (deferred publish — no per-write rebuild).

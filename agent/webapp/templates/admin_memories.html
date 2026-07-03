@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% set nav = "memories" %}
+{% block title %}Memories (admin){% endblock %}
+{% block content %}
+  <h1>Memories</h1>
+  <p class="muted">Oliver's durable memory — member tastes and club lore, mostly groomed by the
+    weekly reflection. Edit a note that's wrong, retire one that shouldn't exist. Private: never
+    rendered to the public site.</p>
+
+  <form method="get" action="/webapp/admin/memories" class="card">
+    <div class="row" style="gap:.5rem; flex-wrap:wrap; align-items:flex-end">
+      <div style="flex:2; min-width:12rem">
+        <label style="margin:0 0 .2rem">Search notes</label>
+        <input type="text" name="q" value="{{ f.q }}" placeholder="e.g. Harari, audiobook, PowerPoint…">
+      </div>
+      <div style="flex:1; min-width:9rem">
+        <label style="margin:0 0 .2rem">Subject</label>
+        <select name="subject">
+          <option value="">Anyone / anything</option>
+          {% for m in members %}<option value="{{ m.slug }}" {{ 'selected' if m.slug == f.subject }}>{{ m.name }}{{ '' if m.current else ' (former)' }}</option>{% endfor %}
+        </select>
+      </div>
+      <div style="flex:1; min-width:8rem">
+        <label style="margin:0 0 .2rem">Scope</label>
+        <select name="scope">
+          <option value="">All</option>
+          {% for s in ('member', 'club', 'general') %}
+          <option value="{{ s }}" {{ 'selected' if s == f.scope }}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="flex:1; min-width:8rem">
+        <label style="margin:0 0 .2rem">Source</label>
+        <select name="source">
+          <option value="">All</option>
+          {% for s in sources %}<option value="{{ s }}" {{ 'selected' if s == f.source }}>{{ s }}</option>{% endfor %}
+        </select>
+      </div>
+      <div style="width:5.5rem">
+        <label style="margin:0 0 .2rem">Limit</label>
+        <input type="number" name="limit" value="{{ f.limit }}" min="1" max="500">
+      </div>
+      <div><button class="primary">Apply</button>
+        <a class="btn" href="/webapp/admin/memories">Clear</a></div>
+    </div>
+  </form>
+
+  <p class="muted">{{ rows|length }} of {{ total }} active memor{{ 'y' if total == 1 else 'ies' }}{% if rows|length >= f.limit %} (limit reached — narrow the filters){% endif %}.</p>
+  <input class="filter" type="text" id="textfilter" placeholder="Filter loaded rows…" autocomplete="off">
+
+  <table>
+    <thead><tr><th>Id</th><th>Scope</th><th>Note</th><th>Source</th><th>Created</th><th></th></tr></thead>
+    <tbody id="rows">
+      {% for r in rows %}
+      <tr data-q="{{ ((r.subject or '') ~ ' ' ~ (r.scope or '') ~ ' ' ~ r.note ~ ' ' ~ (r.source or ''))|lower }}">
+        <td class="muted">{{ r.id }}</td>
+        <td style="white-space:nowrap">{{ r.scope or 'general' }}{% if r.subject %} <span class="muted">/ {{ r.subject }}</span>{% endif %}</td>
+        <td style="word-break:break-word">
+          <form method="post" action="/webapp/admin/memories/act" class="row" style="gap:.4rem">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <input type="hidden" name="op" value="edit">
+            <input type="hidden" name="id" value="{{ r.id }}">
+            <input type="hidden" name="return" value="/webapp/admin/memories?q={{ f.q|urlencode }}&subject={{ f.subject|urlencode }}&scope={{ f.scope }}&source={{ f.source|urlencode }}&limit={{ f.limit }}">
+            <input type="text" name="note" value="{{ r.note }}" style="flex:1">
+            <button class="btn" title="Save the edited note">Save</button>
+          </form>
+        </td>
+        <td class="muted" style="white-space:nowrap">{{ r.source or '—' }}</td>
+        <td class="muted" style="white-space:nowrap">{{ (r.created_at or '')[:10] }}</td>
+        <td style="text-align:right">
+          <form method="post" action="/webapp/admin/memories/act"
+                onsubmit="return confirm('Retire memory {{ r.id }}? Oliver will no longer know this.')">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <input type="hidden" name="op" value="retire">
+            <input type="hidden" name="id" value="{{ r.id }}">
+            <input type="hidden" name="return" value="/webapp/admin/memories?q={{ f.q|urlencode }}&subject={{ f.subject|urlencode }}&scope={{ f.scope }}&source={{ f.source|urlencode }}&limit={{ f.limit }}">
+            <button class="btn" title="Retire this memory">Retire</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}<tr><td colspan="6" class="muted">Nothing matches these filters.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
+{% block script %}
+  const tf = document.getElementById('textfilter');
+  tf.addEventListener('input', () => {
+    const q = tf.value.toLowerCase();
+    document.querySelectorAll('#rows tr').forEach(tr => {
+      if (!tr.dataset.q) return;
+      tr.style.display = tr.dataset.q.includes(q) ? '' : 'none';
+    });
+  });
+{% endblock %}

@@ -1,6 +1,6 @@
 """Auth for the member web app: one-time link tokens + HMAC-signed session cookies + CSRF.
 
-The Discord `/oliver webapp` command mints a single-use token (the Discord identity link IS the auth).
+The Discord `/oliver my-club` command mints a single-use token (the Discord identity link IS the auth).
 On first load the server *consumes* it and issues a signed session cookie carrying the member's id,
 admin flag, and a per-session CSRF secret. Every later request derives identity from that cookie —
 never from request params — so a member can only ever see and edit their own data.

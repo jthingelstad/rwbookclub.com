@@ -298,9 +298,24 @@ async def meeting_save(request: web.Request) -> web.Response:
 
 
 # ── Members ──────────────────────────────────────────────────────────────────
+def _identity_coverage() -> dict[str, dict]:
+    """slug → which identity types are linked (the audit the retired `/oliver contact list`
+    command used to give: spot the current member you can't reach before a campaign)."""
+    coverage: dict[str, dict] = {}
+    for key, rows in (("discord", db.list_member_identities()),
+                      ("email", db.list_member_emails()),
+                      ("sms", db.list_member_sms())):
+        for r in rows:
+            coverage.setdefault(r["member_slug"], {})[key] = True
+    return coverage
+
+
 async def _render_members(request: web.Request, *, status: int = 200,
                           error: str | None = None) -> web.Response:
     members = await asyncio.to_thread(_members)
+    coverage = await asyncio.to_thread(_identity_coverage)
+    for m in members:
+        m["coverage"] = coverage.get(m["slug"], {})
     members = sorted(members, key=lambda m: ((not m["current"]), m["name"].lower()))
     return render("admin_members.html", request, status=status, error=error, members=members)
 
@@ -488,6 +503,54 @@ async def bookcloud_page(request: web.Request) -> web.Response:
                      "unread": unread, "limit": limit})
 
 
+# ── Memories ─────────────────────────────────────────────────────────────────
+# Oliver's durable memory store (member tastes + club lore, mostly reflection-groomed). This page
+# replaced the retired `/oliver memory search/edit/forget` commands: search/filter the whole set,
+# fix a note inline, retire what's wrong. Provenance (source) is read-only.
+def _memory_sources() -> list[str]:
+    with db.connect() as conn:
+        return [r["source"] for r in conn.execute(
+            "SELECT DISTINCT source FROM memories WHERE status = 'active' AND source IS NOT NULL "
+            "ORDER BY source")]
+
+
+async def memories_page(request: web.Request) -> web.Response:
+    p = request.query
+    q, subject, scope, source = (p.get("q", "").strip(), p.get("subject", "").strip(),
+                                 p.get("scope", ""), p.get("source", ""))
+    try:
+        limit = min(max(int(p.get("limit") or 200), 1), 500)
+    except ValueError:
+        limit = 200
+    rows = await asyncio.to_thread(
+        db.get_memories, subject=subject or None, scope=scope or None,
+        query=q or None, source=source or None, limit=limit)
+    total = await asyncio.to_thread(db.count_memories)
+    sources = await asyncio.to_thread(_memory_sources)
+    members = sorted(await asyncio.to_thread(_members), key=lambda m: m["name"].lower())
+    return render("admin_memories.html", request, rows=rows, total=total, sources=sources,
+                  members=members,
+                  f={"q": q, "subject": subject, "scope": scope, "source": source, "limit": limit})
+
+
+async def memory_action(request: web.Request) -> web.Response:
+    form = _form(request)
+    op = form.get("op", "")
+    try:
+        memory_id = int(form.get("id") or 0)
+    except ValueError:
+        memory_id = 0
+    if op == "edit" and memory_id and (form.get("note") or "").strip():
+        await asyncio.to_thread(db.update_memory, memory_id, form["note"].strip())
+    elif op == "retire" and memory_id:
+        await asyncio.to_thread(db.delete_memory, memory_id)
+    # Memories are private (never rendered to the public site) — no mark_dirty.
+    ret = (form.get("return") or "").strip()
+    if not ret.startswith("/webapp/admin/memories"):
+        ret = "/webapp/admin/memories"
+    raise web.HTTPFound(ret)
+
+
 # ── Club lists ───────────────────────────────────────────────────────────────
 # Two pages, like the member side: the index (manage club lists) and a per-list detail page (manage
 # its books). Item ops post to the shared /webapp/lists/act (authorized as a club list for admins).
@@ -527,4 +590,6 @@ def add_routes(app: web.Application) -> None:
         web.get("/webapp/admin/events", events_page),
         web.post("/webapp/admin/events/delete", event_delete),
         web.get("/webapp/admin/bookcloud", bookcloud_page),
+        web.get("/webapp/admin/memories", memories_page),
+        web.post("/webapp/admin/memories/act", memory_action),
     ])

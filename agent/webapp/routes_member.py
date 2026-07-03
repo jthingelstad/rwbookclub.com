@@ -15,6 +15,7 @@ from agent import clubdb, corpus_gen, db
 from agent import corpus_read as cr
 from agent.club import lists as lists_writer
 from agent.club import reviews as reviews_writer
+from agent.mail import mail_archive
 from agent.webapp import state
 from agent.webapp.render import render
 from corpus.paths import DATA_DIR
@@ -54,6 +55,9 @@ def apply_identity_op(slug: str, op: str, val: str, label: str | None = None,
         return True
     if op == "add-email" and val:
         db.link_member_email(val, slug, linked_by="webapp")
+        # Archived mail from this address catches up immediately (what the retired Discord
+        # link-email command did); scoped to one address, so it's cheap.
+        mail_archive.reattribute_archive(val)
     elif op == "add-phone" and val:
         db.link_member_sms(val, slug, linked_by="webapp")
     elif op == "remove-phone" and val:

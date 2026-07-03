@@ -157,7 +157,7 @@ TOOLS = [
     },
     {
         "name": "pending_reviews",
-        "description": "Books a member has read but not yet reviewed — answers 'what do I still owe a review for?'. Reviewing is done in the web app: point them to /oliver webapp (Reviews tab) to log one.",
+        "description": "Books a member has read but not yet reviewed — answers 'what do I still owe a review for?'. Reviewing is done in the web app: point them to /oliver my-club (Reviews tab) to log one.",
         "input_schema": {
             "type": "object",
             "properties": {"member": {"type": "string", "description": "member name or slug"}},

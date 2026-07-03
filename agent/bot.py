@@ -232,7 +232,7 @@ async def on_ready() -> None:
     start_activity_logger()
     start_email_poller()
     # The member web app is NOT started here — it starts on demand when a member runs
-    # /oliver webapp and shuts itself down after idle (see agent/webapp.py).
+    # /oliver my-club and shuts itself down after idle (see agent/webapp.py).
 
 
 def start_activity_logger() -> None:

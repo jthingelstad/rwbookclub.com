@@ -821,7 +821,8 @@ def add_memory(note: str, *, scope: str = "general", subject: str | None = None,
 
 
 def get_memories(*, subject: str | None = None, scope: str | None = None,
-                 query: str | None = None, limit: int = 50) -> list[dict]:
+                 query: str | None = None, source: str | None = None,
+                 limit: int = 50) -> list[dict]:
     sql = (
         "SELECT id, scope, subject, note, source, source_user_id, source_message_id, "
         "confidence, created_at FROM memories WHERE status = 'active'"
@@ -833,9 +834,17 @@ def get_memories(*, subject: str | None = None, scope: str | None = None,
         sql += " AND scope = ?"; args.append(scope)
     if query:
         sql += " AND note LIKE ?"; args.append(f"%{query}%")
+    if source:
+        sql += " AND source = ?"; args.append(source)
     sql += " ORDER BY id DESC LIMIT ?"; args.append(limit)
     with connect() as conn:
         return [dict(r) for r in conn.execute(sql, args)]
+
+
+def count_memories() -> int:
+    """Active memory count (the admin status card's one-number view of the memory store)."""
+    with connect() as conn:
+        return conn.execute("SELECT COUNT(*) FROM memories WHERE status = 'active'").fetchone()[0]
 
 
 def update_memory(memory_id: int, note: str) -> bool:

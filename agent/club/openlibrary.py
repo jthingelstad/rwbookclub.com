@@ -1,4 +1,4 @@
-"""Best-effort Open Library metadata lookup for `/oliver library add-book`.
+"""Best-effort Open Library metadata lookup for the web app admin add-book flow.
 
 Open Library data is uneven, so this returns a single best-guess candidate; the admin
 reviews/edits the written file. Looks up by ISBN (precise) or title (search).

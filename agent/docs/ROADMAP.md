@@ -60,7 +60,8 @@ deployed by the publish step. Submitting the modal is the confirmation.
 **Phase 4 — Meetings & operations.** ✅ **Done.**
 `/oliver library add-book` (fetches metadata + cover from Open Library, writes a book file) and
 `/oliver library schedule` (book + date + picker → writes a placeholder meeting + sets the book's
-picker), admin-gated, via `agent/corpus_write.py`; writes go to the `club_*` DB, regenerate
+picker), admin-gated, via `agent/corpus_write.py` (both since retired — the web app's admin
+Books/Meetings pages own these writes as of the 2026-07 command review); writes go to the `club_*` DB, regenerate
 the corpus, validate it, and create missing author records for new books. An in-process
 `discord.ext.tasks` loop (`agent/scheduler.py`, pure `due_notifications`) posts proactive
 upcoming-meeting reminders, a review nudge for the most-recent read, and milestone/anniversary
@@ -88,7 +89,7 @@ lock). The persona was deepened to read like a long-time member
 (real opinions, group-channel etiquette, no help-desk tone) and `_question_block` now injects
 both the speaker's remembered tastes and club-scoped lore, so replies personalize. Admin memory
 commands (`/oliver memory search`, `edit`, `forget`) provide a repair path for bad durable
-notes. Milestone/anniversary celebration shipped in Phase 4's scheduler.
+notes (since retired — the web app's admin Memories page is the repair path as of 2026-07). Milestone/anniversary celebration shipped in Phase 4's scheduler.
 Awards were **superseded by book lists** (Phase 7) — `club_awards` was retired and the one
 record (2016 Book of the Year) migrated into a "Books of the Year" club list.
 
@@ -115,7 +116,7 @@ club list. (The separate enrichment-driven literary-awards field on books is unr
 (`agent/webapp/`, aiohttp + Jinja2) over **Tailscale Funnel**, authed by a Discord-minted single-use
 token → signed session cookie (the Discord identity link *is* the login; no passwords, no cloud DB —
 the authoritative SQLite stays local and the Mac dials out via Funnel). On-demand lifecycle (starts on
-`/oliver webapp`, idles off ~15 min) and **deferred publish** (Publish button / idle shutdown, no
+`/oliver my-club`, idles off ~15 min) and **deferred publish** (Publish button / idle shutdown, no
 per-write rebuild). Member tabs: bulk **ratings** grid (1–5/DNF, one click), **reviews** (Markdown),
 **lists**, **profile/contact**. Admin tabs: **book** data, **meetings** (add/edit, mark held),
 **hosts**. Reuses existing writers + new `clubdb.set_rating`/`update_meeting`/`set_meeting_hosts`. The

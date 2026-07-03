@@ -12,6 +12,12 @@
     {% for m in members %}
     <tr>
       <td><a href="/webapp/admin/members/{{ m.slug }}">{{ m.name }}</a>{% if not m.current %} <span class="muted">· former</span>{% endif %}</td>
+      <td class="muted" style="font-size:.8rem; white-space:nowrap">
+        {# Reachability at a glance (replaces the old /oliver contact list audit) — dim what's missing #}
+        <span {% if not m.coverage.discord %}style="opacity:.25" title="no Discord link"{% else %}title="Discord linked"{% endif %}>💬</span>
+        <span {% if not m.coverage.email %}style="opacity:.25" title="no email link"{% else %}title="email linked"{% endif %}>✉️</span>
+        <span {% if not m.coverage.sms %}style="opacity:.25" title="no SMS link"{% else %}title="SMS linked"{% endif %}>📱</span>
+      </td>
       <td style="text-align:right">
         <a class="btn" href="/webapp/admin/members/{{ m.slug }}">Edit</a>
       </td>

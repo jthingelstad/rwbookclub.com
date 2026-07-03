@@ -1,4 +1,4 @@
-"""Write books + meetings — the /oliver library add-book / schedule path.
+"""Write books + meetings — the add-book / schedule-meeting write path (web app admin Books/Meetings).
 
 Oliver manages the authoritative SQLite club record (``club_*`` tables). A write is:
 
@@ -85,7 +85,7 @@ def schedule_meeting(book_query: str, date_iso: str, picker_query: str) -> dict:
     clubdb.ensure_schema()
     book = cr.find_book(book_query)
     if not book:
-        raise WriteError(f"No book matching {book_query!r} — add it first with /oliver library add-book.")
+        raise WriteError(f"No book matching {book_query!r} — add it first in the web app (Books → Add).")
     member = cr.find_member(picker_query)
     if not member:
         raise WriteError(f"No club member matching {picker_query!r}.")

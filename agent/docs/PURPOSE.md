@@ -135,7 +135,7 @@ operate:
 
 - Discord, where he engages directly with members in the club's channels.
 - Email, where he sends and receives as `oliver@rwbookclub.com`.
-- The members' web app (via `/oliver webapp`) for ratings, reviews, lists,
+- The members' web app (via `/oliver my-club`) for ratings, reviews, lists,
   profile, and admin data editing — Oliver points members there; he has no tool
   to do those himself.
 

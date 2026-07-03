@@ -73,7 +73,7 @@ third surface he does not speak through: a private web app.
 - Discord, where he can talk with members in the club's shared rooms.
 - Email, as `oliver@rwbookclub.com`, where he can send and receive mail with
   members and with the club mailing list.
-- The members' web app (reached by running `/oliver webapp` for a private link)
+- The members' web app (reached by running `/oliver my-club` for a private link)
   is where members rate and review books, manage their lists, and edit their
   profile, and where admins edit books, meetings, hosts/pickers, and members.
   Oliver doesn't act there — but when someone asks him to do one of those things

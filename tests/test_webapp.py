@@ -145,6 +145,44 @@ def test_new_webapp_templates_render():
         events=events, categories=["club"], members=[], query_string="category=club",
         f={"category": "club", "member": "", "since": "", "until": "", "limit": 200}, **base_ctx)
     assert "ev-detail" in page and "hello" in page and "/webapp/admin/events/delete" in page
+    memories = [{"id": 3, "scope": "member", "subject": "jamie", "note": "Enjoys hard SF",
+                 "source": "reflection", "created_at": "2026-07-01T00:00:00+00:00"}]
+    mem_page = _env.get_template("admin_memories.html").render(
+        rows=memories, total=1, sources=["reflection"], members=[],
+        f={"q": "", "subject": "", "scope": "", "source": "", "limit": 200}, **base_ctx)
+    assert "Enjoys hard SF" in mem_page and "/webapp/admin/memories/act" in mem_page
+    assert "Retire" in mem_page
+    members_page = _env.get_template("admin_members.html").render(
+        members=[{"slug": "jamie", "name": "Jamie", "current": True,
+                  "coverage": {"discord": True, "email": True}}], **base_ctx)
+    assert "no SMS link" in members_page and "Discord linked" in members_page
+
+
+def test_memories_filters_and_count(fresh_db):
+    fresh_db.add_memory("Enjoys hard SF", scope="member", subject="jamie", source="reflection")
+    fresh_db.add_memory("December social meeting", scope="club", source="reflection")
+    fresh_db.add_memory("Prefers audiobooks", scope="member", subject="jamie", source="member_request")
+    assert fresh_db.count_memories() == 3
+    assert len(fresh_db.get_memories(subject="jamie")) == 2
+    assert len(fresh_db.get_memories(source="reflection")) == 2
+    assert len(fresh_db.get_memories(scope="club")) == 1
+    only = fresh_db.get_memories(query="audiobook", source="member_request")
+    assert len(only) == 1 and only[0]["note"] == "Prefers audiobooks"
+    fresh_db.delete_memory(only[0]["id"])
+    assert fresh_db.count_memories() == 2  # retired memories drop out of the count
+
+
+def test_webapp_email_link_reattributes_archive(fresh_db, monkeypatch):
+    # The retired Discord link-email command re-attributed archived mail; the webapp
+    # writer must do the same so history never silently lags a new link.
+    from agent.webapp import routes_member
+    calls = []
+    monkeypatch.setattr(routes_member.mail_archive, "reattribute_archive",
+                        lambda email=None: calls.append(email) or 0)
+    routes_member.apply_identity_op("jamie", "add-email", "jamie@example.test")
+    assert calls == ["jamie@example.test"]
+    rows = fresh_db.list_member_emails()
+    assert any(r["email"] == "jamie@example.test" for r in rows)
 
 
 def test_webapp_refuses_dev_secret(monkeypatch):
@@ -397,13 +435,28 @@ def test_routes_end_to_end(monkeypatch):
                 ahdr = {"Cookie": f"{sessions.COOKIE_NAME}={admin_val}"}
                 with db.connect() as conn:
                     mid = clubdb.all_meetings(conn)[0]["id"]
+                mem_id = db.add_memory("Web e2e test memory", scope="member", subject="jamie",
+                                       source="reflection")
                 for path, needle in [("/webapp/admin/books", "Edit book data"),
                                      ("/webapp/admin/books/heart-of-darkness", "Open Library key"),
                                      ("/webapp/admin/meetings", "Schedule a meeting"),
-                                     (f"/webapp/admin/meetings/{mid}", "the host picks")]:
+                                     (f"/webapp/admin/meetings/{mid}", "the host picks"),
+                                     ("/webapp/admin/members", "no SMS link"),
+                                     ("/webapp/admin/memories", "Web e2e test memory")]:
                     async with s.get(base + path, headers=ahdr) as r:
                         assert r.status == 200, path
                         assert needle in await r.text(), path
+                acsrf_early = sessions.read_session(admin_val)["csrf"]
+                # memory grooming: edit the note, then retire it (leaves no active row behind)
+                async with s.post(base + "/webapp/admin/memories/act", headers=ahdr, allow_redirects=False,
+                                  data={"csrf": acsrf_early, "op": "edit", "id": str(mem_id),
+                                        "note": "Web e2e test memory (edited)"}) as r:
+                    assert r.status == 302
+                assert db.get_memories(query="(edited)")[0]["id"] == mem_id
+                async with s.post(base + "/webapp/admin/memories/act", headers=ahdr, allow_redirects=False,
+                                  data={"csrf": acsrf_early, "op": "retire", "id": str(mem_id)}) as r:
+                    assert r.status == 302
+                assert not db.get_memories(query="Web e2e test memory")
                 # admin can create a two-book meeting and a bookless meeting
                 acsrf = sessions.read_session(admin_val)["csrf"]
                 async with s.post(base + "/webapp/admin/meetings/add", headers=ahdr, allow_redirects=False,

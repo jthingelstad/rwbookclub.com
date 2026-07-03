@@ -482,7 +482,7 @@ def import_mbox(path: str | Path, *, write: bool = False) -> ImportReport:
             else:
                 report.updated += 1
             # Unresolved senders (no member match) simply keep member_id NULL — from_email /
-            # from_name are retained on the message. Link the member later (/oliver contact link-email)
+            # from_name are retained on the message. Link the member later (web app member editor)
             # and reattribute_archive picks their history up.
         else:
             report.skipped += 1

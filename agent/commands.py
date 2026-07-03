@@ -18,11 +18,10 @@ import discord
 import requests
 from discord.ext import tasks
 
-from agent import (clock, clubdb, config, context as kb, corpus_read, corpus_write, db, oliver,
+from agent import (clock, clubdb, config, context as kb, corpus_read, db, oliver,
                    publish, reflection, scheduler, webapp)
 from agent.mail import email_jmap, mail_archive, outbound
-from agent.club import (meeting_campaign, meeting_emails, meeting_rules,
-                        openlibrary, release_notes)
+from agent.club import meeting_campaign, meeting_emails, meeting_rules, release_notes
 
 log = logging.getLogger("oliver.commands")
 
@@ -161,17 +160,12 @@ oliver_cmds = discord.app_commands.Group(
     name="oliver", description="Ask Oliver, or help run the R/W Book Club."
 )
 
-# Identity/contact management lives under `/oliver contact …` — a nested subcommand group, both to
-# group it logically and to stay under Discord's 25-subcommand-per-group ceiling. Admin `link-*`
-# (link anyone) and member self-service `add-*`/`remove-*` (your own handles) both live here.
-contact_cmds = discord.app_commands.Group(
-    name="contact", description="Manage member contact handles — websites, emails, phones.",
-    parent=oliver_cmds,
-)
-
 # Domain subcommand groups, so `/oliver` reads as a handful of purposes rather than a flat list.
 # discord.py nests these under oliver_cmds automatically (parent=), within Discord's 2-level limit:
 # `/oliver <group> <subcommand> [options]`.
+# 2026-07 command review: the `contact`, `memory`, and `library` groups were retired — member
+# self-service and admin data edits live in the web app (/oliver my-club) now; memory grooming
+# has its own admin webapp page; link-member (needs Discord's user picker) moved under `admin`.
 reading_cmds = discord.app_commands.Group(
     name="reading", description="Your reading progress for the next book.", parent=oliver_cmds)
 meeting_cmds = discord.app_commands.Group(
@@ -180,13 +174,8 @@ meeting_cmds = discord.app_commands.Group(
 timeline_cmds = discord.app_commands.Group(
     name="timeline", description="The club's event timeline — view it or record an event.",
     parent=oliver_cmds)
-memory_cmds = discord.app_commands.Group(
-    name="memory", description="Oliver's durable memory (admin).", parent=oliver_cmds)
-library_cmds = discord.app_commands.Group(
-    name="library", description="Club reading data — add books, schedule reads (admin).",
-    parent=oliver_cmds)
 admin_cmds = discord.app_commands.Group(
-    name="admin", description="Operate Oliver — stats, feedback, proposals, scheduler (admin).",
+    name="admin", description="Operate Oliver — status, feedback, proposals, scheduler (admin).",
     parent=oliver_cmds)
 
 
@@ -577,7 +566,8 @@ async def oliver_ping(interaction: discord.Interaction) -> None:
     await interaction.response.send_message("🟢 Oliver is awake.", ephemeral=True)
 
 
-@oliver_cmds.command(name="webapp", description="Get a private link to manage your club info on the web.")
+@oliver_cmds.command(name="my-club",
+                     description="Get your private link to manage your club stuff — ratings, reviews, lists, profile.")
 async def oliver_webapp(interaction: discord.Interaction) -> None:
     member = _linked_member_for_user(interaction.user.id)
     if not member:
@@ -597,15 +587,28 @@ async def oliver_webapp(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(
         f"🔧 Your private link (good for ~15 minutes, just for you):\n<{url}>\n"
         "_Blank page? The editor sleeps after ~15 min idle (or a restart) — just run "
-        "`/oliver webapp` again to wake it._", ephemeral=True)
+        "`/oliver my-club` again to wake it._", ephemeral=True)
 
 
-@admin_cmds.command(name="stats", description="Report corpus stats (admin).")
+@admin_cmds.command(name="status", description="Oliver at a glance — release, models, data, memory (admin).")
 @admin_only
-async def oliver_stats(interaction: discord.Interaction) -> None:
-    await interaction.response.send_message(
-        f"Corpus holds {kb.book_count()} books. Model: {oliver.MODEL}.", ephemeral=True,
-    )
+async def oliver_status(interaction: discord.Interaction) -> None:
+    release = db.current_release()
+    release_line = (f"**Release:** {release['name']} (`{release['commit']}`, "
+                    f"{(release.get('occurred_at') or '')[:10]})" if release
+                    else "**Release:** unnamed (no christened release yet)")
+    memories = await asyncio.to_thread(db.count_memories)
+    reflected = db.get_job_state("reflection") or {}  # 'ran_at' stamped by each reflection pass
+    proposals = await asyncio.to_thread(db.list_proposals, 10)
+    lines = [
+        release_line,
+        f"**Models:** chat {oliver.MODEL} · generate {oliver.OPUS_MODEL}",
+        f"**Club record:** {kb.book_count()} books · {len(corpus_read.meetings())} meetings",
+        f"**Memory:** {memories} active memories · last reflection "
+        f"{(reflected.get('ran_at') or 'never')[:10]}",
+        f"**Proposals pending:** {len(proposals)}",
+    ]
+    await interaction.response.send_message("\n".join(lines), ephemeral=True)
 
 
 @admin_cmds.command(name="release-notes",
@@ -719,7 +722,8 @@ async def postscript_cmd(interaction: discord.Interaction) -> None:
     rec = db.email_for_member(slug) if slug else None
     if not rec:
         await interaction.response.send_message(
-            "You don't have a linked email address — link one first (`/oliver contact link-email`).",
+            "You don't have a linked email address — link one in the web app first "
+            "(`/oliver my-club` → Profile).",
             ephemeral=True)
         return
     await interaction.response.defer(ephemeral=True)
@@ -749,7 +753,7 @@ async def postscript_cmd(interaction: discord.Interaction) -> None:
         "~1-week-after-meeting send.", ephemeral=True)
 
 
-@contact_cmds.command(name="link-member", description="Link a Discord user to a club member (admin).")
+@admin_cmds.command(name="link-member", description="Link a Discord user to a club member (admin).")
 @discord.app_commands.describe(member="Club member", user="Discord user")
 @discord.app_commands.autocomplete(member=member_autocomplete)
 @admin_only
@@ -763,50 +767,12 @@ async def link_member_cmd(interaction: discord.Interaction, member: str, user: d
         f"Linked {user.mention} to {m['name']} (`{m['slug']}`).", ephemeral=True)
 
 
-@contact_cmds.command(name="link-email", description="Link an email address to a club member (admin).")
-@discord.app_commands.describe(member="Club member", email="Email address")
-@discord.app_commands.autocomplete(member=member_autocomplete)
-@admin_only
-async def link_email_cmd(interaction: discord.Interaction, member: str, email: str) -> None:
-    m = corpus_read.find_member(member)
-    if not m:
-        await interaction.response.send_message("I couldn't find that member.", ephemeral=True)
-        return
-    try:
-        db.link_member_email(email, m["slug"], linked_by=str(interaction.user.id))
-    except ValueError as e:
-        await interaction.response.send_message(str(e), ephemeral=True)
-        return
-    # Re-attribute any archived mail from this address to the member (history catches up).
-    rescored = await asyncio.to_thread(mail_archive.reattribute_archive, email)
-    extra = f" Re-attributed {rescored} archived message(s)." if rescored else ""
-    await interaction.response.send_message(
-        f"Linked `{email.strip().lower()}` to {m['name']} (`{m['slug']}`).{extra}", ephemeral=True)
-
-
-@contact_cmds.command(name="link-sms", description="Link a phone number to a club member (admin).")
-@discord.app_commands.describe(member="Club member", number="Phone number")
-@discord.app_commands.autocomplete(member=member_autocomplete)
-@admin_only
-async def link_sms_cmd(interaction: discord.Interaction, member: str, number: str) -> None:
-    m = corpus_read.find_member(member)
-    if not m:
-        await interaction.response.send_message("I couldn't find that member.", ephemeral=True)
-        return
-    try:
-        db.link_member_sms(number, m["slug"], linked_by=str(interaction.user.id))
-    except ValueError as e:
-        await interaction.response.send_message(str(e), ephemeral=True)
-        return
-    await interaction.response.send_message(
-        f"Linked `{number.strip()}` to {m['name']} (`{m['slug']}`).", ephemeral=True)
-
-
-# Members manage their own contact handles, lists, and ratings/reviews in the web app now
-# (/oliver webapp). _LINK_FIRST is still used by /oliver webapp for unlinked callers; the admin
-# link-* commands above and the underlying writers (db.link_member_*, agent/club/lists.py) stay.
+# Everyone manages contact handles, lists, and ratings/reviews in the web app now
+# (/oliver my-club — email/SMS linking re-attributes archived mail there too). Only link-member
+# stays a slash command: it needs Discord's user picker. _LINK_FIRST is used by /oliver my-club
+# for unlinked callers.
 _LINK_FIRST = ("I can only do that for linked club members — ask an admin to run "
-               "`/oliver contact link-member` to connect your Discord account first.")
+               "`/oliver admin link-member` to connect your Discord account first.")
 
 
 @admin_cmds.command(name="reattribute-mail",
@@ -821,43 +787,6 @@ async def reattribute_mail_cmd(interaction: discord.Interaction) -> None:
         ephemeral=True)
 
 
-@contact_cmds.command(name="list", description="Show Discord, email, and SMS identity links (admin).")
-@admin_only
-async def identities_cmd(interaction: discord.Interaction) -> None:
-    rows = db.list_member_identities()
-    email_rows = db.list_member_emails()
-    sms_rows = db.list_member_sms()
-    website_rows = db.list_member_websites()
-    members = corpus_read.members()
-    if not rows and not email_rows and not sms_rows and not website_rows:
-        missing = ", ".join(sorted(m["name"] for m in members if m.get("isCurrent")))
-        await interaction.response.send_message(
-            f"No Discord identities linked yet. Current members not linked: {missing}.",
-            ephemeral=True)
-        return
-    names = {m["slug"]: m.get("name") for m in members}
-    linked_slugs = {r["member_slug"] for r in rows}
-    email_linked_slugs = {r["member_slug"] for r in email_rows}
-    lines = ["**Linked identities:**"]
-    for r in rows:
-        lines.append(f"• {names.get(r['member_slug'], r['member_slug'])}: Discord <@{r['discord_user_id']}>")
-    for r in email_rows:
-        lines.append(f"• {names.get(r['member_slug'], r['member_slug'])}: email `{r['email']}`")
-    for r in sms_rows:
-        lines.append(f"• {names.get(r['member_slug'], r['member_slug'])}: sms `{r['number']}`")
-    for r in website_rows:
-        lines.append(f"• {names.get(r['member_slug'], r['member_slug'])}: website `{r['url']}`")
-    missing = [m["name"] for m in members if m.get("isCurrent") and m["slug"] not in linked_slugs]
-    if missing:
-        lines.append("\n**Current members without Discord:** " + ", ".join(sorted(missing)))
-    missing_email = [
-        m["name"] for m in members if m.get("isCurrent") and m["slug"] not in email_linked_slugs
-    ]
-    if missing_email:
-        lines.append("\n**Current members without email:** " + ", ".join(sorted(missing_email)))
-    await interaction.response.send_message("\n".join(lines), ephemeral=True)
-
-
 @oliver_cmds.command(name="whoami", description="Check which club member Oliver has linked you to.")
 async def whoami_cmd(interaction: discord.Interaction) -> None:
     member = _linked_member_for_user(interaction.user.id)
@@ -869,7 +798,8 @@ async def whoami_cmd(interaction: discord.Interaction) -> None:
         "I don't have your Discord account linked to a club member yet.", ephemeral=True)
 
 
-@reading_cmds.command(name="status", description="Show or update your reading progress for the next book.")
+@reading_cmds.command(name="status",
+                      description="Show everyone's progress on the next book, or update yours.")
 @discord.app_commands.describe(
     status="Optional status: not_started, started, on_track, behind, finished, paused",
     progress="Optional short note, e.g. 'chapter 6' or 'halfway'",
@@ -962,40 +892,6 @@ async def reading_checkin_cmd(interaction: discord.Interaction, member: str,
     await interaction.followup.send(
         f"Sent reading check-in to {m['name']} at `{email['email']}` (`{sent.get('emailId')}`).",
         ephemeral=True)
-
-
-@library_cmds.command(name="add-book", description="Add a book to the corpus (admin) — fetches metadata from Open Library.")
-@discord.app_commands.describe(title="Book title", isbn="ISBN (optional, more precise)")
-@admin_only
-async def oliver_add_book(interaction: discord.Interaction, title: str, isbn: str | None = None) -> None:
-    await interaction.response.defer(ephemeral=True)
-    try:
-        meta = await asyncio.to_thread(openlibrary.lookup, title, isbn)
-        if not meta or not meta.get("title"):
-            await interaction.followup.send(
-                f"Couldn't find “{title}” on Open Library — you can add it by hand in corpus/data/books/.",
-                ephemeral=True)
-            return
-        res = await asyncio.to_thread(corpus_write.write_book, meta)
-    except Exception:
-        log.exception("add-book failed")
-        await interaction.followup.send("Something went wrong adding that book.", ephemeral=True)
-        return
-    schedule_publish()  # rebuild + deploy the site in the background
-    authors = ", ".join(res["authors"]) or "unknown author"
-    cover = "with cover" if res["hasCover"] else "no cover found"
-    verb = "Updated" if res["updated"] else "Added"
-    ack = await asyncio.to_thread(
-        oliver.compose,
-        "brief acknowledgement that an admin just added a book to the club corpus",
-        {"action": verb.lower(), "book": res["title"], "authors": authors, "cover": cover},
-        fallback=f"📗 {verb} **{res['title']}** by {authors} ({cover}).",
-    )
-    # Keep the exact file path + next step deterministic (don't let the LLM mangle it).
-    await interaction.followup.send(
-        f"{ack}\n\nEdit details in the web app (/oliver webapp → Books), then schedule it there under Meetings.",
-        ephemeral=True,
-    )
 
 
 @timeline_cmds.command(name="log", description="Record a club timeline event (admin).")
@@ -1192,42 +1088,6 @@ async def resolve_proposal_cmd(interaction: discord.Interaction, proposal_id: in
     await interaction.response.send_message(
         f"Proposal {decision.name}ed." if ok else "No pending proposal with that id.",
         ephemeral=True)
-
-
-@memory_cmds.command(name="search", description="Search Oliver's durable memories (admin).")
-@discord.app_commands.describe(subject="Optional member slug or topic", query="Optional text search")
-@admin_only
-async def memories_cmd(interaction: discord.Interaction, subject: str | None = None,
-                       query: str | None = None) -> None:
-    rows = await asyncio.to_thread(db.get_memories, subject=subject, query=query, limit=10)
-    if not rows:
-        await interaction.response.send_message("No matching memories.", ephemeral=True)
-        return
-    lines = ["**Oliver memories:**"]
-    for r in rows:
-        scope = r.get("scope") or "general"
-        subj = f"/{r['subject']}" if r.get("subject") else ""
-        src = f" · source: {r['source']}" if r.get("source") else ""
-        lines.append(f"• `{r['id']}` [{scope}{subj}] {r['note']}{src}")
-    await interaction.response.send_message("\n".join(lines)[:config.MAX_DISCORD_LEN], ephemeral=True)
-
-
-@memory_cmds.command(name="edit", description="Edit one of Oliver's memories (admin).")
-@discord.app_commands.describe(memory_id="Memory id from /oliver memory search", note="Replacement note")
-@admin_only
-async def edit_memory_cmd(interaction: discord.Interaction, memory_id: int, note: str) -> None:
-    ok = await asyncio.to_thread(db.update_memory, memory_id, note)
-    await interaction.response.send_message(
-        "Updated memory." if ok else "No active memory with that id.", ephemeral=True)
-
-
-@memory_cmds.command(name="forget", description="Delete one of Oliver's memories (admin).")
-@discord.app_commands.describe(memory_id="Memory id from /oliver memory search")
-@admin_only
-async def forget_cmd(interaction: discord.Interaction, memory_id: int) -> None:
-    ok = await asyncio.to_thread(db.delete_memory, memory_id)
-    await interaction.response.send_message(
-        "Forgot that memory." if ok else "No active memory with that id.", ephemeral=True)
 
 
 @admin_cmds.command(name="tick", description="Run the proactive scheduler now (admin).")

@@ -12,7 +12,7 @@ Safety properties:
 - Grounding rules in the prompt: only what was actually said; book-club-relevant; neutral; no
   sensitive attributes. Strict-JSON output; a parse failure skips the member and writes nothing.
 - Auditable: one #oliver-log activity per run with per-member counts; tokens logged to usage_log
-  (channel 'reflection'); everything inspectable via /oliver memory search.
+  (channel 'reflection'); everything inspectable in the web app (admin Memories page).
 
 Run weekly from the scheduler (commands.run_scheduler), or manually:
     python -m agent.reflection --dry-run    # preview proposals, write nothing
@@ -246,7 +246,8 @@ def run(*, dry_run: bool = False) -> dict:
              if len(lines) >= MIN_TURNS or any(ln.startswith("[mailing list]") for ln in lines)}
     if not worth:
         if not dry_run:  # persist even when quiet — this also seeds the first-run mail cursor
-            db.set_job_state(JOB_KEY, {**state, "conv_id": max_conv, "mail_sent_at": max_mail})
+            db.set_job_state(JOB_KEY, {**state, "conv_id": max_conv, "mail_sent_at": max_mail,
+                                       "ran_at": db._now()})
         return {"members": 0}
 
     results: dict[str, dict] = {}
@@ -270,7 +271,8 @@ def run(*, dry_run: bool = False) -> dict:
     ok = [s for s, r in results.items() if s != "club" and "skipped" not in r]
     if not dry_run:
         if ok:  # advance only if at least one member succeeded; failures retry next week
-            db.set_job_state(JOB_KEY, {**state, "conv_id": max_conv, "mail_sent_at": max_mail})
+            db.set_job_state(JOB_KEY, {**state, "conv_id": max_conv, "mail_sent_at": max_mail,
+                                       "ran_at": db._now()})
         summary = "; ".join(
             f"{s}: +{r['add']} ~{r['update']} −{r['retire']}" if "skipped" not in r
             else f"{s}: skipped ({r['skipped']})"

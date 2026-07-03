@@ -1,5 +1,5 @@
 """The member web app server: an aiohttp app run inside the bot process, reached over Tailscale
-Funnel. Starts on demand (`/oliver webapp`), shuts down after idle. One middleware handles activity
+Funnel. Starts on demand (`/oliver my-club`), shuts down after idle. One middleware handles activity
 tracking, session auth, the admin gate, and CSRF. Public-data writes mark the site dirty; it's
 rebuilt only on an explicit Publish or on idle shutdown (deferred-publish model).
 """
@@ -208,4 +208,4 @@ async def _do_stop() -> None:
     if _runner is not None:
         await _runner.cleanup()
     _runner = _site = None
-    log.info("webapp stopped (idle); no listener until the next /oliver webapp")
+    log.info("webapp stopped (idle); no listener until the next /oliver my-club")
