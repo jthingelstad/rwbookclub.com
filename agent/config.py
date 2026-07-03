@@ -63,6 +63,15 @@ FASTMAIL_JMAP_SESSION_URL = os.environ.get(
     "FASTMAIL_JMAP_SESSION_URL", "https://api.fastmail.com/jmap/session"
 )
 OLIVER_EMAIL_ADDRESS = os.environ.get("OLIVER_EMAIL_ADDRESS", "oliver@rwbookclub.com")
+# Daily off-machine DB backup → iCloud Drive (agent/backup.py; iCloud syncs it off the Mac).
+# ON by default; the directory default is the Mac's iCloud Drive root + Oliver/backups.
+OFFSITE_BACKUP_ENABLED = os.environ.get("OLIVER_OFFSITE_BACKUP_ENABLED", "1") not in {"0", "false", "False"}
+OFFSITE_BACKUP_DIR = os.environ.get(
+    "OLIVER_OFFSITE_BACKUP_DIR",
+    "~/Library/Mobile Documents/com~apple~CloudDocs/Oliver/backups",
+)
+OFFSITE_BACKUP_KEEP = int(os.environ.get("OLIVER_OFFSITE_BACKUP_KEEP") or 14)
+
 # Oliver's own club_members row (the "sixth member": public profile, webapp login). Human-only
 # mechanics — roll calls, check-ins, outreach, audits, taste lenses — must exclude this slug
 # (use corpus_read.human_current_members / filter on it), or Oliver starts emailing himself.

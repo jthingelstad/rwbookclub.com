@@ -18,7 +18,7 @@ import discord
 import requests
 from discord.ext import tasks
 
-from agent import (clock, clubdb, config, context as kb, corpus_read, db, oliver,
+from agent import (backup, clock, clubdb, config, context as kb, corpus_read, db, oliver,
                    publish, reflection, scheduler, webapp)
 from agent.mail import email_jmap, mail_archive, outbound
 from agent.club import meeting_campaign, meeting_emails, meeting_rules, release_notes
@@ -1176,6 +1176,14 @@ async def run_scheduler() -> int:
         await ensure_site_reflects_next_book()
     except Exception:
         log.exception("site self-heal check failed")
+
+    # 0a2. Daily off-machine backup (iCloud Drive). Date-gated inside run(), so it fires on the
+    # first tick of each club-local day — whenever the Mac happens to be awake — and no-ops the
+    # rest. Failures post to #oliver-log from inside run(); never let it break the tick.
+    try:
+        await asyncio.to_thread(backup.run)
+    except Exception:
+        log.exception("offsite backup step failed")
 
     # 0b. Weekly reflective memory (Sunday early morning): distill the week's conversations into
     # durable member memories. Internal + audited in #oliver-log. The hourly loop ticks once inside
