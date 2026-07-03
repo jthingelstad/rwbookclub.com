@@ -53,21 +53,35 @@ def test_prompt_notes_truncation():
 
 
 def test_release_notes_email_extracts_oliver_subject_and_body(monkeypatch):
-    monkeypatch.setattr(rn, "recent_changes", lambda **kw: MATERIAL)
+    monkeypatch.setattr(rn, "recent_changes", lambda **kw: dict(MATERIAL))
+    monkeypatch.setattr(rn, "coin_release_name", lambda material: "")
     monkeypatch.setattr(rn.oliver, "generate",
                         lambda prompt: "<subject>Three new tricks</subject><email>Here's what I can do now.</email>")
     email = rn.release_notes_email(days=5)
     assert email["subject"] == "Three new tricks"
     assert email["body"] == "Here's what I can do now."
     assert email["window"] == "the last 5 days"
+    assert email["release_name"] == ""  # a failed naming call never blocks the notes
 
 
 def test_release_notes_email_subject_falls_back_when_missing(monkeypatch):
-    monkeypatch.setattr(rn, "recent_changes", lambda **kw: MATERIAL)
+    monkeypatch.setattr(rn, "recent_changes", lambda **kw: dict(MATERIAL))
+    monkeypatch.setattr(rn, "coin_release_name", lambda material: "")
     monkeypatch.setattr(rn.oliver, "generate", lambda prompt: "<email>Body only, no subject tag.</email>")
     email = rn.release_notes_email(days=5)
     assert email["body"] == "Body only, no subject tag."
     assert email["subject"].startswith("Under my hood:")
+
+
+def test_release_notes_email_carries_name_into_prompt_and_result(monkeypatch):
+    prompts = []
+    monkeypatch.setattr(rn, "recent_changes", lambda **kw: dict(MATERIAL))
+    monkeypatch.setattr(rn, "coin_release_name", lambda material: "Blistering Blindsight")
+    monkeypatch.setattr(rn.oliver, "generate",
+                        lambda prompt: prompts.append(prompt) or "<subject>S</subject><email>B</email>")
+    email = rn.release_notes_email(days=5)
+    assert email["release_name"] == "Blistering Blindsight"
+    assert 'christened "Blistering Blindsight"' in prompts[0]
 
 
 def test_release_notes_email_none_when_no_changes(monkeypatch):
@@ -98,3 +112,95 @@ def test_extract_subject_variants():
     # Tolerates a missing close tag: takes only the first line, not the email that follows.
     assert rn._extract_subject("<subject>Just this line\n<email>not this</email>") == "Just this line"
     assert rn._extract_subject("no tags at all") == ""
+
+
+# --- Named releases: coin_release_name / prompt paragraph / db round-trip / Oliver's context ---
+
+
+def _patch_naming_world(monkeypatch, *, complete):
+    monkeypatch.setattr(rn.cr, "books", lambda: [
+        {"title": "Blindsight", "isRead": True},
+        {"title": "Quicksilver", "isRead": True},
+        {"title": "Not Yet Read", "isRead": False},
+    ])
+    monkeypatch.setattr(rn.db, "release_history", lambda: [
+        {"name": "Quixotic Quicksilver", "commit": "aaa111", "subject": "s", "occurred_at": "t"},
+        {"name": None, "commit": "bbb222", "subject": "s", "occurred_at": "t"},
+    ])
+    monkeypatch.setattr(rn.oliver, "complete", complete)
+
+
+def test_coin_release_name_prompt_and_cleanup(monkeypatch):
+    calls = []
+
+    def fake_complete(system, user, **kwargs):
+        calls.append((system, user, kwargs))
+        return '"Blistering Blindsight"'
+
+    _patch_naming_world(monkeypatch, complete=fake_complete)
+    assert rn.coin_release_name(MATERIAL) == "Blistering Blindsight"
+    _, user, kwargs = calls[0]
+    assert "- Blindsight" in user and "- Quicksilver" in user
+    assert "Not Yet Read" not in user            # unread shelf entries aren't anchors
+    assert "Quixotic Quicksilver" in user        # used names embedded so they're never reused
+    assert "a shiny thing" in user               # the batch gist (merge lines) is in the prompt
+    assert kwargs["model"] == rn.oliver.MODEL    # Sonnet, not the Opus-tier default
+    assert kwargs["usage_channel"] == "release_notes:name"
+
+
+def test_coin_release_name_tolerates_failure(monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("api down")
+
+    _patch_naming_world(monkeypatch, complete=boom)
+    assert rn.coin_release_name(MATERIAL) == ""
+
+    _patch_naming_world(monkeypatch, complete=lambda *a, **k: "Two\nLines")
+    assert rn.coin_release_name(MATERIAL) == ""
+
+    _patch_naming_world(monkeypatch, complete=lambda *a, **k: "x" * 80)
+    assert rn.coin_release_name(MATERIAL) == ""
+
+
+def test_prompt_release_name_paragraph_toggle():
+    named = rn.release_notes_prompt({**MATERIAL, "release_name": "Blistering Blindsight"})
+    assert "RELEASE NAME" in named and 'christened "Blistering Blindsight"' in named
+    nameless = rn.release_notes_prompt(dict(MATERIAL))
+    assert "RELEASE NAME" not in nameless
+
+
+def test_release_history_and_current_release_round_trip(fresh_db):
+    assert fresh_db.current_release() is None
+    fresh_db.record_release_notes_sent("aaa111", scope="s1", subject="old",
+                                       occurred_at="2026-06-01T00:00:00+00:00")  # pre-naming
+    fresh_db.record_release_notes_sent("bbb222", scope="s2", subject="new",
+                                       release_name="Blistering Blindsight",
+                                       occurred_at="2026-07-04T01:00:00+00:00")
+    history = fresh_db.release_history()
+    assert [r["commit"] for r in history] == ["bbb222", "aaa111"]  # newest first
+    assert history[1]["name"] is None
+    current = fresh_db.current_release()
+    assert current["name"] == "Blistering Blindsight" and current["commit"] == "bbb222"
+
+
+def test_current_release_skips_newer_unnamed_send(fresh_db):
+    # A nameless send after a named one must not blank the current release.
+    fresh_db.record_release_notes_sent("aaa111", scope="s", subject="named",
+                                       release_name="Quixotic Quicksilver",
+                                       occurred_at="2026-07-01T00:00:00+00:00")
+    fresh_db.record_release_notes_sent("bbb222", scope="s", subject="nameless",
+                                       occurred_at="2026-07-02T00:00:00+00:00")
+    assert fresh_db.current_release()["name"] == "Quixotic Quicksilver"
+
+
+def test_club_context_carries_current_release(fresh_db):
+    from agent import context
+
+    assert "release named" not in context.club_context()  # no named release → no line
+    # 01:00 UTC on Jul 4 is the evening of Jul 3 in club time — the line must say the club day.
+    fresh_db.record_release_notes_sent("bbb222", scope="s", subject="new",
+                                       release_name="Blistering Blindsight",
+                                       occurred_at="2026-07-04T01:00:00+00:00")
+    ctx = context.club_context()
+    assert 'running the release named "Blistering Blindsight"' in ctx
+    assert "Friday, July 3" in ctx

@@ -12,6 +12,11 @@ capability docs (ROADMAP — the de-facto changelog — and which docs changed i
 The grounding rule in the prompt is strict: describe only what's in the material, never
 invent a capability.
 
+Each release also gets a NAME — a simple alliteration on one title from the club's shelf
+("Quixotic Quicksilver"), coined by a small Sonnet call (`coin_release_name`) and woven into the
+email's opening. A list send stores it in the `release_notes_sent` event; `db.current_release()`
+is how Oliver knows what release he's running (surfaced via `context.club_context`).
+
 Scope is either a day window (`--days`, default 7) or everything since a commit (`--since <hash>`).
 In the Discord command, the default scope (no day/since given) is everything since the LAST
 release notes: a list send records HEAD as a `release_notes_sent` event in the club timeline
@@ -29,7 +34,8 @@ from __future__ import annotations
 import argparse
 import re
 
-from agent import clock, oliver, publish
+from agent import clock, db, oliver, publish
+from agent import corpus_read as cr
 from agent.club.meeting_emails import _extract_email
 from agent.club.meeting_rules import friendly_date as _friendly_date
 from agent.mail import outbound
@@ -116,6 +122,46 @@ def recent_changes(*, days: int | None = None, since_commit: str | None = None) 
     }
 
 
+def coin_release_name(material: dict) -> str:
+    """Coin this release's name: a simple alliteration on ONE title from the club's shelf
+    ("Blistering Blindsight"). A small Sonnet call — the name is a garnish, not worth Opus-tier
+    tokens — and failure-tolerant: any error or malformed output returns "" and the release notes
+    ship nameless rather than blocked."""
+    try:
+        shelf = sorted(b["title"] for b in cr.books() if b.get("isRead"))
+        used = [r["name"] for r in db.release_history() if r["name"]]
+        used_block = ("\n".join(f"- {n}" for n in used)
+                      if used else "(none yet — this is the first named release)")
+        user = (
+            "Coin the name for this release of Oliver (the R/W Book Club's agent software). "
+            "Rules:\n"
+            "- Pick ONE title from the club's shelf below whose spirit fits this batch of changes.\n"
+            "- The name is: one alliterative adjective + that title's distinctive word, title word "
+            "LAST — if the shelf held \"Middlemarch\" you might coin \"Merry Middlemarch\". The "
+            "adjective MUST start with the same letter/sound as the title word (that's the "
+            "alliteration). Two or three words total; never append extra words after the title "
+            "word.\n"
+            "- Never reuse a previously used name OR its anchor title.\n"
+            "- Output ONLY the name on a single line. No quotes, no explanation.\n\n"
+            "--- What shipped in this batch (merge commits) ---\n"
+            f"{material.get('merges') or '(no merge lines — small batch)'}\n\n"
+            "--- Previously used release names ---\n"
+            f"{used_block}\n\n"
+            "--- The club's shelf (pick your anchor title from these) ---\n"
+            + "\n".join(f"- {t}" for t in shelf)
+        )
+        name = oliver.complete(
+            "You name software releases for a book club's agent. You answer with the name only.",
+            user, model=oliver.MODEL, max_tokens=4000, effort="low",
+            usage_channel="release_notes:name",
+        ).strip().strip('"').strip("'")
+        if not name or "\n" in name or len(name) > 60:
+            return ""
+        return name
+    except Exception:
+        return ""
+
+
 def release_notes_prompt(material: dict) -> str:
     window = material["window"]
     trunc = (
@@ -124,6 +170,15 @@ def release_notes_prompt(material: dict) -> str:
         if material["truncated"] else ""
     )
     docs = "\n".join(f"- {d}" for d in material["changed_docs"]) or "(no docs changed)"
+    name = material.get("release_name") or ""
+    naming = (
+        f"RELEASE NAME: this release has been christened \"{name}\" — every release of your "
+        "software is named with an alliteration on a title from the club's shelf. Your OPEN "
+        "framing sentence must introduce the release by this name; a short clause on why that "
+        "book fits this batch is welcome. The subject MAY carry the name too, if it lands "
+        "naturally.\n\n"
+        if name else ""
+    )
     return (
         "Write a short email to the R/W Book Club announcing the new capabilities YOU — Oliver — "
         f"have gained. This batch covers {window}. This is you, in first person, telling the club "
@@ -140,6 +195,7 @@ def release_notes_prompt(material: dict) -> str:
         "OPEN: before the first section (no header), write ONE short framing sentence so a reader "
         f"knows immediately what this is and the window it covers — that it's your under-the-hood "
         f"update for {window}. Don't dive straight into the story.\n\n"
+        f"{naming}"
         "STRUCTURE — exactly three '## ' sections, in this order:\n\n"
         "## The story\n"
         "A short narrative (2-4 sentences, prose) of what's genuinely interesting in this batch — "
@@ -176,15 +232,18 @@ def release_notes_prompt(material: dict) -> str:
 
 
 def release_notes_email(*, days: int | None = None, since_commit: str | None = None) -> dict | None:
-    """Build the release-notes email. Returns {subject, body, window} (body unsigned), or None if
-    there were no changes in the window (caller should report that plainly)."""
+    """Build the release-notes email. Returns {subject, body, window, release_name} (body
+    unsigned; release_name may be "" if the naming call failed), or None if there were no changes
+    in the window (caller should report that plainly)."""
     material = recent_changes(days=days, since_commit=since_commit)
     if material["count"] == 0:
         return None
+    material["release_name"] = coin_release_name(material)
     out = oliver.generate(release_notes_prompt(material))
     body = _extract_email(out)
     subject = _extract_subject(out) or f"Under my hood: what changed — {_friendly_date(clock.club_today_iso())}"
-    return {"subject": subject, "body": body, "window": material["window"]}
+    return {"subject": subject, "body": body, "window": material["window"],
+            "release_name": material["release_name"]}
 
 
 def _main() -> None:
@@ -199,6 +258,8 @@ def _main() -> None:
         scope = f"since {args.since}" if args.since else f"the last {args.days or 7} days"
         print(f"No changes {scope} — nothing to announce.")
         return
+    if email.get("release_name"):
+        print(f"Release name: {email['release_name']}")
     print(f"Subject: {email['subject']}\n")
     print(outbound.finalize(email["body"]))  # show exactly what would be sent (incl. signature)
 

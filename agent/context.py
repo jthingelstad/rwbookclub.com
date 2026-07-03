@@ -8,8 +8,11 @@ current roster, what's next). Oliver pulls specifics on demand via tools
 from __future__ import annotations
 
 from collections import Counter
+from datetime import datetime, timezone
 
+from agent import clock
 from agent import corpus_read as cr
+from agent import db
 from agent.club import meeting_rules
 
 
@@ -34,6 +37,18 @@ def _hosts_by_slug() -> Counter:
         for slug in (mt.get("host") or []):
             hosts[slug] += 1
     return hosts
+
+
+def _club_date(occurred_at: str | None) -> str:
+    """A UTC audit timestamp as a friendly CLUB-local date ('Friday, July 3') — an evening send
+    lands past midnight UTC, so taking the raw UTC date would name the wrong day."""
+    try:
+        instant = datetime.fromisoformat((occurred_at or "").replace("Z", "+00:00"))
+        if instant.tzinfo is None:
+            instant = instant.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return "recently"
+    return meeting_rules.friendly_date(instant.astimezone(clock.tz()).date().isoformat()) or "recently"
 
 
 def club_context() -> str:
@@ -72,4 +87,12 @@ def club_context() -> str:
                 bits.append(f"picked by {u['pickedBy']}")
             parts.append(f"{u['title']} ({', '.join(bits)})")
         lines.append("Upcoming: " + "; ".join(parts) + ".")
+    release = db.current_release()
+    if release:
+        when = _club_date(release.get("occurred_at"))
+        lines.append(
+            f'Your software: you are running the release named "{release["name"]}" '
+            f"(christened {when} — every release of your software is named with an alliteration "
+            "on a title from the club's shelf). If asked what release or version you're running, "
+            "that's the answer.")
     return "\n".join(lines)

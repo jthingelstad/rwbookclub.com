@@ -664,19 +664,23 @@ async def release_notes_cmd(interaction: discord.Interaction, days: int | None =
         return
 
     try:
+        name = email.get("release_name") or None
+        christened = f"\nChristened: *{name}*" if name else ""
         if target == "list":
             await _send_club_email(email["subject"], email["body"])
             db.add_activity("release_notes_sent", "Release notes sent",
-                            f"Scope: {scope}\nTo: club mailing list\nSubject: {email['subject']}")
+                            f"Scope: {scope}\nTo: club mailing list\nSubject: {email['subject']}"
+                            + (f"\nRelease name: {name}" if name else ""))
             # Mark this release in the club timeline and store HEAD as the baseline the next
-            # release-notes scopes from (so it auto-covers everything shipped since).
+            # release-notes scopes from (so it auto-covers everything shipped since). A named
+            # list send is what christens the release — the name becomes current_release().
             head = release_notes.head_commit()
             if head:
                 db.record_release_notes_sent(head, scope=scope, subject=email["subject"],
-                                             window=email.get("window"))
+                                             window=email.get("window"), release_name=name)
             await interaction.followup.send(
                 f"📣 Sent release notes ({scope}) to the club list and mirrored to the main "
-                f"channel.\nSubject: *{email['subject']}*", ephemeral=True)
+                f"channel.\nSubject: *{email['subject']}*{christened}", ephemeral=True)
         else:
             slug = db.member_slug_for_user(str(interaction.user.id))
             rec = db.email_for_member(slug) if slug else None
@@ -692,8 +696,9 @@ async def release_notes_cmd(interaction: discord.Interaction, days: int | None =
                             f"Email ID: {sent.get('emailId')}")
             await interaction.followup.send(
                 f"📝 Emailed the release-notes draft ({scope}) to `{rec['email']}` "
-                f"(`{sent.get('emailId')}`).\nSubject: *{email['subject']}*\n"
-                "Review it, then re-run with `to:list` to send it to the club.", ephemeral=True)
+                f"(`{sent.get('emailId')}`).\nSubject: *{email['subject']}*"
+                + (f"\nDraft release name: *{name}* (christened only on a list send)" if name else "")
+                + "\nReview it, then re-run with `to:list` to send it to the club.", ephemeral=True)
     except Exception:
         log.exception("release-notes send failed")
         db.add_activity("warning", "Release notes send failed",

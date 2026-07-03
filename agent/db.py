@@ -1905,15 +1905,20 @@ def record_meeting_scheduled(meeting_id: int, *, detail: str | None = None,
 
 
 def record_release_notes_sent(commit: str, *, scope: str, subject: str,
-                              window: str | None = None, occurred_at: str | None = None) -> int:
+                              window: str | None = None, release_name: str | None = None,
+                              occurred_at: str | None = None) -> int:
     """Log a release-notes send to the club timeline (category 'club').
 
     `commit` is the repo HEAD at send time; it becomes the baseline the *next* release-notes
     scopes from (everything since this commit). The detail JSON carries the commit plus the
-    human-facing subject/scope/window so the timeline reads as a real club milestone."""
+    human-facing subject/scope/window so the timeline reads as a real club milestone.
+    `release_name` is the christened release name ("Quixotic Quicksilver") — a list send with a
+    name makes that name Oliver's current release (`current_release`); pre-naming rows lack it."""
     detail = {"commit": commit, "subject": subject, "scope": scope}
     if window:
         detail["window"] = window
+    if release_name:
+        detail["release_name"] = release_name
     return record_event(actor="oliver", kind="release_notes_sent", category="club",
                         surface="system", detail=detail, occurred_at=occurred_at)
 
@@ -1931,6 +1936,31 @@ def last_release_notes_commit() -> str | None:
         return json.loads(row["detail"]).get("commit")
     except (ValueError, TypeError):
         return None
+
+
+def release_history() -> list[dict]:
+    """Every release-notes send, newest first: {name, commit, subject, occurred_at}. `name` is
+    None for releases sent before naming existed. Feeds the naming prompt (never reuse a name)
+    and `current_release`."""
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT detail, occurred_at FROM events WHERE kind = 'release_notes_sent' "
+            "ORDER BY occurred_at DESC, id DESC").fetchall()
+    out = []
+    for row in rows:
+        try:
+            detail = json.loads(row["detail"]) if row["detail"] else {}
+        except (ValueError, TypeError):
+            detail = {}
+        out.append({"name": detail.get("release_name"), "commit": detail.get("commit"),
+                    "subject": detail.get("subject"), "occurred_at": row["occurred_at"]})
+    return out
+
+
+def current_release() -> dict | None:
+    """The newest NAMED release — what release of his own software Oliver is running. None until
+    the first named release ships (unnamed pre-naming sends never win)."""
+    return next((r for r in release_history() if r["name"]), None)
 
 
 def meeting_member_status_for_meeting(meeting_id: int) -> list[dict]:
