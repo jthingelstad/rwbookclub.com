@@ -1371,12 +1371,53 @@ body.stats-page .page {
 }
 
 /* /oliver — the agent's landing page */
+.oliver-hero {
+  display: flex;
+  gap: var(--gap-lg);
+  align-items: center;
+}
 .oliver .oliver-portrait {
-  display: block;
-  margin: 0 auto 1.5rem;
   border-radius: 50%;
-  border: 3px solid var(--ink-faint, #ccc);
-  width: 180px;
-  height: 180px;
+  border: 3px solid var(--rule);
+  width: 200px;
+  height: 200px;
   object-fit: cover;
+  flex-shrink: 0;
+  background: #fff;
+}
+.oliver-features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--gap-sm);
+  margin: var(--gap-md) 0 var(--gap-xl);
+}
+.feature-card {
+  padding: var(--gap-md);
+  background: var(--bg-alt);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+.feature-card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.feature-card p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+.oliver-close {
+  font-size: 1.1rem;
+  max-width: 38em;
+}
+.oliver-colophon {
+  color: var(--ink-faint);
+  font-size: var(--type-small);
+}
+@media (max-width: 640px) {
+  .oliver-hero { flex-direction: column; text-align: center; }
+  .oliver .oliver-portrait { width: 160px; height: 160px; }
+  .oliver-features { grid-template-columns: 1fr; }
 }
