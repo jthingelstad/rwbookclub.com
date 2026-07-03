@@ -561,9 +561,7 @@ def _member_lenses() -> dict:
     """Every current member's taste lens: reflection memories + recent picks. The who-will-love-it
     / who-will-fight-it evidence for pick advice — reactions must come from HERE, never invented."""
     lenses = {}
-    for m in cr.members():
-        if not m.get("isCurrent"):
-            continue
+    for m in cr.human_current_members():  # taste lenses are human — Oliver has no vote here
         slug = m["slug"]
         hist = cr.member_history(slug) or {}
         lenses[slug] = {
@@ -766,7 +764,7 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             email_linked = {r["member_slug"] for r in email_links}
             sms_linked = {r["member_slug"] for r in db.list_member_sms()}
             website_linked = {r["member_slug"] for r in db.list_member_websites()}
-            current = [m for m in cr.members() if m.get("isCurrent")]
+            current = cr.human_current_members()
             return _dump({
                 "speakerUserId": ctx.get("speaker_user_id"),
                 "speakerMemberSlug": member_slug,
@@ -1092,7 +1090,7 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 if speaker_user_id != str(config.ADMIN_USER_ID):
                     return _dump({"error": "only an admin can email roll call to all members"})
                 targets = sorted(
-                    [m for m in cr.members() if m.get("isCurrent")],
+                    cr.human_current_members(),
                     key=lambda m: m.get("name") or m["slug"],
                 )
             status = meeting_rules.meeting_status()
@@ -1158,7 +1156,7 @@ def _reading_status_snapshot(meeting: dict) -> dict:
         r["member_slug"]: r
         for r in (db.meeting_member_status_for_meeting(meeting_id) if meeting_id is not None else [])
     }
-    members = [m for m in cr.members() if m.get("isCurrent")]
+    members = cr.human_current_members()
     statuses = []
     for member in sorted(members, key=lambda m: m.get("name") or m["slug"]):
         row = rows.get(member["slug"])

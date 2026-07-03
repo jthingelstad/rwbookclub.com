@@ -38,7 +38,7 @@ def snapshot() -> dict:
     discord_linked = {r["member_slug"] for r in db.list_member_identities()}
     email_linked = {r["member_slug"] for r in db.list_member_emails()}
     members_by_slug = {
-        m["slug"]: m for m in corpus_read.members() if m.get("isCurrent")
+        m["slug"]: m for m in corpus_read.human_current_members()
     }
     needs_roll_call = []
     needs_reading = []

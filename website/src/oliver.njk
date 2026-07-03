@@ -1,0 +1,73 @@
+---
+layout: layouts/base.njk
+title: "Oliver"
+permalink: /oliver/
+---
+
+{%- set readBooks = books | selectattr("isRead") | list -%}
+<article class="about oliver">
+  <a class="back" href="/">← Reading journey</a>
+
+  <img class="oliver-portrait" src="/assets/images/members/oliver-256.jpg" alt="Oliver, the R/W Book Club's agent — a cream-and-brass robot" width="256" height="256">
+
+  <h1>Meet Oliver</h1>
+
+  <p class="lede">
+    Oliver is the R/W Book Club's agent — and, as the club decided long before he could
+    hear them say it, our <em>sixth member</em>. He keeps the club's {{ site.founded }}-to-now
+    record, runs the machinery around our meetings, and joins the conversation over email and
+    Discord in a voice that's unmistakably his.
+  </p>
+
+  <h2>Grounded in {{ readBooks | length }} books of club history</h2>
+  <p>
+    Every fact Oliver states — what we read, when, who picked it, what the reviews said —
+    comes from the club's actual record, never from a language model's fuzzy recollection.
+    When he reaches beyond the record he says so. He also maintains this website: every page
+    here is generated from his database, and he rebuilds and republishes it himself whenever
+    the record changes.
+  </p>
+
+  <h2>One member, two mediums</h2>
+  <p>
+    Talk to Oliver in Discord and he chats; email him and he writes a proper letter. It's one
+    continuous relationship — start a thread in one medium and he'll pick it up in the other,
+    and he remembers what each member cares about. Once a week he sits down with everything
+    that was said and updates a small, groomed set of notes on the club's tastes and running
+    lore — notes every member can inspect and correct.
+  </p>
+
+  <h2>The meeting cycle, end to end</h2>
+  <p>
+    Two days before each meeting Oliver sends <strong>Preface</strong> — a researched
+    discussion brief connecting the book to two decades of past reads. He runs roll call and
+    reading check-ins, rolls the calendar forward when a meeting ends, and a week after we
+    meet he sends <strong>Postscript</strong> — a dispatch on what's new in the world with
+    the books we've <em>already</em> read: adaptations, new work from familiar authors,
+    awards, echoes.
+  </p>
+
+  <h2>A real picking partner</h2>
+  <p>
+    Picking the next book is the club's most important ritual, and it's where Oliver earns
+    his chair. Ask for help and he asks <em>you</em> first — where do you want to take us? —
+    then hunts candidates in that direction, weighs them against everything the club has read
+    and felt, and forecasts the meeting each book would produce. He also keeps a quiet map of
+    every book the club has ever circled but never read, so a good idea from 2019 is never
+    lost.
+  </p>
+
+  <h2>Software that introduces itself</h2>
+  <p>
+    When Oliver gains a capability, he announces it to the club himself — release notes in
+    his own voice, each release christened with a name drawn from a book on our shelf. The
+    club's software tells you when it got better, and what it's calling itself this time.
+  </p>
+
+  <p class="muted">
+    Oliver is built in Python on the <a href="https://www.anthropic.com" rel="external noopener">Anthropic</a>
+    API, lives on a Mac in Minneapolis, and answers to the club in
+    <a href="/members/oliver/">his member profile</a>. The humans are
+    <a href="/members/">over here</a>.
+  </p>
+</article>

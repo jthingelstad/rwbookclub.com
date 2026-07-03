@@ -13,7 +13,7 @@ from __future__ import annotations
 import calendar
 from datetime import date, timedelta
 
-from agent import clock, clubdb, corpus_read, db
+from agent import clock, clubdb, config, corpus_read, db
 
 QUORUM_REQUIRED = 3
 MEETING_WEEKDAY = 1  # Tuesday, where Monday is 0.
@@ -66,8 +66,9 @@ def next_last_tuesday(today: date | None = None) -> date:
 
 
 def _current_members() -> list[dict]:
+    # Meeting mechanics (attendance, readiness) are human-only — Oliver never gets a roll call.
     return sorted(
-        [m for m in corpus_read.members() if m.get("isCurrent")],
+        corpus_read.human_current_members(),
         key=lambda m: m.get("name") or m.get("slug") or "",
     )
 
@@ -115,7 +116,8 @@ def meeting_status(meeting_id: int | None = None) -> dict:
         r["member_id"]: r
         for r in (db.meeting_member_status_for_meeting(mid) if mid is not None else [])
     }
-    members = clubdb.current_members()
+    members = [m for m in clubdb.current_members()
+               if m["slug"] != config.OLIVER_MEMBER_SLUG]  # attendance is human-only
     picker_ids = set(meeting.get("pickerIds") or [])
 
     rows = []

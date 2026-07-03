@@ -1369,3 +1369,14 @@ body.stats-page .page {
   color: var(--ink-faint);
   font-style: italic;
 }
+
+/* /oliver — the agent's landing page */
+.oliver .oliver-portrait {
+  display: block;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  border: 3px solid var(--ink-faint, #ccc);
+  width: 180px;
+  height: 180px;
+  object-fit: cover;
+}

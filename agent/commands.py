@@ -211,7 +211,7 @@ def _reading_status_text() -> str:
     meeting_id = meeting["meetingId"]
     rows = _reading_status_by_member(meeting_id)
     current = sorted(
-        [m for m in corpus_read.members() if m.get("isCurrent")],
+        corpus_read.human_current_members(),
         key=lambda m: m.get("name") or m["slug"],
     )
     lines = [f"Reading status for **{title}** on {meeting['date']}:"]
@@ -459,7 +459,7 @@ async def _email_roll_call(interaction: discord.Interaction) -> None:
     status = meeting_rules.meeting_status()
     meeting = status["meeting"]
     current = sorted(
-        [m for m in corpus_read.members() if m.get("isCurrent")],
+        corpus_read.human_current_members(),
         key=lambda m: m.get("name") or m["slug"],
     )
     attendance = _attendance_by_member(status)

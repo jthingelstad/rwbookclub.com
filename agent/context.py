@@ -56,7 +56,8 @@ def club_context() -> str:
     picks = _picks_by_slug()
     hosts = _hosts_by_slug()
     current = sorted(
-        (m for m in cr.members() if m.get("isCurrent")),
+        # The prompt roster is the human members — Oliver knows who he is without listing himself.
+        cr.human_current_members(),
         key=lambda m: picks[m.get("slug")],
         reverse=True,
     )

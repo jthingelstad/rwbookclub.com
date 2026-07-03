@@ -63,6 +63,10 @@ FASTMAIL_JMAP_SESSION_URL = os.environ.get(
     "FASTMAIL_JMAP_SESSION_URL", "https://api.fastmail.com/jmap/session"
 )
 OLIVER_EMAIL_ADDRESS = os.environ.get("OLIVER_EMAIL_ADDRESS", "oliver@rwbookclub.com")
+# Oliver's own club_members row (the "sixth member": public profile, webapp login). Human-only
+# mechanics — roll calls, check-ins, outreach, audits, taste lenses — must exclude this slug
+# (use corpus_read.human_current_members / filter on it), or Oliver starts emailing himself.
+OLIVER_MEMBER_SLUG = "oliver"
 BOOK_CLUB_MAILING_LIST_ADDRESS = os.environ.get(
     "BOOK_CLUB_MAILING_LIST_ADDRESS", "rwbookclub@googlegroups.com"
 )

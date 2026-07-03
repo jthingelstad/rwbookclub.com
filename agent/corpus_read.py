@@ -15,7 +15,7 @@ from statistics import mean
 
 import yaml
 
-from agent import clock
+from agent import clock, config
 from corpus.paths import DATA_DIR
 
 
@@ -41,6 +41,15 @@ def parse_frontmatter(text: str) -> tuple[dict, str]:
 
 def members() -> list[dict]:
     return _load_json_dir("members")
+
+
+def human_current_members() -> list[dict]:
+    """Current members minus Oliver — the club's HUMAN roster. Oliver has a real club_members row
+    (the sixth member: public profile, webapp login), but human-only mechanics — roll calls,
+    reading check-ins, outreach, contact audits, taste lenses — enumerate members through here so
+    they never target the agent itself."""
+    return [m for m in members()
+            if m.get("isCurrent") and m.get("slug") != config.OLIVER_MEMBER_SLUG]
 
 
 def meetings() -> list[dict]:
