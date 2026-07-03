@@ -8,5 +8,5 @@ markdown>=3.10.2
 
 # Member/admin web app (agent/webapp/): aiohttp server + Jinja2 templates.
 # aiohttp also ships with discord.py, but the webapp imports both directly.
-aiohttp>=3.12
+aiohttp>=3.14.1
 jinja2>=3.1
