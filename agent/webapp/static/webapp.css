@@ -3,8 +3,9 @@
    (header/nav/toast), the widgets Pico has no opinion on (stars, DNF, drag), and the utility
    classes that replaced the old inline style="" attributes (CSP forbids those now). */
 
-:root {
-  /* The club's book-brown as Pico's primary, both modes. */
+:root:not([data-theme=dark]) {
+  /* The club's book-brown as Pico's primary. Selector matches Pico's own light-theme
+     specificity (:root alone loses the cascade tie). */
   --pico-primary: #6b4f3b;
   --pico-primary-background: #6b4f3b;
   --pico-primary-border: #6b4f3b;
@@ -65,7 +66,8 @@ details.admin-nav > summary {
   font-size: .95rem; color: var(--pico-color);
 }
 details.admin-nav > summary::-webkit-details-marker { display: none; }
-details.admin-nav > summary::after { display: none; }  /* Pico's accordion chevron */
+details.admin-nav > summary::after,
+summary.muted::after { display: none; }  /* Pico's accordion chevron */
 details.admin-nav > summary:hover, details.admin-nav[open] > summary {
   background: var(--pico-secondary-focus);
 }
@@ -114,6 +116,8 @@ textarea { min-height: 8rem; }
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast.err { background: #b3261e; }
+
+input[type=checkbox] { flex-shrink: 0; width: 1.1rem; height: 1.1rem; }
 
 tr.dragging { opacity: .45; }
 td.drag { width: 1.2rem; cursor: grab; color: var(--pico-muted-color); user-select: none; }
