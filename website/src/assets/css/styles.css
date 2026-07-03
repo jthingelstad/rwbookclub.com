@@ -19,8 +19,11 @@
 }
 
 /* ─── Tokens ─────────────────────────────────────────────────────────── */
+/* Dark scheme: the same warm paper, read by lamplight. Only the eight surface tokens move —
+   every component derives from them, so this block is the entire dark theme. */
 
 :root {
+  color-scheme: light dark;
   /* Surfaces */
   --bg:        #FBF8F3;
   --bg-alt:    #F4EFE3;
@@ -1077,11 +1080,11 @@ body.stats-page .page {
 .split-bar-segment:hover { opacity: 0.9; }
 .split-bar-nonfiction {
   background: var(--accent);
-  color: #FBF8F3;
+  color: var(--bg);
 }
 .split-bar-fiction {
   background: var(--ink-soft);
-  color: #FBF8F3;
+  color: var(--bg);
 }
 .split-bar-label {
   font-size: var(--type-small);
@@ -1371,6 +1374,7 @@ body.stats-page .page {
 }
 
 /* /oliver — the agent's landing page */
+.oliver-hero .hero-title { text-wrap: balance; }
 .oliver-hero {
   display: flex;
   gap: var(--gap-lg);
@@ -1458,3 +1462,24 @@ body.stats-page .page {
   .masthead-nav { text-align: left; margin-top: 0.5rem; }
   .section-nav { gap: 0.6rem; row-gap: 0.2rem; }
 }
+
+/* ─── Dark scheme ────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:        #171310;
+    --bg-alt:    #211B15;
+    --ink:       #EDE6D8;
+    --ink-soft:  #B5AA97;
+    --ink-faint: #837767;
+    --rule:      #3A3225;
+    --accent:    #D07A4A;
+    --accent-ink:#E0925F;
+  }
+  .book-cover, .oliver-portrait, .member-photo, .author-portrait {
+    /* covers/portraits keep their printed look; a soft edge stops them glowing */
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .4);
+  }
+}
+
+/* Long tokens (webcal URLs, ISBNs) must never force horizontal scroll on phones. */
+code { overflow-wrap: anywhere; }
