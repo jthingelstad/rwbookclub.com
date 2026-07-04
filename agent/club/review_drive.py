@@ -39,6 +39,7 @@ ASK_HOUR = 10            # 10am club time
 MAX_ASKS_PER_BOOK = 2    # then never ask about that book again
 ASK_COOLDOWN_DAYS = 7    # "at most once a week" per member
 MAX_CORRECTION_ROUNDS = 2  # then park and point at the web app
+ASK_EXPIRY_DAYS = 21       # an unanswered ask expires; the member is free for future asks
 
 JOB_KEY = "review_drive"
 YES_RE = re.compile(r"^\s*(yes|yep|yeah|yup|looks good|perfect|that works|correct|👍|do it)\b",
@@ -179,6 +180,10 @@ def run(now) -> int:
     state = db.get_job_state(JOB_KEY) or {}
     if state.get("week") == week:
         return 0
+    expired = db.expire_stale_review_drafts(ASK_EXPIRY_DAYS)
+    if expired:
+        db.add_activity("review_drive", "Review drafts expired",
+                        f"{expired} unanswered ask(s) older than {ASK_EXPIRY_DAYS} days released.")
     sent = 0
     for slug in sorted(slugs):
         try:

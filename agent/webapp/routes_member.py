@@ -117,6 +117,17 @@ def _book_dates() -> dict[str, str]:
             "WHERE m.date IS NOT NULL GROUP BY b.id")}
 
 
+def _within_tenure(member_slug: str, book_slug: str) -> bool:
+    """Server-side twin of the grid/index filtering: True unless the book's meeting predates
+    the member's join date (fail open on unknowns). The views hide pre-join books; this makes
+    the rule hold even for hand-crafted POSTs and direct composer URLs."""
+    joined = (cr.find_member(member_slug) or {}).get("joined")
+    if not joined:
+        return True
+    read = (cr.find_book(book_slug) or {}).get("meetingDate")
+    return not read or read >= joined
+
+
 def _tenure(slug: str, rows: list[dict], date_key: str = "date") -> list[dict]:
     """Drop books the club read before this member joined (fail open on missing dates) —
     the grid/index/dashboard only ever offer books from the member's own tenure."""
@@ -175,6 +186,8 @@ async def ratings_set(request: web.Request) -> web.Response:
             return web.json_response({"error": "bad rating"}, status=400)
         if not 1 <= rating <= 5:
             return web.json_response({"error": "rating must be 1-5"}, status=400)
+    if not await asyncio.to_thread(_within_tenure, session["slug"], book_slug):
+        return web.json_response({"error": "that book predates your time in the club"}, status=403)
     ok = await asyncio.to_thread(_do_set_rating, book_slug, session["m"], rating=rating, dnf=dnf)
     if not ok:
         return web.json_response({"error": "unknown book"}, status=404)
@@ -200,6 +213,8 @@ async def review_compose(request: web.Request) -> web.Response:
     book = await asyncio.to_thread(cr.find_book, book_slug)
     if not book:
         return web.Response(status=404, text="No such book.")
+    if not await asyncio.to_thread(_within_tenure, slug, book["slug"]):
+        return web.Response(status=403, text="That book predates your time in the club.")
     existing = await asyncio.to_thread(
         lambda: next((r for r in cr._reviews_for(book_slug=book["slug"], member_slug=slug)), None))
     return render("review.html", request, book=book, existing=existing or {})
@@ -209,6 +224,8 @@ async def review_submit(request: web.Request) -> web.Response:
     form = _form(request)
     slug = request["session"]["slug"]
     book_slug = (form.get("book_slug") or "").strip()
+    if not await asyncio.to_thread(_within_tenure, slug, book_slug):
+        return web.Response(status=403, text="That book predates your time in the club.")
     try:
         await asyncio.to_thread(
             reviews_writer.write_review, book_slug, slug,

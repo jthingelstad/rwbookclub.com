@@ -2172,6 +2172,18 @@ def update_review_draft(draft_id: int, *, state: str | None = None,
                      (*args, draft_id))
 
 
+def expire_stale_review_drafts(days: int) -> int:
+    """Expire open drafts older than `days`. An ignored ask must not block a member's future
+    asks forever — expiry frees them for the cadence (the per-book ask cap still applies, so
+    an expired book gets at most one more try ever). Returns the number expired."""
+    with connect() as conn:
+        cur = conn.execute(
+            "UPDATE review_drafts SET state = 'expired', updated_at = datetime('now') "
+            "WHERE state IN ('awaiting_reply', 'awaiting_confirm') "
+            "AND created_at < datetime('now', ?)", (f"-{days} days",))
+        return cur.rowcount
+
+
 def add_proposal(*, kind: str, title: str, body: str, channel_id: str | None = None,
                  source_user_id: str | None = None) -> int:
     with connect() as conn:
