@@ -29,7 +29,7 @@ from discord.ext import tasks
 
 from agent import clubdb, commands, config, context as kb, db, oliver, publish
 from agent.mail import email_jmap, email_policy, mail_archive, outbound
-from agent.club import meeting_rules
+from agent.club import meeting_rules, review_drive
 
 # Split the streams so launchd's logs are useful: activity (DEBUG/INFO) → stdout (oliver.log),
 # problems (WARNING+) → stderr (oliver.err). So `oliver.err` is the problems-only signal and
@@ -373,6 +373,22 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
                 f"Member: {member_slug}\nStatus: {recorded_availability}\n"
                 f"Source: email reply\nMeeting: {meeting['meetingKey']}",
             )
+    # Review-drive threads are code-driven: if this email continues an open review draft
+    # (JMAP threads the reply automatically), the state machine owns it — the general model
+    # path never sees it and there is no model-side review-write tool.
+    if member_slug and member_id is not None and not decision.is_mailing_list:
+        review_draft = db.draft_for_thread(msg.thread_id)
+        if review_draft and review_draft["member_id"] == member_id:
+            try:
+                await asyncio.to_thread(review_drive.handle_reply, review_draft, msg)
+            except Exception as e:
+                db.mark_email_processed(msg.id, status="failed",
+                                        error=f"review_drive:{type(e).__name__}: {e}")
+                log.exception("review-drive reply handling failed for %s", msg.id)
+                return
+            db.mark_email_processed(msg.id)
+            return
+
     if decision.is_mailing_list:
         channel_id = f"email:list:{msg.thread_id or config.BOOK_CLUB_MAILING_LIST_ADDRESS.lower()}"
     else:

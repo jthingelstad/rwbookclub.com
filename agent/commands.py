@@ -22,7 +22,8 @@ from agent import (backup, clock, clubdb, config, context as kb, corpus_read, db
                    publish, reflection, scheduler, webapp)
 from agent.enrich import loop as enrich_loop
 from agent.mail import email_jmap, mail_archive, outbound
-from agent.club import meeting_campaign, meeting_emails, meeting_rules, release_notes
+from agent.club import (meeting_campaign, meeting_emails, meeting_rules,
+                        release_notes, review_drive)
 
 log = logging.getLogger("oliver.commands")
 
@@ -1208,7 +1209,14 @@ async def run_scheduler() -> int:
         except Exception:
             log.exception("enrichment sweep failed")
 
-    # 0a4. Weekly health digest to the admin (Monday morning): inverted alarming — the missing
+    # 0a4. Weekly review drive (Wednesday morning): ask each allowlisted member for ONE written
+    # review of a book they rated but never wrote up. All gating inside review_drive.run().
+    try:
+        await asyncio.to_thread(review_drive.run, now)
+    except Exception:
+        log.exception("review drive failed")
+
+    # 0a5. Weekly health digest to the admin (Monday morning): inverted alarming — the missing
     # email is the alarm. All gating inside health.run().
     try:
         await asyncio.to_thread(health.run, now)

@@ -184,6 +184,21 @@ CREATE TABLE IF NOT EXISTS proposals (
 );
 CREATE INDEX IF NOT EXISTS idx_proposals_status ON proposals(status, created_at);
 
+CREATE TABLE IF NOT EXISTS review_drafts (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    member_id   INTEGER NOT NULL,
+    book_slug   TEXT NOT NULL,
+    thread_id   TEXT,
+    state       TEXT NOT NULL DEFAULT 'awaiting_reply',
+                -- awaiting_reply | awaiting_confirm | written | declined | parked
+    draft_json  TEXT,
+    rounds      INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_review_drafts_thread ON review_drafts(thread_id);
+CREATE INDEX IF NOT EXISTS idx_review_drafts_member ON review_drafts(member_id, state);
+
 CREATE TABLE IF NOT EXISTS inbound_emails (
     email_id       TEXT PRIMARY KEY,
     thread_id      TEXT,
@@ -2113,6 +2128,50 @@ def list_mail_threads(*, limit: int | None = None) -> list[dict]:
 
 
 # ── Oliver action proposals ─────────────────────────────────────────────────
+# ── Review drafts (the review-drive email state machine) ─────────────────────
+def create_review_draft(*, member_id: int, book_slug: str, thread_id: str | None) -> int:
+    with connect() as conn:
+        cur = conn.execute(
+            "INSERT INTO review_drafts (member_id, book_slug, thread_id) VALUES (?, ?, ?)",
+            (member_id, book_slug, thread_id))
+        return cur.lastrowid
+
+
+def draft_for_thread(thread_id: str | None) -> dict | None:
+    """The OPEN draft (awaiting reply/confirm) on this email thread, if any — the router's key."""
+    if not thread_id:
+        return None
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT * FROM review_drafts WHERE thread_id = ? "
+            "AND state IN ('awaiting_reply', 'awaiting_confirm') "
+            "ORDER BY id DESC LIMIT 1", (thread_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def open_draft_for_member(member_id: int) -> dict | None:
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT * FROM review_drafts WHERE member_id = ? "
+            "AND state IN ('awaiting_reply', 'awaiting_confirm') "
+            "ORDER BY id DESC LIMIT 1", (member_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def update_review_draft(draft_id: int, *, state: str | None = None,
+                        draft_json: str | None = None, rounds: int | None = None,
+                        thread_id: str | None = None) -> None:
+    sets, args = ["updated_at = datetime('now')"], []
+    for col, val in (("state", state), ("draft_json", draft_json),
+                     ("rounds", rounds), ("thread_id", thread_id)):
+        if val is not None:
+            sets.append(f"{col} = ?")
+            args.append(val)
+    with connect() as conn:
+        conn.execute(f"UPDATE review_drafts SET {', '.join(sets)} WHERE id = ?",
+                     (*args, draft_id))
+
+
 def add_proposal(*, kind: str, title: str, body: str, channel_id: str | None = None,
                  source_user_id: str | None = None) -> int:
     with connect() as conn:
