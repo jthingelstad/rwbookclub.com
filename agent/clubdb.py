@@ -235,6 +235,13 @@ def _migrate_club(conn: sqlite3.Connection) -> None:
     cols = {r["name"] for r in conn.execute("PRAGMA table_info(club_meetings)")}
     if "start_time" not in cols:
         conn.execute("ALTER TABLE club_meetings ADD COLUMN start_time TEXT")
+    # Enrichment retry accounting (2026-07): the daily sweep re-tries rows whose effective
+    # fields are still incomplete, with a capped attempt count so a book Open Library simply
+    # doesn't know can be flagged once and parked instead of retried forever.
+    for table in ("club_book_enrichment", "club_author_enrichment"):
+        ecols = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}
+        if "enrich_attempts" not in ecols:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN enrich_attempts INTEGER NOT NULL DEFAULT 0")
     # placeholder is retired: whether a meeting is upcoming or past is derived from its date+time
     # (see agent.clock), so the flag is dead weight. Drop it from existing DBs.
     if "placeholder" in cols:

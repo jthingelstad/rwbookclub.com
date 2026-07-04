@@ -18,8 +18,9 @@ import discord
 import requests
 from discord.ext import tasks
 
-from agent import (backup, clock, clubdb, config, context as kb, corpus_read, db, oliver,
+from agent import (backup, clock, clubdb, config, context as kb, corpus_read, db, health, oliver,
                    publish, reflection, scheduler, webapp)
+from agent.enrich import loop as enrich_loop
 from agent.mail import email_jmap, mail_archive, outbound
 from agent.club import meeting_campaign, meeting_emails, meeting_rules, release_notes
 
@@ -1191,6 +1192,28 @@ async def run_scheduler() -> int:
         await asyncio.to_thread(backup.run)
     except Exception:
         log.exception("offsite backup step failed")
+
+    # 0a3. Daily enrichment sweep: new books/authors get enriched, incomplete rows retry with a
+    # capped attempt count (exhausted rows are flagged to #oliver-log and parked). Date-gated
+    # like the backup; network failures abort quietly inside run_pending and retry tomorrow.
+    if config.ENRICH_SWEEP_ENABLED and (db.get_job_state("enrichment_sweep") or {}).get("date") != clock.club_today_iso():
+        try:
+            summary = await asyncio.to_thread(enrich_loop.run_pending, limit=config.ENRICH_SWEEP_LIMIT)
+            db.set_job_state("enrichment_sweep", {"date": clock.club_today_iso(), **{
+                k: v for k, v in summary.items() if k != "exhausted"},
+                "exhausted": len(summary["exhausted"])})
+            if summary["enriched"] or summary["retried"]:
+                log.info("enrichment sweep: %s", summary)
+                schedule_publish()  # new synopses/bios/covers should reach the site
+        except Exception:
+            log.exception("enrichment sweep failed")
+
+    # 0a4. Weekly health digest to the admin (Monday morning): inverted alarming — the missing
+    # email is the alarm. All gating inside health.run().
+    try:
+        await asyncio.to_thread(health.run, now)
+    except Exception:
+        log.exception("health digest failed")
 
     # 0b. Weekly reflective memory (Sunday early morning): distill the week's conversations into
     # durable member memories. Internal + audited in #oliver-log. The hourly loop ticks once inside

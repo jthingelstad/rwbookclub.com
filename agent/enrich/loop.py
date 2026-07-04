@@ -16,6 +16,7 @@ unless ``--force``. Curated core fields are never overwritten — dual-source va
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from datetime import datetime, timezone
 
@@ -25,6 +26,8 @@ from agent.enrich import wikidata as wd
 from agent.enrich import wikipedia as wp
 from corpus import images
 from corpus.paths import AUTHORS_IMG_DIR, COVERS_DIR
+
+log = logging.getLogger("oliver.enrich")
 
 COVER_WIDTHS = [240, 480, 960]
 AUTHOR_PHOTO_WIDTHS = [240, 480]
@@ -185,6 +188,82 @@ def _select(entities: list[dict], done: set[int], *, id_key: str,
     if limit:
         todo = todo[:limit]
     return todo
+
+
+# ── Scheduled sweep (daily, from the bot) ────────────────────────────────────
+# A row is INCOMPLETE when its effective (core-COALESCE-sidecar) reader-facing fields are
+# still empty after enrichment ran: synopsis/pages/year for books, bio for authors. The sweep
+# enriches never-enriched rows first (new entities), then retries incomplete ones — at most
+# every RETRY_AFTER_DAYS and MAX_RETRY_ATTEMPTS times total. A row that exhausts its retries
+# gets ONE #oliver-log warning and is parked (Jamie's rule: flag it, don't loop forever).
+MAX_RETRY_ATTEMPTS = 3
+RETRY_AFTER_DAYS = 30
+
+
+def _book_gaps(b: dict) -> list[str]:
+    return [k for k in ("synopsis", "publication_year", "page_count") if not b.get(k)]
+
+
+def _author_gaps(a: dict) -> list[str]:
+    return ["bio"] if not a.get("bio") else []
+
+
+def _retry_eligible(conn, table: str, key_col: str) -> dict[int, int]:
+    """id -> attempts for enriched rows still under the retry cap and past the cool-down."""
+    return {r[key_col]: r["enrich_attempts"] for r in conn.execute(
+        f"SELECT {key_col}, enrich_attempts FROM {table} "
+        f"WHERE enriched_at IS NOT NULL AND enrich_attempts < ? "
+        f"AND enriched_at < datetime('now', ?)",
+        (MAX_RETRY_ATTEMPTS, f"-{RETRY_AFTER_DAYS} days"))}
+
+
+def run_pending(*, limit: int = 8, fetch_images: bool = True) -> dict:
+    """One scheduled enrichment pass: new entities first, then capped retries of incomplete
+    rows. Network errors abort the sweep quietly (the source is down; tomorrow's sweep
+    retries) WITHOUT burning an attempt. Returns a summary for the scheduler's log line."""
+    summary = {"enriched": 0, "retried": 0, "exhausted": []}
+    budget = limit
+    with db.connect() as conn:
+        for kind, table, key, fetch_all, enrich_fn, gaps_fn in (
+            ("book", "club_book_enrichment", "book_id", clubdb.all_books, enrich_book, _book_gaps),
+            ("author", "club_author_enrichment", "author_id", clubdb.all_authors, enrich_author, _author_gaps),
+        ):
+            if budget <= 0:
+                break
+            entities = {e["id"]: e for e in fetch_all(conn)}
+            done = _already_enriched(conn, table, key)
+            fresh = [e for eid, e in entities.items() if eid not in done]
+            retry = [(entities[eid], att) for eid, att in _retry_eligible(conn, table, key).items()
+                     if eid in entities and gaps_fn(entities[eid])]
+            for entity, attempts in [(e, None) for e in fresh] + retry:
+                if budget <= 0:
+                    break
+                try:
+                    enrich_fn(conn, entity, fetch_images=fetch_images)
+                    conn.commit()
+                except Exception:  # noqa: BLE001 — network/source failure: stop, retry tomorrow
+                    log.exception("enrichment sweep aborted on %s %r (source down?)",
+                                  kind, entity["slug"])
+                    return summary
+                budget -= 1
+                summary["enriched" if attempts is None else "retried"] += 1
+                if attempts is None:
+                    continue
+                # A RETRY that still leaves gaps burns an attempt; crossing the cap flags once.
+                current = {e["id"]: e for e in fetch_all(conn)}[entity["id"]]
+                remaining = gaps_fn(current)
+                if remaining:
+                    conn.execute(f"UPDATE {table} SET enrich_attempts = ? WHERE {key} = ?",
+                                 (attempts + 1, entity["id"]))
+                    conn.commit()
+                    if attempts + 1 >= MAX_RETRY_ATTEMPTS:
+                        summary["exhausted"].append(entity["slug"])
+                        db.add_activity(
+                            "warning", f"Enrichment exhausted: {entity['slug']}",
+                            f"Still missing {', '.join(remaining)} after {MAX_RETRY_ATTEMPTS} "
+                            "retries — parked (edit by hand in the web app, or clear "
+                            f"enrich_attempts in {table} to retry).")
+    return summary
 
 
 def run(*, do_books: bool, do_authors: bool, force: bool = False,
