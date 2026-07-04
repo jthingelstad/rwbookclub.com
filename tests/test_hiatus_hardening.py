@@ -92,7 +92,9 @@ def test_digest_sends_once_per_week_at_the_gate(fresh_db, monkeypatch):
                         lambda slug: {"email": "jamie@example.test"})
     monkeypatch.setattr(health.oliver, "compose",
                         lambda kind, facts, fallback="": fallback)
-    fresh_db.set_job_state("offsite_backup", {"date": "2026-07-06", "file": "oliver-2026-07-06.db.gz"})
+    from agent import clock
+    fresh_db.set_job_state("offsite_backup",
+                           {"date": clock.club_today_iso(), "file": "oliver-today.db.gz"})
 
     assert health.run(_monday_8am()) is True
     assert sent[0]["to"] == ["jamie@example.test"]
