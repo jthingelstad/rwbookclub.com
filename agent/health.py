@@ -73,7 +73,8 @@ def digest_email(facts: dict) -> tuple[str, str]:
         opener, "",
         f"- **Backup**: {facts['backupFile'] or 'NONE'}"
         + (f" ({facts['backupAgeDays']}d old)" if facts["backupAgeDays"] is not None else "")
-        + (" ⚠️" if (facts["backupAgeDays"] or 99) > 1 else " ✓"),
+        # explicit None check: a 0-day-old backup is the GOOD case, and `0 or 99` would flag it
+        + (" ⚠️" if (99 if facts["backupAgeDays"] is None else facts["backupAgeDays"]) > 1 else " ✓"),
         f"- **Warnings (7d)**: {facts['warnings7d']}"
         + (" ✓" if not facts["warnings7d"] else " ⚠️ — " + "; ".join(facts["recentWarnings"])),
         f"- **Database**: {facts['dbMB']} MB · {facts['memories']} active memories · "

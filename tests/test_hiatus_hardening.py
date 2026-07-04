@@ -97,6 +97,8 @@ def test_digest_sends_once_per_week_at_the_gate(fresh_db, monkeypatch):
     assert health.run(_monday_8am()) is True
     assert sent[0]["to"] == ["jamie@example.test"]
     assert "Backup" in sent[0]["body"] and "absence is the alarm" in sent[0]["body"]
+    # A same-day backup must read as healthy (regression: `0 or 99` once flagged 0d as stale).
+    assert "(0d old) ✓" in sent[0]["body"]
     assert health.run(_monday_8am()) is False        # same week → no repeat
     assert health.run(_monday_8am().replace(hour=14)) is False  # outside the gate hour
 
