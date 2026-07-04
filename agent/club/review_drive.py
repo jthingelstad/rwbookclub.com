@@ -121,7 +121,10 @@ def next_candidate(slug: str) -> dict | None:
             "LEFT JOIN club_meetings m ON m.id = mb.meeting_id "
             "WHERE mem.slug = ? AND r.rating IS NOT NULL AND COALESCE(r.dnf, 0) = 0 "
             "AND COALESCE(r.body, '') = '' "
-            "GROUP BY b.id ORDER BY r.rating DESC, read_date DESC", (slug,)).fetchall()
+            "GROUP BY b.id "
+            # never ask about a book the club read before this member joined (fail open on NULLs)
+            "HAVING (mem.joined IS NULL OR MAX(m.date) IS NULL OR MAX(m.date) >= mem.joined) "
+            "ORDER BY r.rating DESC, read_date DESC", (slug,)).fetchall()
     for r in rows:
         if counts.get(r["slug"], 0) < MAX_ASKS_PER_BOOK:
             return {"slug": r["slug"], "title": r["title"], "rating": r["rating"],

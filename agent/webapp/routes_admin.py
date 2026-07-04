@@ -346,9 +346,10 @@ async def member_action(request: web.Request) -> web.Response:
 
 def _member_by_slug(slug: str) -> dict | None:
     with db.connect() as conn:
-        row = conn.execute("SELECT slug, name, is_current FROM club_members WHERE slug = ?",
+        row = conn.execute("SELECT slug, name, is_current, joined FROM club_members WHERE slug = ?",
                            (slug,)).fetchone()
-    return {"slug": row["slug"], "name": row["name"], "current": bool(row["is_current"])} if row else None
+    return {"slug": row["slug"], "name": row["name"], "current": bool(row["is_current"]),
+            "joined": row["joined"]} if row else None
 
 
 def _member_identities(slug: str) -> dict:
@@ -382,6 +383,14 @@ def _member_save(slug: str, op: str, form) -> bool:
         with db.connect() as conn:
             clubdb.set_member_current(conn, slug, is_current=True)
         return True
+    if op == "set-joined":
+        raw = (form.get("value") or "").strip() or None
+        if raw:  # a date input supplies ISO; reject anything else rather than store garbage
+            import datetime
+            datetime.date.fromisoformat(raw)
+        with db.connect() as conn:
+            conn.execute("UPDATE club_members SET joined = ? WHERE slug = ?", (raw, slug))
+        return False  # not rendered publicly (yet) — no site rebuild needed
     # Otherwise it's an identity op (website/email/phone), shared with the member profile page.
     val = (form.get("value") or "").strip()
     label = (form.get("label") or "").strip() or None

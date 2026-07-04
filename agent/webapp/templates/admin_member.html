@@ -36,6 +36,14 @@
       <input class="grow" type="text" name="name" value="{{ member.name }}"><button class="primary">Rename</button>
     </form>
     <p class="muted mt-5">The slug (<code>{{ member.slug }}</code>) stays fixed so links don't break.</p>
+    <form class="mt-6 row gap-4" method="post" action="{{ act }}">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="set-joined">
+      <div class="grow">
+        <label>Joined <span class="muted">(first-pick backfill = latest possible; refine as members report first reads)</span></label>
+        <input type="date" name="value" value="{{ member.joined or '' }}">
+      </div>
+      <button>Save joined</button>
+    </form>
     <form class="mt-6" method="post" action="{{ act }}">
       <input type="hidden" name="csrf" value="{{ csrf }}">
       {% if member.current %}

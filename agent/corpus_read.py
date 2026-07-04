@@ -649,6 +649,7 @@ def member_history(name_or_slug: str) -> dict | None:
         "name": m.get("name"),
         "slug": m.get("slug"),
         "isCurrent": bool(m.get("isCurrent")),
+        "joined": m.get("joined"),
         "websites": m.get("websites") or [],
         "pickedCount": len(picked),
         "picks": [{"title": b.get("title"), "year": b.get("year")} for b in picked],
@@ -716,6 +717,9 @@ def pending_reviews(name_or_slug: str) -> dict | None:
         return None
     reviewed = {r.get("book") for r in reviews() if r.get("member") == m["slug"]}
     read = [b for b in books() if b.get("isRead")]
+    joined = m.get("joined")
+    if joined:  # a member owes nothing for books read before they joined (fail open on NULLs)
+        read = [b for b in read if not b.get("meetingDate") or b["meetingDate"] >= joined]
     pending = [_book_brief(b) for b in read if b.get("slug") not in reviewed]
     pending.sort(key=lambda x: x["yearRead"] or 0, reverse=True)
     return {"member": m["name"], "count": len(pending), "books": pending}

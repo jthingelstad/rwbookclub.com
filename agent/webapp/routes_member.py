@@ -81,10 +81,13 @@ def home_context(member_slug: str) -> dict:
     mine = _member_ratings(member_slug)
     recent_read = sorted((b for b in cr.books() if b.get("isRead")),
                          key=lambda b: b.get("meetingDate") or "", reverse=True)
+    joined = (cr.find_member(member_slug) or {}).get("joined")
     unrated = [
         {"slug": b["slug"], "title": b["title"], "year": (b.get("meetingDate") or "")[:4]}
         for b in recent_read
-        if not (mine.get(b["slug"]) or {}).get("rating") and not (mine.get(b["slug"]) or {}).get("dnf")
+        if not (mine.get(b["slug"]) or {}).get("rating")
+        and not (mine.get(b["slug"]) or {}).get("dnf")
+        and (not joined or not b.get("meetingDate") or b["meetingDate"] >= joined)
     ][:5]
     pending = cr.pending_reviews(member_slug) or {}
     return {"meeting": meeting, "unrated": unrated, "review_debt": pending.get("count") or 0}
@@ -114,6 +117,15 @@ def _book_dates() -> dict[str, str]:
             "WHERE m.date IS NOT NULL GROUP BY b.id")}
 
 
+def _tenure(slug: str, rows: list[dict], date_key: str = "date") -> list[dict]:
+    """Drop books the club read before this member joined (fail open on missing dates) —
+    the grid/index/dashboard only ever offer books from the member's own tenure."""
+    joined = (cr.find_member(slug) or {}).get("joined")
+    if not joined:
+        return rows
+    return [r for r in rows if not r.get(date_key) or r[date_key] >= joined]
+
+
 def _by_discussed_desc(books: list[dict], dates: dict[str, str]) -> list[dict]:
     """Annotate each book with its discussed date/year and sort newest-first (undated last)."""
     rows = []
@@ -135,7 +147,7 @@ async def ratings_page(request: web.Request) -> web.Response:
         "rating": (mine.get(b["slug"]) or {}).get("rating"),
         "dnf": bool((mine.get(b["slug"]) or {}).get("dnf")),
     } for b in books]
-    rows = _by_discussed_desc(rows, dates)  # most-recently-discussed first
+    rows = _tenure(slug, _by_discussed_desc(rows, dates))  # tenure-only, newest first
     years = sorted({r["year"] for r in rows if r["year"]}, reverse=True)
     return render("ratings.html", request, books=rows, years=years)
 
@@ -176,7 +188,7 @@ async def reviews_page(request: web.Request) -> web.Response:
     books = await asyncio.to_thread(_load_books)
     mine = await asyncio.to_thread(_member_ratings, slug)
     dates = await asyncio.to_thread(_book_dates)
-    books = _by_discussed_desc(books, dates)  # most-recently-discussed first
+    books = _tenure(slug, _by_discussed_desc(books, dates))  # tenure-only, newest first
     reviewed = {s for s, r in mine.items() if (r.get("body") or r.get("rating") or r.get("dnf"))}
     years = sorted({b["year"] for b in books if b["year"]}, reverse=True)
     return render("reviews_index.html", request, books=books, reviewed=reviewed, years=years)

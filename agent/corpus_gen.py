@@ -96,7 +96,8 @@ def _member_doc(m: dict) -> dict:
     # `websites` are sourced from member_identities (surface='website') and attached to `m` by the
     # generate() loop — multiple per member, public, rendered on the profile page. Emails/phones are
     # private and never enter the corpus.
-    return {"name": m["name"], "isCurrent": bool(m["is_current"]), "websites": m.get("websites") or []}
+    return {"name": m["name"], "isCurrent": bool(m["is_current"]),
+            "joined": m.get("joined"), "websites": m.get("websites") or []}
 
 
 def _author_doc(a: dict) -> dict:

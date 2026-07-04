@@ -23,7 +23,7 @@ import sqlite3
 from datetime import datetime, timezone
 from typing import Iterator
 
-from agent import db
+from agent import clock, db
 from corpus.paths import slugify
 
 # ── Schema ───────────────────────────────────────────────────────────────────
@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS club_members (
     id          INTEGER PRIMARY KEY,        -- Airtable Member ID
     slug        TEXT NOT NULL UNIQUE,       -- corpus filename stem (output only)
     name        TEXT NOT NULL,
-    is_current  INTEGER NOT NULL DEFAULT 0
+    is_current  INTEGER NOT NULL DEFAULT 0,
+    joined      TEXT                        -- local YYYY-MM-DD; first-pick backfill = LATEST bound
     -- contact + web addresses live in member_identities (surface='email'|'sms'|'website'); see db.py
 );
 
@@ -235,6 +236,18 @@ def _migrate_club(conn: sqlite3.Connection) -> None:
     cols = {r["name"] for r in conn.execute("PRAGMA table_info(club_meetings)")}
     if "start_time" not in cols:
         conn.execute("ALTER TABLE club_meetings ADD COLUMN start_time TEXT")
+    # Member join dates (2026-07): a member's first PICK is the LATEST their join date can be,
+    # so backfill `joined` from the first hosted meeting (host = picker) and refine by hand as
+    # members report their actual first read. Fills NULLs only — corrections stick.
+    mcols = {r["name"] for r in conn.execute("PRAGMA table_info(club_members)")}
+    if "joined" not in mcols:
+        conn.execute("ALTER TABLE club_members ADD COLUMN joined TEXT")
+    conn.execute(
+        "UPDATE club_members SET joined = ("
+        "  SELECT MIN(m.date) FROM club_meeting_hosts h JOIN club_meetings m ON m.id = h.meeting_id"
+        "  WHERE h.member_id = club_members.id)"
+        " WHERE joined IS NULL")
+
     # Enrichment retry accounting (2026-07): the daily sweep re-tries rows whose effective
     # fields are still incomplete, with a capped attempt count so a book Open Library simply
     # doesn't know can be flagged once and parked instead of retried forever.
@@ -452,8 +465,9 @@ def create_member(conn: sqlite3.Connection, name: str) -> dict:
     while conn.execute("SELECT 1 FROM club_members WHERE slug = ?", (slug,)).fetchone():
         slug, n = f"{root}-{n}", n + 1
     mid = _next_id(conn, "club_members")
-    conn.execute("INSERT INTO club_members(id, slug, name, is_current) VALUES (?, ?, ?, 1)",
-                 (mid, slug, name))
+    conn.execute(
+        "INSERT INTO club_members(id, slug, name, is_current, joined) VALUES (?, ?, ?, 1, ?)",
+        (mid, slug, name, clock.club_today_iso()))
     return {"id": mid, "slug": slug}
 
 

@@ -74,6 +74,7 @@ erDiagram
         text slug
         text name
         int is_current
+        text joined
     }
     club_meetings {
         int id PK
