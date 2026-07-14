@@ -2,6 +2,7 @@
 
 import gzip
 import sqlite3
+import stat
 
 from agent import backup, config
 
@@ -18,6 +19,8 @@ def test_backup_writes_valid_snapshot_and_gates_daily(fresh_db, monkeypatch, tmp
     assert out and out["file"].startswith("oliver-") and out["bytes"] > 0
     target = tmp_path / "icloud" / out["file"]
     assert target.exists()
+    assert stat.S_IMODE(target.parent.stat().st_mode) == 0o700
+    assert stat.S_IMODE(target.stat().st_mode) == 0o600
 
     # The gzip really is a working SQLite database with the club record inside.
     restored = tmp_path / "restored.db"

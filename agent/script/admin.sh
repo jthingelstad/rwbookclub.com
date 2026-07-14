@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+umask 077
 
 LABEL="com.rwbookclub.oliver"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
@@ -38,12 +39,27 @@ require_venv() {
     echo "$VENV"
 }
 
+permissions() {
+    local python
+    if VENV="$(resolve_venv)"; then
+        python="$VENV/bin/python"
+    else
+        python="$(command -v python3)"
+    fi
+    (cd "$REPO_ROOT" && "$python" -m agent.security "$@")
+}
+
+repair_permissions() {
+    permissions --repair
+}
+
 # Take a consistent snapshot of the SQLite DB, then VACUUM it. Run while Oliver is stopped
 # (no open connections), so VACUUM gets its exclusive lock and the snapshot is clean. The DB is
 # in WAL mode, so a plain cp is unsafe — sqlite3's online .backup reads through the WAL correctly.
 # Best-effort: a backup failure warns and skips the vacuum (never mutate the DB without a copy),
 # and never aborts the restart it's part of.
 backup_and_vacuum() {
+    repair_permissions
     if [ ! -f "$DB" ]; then
         echo "==> No database at $DB; skipping backup + vacuum."
         return 0
@@ -52,7 +68,7 @@ backup_and_vacuum() {
         echo "==> Warning: no venv found; skipping DB backup + vacuum." >&2
         return 0
     fi
-    mkdir -p "$BACKUP_DIR"
+    mkdir -p -m 700 "$BACKUP_DIR"
     local stamp backup
     stamp="$(date -u +%Y%m%dT%H%M%SZ)"
     backup="$BACKUP_DIR/oliver-restart-$stamp.db"
@@ -111,6 +127,7 @@ start_bot() {
         echo "Run '$0 install' first."
         exit 1
     fi
+    repair_permissions
     echo "==> Starting oliver..."
     launchctl bootstrap "gui/$(id -u)" "$PLIST"
     sleep 3
@@ -125,7 +142,8 @@ restart_bot() {
 
 install_bot() {
     VENV="$(require_venv)"
-    mkdir -p "$LOG_DIR"
+    mkdir -p -m 700 "$LOG_DIR"
+    repair_permissions
     echo "==> Installing launchd plist..."
     echo "    venv:    $VENV"
     echo "    cwd:     $REPO_ROOT"
@@ -185,8 +203,9 @@ upgrade_bot() {
 }
 
 tail_logs() {
-    mkdir -p "$LOG_DIR"
+    mkdir -p -m 700 "$LOG_DIR"
     touch "$LOG_DIR/oliver.log" "$LOG_DIR/oliver.err"
+    repair_permissions
     echo "==> Tailing $LOG_DIR/oliver.{log,err} (Ctrl-C to stop)..."
     tail -F "$LOG_DIR/oliver.log" "$LOG_DIR/oliver.err"
 }
@@ -200,8 +219,10 @@ case "${1:-}" in
     install)  install_bot ;;
     status)   status ;;
     tail)     tail_logs ;;
+    permissions) permissions ;;
+    permissions-repair) repair_permissions ;;
     *)
-        echo "Usage: $0 {start|stop|restart|upgrade|backup|install|status|tail}"
+        echo "Usage: $0 {start|stop|restart|upgrade|backup|install|status|tail|permissions|permissions-repair}"
         exit 1
         ;;
 esac

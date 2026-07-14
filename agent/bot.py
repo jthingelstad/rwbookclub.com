@@ -27,7 +27,7 @@ import discord
 import requests
 from discord.ext import tasks
 
-from agent import clubdb, commands, config, context as kb, db, oliver, publish
+from agent import clubdb, commands, config, context as kb, db, oliver, publish, security
 from agent.mail import email_jmap, email_policy, mail_archive, outbound
 from agent.club import meeting_rules, review_drive
 
@@ -674,7 +674,7 @@ def _rotate_launchd_log(name: str, fd: int) -> None:
         if not path.exists() or path.stat().st_size <= _LOG_MAX_BYTES:
             return
         path.replace(path.with_name(name + ".1"))
-        fresh = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
+        fresh = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
         os.dup2(fresh, fd)
         os.close(fresh)
     except OSError:
@@ -682,6 +682,12 @@ def _rotate_launchd_log(name: str, fd: int) -> None:
 
 
 def main() -> None:
+    permission_report = security.enforce_runtime_permissions(repair=True)
+    if not permission_report.ok:
+        raise SystemExit(
+            "Oliver private runtime permissions are unsafe; run "
+            "`./agent/script/admin.sh permissions-repair` for details."
+        )
     if not config.TOKEN:
         raise SystemExit("DISCORD_BOT_TOKEN is not set (add it to the root .env).")
     _rotate_launchd_log("oliver.log", 1)

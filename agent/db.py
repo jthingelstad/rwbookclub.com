@@ -21,7 +21,10 @@ from pathlib import Path
 from typing import Iterator
 from urllib.parse import urlsplit
 
+from agent import security
+
 DB_PATH = Path(os.environ.get("OLIVER_DB_PATH") or Path(__file__).resolve().parent / "oliver.db")
+security.set_private_umask()
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS memories (
@@ -815,6 +818,7 @@ def _ensure_schema() -> None:
 
 
 _ensure_schema()
+security.secure_database_files(DB_PATH)
 
 
 def _now() -> str:

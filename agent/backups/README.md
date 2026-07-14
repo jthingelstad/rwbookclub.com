@@ -1,5 +1,8 @@
 # DB backups
 
+This directory contains private member and mailbox state. Oliver's admin preflight keeps the
+directory owner-only (`0700`) and backup files owner-readable/writable only (`0600`).
+
 Full copies of `agent/oliver.db`. All are **gitignored** (class B — never committed; they hold the
 live DB, PII included) and live here only as local restore points. Two kinds:
 

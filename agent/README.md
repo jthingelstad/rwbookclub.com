@@ -142,7 +142,9 @@ Run from the **repo root** so the `agent` and `corpus` packages resolve.
 Oliver's memory is a local SQLite file (`agent/oliver.db`, gitignored) — private state
 that doesn't belong in the public corpus. On the deployment host, point `OLIVER_DB_PATH`
 at durable storage and back it up (litestream or a periodic dump, matching the Weekly
-Thing pattern). Backup wiring is a deployment step, not in the repo.
+Thing pattern). Oliver enforces owner-only modes for `.env`, SQLite and its sidecars,
+`agent/logs/`, `agent/backups/`, the generated private corpus, and offsite backups. Audit with
+`./agent/script/admin.sh permissions`; repair safe mode drift with `permissions-repair`.
 
 ### Command structure
 

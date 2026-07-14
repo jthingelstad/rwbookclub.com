@@ -21,7 +21,7 @@ import sqlite3
 import tempfile
 from pathlib import Path
 
-from agent import clock, config, db
+from agent import clock, config, db, security
 
 log = logging.getLogger("oliver.backup")
 
@@ -52,7 +52,9 @@ def run(*, force: bool = False) -> dict | None:
     target = _target_dir()
     name = f"oliver-{today}.db.gz"
     try:
-        target.mkdir(parents=True, exist_ok=True)
+        security.set_private_umask()
+        target.mkdir(parents=True, exist_ok=True, mode=security.PRIVATE_DIR_MODE)
+        security.secure_directory_tree(target)
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             tmp_path = Path(tmp.name)
         try:
@@ -60,6 +62,7 @@ def run(*, force: bool = False) -> dict | None:
             with open(tmp_path, "rb") as raw, gzip.open(target / name, "wb", compresslevel=6) as gz:
                 while chunk := raw.read(1 << 20):
                     gz.write(chunk)
+            security.secure_file(target / name)
         finally:
             tmp_path.unlink(missing_ok=True)
 
