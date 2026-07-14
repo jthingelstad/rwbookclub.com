@@ -115,7 +115,8 @@ def test_admin_bookcloud_template_renders(fresh_db):
 def test_book_cloud_recent_dispatch_modes(fresh_db):
     db.add_book_cloud_entry(title="A", reason="r1", surface="discord")
     db.add_book_cloud_entry(title="A", reason="r2", surface="discord")
-    raw = json.loads(dispatch("book_cloud_recent", {}, {}))
+    ctx = {"member_slug": "jamie", "speaker_user_id": "u1"}
+    raw = json.loads(dispatch("book_cloud_recent", {}, ctx))
     assert len(raw) == 2
-    agg = json.loads(dispatch("book_cloud_recent", {"titles": True}, {}))
+    agg = json.loads(dispatch("book_cloud_recent", {"titles": True}, ctx))
     assert len(agg) == 1 and agg[0]["mention_count"] == 2

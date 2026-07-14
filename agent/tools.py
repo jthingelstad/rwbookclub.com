@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import logging
 
+from agent import access
 from agent import clubdb
 from agent import config
 from agent import corpus_read as cr
@@ -166,24 +167,30 @@ TOOLS = [
     },
     {
         "name": "current_club_state",
-        "description": "Compact snapshot of Oliver's current operating context: current members, identity links, next meeting attendance status, high-level corpus stats, and recent feedback.",
+        "description": "Compact snapshot of current members, aggregate next-meeting status, and "
+                       "high-level corpus stats. Non-admin members receive only their own "
+                       "attendance row and no identity-link or feedback details.",
         "input_schema": {"type": "object", "properties": {}},
     },
     {
         "name": "current_meeting_status",
-        "description": "The source of truth for the NEXT meeting: its canonical date, the book, and the picker, plus roll-call status under club rules (last Tuesday, quorum of 3 of 5 current members, picker must attend). Call this to verify any meeting date/time/book a member states before agreeing to it. Read-only.",
+        "description": "The source of truth for the NEXT meeting: its canonical date, the book, "
+                       "and the picker, plus aggregate roll-call status under club rules. "
+                       "A member sees only their own attendance row; admin sees the full roster. "
+                       "Call this to verify any meeting date/time/book a member states. Read-only.",
         "input_schema": {"type": "object", "properties": {}},
     },
     {
         "name": "meeting_readiness",
-        "description": "Combined readiness for the next meeting: attendance, reading status, quorum, "
-                       "and who still needs roll-call or reading nudges.",
+        "description": "Combined readiness for the next meeting. Members see aggregate counts "
+                       "plus only their own attendance/reading row; admin sees the full roster "
+                       "and who still needs a nudge.",
         "input_schema": {"type": "object", "properties": {}},
     },
     {
         "name": "meeting_campaign",
-        "description": "Operational dashboard for the next meeting: current book/date, days left, "
-                       "attendance, picker, reading progress, last member contact, and recommended next actions.",
+        "description": "Admin-only operational dashboard for the next meeting: current book/date, "
+                       "attendance, reading progress, last member contact, and next actions.",
         "input_schema": {"type": "object", "properties": {}},
     },
     {
@@ -257,7 +264,8 @@ TOOLS = [
     },
     {
         "name": "recall",
-        "description": "Look up notes Oliver previously saved, by subject and/or text.",
+        "description": "Look up club lore and notes about the linked speaker. Member-private notes "
+                       "for anyone else are unavailable; admins may audit another member by subject.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -336,7 +344,8 @@ TOOLS = [
     },
     {
         "name": "reading_status",
-        "description": "Show the reading-progress tracker for the next/current book.",
+        "description": "Show reading progress for the next/current book. A member sees only their "
+                       "own row; admin sees the full tracker.",
         "input_schema": {"type": "object", "properties": {}},
     },
     {
@@ -370,16 +379,16 @@ TOOLS = [
     },
     {
         "name": "search_discussion",
-        "description": "Keyword-search everything you've said or heard across ALL mediums — Discord "
-                       "channels (#ask-oliver, #general, #book-talk) AND your 1:1 email threads AND "
-                       "the mailing list — newest first. This is your own conversation memory, NOT "
+        "description": "Keyword-search shared Discord/mailing-list discussion plus the linked "
+                       "speaker's own 1:1 email threads — newest first. Another member's private "
+                       "email is unavailable unless the speaker is the admin. This is conversation memory, NOT "
                        "the book corpus. Reach for it whenever someone refers to an earlier exchange "
                        "on any medium ('the books we went over in email', 'didn't we talk about…', "
                        "'what did someone say in book-talk'). Each result is tagged with its medium "
                        "(email / mailing list / Discord), who said it, and whether it was a member's "
                        "turn or YOUR reply — so you can tell email from Discord and see what you "
-                       "yourself sent. Pass `member` to scope to one person's history with you across "
-                       "mediums. For facts about books the club has read, use find_books/get_book.",
+                       "yourself sent. A member may pass only their own slug; admins may scope to "
+                       "another member for repair/audit. For book facts, use find_books/get_book.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -392,8 +401,9 @@ TOOLS = [
     },
     {
         "name": "search_mail_archive",
-        "description": "Keyword-search the R/W Book Club email archive — the mailing list, archived "
-                       "inbound email, AND Oliver's own sent replies (both sides of a thread). Use "
+        "description": "Keyword-search the R/W Book Club email archive — the shared mailing list plus "
+                       "the linked speaker's own 1:1 inbound mail and Oliver replies. Other members' "
+                       "private threads are unavailable unless the speaker is the admin. Use "
                        "when a question asks what the club (or you) discussed, planned, nominated, "
                        "voted on, or decided over email. Searches cleaned message bodies, not "
                        "attachments or quoted history.",
@@ -412,8 +422,8 @@ TOOLS = [
     {
         "name": "get_mail_thread",
         "description": "Fetch a chronological cleaned transcript for one email archive thread "
-                       "returned by search_mail_archive — both the members' messages and Oliver's "
-                       "own replies, in order.",
+                       "returned by search_mail_archive — shared list mail or the linked speaker's "
+                       "own private thread, with addresses omitted. Admins may audit any thread.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -557,9 +567,22 @@ def _surface_from_ctx(ctx: dict) -> str:
             else "email" if channel.startswith("email:") else "discord")
 
 
-def _member_lenses() -> dict:
+def _member_slug(value: str | None) -> str | None:
+    """Resolve a model-supplied member name/slug through the public member index."""
+    if not value:
+        return None
+    member = cr.find_member(value)
+    return member.get("slug") if member else None
+
+
+def _member_lenses(ctx: dict | None = None) -> dict:
     """Every current member's taste lens: reflection memories + recent picks. The who-will-love-it
-    / who-will-fight-it evidence for pick advice — reactions must come from HERE, never invented."""
+    / who-will-fight-it evidence for pick advice — reactions must come from HERE, never invented.
+
+    Exact private memory notes are included only for the speaking member (or an admin).  Other
+    members' public picks/reviews remain useful evidence without disclosing their private notes.
+    """
+    actor = access.actor_from_ctx(ctx or {})
     lenses = {}
     for m in cr.human_current_members():  # taste lenses are human — Oliver has no vote here
         slug = m["slug"]
@@ -569,7 +592,10 @@ def _member_lenses() -> dict:
             # The FULL active memory set, not a newest-N window: after archive mining, a member's
             # decisive note (e.g. Loren's Harari skepticism) can be years old — a partial lens
             # produced a live forecast that contradicted recorded taste.
-            "memories": [x["note"] for x in db.get_memories(subject=slug, limit=40)],
+            "memories": (
+                [x["note"] for x in db.get_memories(subject=slug, limit=40)]
+                if access.can_access_member(actor, slug) else []
+            ),
             "recentPicks": [{"title": p.get("title"), "year": p.get("year")}
                             for p in (hist.get("picks") or [])[:3]],
         }
@@ -625,8 +651,10 @@ def _pick_fit(tool_input: dict, ctx: dict) -> dict:
     cand_authors = out["candidate"].get("authors") or []
     # This title's own cloud history — who floated it, when, why.
     norm = title.lower().strip()
+    actor = access.actor_from_ctx(ctx)
     out["cloudHistory"] = next(
-        (r for r in db.book_cloud_titles(query=title, limit=5)
+        (r for r in db.book_cloud_titles_visible(
+            viewer_member_slug=actor.member_slug, is_admin=actor.is_admin, query=title, limit=5)
          if (r.get("title") or "").lower().strip() == norm), None)
     # Nearest neighbors on the shelf, each with the club's actual verdict.
     neighbors = cr.affinity_to_history(subjects, cand_authors, title=title)
@@ -637,7 +665,7 @@ def _pick_fit(tool_input: dict, ctx: dict) -> dict:
                             "dnfCount": rs.get("dnfCount"),
                             "excerpt": (rs.get("excerpts") or [None])[0]}
     out["nearestInHistory"] = neighbors
-    out["memberLenses"] = _member_lenses()
+    out["memberLenses"] = _member_lenses(ctx)
     stats = cr.club_stats()
     out["coverage"] = {"topics": stats.get("topics"), "fiction": stats.get("fiction"),
                        "nonfiction": stats.get("nonfiction")}
@@ -661,14 +689,22 @@ def _pick_fit(tool_input: dict, ctx: dict) -> dict:
 
 def _pick_prospects(tool_input: dict, ctx: dict) -> dict:
     """One-call discovery dossier: where should this member even look for a pick?"""
-    member = (tool_input.get("member") or ctx.get("member_slug") or "").strip() or None
+    actor = access.actor_from_ctx(ctx)
+    requested = tool_input.get("member")
+    member = _member_slug(requested) if requested else actor.member_slug
+    if requested and not member:
+        return {"error": f"no such member: {requested}"}
+    if member and not access.can_access_member(actor, member):
+        return {"error": "private pick guidance can only use your own member profile"}
     direction = (tool_input.get("direction") or "").strip() or None
     out: dict = {"member": member, "direction": direction}
 
     if member:
         hist = cr.member_history(member) or {}
         out["memberTaste"] = {
-            "memories": [x["note"] for x in db.get_memories(subject=member, limit=12)],
+            "memories": [x["note"] for x in db.visible_memories(
+                viewer_member_slug=actor.member_slug, is_admin=actor.is_admin,
+                subject=member, limit=12)],
             # Their reviews across ALL reads (incl. others' picks) — a richer taste signal
             # than their own picks alone.
             "reviews": [{"book": r.get("book"), "rating": r.get("rating"), "dnf": r.get("dnf"),
@@ -680,7 +716,8 @@ def _pick_prospects(tool_input: dict, ctx: dict) -> dict:
 
     # The cloud's unread orbit — titles floated but never read, theirs vs the club's.
     read_slugs = {b["slug"] for b in cr.books() if b.get("isRead")}
-    unread = [r for r in db.book_cloud_titles(limit=60)
+    unread = [r for r in db.book_cloud_titles_visible(
+        viewer_member_slug=actor.member_slug, is_admin=actor.is_admin, limit=60)
               if not (r.get("book_slug") and r["book_slug"] in read_slugs)]
     out["cloudProspects"] = {
         "yours": [r for r in unread if member and member in (r.get("mentioners") or [])][:12],
@@ -723,6 +760,11 @@ def _dump(obj) -> str:
 def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
     """Run a tool. ctx carries {channel_id, speaker, member_slug}. Returns a string."""
     try:
+        actor = access.actor_from_ctx(ctx)
+        if error := access.tool_access_error(name, actor):
+            log.warning("tool access denied: tool=%s member=%s admin=%s",
+                        name, actor.member_slug, actor.is_admin)
+            return _dump({"error": error})
         if name == "find_books":
             return _dump(cr.find_books(tool_input["query"]))
         if name == "search_books":
@@ -747,13 +789,18 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
         if name == "club_stats":
             return _dump(cr.club_stats())
         if name == "pending_reviews":
-            return _dump(cr.pending_reviews(tool_input["member"]) or {"error": "no such member"})
+            target = _member_slug(tool_input["member"])
+            if not target:
+                return _dump({"error": "no such member"})
+            if not access.can_access_member(actor, target):
+                return _dump({"error": "you can only inspect your own pending reviews"})
+            return _dump(cr.pending_reviews(target) or {"error": "no such member"})
         if name == "current_club_state":
-            return _dump(meeting_rules.summarize_club_state())
+            return _dump(_current_club_state_snapshot(actor))
         if name == "current_meeting_status":
-            return _dump(meeting_rules.meeting_status())
+            return _dump(_meeting_status_snapshot(actor))
         if name == "meeting_readiness":
-            return _dump(_meeting_readiness_snapshot())
+            return _dump(_meeting_readiness_snapshot(actor))
         if name == "meeting_campaign":
             return _dump(meeting_campaign.snapshot())
         if name == "identity_status":
@@ -765,6 +812,16 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             sms_linked = {r["member_slug"] for r in db.list_member_sms()}
             website_linked = {r["member_slug"] for r in db.list_member_websites()}
             current = cr.human_current_members()
+            if not actor.is_admin:
+                return _dump({
+                    "speakerUserId": ctx.get("speaker_user_id"),
+                    "speakerMemberSlug": member_slug,
+                    "speakerMember": cr.find_member(member_slug) if member_slug else None,
+                    "discordLinked": member_slug in linked,
+                    "emailLinked": member_slug in email_linked,
+                    "smsLinked": member_slug in sms_linked,
+                    "websiteLinked": member_slug in website_linked,
+                })
             return _dump({
                 "speakerUserId": ctx.get("speaker_user_id"),
                 "speakerMemberSlug": member_slug,
@@ -789,8 +846,15 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             return _dump(db.recent_messages(str(ctx.get("channel_id") or ""), limit=limit))
         if name == "search_discussion":
             limit = max(1, min(int(tool_input.get("limit", 12)), 20))
-            rows = db.search_conversations(
-                tool_input["query"], limit=limit, member_slug=tool_input.get("member") or None)
+            requested = tool_input.get("member")
+            target = _member_slug(requested) if requested else None
+            if requested and not target:
+                return _dump({"error": f"no such member: {requested}"})
+            if target and not access.can_access_member(actor, target):
+                return _dump({"error": "another member's private conversation history is unavailable"})
+            rows = db.search_conversations_visible(
+                tool_input["query"], limit=limit, member_slug=target,
+                viewer_member_slug=actor.member_slug, is_admin=actor.is_admin)
             out = []
             for r in rows:
                 try:
@@ -810,9 +874,17 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             return _dump(out)
         if name == "search_mail_archive":
             limit = max(1, min(int(tool_input.get("limit", 8)), 20))
-            rows = db.search_mail_archive(
+            requested = tool_input.get("member")
+            target = _member_slug(requested) if requested else None
+            if requested and not target:
+                return _dump({"error": f"no such member: {requested}"})
+            if target and not access.can_access_member(actor, target):
+                return _dump({"error": "another member's private email history is unavailable"})
+            rows = db.search_mail_archive_visible(
                 tool_input["query"],
-                member_slug=tool_input.get("member"),
+                viewer_member_slug=actor.member_slug,
+                is_admin=actor.is_admin,
+                member_slug=target,
                 year_from=tool_input.get("year_from"),
                 year_to=tool_input.get("year_to"),
                 limit=limit,
@@ -822,9 +894,11 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             return _dump(rows)
         if name == "get_mail_thread":
             limit = max(1, min(int(tool_input.get("limit", 50)), 100))
-            thread = db.get_mail_thread(tool_input["thread_id"], limit=limit)
+            thread = db.get_mail_thread_visible(
+                tool_input["thread_id"], limit=limit,
+                viewer_member_slug=actor.member_slug, is_admin=actor.is_admin)
             if not thread:
-                return _dump({"error": "no such mail thread"})
+                return _dump({"error": "no accessible mail thread"})
             for msg in thread["messages"]:
                 msg["body_clean"] = (msg.get("body_clean") or "")[:1000]
             return _dump(thread)
@@ -863,6 +937,8 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 if not m:
                     return _dump({"error": f"no such member: {tool_input['member']}"})
                 member_slug = m["slug"]
+                if not access.can_access_member(actor, member_slug):
+                    return _dump({"error": "you cannot record another member's private milestone"})
                 member_id = clubdb.lookup_member_id(member_slug)
             surface = "email" if str(ctx.get("speaker_user_id") or "").startswith("email:") else "discord"
             eid = db.record_event(
@@ -904,7 +980,8 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 "Roll-call response recorded",
                 f"Member: {member_slug}\nStatus: {status}\nMeeting: {meeting['meetingKey']}",
             )
-            return _dump({"saved": True, "meetingStatus": meeting_rules.meeting_status(meeting_id)})
+            return _dump({"saved": True, "meetingStatus": _meeting_status_snapshot(
+                actor, meeting_id=meeting_id)})
         if name == "propose_action":
             pid = db.add_proposal(
                 kind=tool_input["kind"],
@@ -918,17 +995,24 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             limit = max(1, min(int(tool_input.get("limit", 10)), 10))
             return _dump(db.list_proposals(limit=limit))
         if name == "remember":
-            scope = tool_input.get("scope", "general")
-            # Club-scope notes are injected into *every* future turn's context
-            # (oliver._question_block), so only a linked club member can shape
-            # that shared lore. From anyone else, record it as a general note
-            # rather than letting it poison the global overview.
-            if scope == "club" and not ctx.get("member_slug"):
-                scope = "general"
+            scope = tool_input.get("scope") or "member"
+            subject = tool_input.get("subject")
+            # A member can create private notes only about themself. Admin repair paths may target
+            # another member or use general scope. Club lore remains shared and provenance-tagged.
+            if scope == "member":
+                target = _member_slug(subject) if subject else actor.member_slug
+                if subject and not target:
+                    return _dump({"error": f"no such member: {subject}"})
+                if not target or not access.can_access_member(actor, target):
+                    return _dump({"error": "you can only save member-private notes about yourself"})
+                subject = target
+            elif scope == "general" and not actor.is_admin:
+                scope = "member"
+                subject = actor.member_slug
             mid = db.add_memory(
                 tool_input["note"],
                 scope=scope,
-                subject=tool_input.get("subject"),
+                subject=subject,
                 source=ctx.get("speaker"),
                 source_user_id=ctx.get("speaker_user_id"),
                 source_message_id=ctx.get("source_message_id"),
@@ -953,15 +1037,28 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
         if name == "book_cloud_recent":
             limit = max(1, min(int(tool_input.get("limit", 20)), 50))
             if tool_input.get("titles"):
-                return _dump(db.book_cloud_titles(query=tool_input.get("query"),
-                                                  member=tool_input.get("member"), limit=limit))
-            return _dump(db.recent_book_cloud(limit=limit, query=tool_input.get("query")))
+                return _dump(db.book_cloud_titles_visible(
+                    viewer_member_slug=actor.member_slug, is_admin=actor.is_admin,
+                    query=tool_input.get("query"), member=tool_input.get("member"), limit=limit))
+            return _dump(db.recent_book_cloud_visible(
+                viewer_member_slug=actor.member_slug, is_admin=actor.is_admin,
+                limit=limit, query=tool_input.get("query"), member=tool_input.get("member")))
         if name == "pick_fit":
             return _dump(_pick_fit(tool_input, ctx))
         if name == "pick_prospects":
             return _dump(_pick_prospects(tool_input, ctx))
         if name == "recall":
-            return _dump(db.get_memories(subject=tool_input.get("subject"), query=tool_input.get("query")))
+            subject = tool_input.get("subject")
+            target = subject
+            if subject and subject != "club":
+                target = _member_slug(subject)
+                if not target:
+                    return _dump({"error": f"no such member: {subject}"})
+                if not access.can_access_member(actor, target):
+                    return _dump({"error": "another member's private memories are unavailable"})
+            return _dump(db.visible_memories(
+                viewer_member_slug=actor.member_slug, is_admin=actor.is_admin,
+                subject=target, query=tool_input.get("query")))
         if name == "set_reminder":
             rid = db.add_reminder(
                 tool_input["due"], tool_input["text"],
@@ -1024,9 +1121,9 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 "Reading status recorded",
                 f"Member: {member_slug}\nStatus: {tool_input['status']}\nProgress: {tool_input.get('progress') or '-'}\nMeeting: {meeting['meetingKey']}",
             )
-            return _dump({"saved": True, "readingStatus": _reading_status_snapshot(meeting)})
+            return _dump({"saved": True, "readingStatus": _reading_status_snapshot(meeting, actor)})
         if name == "reading_status":
-            return _dump(_reading_status_snapshot(meeting_rules.next_meeting()))
+            return _dump(_reading_status_snapshot(meeting_rules.next_meeting(), actor))
         if name == "request_reading_update":
             if str(ctx.get("channel_id") or "").startswith("email:"):
                 return _dump({"error": "email check-ins cannot be initiated from inbound email"})
@@ -1059,7 +1156,7 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                     "sent": False,
                     "member": member["slug"],
                     "reason": f"{member['name']} is already marked finished for {title}",
-                    "readingStatus": _reading_status_snapshot(meeting),
+                    "readingStatus": _reading_status_snapshot(meeting, actor),
                 })
             body = meeting_rules.reading_checkin_email_body(
                 member["name"], meeting, note=tool_input.get("note"))
@@ -1140,7 +1237,7 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 "sent": sent_rows,
                 "skipped": skipped,
                 "missing": missing,
-                "meetingStatus": meeting_rules.meeting_status(meeting_id),
+                "meetingStatus": _meeting_status_snapshot(actor, meeting_id=meeting_id),
             })
         return _dump({"error": f"unknown tool {name}"})
     except Exception as e:  # noqa: BLE001 - surface tool errors to the model, don't crash the loop
@@ -1150,7 +1247,55 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
         return _dump({"error": f"{type(e).__name__}: {e}"})
 
 
-def _reading_status_snapshot(meeting: dict) -> dict:
+def _meeting_status_snapshot(actor: access.Actor, meeting_id: int | None = None) -> dict:
+    """Meeting status projected to the current actor.
+
+    Meeting facts and aggregate quorum counts are shared with linked members. Individual attendance
+    rows, picker availability, and internal roll-call coordinates are private member signals.
+    """
+    status = meeting_rules.meeting_status(meeting_id)
+    if actor.is_admin:
+        return status
+    roll_call = status.get("rollCall")
+    shared_risks = {
+        "quorum_not_confirmed",
+        "quorum_impossible",
+        "not_last_tuesday",
+    }
+    return {
+        "meeting": status["meeting"],
+        "rollCall": ({"status": roll_call.get("status")} if roll_call else None),
+        "attendance": [
+            row for row in status["attendance"]
+            if row.get("memberSlug") == actor.member_slug
+        ],
+        "counts": status["counts"],
+        "rules": status["rules"],
+        "hasQuorum": status["hasQuorum"],
+        "risks": [risk for risk in status["risks"] if risk in shared_risks],
+        "recommendation": (
+            "ready" if status["hasQuorum"] else
+            "needs_attention" if "quorum_impossible" in status["risks"] else
+            "waiting"
+        ),
+    }
+
+
+def _current_club_state_snapshot(actor: access.Actor) -> dict:
+    state = meeting_rules.summarize_club_state()
+    if actor.is_admin:
+        return state
+    return {
+        "members": [
+            {"slug": member.get("slug"), "name": member.get("name")}
+            for member in state["members"]
+        ],
+        "nextMeeting": _meeting_status_snapshot(actor),
+        "stats": state["stats"],
+    }
+
+
+def _reading_status_snapshot(meeting: dict, actor: access.Actor) -> dict:
     meeting_id = meeting.get("meetingId")
     rows = {
         r["member_slug"]: r
@@ -1169,6 +1314,8 @@ def _reading_status_snapshot(meeting: dict) -> dict:
             "percent": row.get("reading_percent") if row else None,
             "updatedAt": row.get("reading_answered_at") if row else None,
         })
+    if not actor.is_admin:
+        statuses = [row for row in statuses if row["memberSlug"] == actor.member_slug]
     return {
         "meeting": meeting,
         "book": meeting.get("book"),
@@ -1176,11 +1323,11 @@ def _reading_status_snapshot(meeting: dict) -> dict:
     }
 
 
-def _meeting_readiness_snapshot() -> dict:
+def _meeting_readiness_snapshot(actor: access.Actor) -> dict:
     campaign = meeting_campaign.snapshot()
-    return {
+    out = {
         **campaign,
-        "reading": _reading_status_snapshot(campaign["meeting"]),
+        "reading": _reading_status_snapshot(campaign["meeting"], actor),
         "counts": {
             **campaign["counts"],
             "attendingAndFinished": len([
@@ -1193,6 +1340,21 @@ def _meeting_readiness_snapshot() -> dict:
             ]),
         },
     }
+    if actor.is_admin:
+        return out
+
+    own = [m for m in out["members"] if m["memberSlug"] == actor.member_slug]
+    out["members"] = own
+    out["needsRollCall"] = [
+        m for m in out["needsRollCall"] if m["memberSlug"] == actor.member_slug
+    ]
+    out["needsReading"] = [
+        m for m in out["needsReading"] if m["memberSlug"] == actor.member_slug
+    ]
+    out["attendance"] = _meeting_status_snapshot(
+        actor, meeting_id=campaign["meeting"].get("meetingId"))
+    out["recommendedActions"] = []
+    return out
 
 
 # Roll-call email text is shared with the command path; it lives in meeting_rules so the

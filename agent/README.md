@@ -48,6 +48,11 @@ agent/
   (`pick_prospects` → `pick_fit` — discover then evaluate pick candidates against member tastes,
   shelf-neighbor verdicts, and the cloud), plus `remember`, `recall`, `set_reminder`, and explicit
   self-reported `record_availability` (SQLite).
+- **Tool privacy is enforced by the dispatcher and row-level readers, not by prompt trust.** Public
+  corpus tools are open; club-operational/private tools require a linked member; admin repair tools
+  are admin-only. Members can search shared Discord/mailing-list history plus their own 1:1
+  conversations and memories, never another member's private state. Pick dossiers use another
+  member's public picks/reviews but omit their exact private memory notes.
 - **Reviews / ratings / lists / profile**: members manage these in the **web app** (`/oliver my-club`,
   see below), which writes `club_reviews` / `club_lists` / `member_identities` and regenerates the
   corpus. Identity comes from the Discord-user → member map (carried into a signed web session), not

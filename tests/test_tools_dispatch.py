@@ -4,7 +4,16 @@ from __future__ import annotations
 
 import json
 
-from agent import clubdb
+from agent import clubdb, config
+
+
+JAMIE_CTX = {"speaker": "Jamie", "speaker_user_id": "u1", "member_slug": "jamie"}
+NICK_CTX = {"speaker": "Nick", "speaker_user_id": "u2", "member_slug": "nick"}
+ADMIN_CTX = {
+    "speaker": "Jamie",
+    "speaker_user_id": str(config.ADMIN_USER_ID),
+    "member_slug": "jamie",
+}
 
 
 class TestDispatchErrors:
@@ -77,12 +86,12 @@ class TestDispatchHappyPaths:
         result = json.loads(dispatch(
             "remember",
             {"note": "likes infrastructure books", "scope": "member", "subject": "nick"},
-            {"speaker": "Nick", "speaker_user_id": "u1", "source_message_id": "m1"},
+            {**NICK_CTX, "source_message_id": "m1"},
         ))
         assert result["saved"] is True
         memories = fresh_db.get_memories(subject="nick")
         assert memories[0]["source"] == "Nick"
-        assert memories[0]["source_user_id"] == "u1"
+        assert memories[0]["source_user_id"] == "u2"
         assert memories[0]["source_message_id"] == "m1"
 
     def test_identity_status_uses_linked_speaker(self, fresh_db):
@@ -96,12 +105,12 @@ class TestDispatchHappyPaths:
         }))
         assert result["speakerMemberSlug"] == "jamie"
         assert result["speakerMember"]["name"] == "Jamie"
-        assert "jamie" in result["emailLinkedCurrentMembers"]
+        assert result["emailLinked"] is True
 
     def test_current_meeting_status_returns_rules(self, fresh_db):
         from agent.tools import dispatch
 
-        result = json.loads(dispatch("current_meeting_status", {}, {}))
+        result = json.loads(dispatch("current_meeting_status", {}, JAMIE_CTX))
         assert result["rules"]["standingDate"] == "last Tuesday of the month"
         assert result["counts"]["quorumRequired"] == 3
 
@@ -166,7 +175,7 @@ class TestDispatchHappyPaths:
     def test_reading_status_returns_current_book(self, fresh_db):
         from agent.tools import dispatch
 
-        result = json.loads(dispatch("reading_status", {}, {}))
+        result = json.loads(dispatch("reading_status", {}, JAMIE_CTX))
         assert result["meeting"]["meetingKey"] == "a-world-appears"
         assert result["book"]["title"] == "A World Appears"
 
@@ -189,7 +198,7 @@ class TestDispatchHappyPaths:
             "to": ["jamie@thingelstad.com"],
             "subject": "test",
             "body": "test",
-        }, {"channel_id": "email:thread1"}))
+        }, {**JAMIE_CTX, "channel_id": "email:thread1"}))
         assert result == {
             "error": "inbound email replies are sent automatically; write response text instead"
         }
@@ -210,7 +219,7 @@ class TestDispatchHappyPaths:
             "to": ["jamie@thingelstad.com"],
             "subject": "test",
             "body": "test",
-        }, {"channel_id": "ch1"}))
+        }, {**JAMIE_CTX, "channel_id": "ch1"}))
         assert result["sent"] is True
         assert sent[0]["to"] == ["jamie@thingelstad.com"]
 
@@ -224,7 +233,7 @@ class TestDispatchHappyPaths:
             "to": ["outsider@example.test"],
             "subject": "test",
             "body": "test",
-        }, {"channel_id": "ch1"}))
+        }, {**JAMIE_CTX, "channel_id": "ch1"}))
         assert result == {"error": "Oliver can only email linked book club member addresses from this tool"}
 
     def test_send_email_blocks_mailing_list_recipient(self, monkeypatch):
@@ -237,7 +246,7 @@ class TestDispatchHappyPaths:
             "to": [config.BOOK_CLUB_MAILING_LIST_ADDRESS],
             "subject": "test",
             "body": "test",
-        }, {"channel_id": "ch1"}))
+        }, {**JAMIE_CTX, "channel_id": "ch1"}))
         assert result == {
             "error": (
                 "the book club mailing list can only be emailed by approved meeting-cadence paths, "
@@ -381,7 +390,7 @@ class TestDispatchHappyPaths:
         meeting = meeting_rules.next_meeting()
         fresh_db.record_attendance_report(meeting["meetingId"], clubdb.lookup_member_id("jamie"), "yes")
         fresh_db.record_reading_report(meeting["meetingId"], clubdb.lookup_member_id("jamie"), "finished")
-        result = json.loads(dispatch("meeting_readiness", {}, {}))
+        result = json.loads(dispatch("meeting_readiness", {}, JAMIE_CTX))
         assert result["counts"]["attending"] == 1
         assert result["counts"]["attendingAndFinished"] == 1
         assert result["counts"]["needsRollCall"] == 4
@@ -403,7 +412,7 @@ class TestDispatchHappyPaths:
                 meeting["meetingId"], clubdb.lookup_member_id(member["slug"]), "yes")
             fresh_db.record_reading_report(
                 meeting["meetingId"], clubdb.lookup_member_id(member["slug"]), "finished")
-        result = json.loads(dispatch("meeting_readiness", {}, {}))
+        result = json.loads(dispatch("meeting_readiness", {}, ADMIN_CTX))
         assert result["attendance"]["hasQuorum"] is True
         assert result["attendance"]["pickerAvailable"] is False
         assert result["ready"] is False
@@ -416,7 +425,7 @@ class TestDispatchHappyPaths:
         fresh_db.link_member_email("jamie@example.test", "jamie")
         fresh_db.record_reading_request(
             meeting["meetingId"], clubdb.lookup_member_id("jamie"), surface="email")
-        result = json.loads(dispatch("meeting_campaign", {}, {}))
+        result = json.loads(dispatch("meeting_campaign", {}, ADMIN_CTX))
         jamie = next(m for m in result["members"] if m["memberSlug"] == "jamie")
         assert jamie["emailLinked"] is True
         assert jamie["readingCheckinCount"] == 1
@@ -427,7 +436,8 @@ class TestDispatchHappyPaths:
         from agent.tools import dispatch
 
         fresh_db.log_message("ch1", "user", "hello", speaker="Jamie")
-        result = json.loads(dispatch("recent_channel_context", {"limit": 5}, {"channel_id": "ch1"}))
+        result = json.loads(dispatch(
+            "recent_channel_context", {"limit": 5}, {**JAMIE_CTX, "channel_id": "ch1"}))
         assert result[0]["content"] == "hello"
 
     def test_propose_action_stages_admin_review(self, fresh_db):
@@ -437,7 +447,7 @@ class TestDispatchHappyPaths:
             "kind": "meeting_notice",
             "title": "Warn about quorum",
             "body": "Only two members are confirmed.",
-        }, {"channel_id": "ch1", "speaker_user_id": "u1"}))
+        }, {**JAMIE_CTX, "channel_id": "ch1"}))
         assert result["saved"] is True
         proposals = fresh_db.list_proposals()
         assert proposals[0]["title"] == "Warn about quorum"
@@ -447,7 +457,7 @@ class TestDispatchHappyPaths:
         from agent.tools import dispatch
 
         fresh_db.add_proposal(kind="other", title="Check this", body="A note")
-        result = json.loads(dispatch("open_proposals", {}, {}))
+        result = json.loads(dispatch("open_proposals", {}, ADMIN_CTX))
         assert result[0]["title"] == "Check this"
 
     def test_search_discussion_returns_rows_with_channel_label(self, fresh_db):
@@ -455,7 +465,7 @@ class TestDispatchHappyPaths:
 
         fresh_db.log_message("100", "user", "we loved the foundation series", speaker="Jamie")
         fresh_db.log_message("200", "user", "foundation came up in book-talk", speaker="Tom")
-        result = json.loads(dispatch("search_discussion", {"query": "foundation"}, {}))
+        result = json.loads(dispatch("search_discussion", {"query": "foundation"}, JAMIE_CTX))
         assert isinstance(result, list)
         assert len(result) == 2
         # Every row carries a human "channel" label (falls back to the raw id here).
@@ -465,7 +475,7 @@ class TestDispatchHappyPaths:
         from agent.tools import dispatch
 
         fresh_db.log_message("100", "user", "kafka " * 200, speaker="Jamie")
-        result = json.loads(dispatch("search_discussion", {"query": "kafka"}, {}))
+        result = json.loads(dispatch("search_discussion", {"query": "kafka"}, JAMIE_CTX))
         assert len(result[0]["content"]) == 300
 
     def test_search_discussion_clamps_limit(self, fresh_db):
@@ -473,13 +483,14 @@ class TestDispatchHappyPaths:
 
         for i in range(30):
             fresh_db.log_message("100", "user", f"note {i} mentions borges", speaker="Jamie")
-        result = json.loads(dispatch("search_discussion", {"query": "borges", "limit": 99}, {}))
+        result = json.loads(dispatch(
+            "search_discussion", {"query": "borges", "limit": 99}, JAMIE_CTX))
         assert len(result) == 20  # clamped to the 20-row ceiling
 
     def test_search_discussion_requires_query(self, fresh_db):
         from agent.tools import dispatch
 
-        result = json.loads(dispatch("search_discussion", {}, {}))
+        result = json.loads(dispatch("search_discussion", {}, JAMIE_CTX))
         assert "error" in result
         assert "KeyError" in result["error"]
 
@@ -489,10 +500,10 @@ class TestDispatchHappyPaths:
         saved = json.loads(dispatch("record_timeline_event", {
             "category": "social", "kind": "dinner", "date": "2019-05-01",
             "summary": "The club had dinner at Nick's.", "member": "nick",
-        }, {"speaker_user_id": "u1"}))
+        }, NICK_CTX))
         assert saved["saved"] is True and saved["kind"] == "dinner"
 
-        rows = json.loads(dispatch("club_timeline", {"category": "social"}, {}))
+        rows = json.loads(dispatch("club_timeline", {"category": "social"}, NICK_CTX))
         assert rows[0]["kind"] == "dinner"
         assert rows[0]["member"] == "nick"
         assert rows[0]["date"] == "2019-05-01"
@@ -503,7 +514,7 @@ class TestDispatchHappyPaths:
         result = json.loads(dispatch("record_timeline_event", {
             "category": "social", "kind": "book_picked",  # book_picked is a selection kind
             "date": "2019-05-01", "summary": "wrong category",
-        }, {}))
+        }, JAMIE_CTX))
         assert "error" in result
         assert fresh_db.timeline(category="social") == []
 
@@ -516,5 +527,5 @@ class TestDispatchHappyPaths:
                               detail="vacation", occurred_at="2024-07-01")
         fresh_db.record_event(actor="oliver", kind="website_launched", category="club",
                               detail="new site", occurred_at="2010-01-01")
-        rows = json.loads(dispatch("club_timeline", {"member": "jamie"}, {}))
+        rows = json.loads(dispatch("club_timeline", {"member": "jamie"}, JAMIE_CTX))
         assert len(rows) == 1 and rows[0]["kind"] == "member_away"

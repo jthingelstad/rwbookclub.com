@@ -26,7 +26,7 @@ import json
 import logging
 import re
 
-from agent import config, db, oliver
+from agent import access, config, db, oliver
 
 log = logging.getLogger("oliver.reflection")
 
@@ -97,13 +97,18 @@ CLUB_SYSTEM = (
 )
 
 
-def _gather(state: dict) -> tuple[dict[str, list[str]], int, str]:
-    """New material since the watermark, grouped per member as rendered lines. Returns
-    (member -> lines, max conversation id seen, max mail sent_at seen)."""
+def _gather(state: dict) -> tuple[dict[str, list[str]], int, str, list[str]]:
+    """Gather new material with an explicit private/shared split.
+
+    Per-member material includes that member's 1:1 conversations.  ``club_lines`` contains only
+    shared Discord/mailing-list material and is the sole input to the club-lore reflection lane.
+    Returns (member -> lines, max conversation id, max shared-mail sent_at, club lines).
+    """
     conv_cursor = int(state.get("conv_id") or 0)
     mail_cursor = state.get("mail_sent_at") or ""
 
     per_member: dict[str, list[str]] = {}
+    club_lines: list[str] = []
     turns = db.conversations_after_global(conv_cursor)
     max_conv = conv_cursor
     for t in turns:
@@ -113,19 +118,27 @@ def _gather(state: dict) -> tuple[dict[str, list[str]], int, str]:
             continue
         who = "Oliver" if t["role"] == "assistant" else (t.get("speaker") or slug)
         medium = db.conversation_medium(t["channel_id"])
-        per_member.setdefault(slug, []).append(f"[{medium}] {who}: {t['content']}")
+        line = f"[{medium}] {who}: {t['content']}"
+        per_member.setdefault(slug, []).append(line)
+        if access.is_shared_conversation(t["channel_id"]):
+            club_lines.append(line)
 
     max_mail = mail_cursor
     if mail_cursor:  # forward-only; cursor is initialized on first run
-        for m in db.mail_messages_since(mail_cursor, exclude_from=config.OLIVER_EMAIL_ADDRESS):
+        for m in db.mail_messages_since(
+            mail_cursor,
+            exclude_from=config.OLIVER_EMAIL_ADDRESS,
+            mailing_list_only=True,
+        ):
             max_mail = max(max_mail, m["sent_at"] or "")
             slug = m.get("member_slug")
             if not slug:
                 continue
             body = (m.get("body_clean") or "")[:1500]
-            per_member.setdefault(slug, []).append(
-                f"[mailing list] {slug} — {m.get('subject') or '(no subject)'}: {body}")
-    return per_member, max_conv, max_mail
+            line = f"[mailing list] {slug} — {m.get('subject') or '(no subject)'}: {body}"
+            per_member.setdefault(slug, []).append(line)
+            club_lines.append(line)
+    return per_member, max_conv, max_mail, club_lines
 
 
 def _prompt(label: str, lines: list[str], updatable: list[dict], readonly: list[dict],
@@ -241,7 +254,7 @@ def run(*, dry_run: bool = False) -> dict:
         # historical mining is a separate task). Conversations start from 0 — the table is small
         # and the backfill seeds the taste profiles.
         state["mail_sent_at"] = db.latest_mail_sent_at() or "9999"
-    per_member, max_conv, max_mail = _gather(state)
+    per_member, max_conv, max_mail, club_lines = _gather(state)
     worth = {slug: lines for slug, lines in per_member.items()
              if len(lines) >= MIN_TURNS or any(ln.startswith("[mailing list]") for ln in lines)}
     if not worth:
@@ -257,15 +270,14 @@ def run(*, dry_run: bool = False) -> dict:
         except Exception:
             log.exception("reflection failed for %s", slug)
             results[slug] = {"skipped": "error"}
-    # Club lane: one extra pass over the whole week's material (all members together) for
-    # club-level lore — traditions, jokes, recurring debates — kept alive weekly after the
-    # one-time archive-mining seed.
-    club_lines = [ln for lines in per_member.values() for ln in lines]
-    try:
-        results["club"] = consolidate(club_lines, scope="club", dry_run=dry_run)
-    except Exception:
-        log.exception("reflection club lane failed")
-        results["club"] = {"skipped": "error"}
+    # Club lane: one extra pass over SHARED material only.  Private 1:1 email still improves the
+    # speaking member's own memory, but can never be promoted to club lore by prompt judgment.
+    if club_lines:
+        try:
+            results["club"] = consolidate(club_lines, scope="club", dry_run=dry_run)
+        except Exception:
+            log.exception("reflection club lane failed")
+            results["club"] = {"skipped": "error"}
     # Watermark advances on member success only, so a failed member's material retries next week
     # (the club lane re-seeing a week of material is harmless — consolidation won't duplicate).
     ok = [s for s, r in results.items() if s != "club" and "skipped" not in r]

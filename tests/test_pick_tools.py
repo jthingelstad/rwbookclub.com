@@ -44,13 +44,16 @@ def test_pick_fit_external_candidate(fresh_db, monkeypatch):
     monkeypatch.setattr(enrich_ol, "search_best_match", lambda t, a: _ol_doc())
     db.add_memory("Skeptical of big-idea nonspecialist nonfiction like Harari", scope="member",
                   subject="loren", source="reflection")
+    db.add_memory("Likes systems books with a strong argument", scope="member",
+                  subject="jamie", source="reflection")
     out = json.loads(dispatch("pick_fit", {"title": "Nexus", "author": "Yuval Noah Harari"},
                               {"member_slug": "jamie", "speaker": "Jamie", "channel_id": "123"}))
     assert out["candidate"]["resolved"] == "openlibrary"
     assert out["candidate"]["pages"] == 528
     assert out["nearestInHistory"], "shared-subject neighbors on the shelf"
     assert "clubVerdict" in out["nearestInHistory"][0]        # ratings + discussionAverage carried
-    assert "Skeptical of big-idea" in " ".join(out["memberLenses"]["loren"]["memories"])
+    assert out["memberLenses"]["loren"]["memories"] == []
+    assert "Likes systems books" in " ".join(out["memberLenses"]["jamie"]["memories"])
     assert out["coverage"]["topics"] and "note" in out
     # The consideration was recorded into the cloud, attributed via ctx.
     row = db.recent_book_cloud()[0]
@@ -85,7 +88,8 @@ def test_pick_fit_surfaces_cloud_history(fresh_db, monkeypatch):
     db.add_book_cloud_entry(title="Nexus", reason="Nick compared it to The Master Algorithm",
                             surface="mailing_list", mentioned_by="nick",
                             created_at="2024-11-01 00:00:00")
-    out = json.loads(dispatch("pick_fit", {"title": "Nexus"}, {"channel_id": "123"}))
+    out = json.loads(dispatch(
+        "pick_fit", {"title": "Nexus"}, {"member_slug": "jamie", "channel_id": "123"}))
     assert out["cloudHistory"]["mentioners"] == ["nick"]
     assert out["cloudHistory"]["first_mentioned"].startswith("2024-11-01")
 
@@ -110,11 +114,12 @@ def test_pick_prospects_defaults_to_asker_and_splits_cloud(fresh_db):
 
 
 def test_pick_prospects_direction_angles_lead(fresh_db):
-    out = json.loads(dispatch("pick_prospects", {"direction": "urban history"}, {"channel_id": "123"}))
+    ctx = {"member_slug": "jamie", "channel_id": "123"}
+    out = json.loads(dispatch("pick_prospects", {"direction": "urban history"}, ctx))
     assert "urban history" in out["searchAngles"][0]           # direction angles come FIRST
     assert sum("urban history" in a for a in out["searchAngles"]) >= 3
     assert "direction drives" in out["note"]                   # fresh-first guidance
-    plain = json.loads(dispatch("pick_prospects", {}, {"channel_id": "123"}))
+    plain = json.loads(dispatch("pick_prospects", {}, ctx))
     assert "fresh candidates" in plain["note"].lower() or "fresh" in plain["note"]
 
 

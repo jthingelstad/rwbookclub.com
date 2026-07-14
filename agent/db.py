@@ -856,6 +856,47 @@ def get_memories(*, subject: str | None = None, scope: str | None = None,
         return [dict(r) for r in conn.execute(sql, args)]
 
 
+def visible_memories(*, viewer_member_slug: str | None, is_admin: bool,
+                     subject: str | None = None, query: str | None = None,
+                     limit: int = 50) -> list[dict]:
+    """Memories a conversational actor may see.
+
+    Admin repair/audit calls retain the unrestricted reader above.  A linked member sees club
+    lore plus their own member-scoped notes; general notes and another member's notes stay private
+    to Oliver/admin.  Unlinked callers get no rows.  The dispatcher also rejects unauthorized
+    targets, but this query is the row-level authority if a caller forgets that check.
+    """
+    if is_admin:
+        if subject == "club":
+            return get_memories(scope="club", query=query, limit=limit)
+        return get_memories(subject=subject, query=query, limit=limit)
+    if not viewer_member_slug:
+        return []
+    if subject and subject not in {viewer_member_slug, "club"}:
+        return []
+
+    sql = (
+        "SELECT id, scope, subject, note, source, source_user_id, source_message_id, "
+        "confidence, created_at FROM memories WHERE status = 'active'"
+    )
+    args: list = []
+    if subject == "club":
+        sql += " AND scope = 'club'"
+    elif subject == viewer_member_slug:
+        sql += " AND scope = 'member' AND subject = ?"
+        args.append(viewer_member_slug)
+    else:
+        sql += " AND (scope = 'club' OR (scope = 'member' AND subject = ?))"
+        args.append(viewer_member_slug)
+    if query:
+        sql += " AND note LIKE ?"
+        args.append(f"%{query}%")
+    sql += " ORDER BY id DESC LIMIT ?"
+    args.append(max(1, min(int(limit), 100)))
+    with connect() as conn:
+        return [dict(r) for r in conn.execute(sql, args)]
+
+
 def count_memories() -> int:
     """Active memory count (the admin status card's one-number view of the memory store)."""
     with connect() as conn:
@@ -955,6 +996,78 @@ def book_cloud_titles(*, query: str | None = None, member: str | None = None,
                 "ORDER BY id DESC LIMIT 6", (r.pop("k"),)).fetchall()
             r["mentioners"] = sorted({d["mentioned_by"] for d in detail if d["mentioned_by"]})
             r["recentReasons"] = [d["reason"] for d in detail[:3]]
+    return rows
+
+
+def recent_book_cloud_visible(*, viewer_member_slug: str | None, is_admin: bool,
+                              limit: int = 20, query: str | None = None,
+                              member: str | None = None, kind: str | None = None) -> list[dict]:
+    """Book-cloud rows visible to a conversational actor.
+
+    Discord/mailing-list mentions are club-shared.  A mention captured in 1:1 email
+    (``surface='email'``) remains visible only to its member; admin views keep using the raw reader.
+    """
+    if is_admin:
+        return recent_book_cloud(limit=limit, query=query, member=member, kind=kind)
+    if not viewer_member_slug:
+        return []
+    sql = ("SELECT id, title, author, book_slug, mentioned_by, mentioned_by_name, surface, "
+           "reason, reason_kind, created_at FROM book_cloud WHERE "
+           "(COALESCE(surface, '') != 'email' OR mentioned_by = ?)")
+    args: list = [viewer_member_slug]
+    if query:
+        sql += " AND (title LIKE ? OR author LIKE ? OR reason LIKE ?)"
+        args += [f"%{query}%"] * 3
+    if member:
+        sql += " AND mentioned_by = ?"
+        args.append(member)
+    if kind:
+        sql += " AND reason_kind = ?"
+        args.append(kind)
+    sql += " ORDER BY id DESC LIMIT ?"
+    args.append(max(1, min(int(limit), 500)))
+    with connect() as conn:
+        return [dict(r) for r in conn.execute(sql, args)]
+
+
+def book_cloud_titles_visible(*, viewer_member_slug: str | None, is_admin: bool,
+                              query: str | None = None, member: str | None = None,
+                              limit: int = 50) -> list[dict]:
+    """Aggregated actor-scoped Book Cloud; see ``recent_book_cloud_visible``."""
+    if is_admin:
+        return book_cloud_titles(query=query, member=member, limit=limit)
+    if not viewer_member_slug:
+        return []
+    visible = "(COALESCE(surface, '') != 'email' OR mentioned_by = ?)"
+    sql = (
+        "SELECT lower(trim(title)) AS k, MAX(title) AS title, MAX(author) AS author, "
+        "MAX(book_slug) AS book_slug, MIN(created_at) AS first_mentioned, "
+        "MAX(created_at) AS last_mentioned, COUNT(*) AS mention_count FROM book_cloud "
+        f"WHERE {visible}"
+    )
+    args: list = [viewer_member_slug]
+    if query:
+        sql += " AND (title LIKE ? OR author LIKE ? OR reason LIKE ?)"
+        args += [f"%{query}%"] * 3
+    if member:
+        sql += (
+            " AND lower(trim(title)) IN (SELECT lower(trim(title)) FROM book_cloud "
+            f"WHERE mentioned_by = ? AND {visible})"
+        )
+        args += [member, viewer_member_slug]
+    sql += " GROUP BY k ORDER BY last_mentioned DESC LIMIT ?"
+    args.append(max(1, min(int(limit), 200)))
+    with connect() as conn:
+        rows = [dict(r) for r in conn.execute(sql, args)]
+        for row in rows:
+            key = row.pop("k")
+            detail = conn.execute(
+                "SELECT mentioned_by, reason FROM book_cloud WHERE lower(trim(title)) = ? "
+                f"AND {visible} ORDER BY id DESC LIMIT 6",
+                (key, viewer_member_slug),
+            ).fetchall()
+            row["mentioners"] = sorted({d["mentioned_by"] for d in detail if d["mentioned_by"]})
+            row["recentReasons"] = [d["reason"] for d in detail[:3]]
     return rows
 
 
@@ -1449,16 +1562,70 @@ def search_mail_archive(query: str, *, member_slug: str | None = None,
         return [dict(r) for r in conn.execute(sql, args)]
 
 
+def search_mail_archive_visible(query: str, *, viewer_member_slug: str | None,
+                                is_admin: bool, member_slug: str | None = None,
+                                year_from: int | None = None,
+                                year_to: int | None = None,
+                                limit: int = 8) -> list[dict]:
+    """Actor-scoped mail search for the model tool.
+
+    Mailing-list mail is shared among linked club members.  A 1:1 row (``list_id IS NULL``) is
+    visible only to the member attached to that row.  Admin callers may search the whole archive,
+    but even their model-facing result omits raw email addresses; internal repair code keeps using
+    ``search_mail_archive`` above when it needs those fields.
+    """
+    match = _fts_query(query)
+    if not match or (not viewer_member_slug and not is_admin):
+        return []
+    if member_slug and not is_admin and member_slug != viewer_member_slug:
+        return []
+    limit = max(1, min(int(limit), 20))
+    sql = (
+        "SELECT m.message_id, m.thread_id, m.subject, m.from_name, "
+        "cm.slug AS member_slug, m.sent_at, m.received_at, "
+        "snippet(mail_message_fts, 4, '[', ']', ' ... ', 18) AS snippet "
+        "FROM mail_message_fts JOIN mail_messages m "
+        "ON m.message_id = mail_message_fts.message_id "
+        "LEFT JOIN club_members cm ON cm.id = m.member_id "
+        "WHERE mail_message_fts MATCH ?"
+    )
+    args: list = [match]
+    if member_slug:
+        sql += " AND m.member_id = (SELECT id FROM club_members WHERE slug = ?)"
+        args.append(member_slug)
+    if not is_admin:
+        sql += (
+            " AND (m.list_id IS NOT NULL OR "
+            "m.member_id = (SELECT id FROM club_members WHERE slug = ?))"
+        )
+        args.append(viewer_member_slug)
+    if year_from:
+        sql += " AND m.sent_at >= ?"
+        args.append(f"{int(year_from):04d}-01-01")
+    if year_to:
+        sql += " AND m.sent_at < ?"
+        args.append(f"{int(year_to) + 1:04d}-01-01")
+    sql += " ORDER BY COALESCE(m.sent_at, m.received_at, m.imported_at) DESC LIMIT ?"
+    args.append(limit)
+    with connect() as conn:
+        return [dict(r) for r in conn.execute(sql, args)]
+
+
 def mail_messages_since(sent_at: str, *, exclude_from: str | None = None,
-                        limit: int = 500) -> list[dict]:
-    """Member-authored archive mail newer than `sent_at`, oldest first — the reflection job's
-    mailing-list feed. Only member-linked senders; `exclude_from` drops Oliver's own outbound."""
+                        mailing_list_only: bool = False, limit: int = 500) -> list[dict]:
+    """Member-authored archive mail newer than ``sent_at``, oldest first.
+
+    ``mailing_list_only`` is the deterministic shared/private boundary used by reflection's club
+    lane.  Only member-linked senders are returned; ``exclude_from`` drops Oliver's own outbound.
+    """
     sql = (
         "SELECT m.message_id, m.subject, m.from_email, cm.slug AS member_slug, m.sent_at, "
         "m.body_clean FROM mail_messages m JOIN club_members cm ON cm.id = m.member_id "
         "WHERE m.sent_at > ?"
     )
     args: list = [sent_at]
+    if mailing_list_only:
+        sql += " AND m.list_id IS NOT NULL"
     if exclude_from:
         sql += " AND m.from_email != ?"; args.append(exclude_from.lower())
     sql += " ORDER BY m.sent_at ASC LIMIT ?"
@@ -1510,6 +1677,40 @@ def get_mail_thread(thread_id: str, *, limit: int = 50) -> dict | None:
             "WHERE m.thread_id = ? ORDER BY m.sent_at ASC, m.message_id ASC LIMIT ?",
             (thread_id, limit),
         ).fetchall()
+    return {"thread": dict(thread), "messages": [dict(r) for r in rows]}
+
+
+def get_mail_thread_visible(thread_id: str, *, viewer_member_slug: str | None,
+                            is_admin: bool, limit: int = 50) -> dict | None:
+    """Actor-scoped, PII-minimized thread transcript for the model tool."""
+    if not viewer_member_slug and not is_admin:
+        return None
+    limit = max(1, min(int(limit), 100))
+    with connect() as conn:
+        thread = conn.execute(
+            "SELECT thread_id, subject_normalized, first_sent_at, last_sent_at, "
+            "message_count, summary, summary_updated_at FROM mail_threads WHERE thread_id = ?",
+            (thread_id,),
+        ).fetchone()
+        if not thread:
+            return None
+        sql = (
+            "SELECT m.message_id, m.from_name, cm.slug AS member_slug, m.subject, "
+            "m.sent_at, m.body_clean FROM mail_messages m "
+            "LEFT JOIN club_members cm ON cm.id = m.member_id WHERE m.thread_id = ?"
+        )
+        args: list = [thread_id]
+        if not is_admin:
+            sql += (
+                " AND (m.list_id IS NOT NULL OR "
+                "m.member_id = (SELECT id FROM club_members WHERE slug = ?))"
+            )
+            args.append(viewer_member_slug)
+        sql += " ORDER BY m.sent_at ASC, m.message_id ASC LIMIT ?"
+        args.append(limit)
+        rows = conn.execute(sql, args).fetchall()
+    if not rows:  # indistinguishable from a nonexistent thread to an unauthorized actor
+        return None
     return {"thread": dict(thread), "messages": [dict(r) for r in rows]}
 
 
@@ -1633,6 +1834,44 @@ def search_conversations(query: str, *, limit: int = 12,
         args.append(member_slug)
     sql += " ORDER BY id DESC LIMIT ?"
     args.append(limit)
+    with connect() as conn:
+        return [dict(r) for r in conn.execute(sql, args)]
+
+
+def search_conversations_visible(query: str, *, viewer_member_slug: str | None,
+                                 is_admin: bool, limit: int = 12,
+                                 member_slug: str | None = None) -> list[dict]:
+    """Actor-scoped conversation search for ``search_discussion``.
+
+    Discord and mailing-list turns are shared with linked members.  Direct-email turns are visible
+    only when tagged to the viewer.  Supplying ``member_slug`` narrows to that person's turns and is
+    defensively refused for a different non-admin member even if the dispatcher missed the check.
+    """
+    if is_admin:
+        return search_conversations(query, limit=limit, member_slug=member_slug)
+    if not viewer_member_slug or (member_slug and member_slug != viewer_member_slug):
+        return []
+    terms = [t for t in query.split() if t]
+    if not terms:
+        return []
+    sql = (
+        "SELECT id, channel_id, role, speaker, content, member_slug, created_at FROM conversations "
+        "WHERE " + " AND ".join("content LIKE ?" for _ in terms)
+    )
+    args: list = [f"%{t}%" for t in terms]
+    if member_slug:
+        # A self-scoped search may span shared channels and this member's direct email, but can
+        # never select another member's rows.
+        sql += " AND member_slug = ?"
+        args.append(viewer_member_slug)
+    else:
+        sql += (
+            " AND (channel_id NOT LIKE 'email:%' OR channel_id LIKE 'email:list:%' "
+            "OR member_slug = ?)"
+        )
+        args.append(viewer_member_slug)
+    sql += " ORDER BY id DESC LIMIT ?"
+    args.append(max(1, min(int(limit), 20)))
     with connect() as conn:
         return [dict(r) for r in conn.execute(sql, args)]
 
@@ -2319,4 +2558,3 @@ def mark_activity_failed(activity_id: int, error: str, *, max_attempts: int = 5,
             "next_attempt_at = ? WHERE id = ?",
             (status, attempts, error[:500], next_attempt_at, activity_id),
         )
-

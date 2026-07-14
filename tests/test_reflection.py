@@ -79,6 +79,7 @@ def test_mailing_list_material_included_and_grouped(fresh_db, monkeypatch):
     db.upsert_mail_message({
         "message_id": "m-1", "thread_id": "t-1", "from_email": "jthingelstad@gmail.com",
         "from_name": "Jamie", "member_slug": "jamie", "subject": "Picks",
+        "list_id": "rwbookclub@googlegroups.com",
         "sent_at": "2026-06-01T00:00:00Z", "received_at": "2026-06-01T00:00:00Z",
         "body_text": "I want more translated fiction next year.",
         "body_clean": "I want more translated fiction next year.",
@@ -154,6 +155,23 @@ def test_weekly_run_includes_club_lane(fresh_db, monkeypatch):
         body = c.execute("SELECT body FROM activity_events WHERE kind='reflection' "
                          "ORDER BY id DESC LIMIT 1").fetchone()["body"]
     assert "club: +1" in body                                   # audit line includes the club lane
+
+
+def test_private_email_is_excluded_from_club_reflection(fresh_db, monkeypatch):
+    _log_turns("jamie", 4, channel="email:private-thread")
+    calls = []
+
+    def fake_complete(system, user, **kw):
+        calls.append((system, user))
+        return json.dumps({"add": ["A durable private preference"], "update": [], "retire": []})
+
+    monkeypatch.setattr(reflection.oliver, "complete", fake_complete)
+    out = reflection.run()
+    assert out["results"]["jamie"]["add"] == 1
+    assert "club" not in out["results"]
+    assert len(calls) == 1
+    assert "[email] Jamie" in calls[0][1]
+    assert db.get_memories(scope="club") == []
 
 
 def test_dry_run_writes_nothing(fresh_db, monkeypatch, capsys):
