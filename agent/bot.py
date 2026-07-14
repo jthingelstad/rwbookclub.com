@@ -327,7 +327,7 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
     if not claimed:
         return
     try:
-        await asyncio.to_thread(
+        archived_new = await asyncio.to_thread(
             mail_archive.archive_inbound_email,
             msg,
             is_mailing_list=decision.is_mailing_list,
@@ -337,17 +337,21 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
         db.mark_email_processed(msg.id, status="failed", error=f"archive:{type(e).__name__}: {e}")
         log.exception("Failed to archive inbound email %s", msg.id)
         return
-    db.add_activity(
-        "email_received",
-        "Email received",
-        f"From: {msg.speaker} <{msg.from_email}>\nSubject: {msg.subject or '(no subject)'}",
-    )
+    # The archive upsert is the durable per-message dedupe key. A failed downstream handler may
+    # reclaim the same unread email on the next poll; only the first successful archive insert
+    # should emit receipt activity/timeline rows.
+    if archived_new:
+        db.add_activity(
+            "email_received",
+            "Email received",
+            f"From: {msg.speaker} <{msg.from_email}>\nSubject: {msg.subject or '(no subject)'}",
+        )
     member_slug = decision.member_slug
     member_id = clubdb.lookup_member_id(member_slug)
     recorded_availability: str | None = None
     meeting = meeting_rules.next_meeting() if (member_slug and member_id is not None) else None
     meeting_id = meeting["meetingId"] if meeting else None
-    if member_slug and member_id is not None:
+    if archived_new and member_slug and member_id is not None:
         db.record_event(
             actor="member",
             kind="email_reply",
@@ -355,7 +359,7 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
             meeting_id=meeting_id,
             surface="email",
             detail=msg.subject or None,
-            source=f"email:{msg.thread_id or msg.from_email.lower()}",
+            source=f"email:{msg.id}",
         )
     if member_slug and member_id is not None and meeting_id is not None:
         recorded_availability = _roll_call_status_from_email(msg.subject, msg.text)

@@ -206,6 +206,36 @@ def test_inbound_confirmation_publishes_on_bot_event_loop(fresh_db, monkeypatch)
         ).fetchone()
 
 
+def test_failed_review_retry_does_not_duplicate_receipt_ledger(fresh_db, monkeypatch):
+    mid = _rated_unreviewed(rating=5)
+    fresh_db.link_member_email("jamie@example.test", "jamie")
+    db.create_review_draft(
+        member_id=mid, book_slug="heart-of-darkness", thread_id="T1",
+        draft_json=json.dumps({"body": "A dark, riveting read.", "rating": 5}),
+    )
+    monkeypatch.setattr(
+        bot.review_drive, "handle_reply",
+        lambda draft, msg: (_ for _ in ()).throw(RuntimeError("test failure")),
+    )
+
+    asyncio.run(bot._handle_inbound_email(_msg("YES")))
+    asyncio.run(bot._handle_inbound_email(_msg("YES")))
+
+    with db.connect() as conn:
+        receipt_events = conn.execute(
+            "SELECT COUNT(*) c FROM events WHERE kind='email_reply' AND source='email:m1'"
+        ).fetchone()["c"]
+        receipt_activity = conn.execute(
+            "SELECT COUNT(*) c FROM activity_events WHERE kind='email_received'"
+        ).fetchone()["c"]
+        inbound = conn.execute(
+            "SELECT status, error FROM inbound_emails WHERE email_id='m1'"
+        ).fetchone()
+    assert receipt_events == 1
+    assert receipt_activity == 1
+    assert inbound["status"] == "failed" and "test failure" in inbound["error"]
+
+
 def test_corrections_reextract_and_two_round_park(fresh_db, monkeypatch):
     sent = _mute_mail(monkeypatch)
     monkeypatch.setattr(rd.oliver, "complete", lambda *a, **kw: json.dumps(
