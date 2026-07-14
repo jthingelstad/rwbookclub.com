@@ -10,7 +10,9 @@ proactive scheduler.
 agent/
 ├── bot.py          # Discord client: /oliver group, #ask-oliver listener, scheduler loop
 ├── oliver.py       # the agent loop (tool use, caching, conversation history)
-├── tools.py        # read/memory/email tool schemas + dispatch
+├── tools.py        # stable schemas + the single registry/authorization/dispatch gate
+├── tool_handlers/  # capability handlers: meeting, memory/retrieval, mail, Book Cloud/picking
+├── model_readers.py # actor-required private readers (separate from raw internal DB APIs)
 ├── clubdb.py       # the authoritative club_* tables + read/write helpers
 ├── corpus_gen.py   # generate the (private, gitignored) corpus from the DB
 ├── corpus_read.py  # query/join layer over the generated corpus
@@ -38,7 +40,7 @@ agent/
   so the next addressed reply can account for what happened in the room. Each channel keeps
   its own conversation thread + rolling summary, and messages are answered through a
   per-channel queue so group chat stays in order.
-- **Tools** (`tools.py`): `find_books`, `search_books`, `get_book`, `member_history`,
+- **Tools** (`tools.py` + `tool_handlers/`): `find_books`, `search_books`, `get_book`, `member_history`,
   `upcoming_meetings`, `club_stats`, `pending_reviews`, `club_lists` (read the corpus), club-awareness
   tools (`current_club_state`, `current_meeting_status`, `identity_status`,
   `recent_feedback`, `recent_channel_context`), relationship tools (`related_books`,
@@ -52,7 +54,10 @@ agent/
   corpus tools are open; club-operational/private tools require a linked member; admin repair tools
   are admin-only. Members can search shared Discord/mailing-list history plus their own 1:1
   conversations and memories, never another member's private state. Pick dossiers use another
-  member's public picks/reviews but omit their exact private memory notes.
+  member's public picks/reviews but omit their exact private memory notes. The dispatcher resolves
+  one typed `RequestContext` from trusted runtime identity and passes it into capability-scoped
+  handlers; model input cannot supply the actor. Private handlers read through `model_readers.py`,
+  whose APIs require an actor, while raw `db.py` readers remain an internal/admin repository surface.
 - **Reviews / ratings / lists / profile**: members manage these in the **web app** (`/oliver my-club`,
   see below), which writes `club_reviews` / `club_lists` / `member_identities` and regenerates the
   corpus. Identity comes from the Discord-user → member map (carried into a signed web session), not

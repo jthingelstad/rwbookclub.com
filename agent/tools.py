@@ -4,9 +4,9 @@ Two kinds of tools live here:
 - **Server-side** (Anthropic-hosted): `web_search` — the platform resolves it,
   `dispatch()` never sees it because the response blocks have type
   `server_tool_use`, not `tool_use`.
-- **Client-side** (this module): corpus reads (find_books, get_book, …) plus
-  SQLite writes (remember/recall/set_reminder). All read-only or local-only —
-  nothing irreversible. `dispatch` is called by the agent loop with the tool
+- **Client-side**: stable schemas and the single authorization/registry gate live here;
+  capability implementations live in `tool_handlers/` and actor-scoped private readers in
+  `model_readers.py`. `dispatch` is called by the agent loop with the tool
   name, model's input, and per-turn context; returns a compact JSON string.
 
 Tool errors are caught and returned to the model as `{"error": ...}` so the
@@ -19,15 +19,10 @@ import json
 import logging
 
 from agent import access
-from agent import clubdb
-from agent import config
 from agent import corpus_read as cr
 from agent import db
-from agent.mail import email_jmap
-from agent.mail import email_policy
-from agent.mail import outbound
-from agent.club import meeting_campaign
-from agent.club import meeting_rules
+from agent.tool_handlers import mail, meeting, memory, picking
+from agent.tool_handlers.context import RequestContext
 
 log = logging.getLogger("oliver.tools")
 
@@ -561,196 +556,114 @@ TOOLS = [
 ]
 
 
-def _surface_from_ctx(ctx: dict) -> str:
-    channel = str(ctx.get("channel_id") or "")
-    return ("mailing_list" if channel.startswith("email:list:")
-            else "email" if channel.startswith("email:") else "discord")
+CORE_NAMES = frozenset({
+    "find_books", "search_books", "get_book", "related_books", "compare_books",
+    "review_summary", "member_history", "upcoming_meetings", "get_author", "club_lists",
+    "club_stats", "identity_status", "recent_feedback", "propose_action", "open_proposals",
+})
 
 
 def _member_slug(value: str | None) -> str | None:
-    """Resolve a model-supplied member name/slug through the public member index."""
-    if not value:
-        return None
-    member = cr.find_member(value)
+    member = cr.find_member(value) if value else None
     return member.get("slug") if member else None
 
 
-def _member_lenses(ctx: dict | None = None) -> dict:
-    """Every current member's taste lens: reflection memories + recent picks. The who-will-love-it
-    / who-will-fight-it evidence for pick advice — reactions must come from HERE, never invented.
-
-    Exact private memory notes are included only for the speaking member (or an admin).  Other
-    members' public picks/reviews remain useful evidence without disclosing their private notes.
-    """
-    actor = access.actor_from_ctx(ctx or {})
-    lenses = {}
-    for m in cr.human_current_members():  # taste lenses are human — Oliver has no vote here
-        slug = m["slug"]
-        hist = cr.member_history(slug) or {}
-        lenses[slug] = {
-            "name": m.get("name"),
-            # The FULL active memory set, not a newest-N window: after archive mining, a member's
-            # decisive note (e.g. Loren's Harari skepticism) can be years old — a partial lens
-            # produced a live forecast that contradicted recorded taste.
-            "memories": (
-                [x["note"] for x in db.get_memories(subject=slug, limit=40)]
-                if access.can_access_member(actor, slug) else []
-            ),
-            "recentPicks": [{"title": p.get("title"), "year": p.get("year")}
-                            for p in (hist.get("picks") or [])[:3]],
-        }
-    return lenses
-
-
-def _pick_fit(tool_input: dict, ctx: dict) -> dict:
-    """One-call evaluation dossier for a pick candidate. Read-only except one Book Cloud INSERT
-    recording that the candidate was considered (so evaluations enrich the cloud)."""
-    from agent.enrich import openlibrary as enrich_ol
-
-    title = tool_input["title"].strip()
-    author = (tool_input.get("author") or "").strip() or None
-    out: dict = {"candidate": {"title": title, "authors": [author] if author else [],
-                               "resolved": "unresolved"}}
-    subjects: list[str] = []
-
-    corpus_hit = cr.find_book(title)
-    if corpus_hit:
-        subjects = corpus_hit.get("subjects") or []
-        out["candidate"] = {
-            "title": corpus_hit.get("title"), "authors": corpus_hit.get("authors") or [],
-            "year": corpus_hit.get("year"), "subjects": subjects, "resolved": "corpus",
-        }
-        if corpus_hit.get("isRead"):
-            out["alreadyRead"] = {  # re-picks are a special headline case
-                "yearRead": (corpus_hit.get("meetingDate") or "")[:4],
-                "picker": corpus_hit.get("pickerName"),
-                "reviewSummary": cr.review_summary(corpus_hit["slug"]),
+def _handle_core(name: str, tool_input: dict, request: RequestContext):
+    if name == "find_books":
+        return cr.find_books(tool_input["query"])
+    if name == "search_books":
+        return cr.search_books(**tool_input)
+    if name == "get_book":
+        return cr.get_book(tool_input["book"]) or {"error": "no such book"}
+    if name == "related_books":
+        limit = max(1, min(int(tool_input.get("limit", 8)), 12))
+        return cr.related_books(tool_input["book"], limit=limit) or {"error": "no such book"}
+    if name == "compare_books":
+        return cr.compare_books(tool_input["books"])
+    if name == "review_summary":
+        return cr.review_summary(tool_input["book"]) or {"error": "no such book"}
+    if name == "member_history":
+        return cr.member_history(tool_input["member"]) or {"error": "no such member"}
+    if name == "upcoming_meetings":
+        return cr.upcoming_meetings()
+    if name == "get_author":
+        return cr.get_author(tool_input["author"]) or {"error": "no such author"}
+    if name == "club_lists":
+        return [item for item in cr.lists() if item.get("scope") == "club"]
+    if name == "club_stats":
+        return cr.club_stats()
+    if name == "identity_status":
+        member_slug = request.member_slug
+        linked = {row["member_slug"] for row in db.list_member_identities()}
+        email_linked = {row["member_slug"] for row in db.list_member_emails()}
+        sms_linked = {row["member_slug"] for row in db.list_member_sms()}
+        website_linked = {row["member_slug"] for row in db.list_member_websites()}
+        current = cr.human_current_members()
+        if not request.actor.is_admin:
+            return {
+                "speakerUserId": request.speaker_user_id,
+                "speakerMemberSlug": member_slug,
+                "speakerMember": cr.find_member(member_slug) if member_slug else None,
+                "discordLinked": member_slug in linked,
+                "emailLinked": member_slug in email_linked,
+                "smsLinked": member_slug in sms_linked,
+                "websiteLinked": member_slug in website_linked,
             }
-        else:
-            out["alreadyScheduled"] = {"meetingDate": corpus_hit.get("meetingDate"),
-                                       "picker": corpus_hit.get("pickerName")}
-    else:
-        try:
-            doc = enrich_ol.search_best_match(title, [author] if author else [])
-        except Exception:  # noqa: BLE001 — OL down must not sink the dossier
-            doc = None
-        if doc:
-            subjects = enrich_ol.clean_subjects(doc.get("subject"))
-            out["candidate"] = {
-                "title": doc.get("title") or title,
-                "authors": doc.get("author_name") or ([author] if author else []),
-                "year": doc.get("first_publish_year"),
-                "pages": doc.get("number_of_pages_median"),
-                "subjects": subjects,
-                "ratingsAverage": doc.get("ratings_average"),
-                "ratingsCount": doc.get("ratings_count"),
-                "olKey": doc.get("key"),
-                "resolved": "openlibrary",
-            }
-
-    cand_authors = out["candidate"].get("authors") or []
-    # This title's own cloud history — who floated it, when, why.
-    norm = title.lower().strip()
-    actor = access.actor_from_ctx(ctx)
-    out["cloudHistory"] = next(
-        (r for r in db.book_cloud_titles_visible(
-            viewer_member_slug=actor.member_slug, is_admin=actor.is_admin, query=title, limit=5)
-         if (r.get("title") or "").lower().strip() == norm), None)
-    # Nearest neighbors on the shelf, each with the club's actual verdict.
-    neighbors = cr.affinity_to_history(subjects, cand_authors, title=title)
-    for n in neighbors:
-        rs = cr.review_summary(n["slug"]) or {}
-        n["clubVerdict"] = {"ratingAverage": rs.get("ratingAverage"),
-                            "discussionAverage": rs.get("discussionAverage"),
-                            "dnfCount": rs.get("dnfCount"),
-                            "excerpt": (rs.get("excerpts") or [None])[0]}
-    out["nearestInHistory"] = neighbors
-    out["memberLenses"] = _member_lenses(ctx)
-    stats = cr.club_stats()
-    out["coverage"] = {"topics": stats.get("topics"), "fiction": stats.get("fiction"),
-                       "nonfiction": stats.get("nonfiction")}
-    out["clubLore"] = [x["note"] for x in db.get_memories(scope="club", limit=17)]
-    out["note"] = ("Current reception/adaptation news is NOT included — web_search it. Never "
-                   "state a member reaction that isn't grounded in memberLenses.")
-    if "alreadyRead" not in out:  # considering a candidate enriches the cloud
-        who = ctx.get("member_slug")
-        db.add_book_cloud_entry(
-            title=out["candidate"].get("title") or title,
-            author=(cand_authors or [None])[0],
-            book_slug=(corpus_hit or {}).get("slug"),
-            reason=f"evaluated as a pick candidate{' for ' + who if who else ''}",
-            reason_kind="pick_candidate",
-            mentioned_by=who, mentioned_by_name=ctx.get("speaker"),
-            surface=_surface_from_ctx(ctx), channel_id=ctx.get("channel_id"),
-            source_message_id=ctx.get("source_message_id"),
+        return {
+            "speakerUserId": request.speaker_user_id,
+            "speakerMemberSlug": member_slug,
+            "speakerMember": cr.find_member(member_slug) if member_slug else None,
+            "linkedCurrentMembers": sorted(linked),
+            "emailLinkedCurrentMembers": sorted(email_linked),
+            "smsLinkedCurrentMembers": sorted(sms_linked),
+            "websiteLinkedCurrentMembers": sorted(website_linked),
+            "missingCurrentMembers": [
+                {"slug": member["slug"], "name": member.get("name")}
+                for member in current if member["slug"] not in linked
+            ],
+            "missingEmailCurrentMembers": [
+                {"slug": member["slug"], "name": member.get("name")}
+                for member in current if member["slug"] not in email_linked
+            ],
+        }
+    if name == "recent_feedback":
+        return db.feedback_stats()
+    if name == "propose_action":
+        proposal_id = db.add_proposal(
+            kind=tool_input["kind"],
+            title=tool_input["title"],
+            body=tool_input["body"],
+            channel_id=request.channel_id,
+            source_user_id=request.speaker_user_id,
         )
-    return out
+        return {"saved": True, "id": proposal_id}
+    if name == "open_proposals":
+        limit = max(1, min(int(tool_input.get("limit", 10)), 10))
+        return db.list_proposals(limit=limit)
+    raise KeyError(name)
 
 
-def _pick_prospects(tool_input: dict, ctx: dict) -> dict:
-    """One-call discovery dossier: where should this member even look for a pick?"""
-    actor = access.actor_from_ctx(ctx)
-    requested = tool_input.get("member")
-    member = _member_slug(requested) if requested else actor.member_slug
-    if requested and not member:
-        return {"error": f"no such member: {requested}"}
-    if member and not access.can_access_member(actor, member):
-        return {"error": "private pick guidance can only use your own member profile"}
-    direction = (tool_input.get("direction") or "").strip() or None
-    out: dict = {"member": member, "direction": direction}
-
-    if member:
-        hist = cr.member_history(member) or {}
-        out["memberTaste"] = {
-            "memories": [x["note"] for x in db.visible_memories(
-                viewer_member_slug=actor.member_slug, is_admin=actor.is_admin,
-                subject=member, limit=12)],
-            # Their reviews across ALL reads (incl. others' picks) — a richer taste signal
-            # than their own picks alone.
-            "reviews": [{"book": r.get("book"), "rating": r.get("rating"), "dnf": r.get("dnf"),
-                         "wouldRecommend": r.get("wouldRecommend")}
-                        for r in (hist.get("reviews") or [])[:12]],
-            "recentPicks": [{"title": p.get("title"), "year": p.get("year")}
-                            for p in (hist.get("picks") or [])[:5]],
-        }
-
-    # The cloud's unread orbit — titles floated but never read, theirs vs the club's.
-    read_slugs = {b["slug"] for b in cr.books() if b.get("isRead")}
-    unread = [r for r in db.book_cloud_titles_visible(
-        viewer_member_slug=actor.member_slug, is_admin=actor.is_admin, limit=60)
-              if not (r.get("book_slug") and r["book_slug"] in read_slugs)]
-    out["cloudProspects"] = {
-        "yours": [r for r in unread if member and member in (r.get("mentioners") or [])][:12],
-        "clubOrbit": [r for r in unread
-                      if not (member and member in (r.get("mentioners") or []))][:12],
-        "totalUnreadInCloud": len(unread),
+def _build_registry():
+    registry = {name: _handle_core for name in CORE_NAMES}
+    for capability in (meeting, memory, mail, picking):
+        overlap = set(registry) & capability.NAMES
+        if overlap:
+            raise RuntimeError(f"duplicate tool handler registration: {sorted(overlap)}")
+        registry.update({name: capability.handle for name in capability.NAMES})
+    expected = {
+        definition["name"] for definition in TOOLS
+        if definition.get("type") != "web_search_20250305"
     }
-    out["lovedAuthorsUnread"] = cr.unread_notable_works(limit=8)
-    stats = cr.club_stats()
-    topics_sorted = sorted(stats.get("topics") or [], key=lambda t: t[1])
-    out["coverageGaps"] = {"leastReadTopics": topics_sorted[:5],
-                           "fiction": stats.get("fiction"), "nonfiction": stats.get("nonfiction")}
-    # Direction leads: when the member has said where they want to go, the fresh-search angles
-    # for that lane come FIRST — the cloud/author leads are supporting color, not the shortlist.
-    angles: list[str] = []
-    if direction:
-        angles += [
-            f"best acclaimed {direction} books 2024 2025 2026",
-            f"award-winning {direction} books recent",
-            f"{direction} book accessible deep exploration general readers",
-        ]
-    angles += [f"notable acclaimed {t} books 2024 2025 2026" for t, _n in topics_sorted[:2]]
-    angles += [f"new book by {a['author']} 2025 2026"
-               for a in (out["lovedAuthorsUnread"] or [])[:2]]
-    out["searchAngles"] = angles
-    out["note"] = (
-        ("The direction drives: web_search the direction angles FIRST for fresh, never-mentioned "
-         "candidates — cloudProspects and lovedAuthorsUnread are supporting color, only where "
-         "they fit the direction. Then pick_fit the best 2-3."
-         if direction else
-         "These are leads, not results — fresh candidates via web_search are fully in scope and "
-         "often the best answer; web_search the angles, then pick_fit the best 2-3."))
-    return out
+    if set(registry) != expected:
+        raise RuntimeError(
+            f"tool registry/schema mismatch: missing={sorted(expected - set(registry))}, "
+            f"extra={sorted(set(registry) - expected)}"
+        )
+    return registry
+
+
+# The one auditable client-tool registry. Authorization remains centralized in dispatch below.
+TOOL_HANDLERS = _build_registry()
 
 
 def _dump(obj) -> str:
@@ -758,629 +671,44 @@ def _dump(obj) -> str:
 
 
 def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
-    """Run a tool. ctx carries {channel_id, speaker, member_slug}. Returns a string."""
+    """Authorize and dispatch one tool with identity resolved only from trusted runtime context."""
     try:
         actor = access.actor_from_ctx(ctx)
         if error := access.tool_access_error(name, actor):
-            log.warning("tool access denied: tool=%s member=%s admin=%s",
-                        name, actor.member_slug, actor.is_admin)
+            log.warning(
+                "tool access denied: tool=%s member=%s admin=%s",
+                name, actor.member_slug, actor.is_admin,
+            )
             return _dump({"error": error})
-        if name == "find_books":
-            return _dump(cr.find_books(tool_input["query"]))
-        if name == "search_books":
-            return _dump(cr.search_books(**tool_input))
-        if name == "get_book":
-            return _dump(cr.get_book(tool_input["book"]) or {"error": "no such book"})
-        if name == "related_books":
-            limit = max(1, min(int(tool_input.get("limit", 8)), 12))
-            return _dump(cr.related_books(tool_input["book"], limit=limit) or {"error": "no such book"})
-        if name == "compare_books":
-            return _dump(cr.compare_books(tool_input["books"]))
-        if name == "review_summary":
-            return _dump(cr.review_summary(tool_input["book"]) or {"error": "no such book"})
-        if name == "member_history":
-            return _dump(cr.member_history(tool_input["member"]) or {"error": "no such member"})
-        if name == "upcoming_meetings":
-            return _dump(cr.upcoming_meetings())
-        if name == "get_author":
-            return _dump(cr.get_author(tool_input["author"]) or {"error": "no such author"})
-        if name == "club_lists":
-            return _dump([x for x in cr.lists() if x.get("scope") == "club"])
-        if name == "club_stats":
-            return _dump(cr.club_stats())
-        if name == "pending_reviews":
-            target = _member_slug(tool_input["member"])
-            if not target:
-                return _dump({"error": "no such member"})
-            if not access.can_access_member(actor, target):
-                return _dump({"error": "you can only inspect your own pending reviews"})
-            return _dump(cr.pending_reviews(target) or {"error": "no such member"})
-        if name == "current_club_state":
-            return _dump(_current_club_state_snapshot(actor))
-        if name == "current_meeting_status":
-            return _dump(_meeting_status_snapshot(actor))
-        if name == "meeting_readiness":
-            return _dump(_meeting_readiness_snapshot(actor))
-        if name == "meeting_campaign":
-            return _dump(meeting_campaign.snapshot())
-        if name == "identity_status":
-            member_slug = ctx.get("member_slug")
-            identities = db.list_member_identities()
-            linked = {r["member_slug"] for r in identities}
-            email_links = db.list_member_emails()
-            email_linked = {r["member_slug"] for r in email_links}
-            sms_linked = {r["member_slug"] for r in db.list_member_sms()}
-            website_linked = {r["member_slug"] for r in db.list_member_websites()}
-            current = cr.human_current_members()
-            if not actor.is_admin:
-                return _dump({
-                    "speakerUserId": ctx.get("speaker_user_id"),
-                    "speakerMemberSlug": member_slug,
-                    "speakerMember": cr.find_member(member_slug) if member_slug else None,
-                    "discordLinked": member_slug in linked,
-                    "emailLinked": member_slug in email_linked,
-                    "smsLinked": member_slug in sms_linked,
-                    "websiteLinked": member_slug in website_linked,
-                })
-            return _dump({
-                "speakerUserId": ctx.get("speaker_user_id"),
-                "speakerMemberSlug": member_slug,
-                "speakerMember": cr.find_member(member_slug) if member_slug else None,
-                "linkedCurrentMembers": sorted(linked),
-                "emailLinkedCurrentMembers": sorted(email_linked),
-                "smsLinkedCurrentMembers": sorted(sms_linked),
-                "websiteLinkedCurrentMembers": sorted(website_linked),
-                "missingCurrentMembers": [
-                    {"slug": m["slug"], "name": m.get("name")}
-                    for m in current if m["slug"] not in linked
-                ],
-                "missingEmailCurrentMembers": [
-                    {"slug": m["slug"], "name": m.get("name")}
-                    for m in current if m["slug"] not in email_linked
-                ],
-            })
-        if name == "recent_feedback":
-            return _dump(db.feedback_stats())
-        if name == "recent_channel_context":
-            limit = max(1, min(int(tool_input.get("limit", 12)), 20))
-            return _dump(db.recent_messages(str(ctx.get("channel_id") or ""), limit=limit))
-        if name == "search_discussion":
-            limit = max(1, min(int(tool_input.get("limit", 12)), 20))
-            requested = tool_input.get("member")
-            target = _member_slug(requested) if requested else None
-            if requested and not target:
-                return _dump({"error": f"no such member: {requested}"})
-            if target and not access.can_access_member(actor, target):
-                return _dump({"error": "another member's private conversation history is unavailable"})
-            rows = db.search_conversations_visible(
-                tool_input["query"], limit=limit, member_slug=target,
-                viewer_member_slug=actor.member_slug, is_admin=actor.is_admin)
-            out = []
-            for r in rows:
-                try:
-                    channel_key = int(r["channel_id"])
-                except (TypeError, ValueError):
-                    channel_key = r["channel_id"]
-                out.append({
-                    "medium": db.conversation_medium(r["channel_id"]),
-                    "channel": config.CHANNEL_NAMES.get(channel_key, r["channel_id"]),
-                    "who": r.get("speaker"),
-                    "member": r.get("member_slug"),
-                    # role tells Oliver whether this was a member's turn or its OWN reply.
-                    "role": r["role"],
-                    "when": r.get("created_at"),
-                    "content": (r["content"] or "")[:300],  # keep tool result compact
-                })
-            return _dump(out)
-        if name == "search_mail_archive":
-            limit = max(1, min(int(tool_input.get("limit", 8)), 20))
-            requested = tool_input.get("member")
-            target = _member_slug(requested) if requested else None
-            if requested and not target:
-                return _dump({"error": f"no such member: {requested}"})
-            if target and not access.can_access_member(actor, target):
-                return _dump({"error": "another member's private email history is unavailable"})
-            rows = db.search_mail_archive_visible(
-                tool_input["query"],
-                viewer_member_slug=actor.member_slug,
-                is_admin=actor.is_admin,
-                member_slug=target,
-                year_from=tool_input.get("year_from"),
-                year_to=tool_input.get("year_to"),
-                limit=limit,
-            )
-            for r in rows:
-                r["snippet"] = (r.get("snippet") or "")[:500]
-            return _dump(rows)
-        if name == "get_mail_thread":
-            limit = max(1, min(int(tool_input.get("limit", 50)), 100))
-            thread = db.get_mail_thread_visible(
-                tool_input["thread_id"], limit=limit,
-                viewer_member_slug=actor.member_slug, is_admin=actor.is_admin)
-            if not thread:
-                return _dump({"error": "no accessible mail thread"})
-            for msg in thread["messages"]:
-                msg["body_clean"] = (msg.get("body_clean") or "")[:1000]
-            return _dump(thread)
-        if name == "club_timeline":
-            limit = max(1, min(int(tool_input.get("limit", 30)), 100))
-            member_id = None
-            if tool_input.get("member"):
-                m = cr.find_member(tool_input["member"])
-                member_id = clubdb.lookup_member_id(m["slug"]) if m else None
-                if member_id is None:
-                    return _dump({"error": f"no such member: {tool_input['member']}"})
-            rows = db.timeline(
-                category=tool_input.get("category"),
-                member_id=member_id,
-                since=tool_input.get("since"),
-                until=tool_input.get("until"),
-                limit=limit,
-            )
-            out = [
-                {"date": (r.get("occurred_at") or "")[:10], "category": r["category"],
-                 "kind": r["kind"], "member": r.get("member_slug"),
-                 "detail": (r.get("detail") or "")[:500], "source": r.get("source")}
-                for r in rows
-            ]
-            return _dump(out)
-        if name == "record_timeline_event":
-            category = tool_input.get("category")
-            kind = tool_input.get("kind")
-            if kind not in (db.CHRONICLE_KINDS.get(category) or ()):
-                return _dump({"error": f"kind {kind!r} is not valid for category {category!r}; "
-                                       f"allowed: {db.CHRONICLE_KINDS.get(category)}"})
-            member_id = None
-            member_slug = None
-            if tool_input.get("member"):
-                m = cr.find_member(tool_input["member"])
-                if not m:
-                    return _dump({"error": f"no such member: {tool_input['member']}"})
-                member_slug = m["slug"]
-                if not access.can_access_member(actor, member_slug):
-                    return _dump({"error": "you cannot record another member's private milestone"})
-                member_id = clubdb.lookup_member_id(member_slug)
-            surface = "email" if str(ctx.get("speaker_user_id") or "").startswith("email:") else "discord"
-            eid = db.record_event(
-                actor="oliver",
-                surface=surface,
-                kind=kind,
-                category=category,
-                member_id=member_id,
-                detail={"summary": tool_input.get("summary"),
-                        "members": [member_slug] if member_slug else []},
-                occurred_at=tool_input.get("date"),
-            )
-            db.add_activity(
-                "timeline_event",
-                "Timeline event recorded",
-                f"Category: {category}\nKind: {kind}\nDate: {tool_input.get('date')}\n"
-                f"Member: {member_slug or '(club-wide)'}\nSummary: {tool_input.get('summary')}",
-            )
-            return _dump({"saved": True, "id": eid, "category": category, "kind": kind})
-        if name == "record_availability":
-            member_slug = ctx.get("member_slug")
-            if not member_slug:
-                return _dump({"error": "speaker is not linked to a club member"})
-            member_id = clubdb.lookup_member_id(member_slug)
-            status = tool_input["status"]
-            meeting = meeting_rules.next_meeting()
-            meeting_id = meeting["meetingId"]
-            if meeting_id is None or member_id is None:
-                return _dump({"error": "no scheduled meeting to record availability against"})
-            db.record_attendance_report(
-                meeting_id,
-                member_id,
-                status,
-                surface=("email" if str(ctx.get("speaker_user_id") or "").startswith("email:") else "discord"),
-                updated_by=ctx.get("speaker_user_id"),
-            )
-            db.add_activity(
-                "roll_call_update",
-                "Roll-call response recorded",
-                f"Member: {member_slug}\nStatus: {status}\nMeeting: {meeting['meetingKey']}",
-            )
-            return _dump({"saved": True, "meetingStatus": _meeting_status_snapshot(
-                actor, meeting_id=meeting_id)})
-        if name == "propose_action":
-            pid = db.add_proposal(
-                kind=tool_input["kind"],
-                title=tool_input["title"],
-                body=tool_input["body"],
-                channel_id=ctx.get("channel_id"),
-                source_user_id=ctx.get("speaker_user_id"),
-            )
-            return _dump({"saved": True, "id": pid})
-        if name == "open_proposals":
-            limit = max(1, min(int(tool_input.get("limit", 10)), 10))
-            return _dump(db.list_proposals(limit=limit))
-        if name == "remember":
-            scope = tool_input.get("scope") or "member"
-            subject = tool_input.get("subject")
-            # A member can create private notes only about themself. Admin repair paths may target
-            # another member or use general scope. Club lore remains shared and provenance-tagged.
-            if scope == "member":
-                target = _member_slug(subject) if subject else actor.member_slug
-                if subject and not target:
-                    return _dump({"error": f"no such member: {subject}"})
-                if not target or not access.can_access_member(actor, target):
-                    return _dump({"error": "you can only save member-private notes about yourself"})
-                subject = target
-            elif scope == "general" and not actor.is_admin:
-                scope = "member"
-                subject = actor.member_slug
-            mid = db.add_memory(
-                tool_input["note"],
-                scope=scope,
-                subject=subject,
-                source=ctx.get("speaker"),
-                source_user_id=ctx.get("speaker_user_id"),
-                source_message_id=ctx.get("source_message_id"),
-            )
-            return _dump({"saved": True, "id": mid, "scope": scope})
-        if name == "book_cloud_add":
-            # Mentioner/surface/provenance come from ctx, never model input (identity map rule).
-            surface = _surface_from_ctx(ctx)
-            entry_id = db.add_book_cloud_entry(
-                title=tool_input["title"],
-                reason=tool_input["reason"],
-                author=tool_input.get("author"),
-                reason_kind=tool_input.get("reason_kind"),
-                book_slug=(cr.find_book(tool_input["title"]) or {}).get("slug"),
-                mentioned_by=ctx.get("member_slug"),
-                mentioned_by_name=ctx.get("speaker"),
-                surface=surface,
-                channel_id=ctx.get("channel_id"),
-                source_message_id=ctx.get("source_message_id"),
-            )
-            return _dump({"saved": True, "id": entry_id})
-        if name == "book_cloud_recent":
-            limit = max(1, min(int(tool_input.get("limit", 20)), 50))
-            if tool_input.get("titles"):
-                return _dump(db.book_cloud_titles_visible(
-                    viewer_member_slug=actor.member_slug, is_admin=actor.is_admin,
-                    query=tool_input.get("query"), member=tool_input.get("member"), limit=limit))
-            return _dump(db.recent_book_cloud_visible(
-                viewer_member_slug=actor.member_slug, is_admin=actor.is_admin,
-                limit=limit, query=tool_input.get("query"), member=tool_input.get("member")))
-        if name == "pick_fit":
-            return _dump(_pick_fit(tool_input, ctx))
-        if name == "pick_prospects":
-            return _dump(_pick_prospects(tool_input, ctx))
-        if name == "recall":
-            subject = tool_input.get("subject")
-            target = subject
-            if subject and subject != "club":
-                target = _member_slug(subject)
-                if not target:
-                    return _dump({"error": f"no such member: {subject}"})
-                if not access.can_access_member(actor, target):
-                    return _dump({"error": "another member's private memories are unavailable"})
-            return _dump(db.visible_memories(
-                viewer_member_slug=actor.member_slug, is_admin=actor.is_admin,
-                subject=target, query=tool_input.get("query")))
-        if name == "set_reminder":
-            rid = db.add_reminder(
-                tool_input["due"], tool_input["text"],
-                channel_id=ctx.get("channel_id"), created_by=ctx.get("speaker"),
-            )
-            return _dump({"saved": True, "id": rid})
-        if name == "send_email":
-            if str(ctx.get("channel_id") or "").startswith("email:"):
-                return _dump({
-                    "error": "inbound email replies are sent automatically; write response text instead"
-                })
-            if not email_jmap.enabled():
-                return _dump({"error": "email is not configured"})
-            recipient_error = email_policy.validate_model_email_recipients(
-                to=tool_input["to"],
-                cc=tool_input.get("cc"),
-            )
-            if recipient_error:
-                return _dump({"error": recipient_error})
-            result = outbound.send(
-                to=tool_input["to"],
-                subject=tool_input["subject"],
-                body=tool_input["body"],
-                cc=tool_input.get("cc"),
-                idempotency_key=(
-                    f"email:model:{ctx['source_message_id']}"
-                    if ctx.get("source_message_id") else None
-                ),
-                policy="model",
-            )
-            db.add_activity(
-                "email_sent",
-                "Email sent",
-                f"To: {', '.join(result.get('to') or [])}\nSubject: {result.get('subject')}\nEmail ID: {result.get('emailId')}",
-            )
-            return _dump({"sent": True, **result})
-        if name == "email_status":
-            return _dump({
-                "configured": email_jmap.enabled(),
-                "address": config.OLIVER_EMAIL_ADDRESS,
-                "inbox": f"{config.OLIVER_EMAIL_INBOX_PARENT}/{config.OLIVER_EMAIL_INBOX_FOLDER}",
-                "sent": f"{config.OLIVER_EMAIL_SENT_PARENT}/{config.OLIVER_EMAIL_SENT_FOLDER}",
-            })
-        if name == "record_reading_status":
-            member_slug = ctx.get("member_slug")
-            if not member_slug:
-                return _dump({"error": "speaker is not linked to a club member"})
-            member_id = clubdb.lookup_member_id(member_slug)
-            meeting = meeting_rules.next_meeting()
-            meeting_id = meeting["meetingId"]
-            if meeting_id is None or member_id is None:
-                return _dump({"error": "no scheduled meeting to record reading status against"})
-            db.record_reading_report(
-                meeting_id,
-                member_id,
-                tool_input["status"],
-                progress=tool_input.get("progress"),
-                page=tool_input.get("page"),
-                percent=tool_input.get("percent"),
-                surface=("email" if str(ctx.get("speaker_user_id") or "").startswith("email:") else "discord"),
-                updated_by=ctx.get("speaker_user_id"),
-            )
-            db.add_activity(
-                "reading_update",
-                "Reading status recorded",
-                f"Member: {member_slug}\nStatus: {tool_input['status']}\nProgress: {tool_input.get('progress') or '-'}\nMeeting: {meeting['meetingKey']}",
-            )
-            return _dump({"saved": True, "readingStatus": _reading_status_snapshot(meeting, actor)})
-        if name == "reading_status":
-            return _dump(_reading_status_snapshot(meeting_rules.next_meeting(), actor))
-        if name == "request_reading_update":
-            if str(ctx.get("channel_id") or "").startswith("email:"):
-                return _dump({"error": "email check-ins cannot be initiated from inbound email"})
-            if not email_jmap.enabled():
-                return _dump({"error": "email is not configured"})
-            member = cr.find_member(tool_input["member"])
-            if not member:
-                return _dump({"error": "no such member"})
-            speaker_user_id = str(ctx.get("speaker_user_id") or "")
-            if ctx.get("member_slug") != member["slug"] and speaker_user_id != str(config.ADMIN_USER_ID):
-                return _dump({"error": "only an admin can request check-ins for other members"})
-            email = db.email_for_member(member["slug"])
-            if not email:
-                return _dump({"error": f"{member['name']} has no linked email address"})
-            meeting = meeting_rules.next_meeting()
-            meeting_id = meeting["meetingId"]
-            member_id = clubdb.lookup_member_id(member["slug"])
-            if meeting_id is None or member_id is None:
-                return _dump({"error": "no scheduled meeting to check in against"})
-            book = meeting.get("book") or {}
-            title = book.get("title") or "the current book"
-            existing = db.meeting_member_status(meeting_id, member_id)
-            if existing and existing["reading"] == "finished":
-                db.add_activity(
-                    "reading_checkin_skipped",
-                    "Reading check-in skipped",
-                    f"Member: {member['slug']}\nReason: already finished\nBook: {title}",
-                )
-                return _dump({
-                    "sent": False,
-                    "member": member["slug"],
-                    "reason": f"{member['name']} is already marked finished for {title}",
-                    "readingStatus": _reading_status_snapshot(meeting, actor),
-                })
-            body = meeting_rules.reading_checkin_email_body(
-                member["name"], meeting, note=tool_input.get("note"))
-            subject = f"Reading check-in: {title}"
-            sent = outbound.send(
-                to=[email["email"]],
-                subject=subject,
-                body=body,
-                idempotency_key=(
-                    f"email:reading-tool:{ctx['source_message_id']}:{member['slug']}"
-                    if ctx.get("source_message_id") else None
-                ),
-                policy="linked_member",
-            )
-            db.record_reading_request(meeting_id, member_id, surface="email")
-            db.add_activity(
-                "email_sent",
-                "Reading check-in email sent",
-                f"Member: {member['slug']}\nTo: {email['email']}\nSubject: {subject}\nEmail ID: {sent.get('emailId')}",
-            )
-            return _dump({"sent": True, "member": member["slug"], **sent})
-        if name == "request_roll_call_update":
-            if str(ctx.get("channel_id") or "").startswith("email:"):
-                return _dump({"error": "roll-call emails cannot be initiated from inbound email"})
-            if not email_jmap.enabled():
-                return _dump({"error": "email is not configured"})
-            speaker_user_id = str(ctx.get("speaker_user_id") or "")
-            requested_member = tool_input.get("member")
-            if requested_member:
-                member = cr.find_member(requested_member)
-                if not member:
-                    return _dump({"error": "no such member"})
-                if ctx.get("member_slug") != member["slug"] and speaker_user_id != str(config.ADMIN_USER_ID):
-                    return _dump({"error": "only an admin can request roll-call emails for other members"})
-                targets = [member]
-            else:
-                if speaker_user_id != str(config.ADMIN_USER_ID):
-                    return _dump({"error": "only an admin can email roll call to all members"})
-                targets = sorted(
-                    cr.human_current_members(),
-                    key=lambda m: m.get("name") or m["slug"],
-                )
-            status = meeting_rules.meeting_status()
-            meeting = status["meeting"]
-            meeting_id = meeting["meetingId"]
-            if meeting_id is None:
-                return _dump({"error": "no scheduled meeting to run roll call against"})
-            attendance = {r["memberSlug"]: r["status"] for r in status["attendance"]}
-            skipped = []
-            filtered_targets = []
-            for member in targets:
-                member_status = attendance.get(member["slug"], "pending")
-                if member_status != "pending":
-                    skipped.append({"member": member["slug"], "reason": f"already {member_status}"})
-                    continue
-                filtered_targets.append(member)
-            sent_rows = []
-            missing = []
-            note = tool_input.get("note")
-            for member in filtered_targets:
-                email = db.email_for_member(member["slug"])
-                if not email:
-                    missing.append({"member": member["slug"], "reason": "no linked email address"})
-                    continue
-                member_id = clubdb.lookup_member_id(member["slug"])
-                if member_id is None:
-                    missing.append({"member": member["slug"], "reason": "not in the club database"})
-                    continue
-                subject = _roll_call_subject(status)
-                body = _roll_call_email_body(member.get("name") or member["slug"], status, note=note)
-                sent = outbound.send(
-                    to=[email["email"]],
-                    subject=subject,
-                    body=body,
-                    idempotency_key=(
-                        f"email:roll-call-tool:{ctx['source_message_id']}:{member['slug']}"
-                        if ctx.get("source_message_id") else None
-                    ),
-                    policy="linked_member",
-                )
-                db.record_attendance_request(meeting_id, member_id, actor="oliver", surface="email")
-                db.add_activity(
-                    "email_sent",
-                    "Roll-call email sent",
-                    f"Member: {member['slug']}\nTo: {email['email']}\nSubject: {subject}\nEmail ID: {sent.get('emailId')}",
-                )
-                sent_rows.append({"member": member["slug"], **sent})
-            if sent_rows and not db.has_open_roll_call(meeting_id):
-                db.record_group_event(
-                    meeting_id,
-                    "roll_call_opened",
-                    actor="oliver",
-                    detail={"channel_id": ctx.get("channel_id"), "opened_by": "email-tool"},
-                )
-            return _dump({
-                "sent": sent_rows,
-                "skipped": skipped,
-                "missing": missing,
-                "meetingStatus": _meeting_status_snapshot(actor, meeting_id=meeting_id),
-            })
-        return _dump({"error": f"unknown tool {name}"})
-    except Exception as e:  # noqa: BLE001 - surface tool errors to the model, don't crash the loop
-        # Also log so the operator sees it — bare error strings to the model
-        # used to be invisible to anyone watching the bot.
+        handler = TOOL_HANDLERS.get(name)
+        if handler is None:
+            return _dump({"error": f"unknown tool {name}"})
+        request = RequestContext.from_runtime(ctx, actor=actor)
+        return _dump(handler(name, tool_input, request))
+    except Exception as exc:  # noqa: BLE001 - tool errors are results, not loop failures
         log.exception("tool %s failed (input=%r)", name, tool_input)
-        return _dump({"error": f"{type(e).__name__}: {e}"})
+        return _dump({"error": f"{type(exc).__name__}: {exc}"})
 
 
-def _meeting_status_snapshot(actor: access.Actor, meeting_id: int | None = None) -> dict:
-    """Meeting status projected to the current actor.
-
-    Meeting facts and aggregate quorum counts are shared with linked members. Individual attendance
-    rows, picker availability, and internal roll-call coordinates are private member signals.
-    """
-    status = meeting_rules.meeting_status(meeting_id)
-    if actor.is_admin:
-        return status
-    roll_call = status.get("rollCall")
-    shared_risks = {
-        "quorum_not_confirmed",
-        "quorum_impossible",
-        "not_last_tuesday",
-    }
-    return {
-        "meeting": status["meeting"],
-        "rollCall": ({"status": roll_call.get("status")} if roll_call else None),
-        "attendance": [
-            row for row in status["attendance"]
-            if row.get("memberSlug") == actor.member_slug
-        ],
-        "counts": status["counts"],
-        "rules": status["rules"],
-        "hasQuorum": status["hasQuorum"],
-        "risks": [risk for risk in status["risks"] if risk in shared_risks],
-        "recommendation": (
-            "ready" if status["hasQuorum"] else
-            "needs_attention" if "quorum_impossible" in status["risks"] else
-            "waiting"
-        ),
-    }
+# Compatibility aliases for focused tests and internal callers while implementation lives in the
+# capability modules. The dispatcher itself reaches these only through TOOL_HANDLERS.
+def _member_lenses(ctx: dict | None = None) -> dict:
+    runtime = ctx or {}
+    request = RequestContext.from_runtime(runtime, actor=access.actor_from_ctx(runtime))
+    return picking.member_lenses(request)
 
 
-def _current_club_state_snapshot(actor: access.Actor) -> dict:
-    state = meeting_rules.summarize_club_state()
-    if actor.is_admin:
-        return state
-    return {
-        "members": [
-            {"slug": member.get("slug"), "name": member.get("name")}
-            for member in state["members"]
-        ],
-        "nextMeeting": _meeting_status_snapshot(actor),
-        "stats": state["stats"],
-    }
+def _pick_fit(tool_input: dict, ctx: dict) -> dict:
+    request = RequestContext.from_runtime(ctx, actor=access.actor_from_ctx(ctx))
+    return picking.pick_fit(tool_input, request)
 
 
-def _reading_status_snapshot(meeting: dict, actor: access.Actor) -> dict:
-    meeting_id = meeting.get("meetingId")
-    rows = {
-        r["member_slug"]: r
-        for r in (db.meeting_member_status_for_meeting(meeting_id) if meeting_id is not None else [])
-    }
-    members = cr.human_current_members()
-    statuses = []
-    for member in sorted(members, key=lambda m: m.get("name") or m["slug"]):
-        row = rows.get(member["slug"])
-        statuses.append({
-            "member": member.get("name"),
-            "memberSlug": member["slug"],
-            "status": row["reading"] if row else "unknown",
-            "progress": row.get("reading_progress") if row else None,
-            "page": row.get("reading_page") if row else None,
-            "percent": row.get("reading_percent") if row else None,
-            "updatedAt": row.get("reading_answered_at") if row else None,
-        })
-    if not actor.is_admin:
-        statuses = [row for row in statuses if row["memberSlug"] == actor.member_slug]
-    return {
-        "meeting": meeting,
-        "book": meeting.get("book"),
-        "statuses": statuses,
-    }
+def _pick_prospects(tool_input: dict, ctx: dict) -> dict:
+    request = RequestContext.from_runtime(ctx, actor=access.actor_from_ctx(ctx))
+    return picking.pick_prospects(tool_input, request)
 
 
-def _meeting_readiness_snapshot(actor: access.Actor) -> dict:
-    campaign = meeting_campaign.snapshot()
-    out = {
-        **campaign,
-        "reading": _reading_status_snapshot(campaign["meeting"], actor),
-        "counts": {
-            **campaign["counts"],
-            "attendingAndFinished": len([
-                m for m in campaign["members"]
-                if m["attendance"] == "yes" and m["reading"] == "finished"
-            ]),
-            "attendingNotFinished": len([
-                m for m in campaign["members"]
-                if m["attendance"] == "yes" and m["reading"] != "finished"
-            ]),
-        },
-    }
-    if actor.is_admin:
-        return out
-
-    own = [m for m in out["members"] if m["memberSlug"] == actor.member_slug]
-    out["members"] = own
-    out["needsRollCall"] = [
-        m for m in out["needsRollCall"] if m["memberSlug"] == actor.member_slug
-    ]
-    out["needsReading"] = [
-        m for m in out["needsReading"] if m["memberSlug"] == actor.member_slug
-    ]
-    out["attendance"] = _meeting_status_snapshot(
-        actor, meeting_id=campaign["meeting"].get("meetingId"))
-    out["recommendedActions"] = []
-    return out
-
-
-# Roll-call email text is shared with the command path; it lives in meeting_rules so the
-# wording can't drift between the two senders.
-_roll_call_subject = meeting_rules.roll_call_subject
-_roll_call_email_body = meeting_rules.roll_call_email_body
+_meeting_status_snapshot = meeting.meeting_status_snapshot
+_current_club_state_snapshot = meeting.current_club_state_snapshot
+_reading_status_snapshot = meeting.reading_status_snapshot
+_meeting_readiness_snapshot = meeting.meeting_readiness_snapshot
