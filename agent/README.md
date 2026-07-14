@@ -88,6 +88,11 @@ agent/
   member privacy. Per-member sends are recorded as `attendance_requested`/`reading_requested` events
   (bumping the projection's ask counts) for the campaign dashboard; nothing records whether a member
   read an email.
+- **Durable outbound delivery** (`outbox.py` + `db.py`): member-facing email and Discord intents
+  are committed to `outbox_messages` before a provider call. Stable keys make replay idempotent;
+  known pre-provider failures retry with bounded backoff, while an interrupted or ambiguous
+  in-flight provider attempt is quarantined as `uncertain` rather than risking a duplicate. The
+  weekly health email reports pending, retrying, uncertain, and dead counts.
 - **Meeting campaign** (`meeting_campaign.py` + `/oliver meeting dashboard`): combines the
   current book/date, days remaining, roll call, picker requirement, reading status, per-member ask
   counts + last-asked timestamps, and recommended next actions into one dashboard/tool snapshot.

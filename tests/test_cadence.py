@@ -48,6 +48,7 @@ def test_chunk_short_text_is_one_piece():
 
 class _Channel:
     def __init__(self):
+        self.id = 123
         self.posts = []
 
     async def send(self, text):
@@ -62,7 +63,7 @@ class _Client:
         return self._channel
 
 
-def test_send_club_email_targets_list_and_mirrors_to_discord(monkeypatch):
+def test_send_club_email_targets_list_and_mirrors_to_discord(fresh_db, monkeypatch):
     sent = {}
     monkeypatch.setattr(commands.outbound, "finalize", lambda body: body + "\n\n— Oliver")
     monkeypatch.setattr(commands.outbound, "send", lambda **kw: sent.update(kw) or {"emailId": "e1"})
@@ -70,12 +71,16 @@ def test_send_club_email_targets_list_and_mirrors_to_discord(monkeypatch):
     monkeypatch.setattr(commands, "_client", _Client(channel))
     monkeypatch.setattr(config, "MAIN_CHANNEL_ID", 123)
 
-    asyncio.run(commands._send_club_email("Subject", "The body"))
+    asyncio.run(commands._send_club_email(
+        "Subject", "The body", idempotency_key="club-email:test-cadence"))
+    asyncio.run(commands._send_club_email(
+        "Subject", "The body", idempotency_key="club-email:test-cadence"))
 
     # Emailed to the whole mailing list, already-finalized (no double signature).
     assert sent["to"] == [config.BOOK_CLUB_MAILING_LIST_ADDRESS]
     assert sent["sign"] is False
     assert sent["body"] == "The body\n\n— Oliver"
     # Mirrored to Discord with the same finalized content.
-    assert channel.posts and "The body" in channel.posts[0]
+    assert len(channel.posts) == 1
+    assert "The body" in channel.posts[0]
     assert "— Oliver" in "".join(channel.posts)

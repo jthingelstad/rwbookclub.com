@@ -1,4 +1,7 @@
-"""The single outbound-email path: signature + send (pure; no contact log, no tracking)."""
+"""The single outbound-email path: signature, durable intent, policy, and send."""
+import pytest
+
+from agent import db
 from agent.mail import outbound
 
 
@@ -29,3 +32,22 @@ def test_send_unsigned_has_no_signature(monkeypatch):
     outbound.send(to=["a@b"], subject="S", body="Hi", sign=False)
     assert captured["body"] == "Hi"
     assert '<div class="oliver-sig">' not in captured["html_body"]  # no signature block (CSS aside)
+
+
+def test_linked_member_policy_is_checked_before_delivery(fresh_db, monkeypatch):
+    calls = []
+    monkeypatch.setattr(outbound.email_jmap, "send_email", lambda **kw: calls.append(kw) or {})
+    with pytest.raises(ValueError, match="linked member"):
+        outbound.send(
+            to=["outsider@example.test"], subject="S", body="Hi",
+            policy="linked_member", idempotency_key="email:policy-denied",
+        )
+    assert calls == []
+    assert db.outbox_by_key("email:policy-denied") is None
+
+    fresh_db.link_member_email("jamie@example.test", "jamie")
+    outbound.send(
+        to=["jamie@example.test"], subject="S", body="Hi",
+        policy="linked_member", idempotency_key="email:policy-allowed",
+    )
+    assert len(calls) == 1

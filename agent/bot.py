@@ -27,7 +27,7 @@ import discord
 import requests
 from discord.ext import tasks
 
-from agent import clubdb, commands, config, context as kb, db, oliver, publish, security
+from agent import clubdb, commands, config, context as kb, db, oliver, outbox, publish, security
 from agent.mail import email_jmap, email_policy, mail_archive, outbound
 from agent.club import meeting_rules, review_drive
 
@@ -473,6 +473,8 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
             body=reply,
             in_reply_to=msg.message_id,
             references=msg.references,
+            idempotency_key=f"email:inbound-reply:{msg.id}",
+            policy="reply",
         )
     except Exception as e:
         db.mark_email_processed(msg.id, status="failed", error=f"send:{type(e).__name__}: {e}")
@@ -592,25 +594,41 @@ async def on_message(message: discord.Message) -> None:
                        speaker=message.author.display_name, member_slug=member_slug)
         db.log_message(str(cid), "assistant", reply, member_slug=member_slug)
 
-    # Post the reply. message.reply can fail if the original was deleted, the bot
-    # lacks Send Messages / Read Message History, or Discord HTTPs out — try a plain
-    # channel.send as a fallback so the user doesn't silently get nothing.
+    # Persist the reply intent before crossing Discord's API boundary. message.reply can fail if
+    # the original was deleted or permissions changed, so the provider attempt retains the
+    # channel.send fallback. An ambiguous provider failure is quarantined by the outbox; replaying
+    # this source message then returns the recorded message id instead of posting twice.
     text = reply[:config.MAX_DISCORD_LEN]
-    sent: discord.Message | None = None
-    try:
-        sent = await message.reply(text, mention_author=False)
-    except discord.HTTPException:
-        log.exception("message.reply failed in channel %s; trying channel.send", message.channel.id)
+    payload = {"channel_id": str(message.channel.id), "content": text,
+               "reply_to_message_id": str(message.id)}
+    row = outbox.enqueue(
+        kind="discord_reply",
+        payload=payload,
+        idempotency_key=f"discord:reply:{message.id}",
+    )
+
+    async def _deliver_reply() -> dict:
+        sent: discord.Message
         try:
-            sent = await message.channel.send(text)
+            sent = await message.reply(text, mention_author=False)
         except discord.HTTPException:
-            log.exception("channel.send also failed in %s — user got no reply", message.channel.id)
+            log.exception(
+                "message.reply failed in channel %s; trying channel.send", message.channel.id
+            )
+            sent = await message.channel.send(text)
+        return {"messageId": str(sent.id)}
+
+    delivery: dict | None = None
+    try:
+        delivery = await outbox.deliver_async(row, _deliver_reply)
+    except Exception:
+        log.exception("Discord reply delivery failed in %s", message.channel.id)
 
     # Record what we sent so on_raw_reaction_add can attribute 👍/👎 feedback
     # back to the question that triggered it.
-    if sent is not None:
+    if delivery and delivery.get("messageId"):
         db.log_response(
-            message_id=str(sent.id), channel_id=str(message.channel.id),
+            message_id=delivery["messageId"], channel_id=str(message.channel.id),
             speaker=message.author.display_name, question=question, reply=text,
         )
 

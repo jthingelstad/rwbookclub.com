@@ -1083,6 +1083,11 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                 subject=tool_input["subject"],
                 body=tool_input["body"],
                 cc=tool_input.get("cc"),
+                idempotency_key=(
+                    f"email:model:{ctx['source_message_id']}"
+                    if ctx.get("source_message_id") else None
+                ),
+                policy="model",
             )
             db.add_activity(
                 "email_sent",
@@ -1161,7 +1166,16 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             body = meeting_rules.reading_checkin_email_body(
                 member["name"], meeting, note=tool_input.get("note"))
             subject = f"Reading check-in: {title}"
-            sent = outbound.send(to=[email["email"]], subject=subject, body=body)
+            sent = outbound.send(
+                to=[email["email"]],
+                subject=subject,
+                body=body,
+                idempotency_key=(
+                    f"email:reading-tool:{ctx['source_message_id']}:{member['slug']}"
+                    if ctx.get("source_message_id") else None
+                ),
+                policy="linked_member",
+            )
             db.record_reading_request(meeting_id, member_id, surface="email")
             db.add_activity(
                 "email_sent",
@@ -1218,7 +1232,16 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
                     continue
                 subject = _roll_call_subject(status)
                 body = _roll_call_email_body(member.get("name") or member["slug"], status, note=note)
-                sent = outbound.send(to=[email["email"]], subject=subject, body=body)
+                sent = outbound.send(
+                    to=[email["email"]],
+                    subject=subject,
+                    body=body,
+                    idempotency_key=(
+                        f"email:roll-call-tool:{ctx['source_message_id']}:{member['slug']}"
+                        if ctx.get("source_message_id") else None
+                    ),
+                    policy="linked_member",
+                )
                 db.record_attendance_request(meeting_id, member_id, actor="oliver", surface="email")
                 db.add_activity(
                     "email_sent",

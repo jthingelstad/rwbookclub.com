@@ -113,7 +113,7 @@ def test_maybe_send_postscript_fires_once_in_window(monkeypatch, fresh_db):
                                              "offered": ["recent", "x"]})
     sent = []
 
-    async def fake_send(subject, body):
+    async def fake_send(subject, body, **_kwargs):
         sent.append((subject, body))
     monkeypatch.setattr(commands, "_send_club_email", fake_send)
 

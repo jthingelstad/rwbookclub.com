@@ -133,7 +133,8 @@ def next_candidate(slug: str) -> dict | None:
     return None
 
 
-def send_ask(slug: str, candidate: dict | None = None) -> dict | None:
+def send_ask(slug: str, candidate: dict | None = None, *,
+             idempotency_key: str | None = None) -> dict | None:
     """Send one review ask to `slug` (candidate auto-selected if not given). Creates the
     draft row + the review_requested ledger event. Returns {book, threadId} or None."""
     member = cr.find_member(slug)
@@ -155,7 +156,13 @@ def send_ask(slug: str, candidate: dict | None = None) -> dict | None:
                   ", but the club record has no written review from you. Would you write one? "
                   "Just reply to this email in your own words — a few sentences is a great "
                   "review, and I'll take care of recording it."))
-    sent = outbound.send(to=[rec["email"]], subject=f"Your review of {cand['title']}?", body=body)
+    sent = outbound.send(
+        to=[rec["email"]],
+        subject=f"Your review of {cand['title']}?",
+        body=body,
+        idempotency_key=idempotency_key,
+        policy="linked_member",
+    )
     # The rating is already an explicit, canonical member statement from the web app. Seed it
     # into the draft so the extraction turn cannot forget it merely because the member replies
     # with prose rather than repeating a number Oliver just quoted back to them.
@@ -195,7 +202,7 @@ def run(now) -> int:
     sent = 0
     for slug in sorted(slugs):
         try:
-            if send_ask(slug):
+            if send_ask(slug, idempotency_key=f"email:review-ask:{week}:{slug}"):
                 sent += 1
         except Exception:  # noqa: BLE001 — one member's failure must not block the rest
             log.exception("review ask failed for %s", slug)
@@ -294,6 +301,15 @@ def handle_reply(draft: dict, msg) -> bool:
     text = email_policy.current_message_text(getattr(msg, "text", "") or "")
     reply_kw = dict(to=[msg.from_email], subject=f"Re: {msg.subject}",
                     in_reply_to=msg.message_id, references=msg.references)
+    source_id = getattr(msg, "id", None) or msg.message_id
+
+    def _reply(body: str, action: str) -> dict:
+        return outbound.send(
+            body=body,
+            idempotency_key=f"email:review-reply:{source_id}:{action}",
+            policy="reply",
+            **reply_kw,
+        )
 
     def _finish(state: str, note: str) -> None:
         db.update_review_draft(draft["id"], state=state)
@@ -303,11 +319,11 @@ def handle_reply(draft: dict, msg) -> bool:
     if draft["state"] == "awaiting_confirm" and YES_RE.search(text):
         d = json.loads(draft["draft_json"] or "{}")
         result = _write(draft, d)
-        outbound.send(body=oliver.compose(
+        _reply(oliver.compose(
             "a one-or-two sentence warm thanks: their review is recorded and will be on the "
             "club site shortly", {"member": first, "book": book["title"]},
             fallback=f"Recorded — thanks, {first}! Your review of *{book['title']}* will be on "
-                     "the club site shortly."), **reply_kw)
+                     "the club site shortly."), "recorded")
         db.record_event(actor="member", kind="review_recorded", member_id=draft["member_id"],
                         surface="email", category="reading",
                         detail=json.dumps({"book_slug": draft["book_slug"]}))
@@ -316,7 +332,7 @@ def handle_reply(draft: dict, msg) -> bool:
 
     d0 = json.loads(draft["draft_json"] or "null")
     if draft["state"] == "awaiting_confirm" and NO_RE.search(text) and len(text) < 80:
-        outbound.send(body=f"No problem, {first} — I'll leave it be.", **reply_kw)
+        _reply(f"No problem, {first} — I'll leave it be.", "declined-confirmation")
         _finish("declined", "member declined at confirmation")
         return False
 
@@ -324,10 +340,9 @@ def handle_reply(draft: dict, msg) -> bool:
     if d is None:
         db.add_activity("warning", "Review extraction failed",
                         f"{book['title']}: unparseable extraction twice; parked.")
-        outbound.send(body=(f"I had trouble turning that into the record cleanly, {first} — "
-                            "mind finishing it in the web app? `/oliver my-club` in Discord "
-                            "gets you a link, and your email is safe with me meanwhile."),
-                      **reply_kw)
+        _reply((f"I had trouble turning that into the record cleanly, {first} — "
+                "mind finishing it in the web app? `/oliver my-club` in Discord "
+                "gets you a link, and your email is safe with me meanwhile."), "parked-extraction")
         _finish("parked", "extraction unparseable")
         return False
 
@@ -344,27 +359,27 @@ def handle_reply(draft: dict, msg) -> bool:
         db.add_memory("Prefers not to receive review-request emails",
                       scope="member", subject=(member or {}).get("slug"),
                       source="member_request")
-        outbound.send(body=f"Understood, {first} — no more review emails from me. "
-                           "The web app's always there if the mood ever strikes.", **reply_kw)
+        _reply(f"Understood, {first} — no more review emails from me. "
+               "The web app's always there if the mood ever strikes.", "optout")
         _finish("declined", "member opted out of review emails")
         return False
 
     if d.get("declined"):
-        outbound.send(body=f"Fair enough, {first} — skipping that one.", **reply_kw)
+        _reply(f"Fair enough, {first} — skipping that one.", "declined")
         _finish("declined", "member declined this book")
         return False
 
     rounds = draft["rounds"] + (1 if draft["state"] == "awaiting_confirm" else 0)
     if rounds > MAX_CORRECTION_ROUNDS:
-        outbound.send(body=(f"We're going in circles by email, {first} — easier hands-on: "
-                            "`/oliver my-club` in Discord opens the web app and your words so "
-                            "far are saved in this thread."), **reply_kw)
+        _reply((f"We're going in circles by email, {first} — easier hands-on: "
+                "`/oliver my-club` in Discord opens the web app and your words so "
+                "far are saved in this thread."), "parked-rounds")
         _finish("parked", "correction rounds exhausted")
         return False
 
     db.update_review_draft(draft["id"], state="awaiting_confirm",
                            draft_json=json.dumps(d), rounds=rounds)
-    outbound.send(body=_confirmation_body(first, book["title"], d), **reply_kw)
+    _reply(_confirmation_body(first, book["title"], d), f"confirmation-{rounds}")
     db.add_activity("review_drive", "Review draft awaiting confirmation",
                     f"{(member or {}).get('slug', '?')} / {book['title']} (round {rounds})")
     return False

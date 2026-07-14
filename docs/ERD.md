@@ -270,6 +270,7 @@ the club record by design — these are operational and disposable).
 | `proposals` | `id` | Staged admin-review actions (`kind`, `status`). |
 | `notifications_sent` | `key` | Scheduler dedup keys (e.g. `topic-email-{meetingKey}`). |
 | `activity_events` | `id` | Outbound activity-log queue → the Oliver-log webhook. |
+| `outbox_messages` | `id` (`idempotency_key` unique) | Durable email/Discord intent and delivery state; ambiguous attempts are quarantined. |
 | `usage_log` | `id` | Per-turn token/cost accounting (`model`, tokens, `rounds`). |
 | `book_cloud` | `id` (idx `title`, `created_at`) | Books the club mentions but hasn't read — who/when/why per mention (no dedupe). |
 | `job_state` | `key` | Cursors/watermarks for recurring jobs (weekly reflection, archive miners). |

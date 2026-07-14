@@ -18,8 +18,8 @@ import discord
 import requests
 from discord.ext import tasks
 
-from agent import (backup, clock, clubdb, config, context as kb, corpus_read, db, health, oliver,
-                   publish, reflection, scheduler, webapp)
+from agent import (backup, clock, clubdb, config, context as kb, corpus_read, db, delivery, health,
+                   oliver, outbox, publish, reflection, scheduler, webapp)
 from agent.enrich import loop as enrich_loop
 from agent.mail import email_jmap, mail_archive, outbound
 from agent.club import (meeting_campaign, meeting_emails, meeting_rules,
@@ -314,7 +314,8 @@ async def _roll_call_reminder(status: dict) -> str:
     )
 
 
-async def _send_roll_call_email_to_member(member: dict, status: dict) -> dict | None:
+async def _send_roll_call_email_to_member(member: dict, status: dict, *,
+                                          idempotency_key: str | None = None) -> dict | None:
     email = db.email_for_member(member["slug"])
     if not email:
         return None
@@ -351,6 +352,8 @@ async def _send_roll_call_email_to_member(member: dict, status: dict) -> dict | 
         to=[email["email"]],
         subject=subject,
         body=body,
+        idempotency_key=idempotency_key,
+        policy="linked_member",
     )
     await asyncio.to_thread(db.record_attendance_request, meeting_id, member_id,
                             actor="oliver", surface="email")
@@ -363,7 +366,8 @@ async def _send_roll_call_email_to_member(member: dict, status: dict) -> dict | 
 
 
 async def _send_reading_checkin_email_to_member(member: dict, meeting: dict,
-                                                *, note: str | None = None) -> dict | None:
+                                                *, note: str | None = None,
+                                                idempotency_key: str | None = None) -> dict | None:
     email = db.email_for_member(member["slug"])
     if not email:
         return None
@@ -395,6 +399,8 @@ async def _send_reading_checkin_email_to_member(member: dict, meeting: dict,
         to=[email["email"]],
         subject=subject,
         body=body,
+        idempotency_key=idempotency_key,
+        policy="linked_member",
     )
     await asyncio.to_thread(db.record_reading_request, meeting_id, member_id,
                             actor="oliver", surface="email")
@@ -435,10 +441,24 @@ async def _run_meeting_outreach(meeting: dict, status: dict) -> int:
             continue
         try:
             if cand["kind"] == "attendance":
-                sent = await _send_roll_call_email_to_member(member, status)
+                sent = await _send_roll_call_email_to_member(
+                    member,
+                    status,
+                    idempotency_key=(
+                        f"email:meeting-outreach:{meeting['meetingId']}:attendance:"
+                        f"{slug}:{cand['asksSoFar']}"
+                    ),
+                )
             else:
                 sent = await _send_reading_checkin_email_to_member(
-                    member, meeting, note="Automated reading check-in.")
+                    member,
+                    meeting,
+                    note="Automated reading check-in.",
+                    idempotency_key=(
+                        f"email:meeting-outreach:{meeting['meetingId']}:reading:"
+                        f"{slug}:{cand['asksSoFar']}"
+                    ),
+                )
         except Exception:
             log.exception("meeting outreach (%s) failed for %s", cand["kind"], slug)
             continue
@@ -480,7 +500,11 @@ async def _email_roll_call(interaction: discord.Interaction) -> None:
             missing.append(member["name"])
             continue
         try:
-            await _send_roll_call_email_to_member(member, status)
+            await _send_roll_call_email_to_member(
+                member,
+                status,
+                idempotency_key=f"email:manual-roll-call:{interaction.id}:{member['slug']}",
+            )
             sent.append(member["name"])
         except Exception:
             log.exception("roll-call email failed for %s", member["slug"])
@@ -672,7 +696,11 @@ async def release_notes_cmd(interaction: discord.Interaction, days: int | None =
         name = email.get("release_name") or None
         christened = f"\nChristened: *{name}*" if name else ""
         if target == "list":
-            await _send_club_email(email["subject"], email["body"])
+            await _send_club_email(
+                email["subject"],
+                email["body"],
+                idempotency_key=f"club-email:release-notes:{interaction.id}",
+            )
             db.add_activity("release_notes_sent", "Release notes sent",
                             f"Scope: {scope}\nTo: club mailing list\nSubject: {email['subject']}"
                             + (f"\nRelease name: {name}" if name else ""))
@@ -702,7 +730,13 @@ async def release_notes_cmd(interaction: discord.Interaction, days: int | None =
                     "(`to:list`) — or link an email first.", ephemeral=True)
                 return
             sent = await asyncio.to_thread(
-                outbound.send, to=[rec["email"]], subject=email["subject"], body=email["body"])
+                outbound.send,
+                to=[rec["email"]],
+                subject=email["subject"],
+                body=email["body"],
+                idempotency_key=f"email:release-notes-draft:{interaction.id}",
+                policy="linked_member",
+            )
             db.add_activity("release_notes_sent", "Release notes sent",
                             f"Scope: {scope}\nTo: {rec['email']} (admin)\nSubject: {email['subject']}\n"
                             f"Email ID: {sent.get('emailId')}")
@@ -748,7 +782,13 @@ async def postscript_cmd(interaction: discord.Interaction) -> None:
         # Self-only test send — to the admin's own linked email, never the club list. Bypasses the
         # flag/window/dedup and records no group event, so it can be re-run freely while iterating.
         sent = await asyncio.to_thread(
-            outbound.send, to=[rec["email"]], subject=email["subject"], body=email["body"])
+            outbound.send,
+            to=[rec["email"]],
+            subject=email["subject"],
+            body=email["body"],
+            idempotency_key=f"email:postscript-draft:{interaction.id}",
+            policy="linked_member",
+        )
     except Exception:
         log.exception("postscript send failed")
         await interaction.followup.send("I drafted Postscript but couldn't send the email.", ephemeral=True)
@@ -893,7 +933,12 @@ async def reading_checkin_cmd(interaction: discord.Interaction, member: str,
         return
     await interaction.response.defer(ephemeral=True)
     try:
-        sent = await _send_reading_checkin_email_to_member(m, meeting, note=note)
+        sent = await _send_reading_checkin_email_to_member(
+            m,
+            meeting,
+            note=note,
+            idempotency_key=f"email:manual-reading-checkin:{interaction.id}:{m['slug']}",
+        )
     except Exception:
         log.exception("reading-checkin email failed")
         await interaction.followup.send("I couldn't send that email.", ephemeral=True)
@@ -1123,7 +1168,15 @@ def _chunk(text: str, limit: int) -> list[str]:
     return out
 
 
-async def _send_club_email(subject: str, body: str) -> None:
+async def _send_discord(channel, content: str, *, idempotency_key: str) -> dict:
+    """Persist one proactive Discord post before crossing Discord's API boundary."""
+    payload = {"channel_id": str(channel.id), "content": content}
+    row = outbox.enqueue(kind="discord", payload=payload, idempotency_key=idempotency_key)
+    return await delivery.deliver_discord_row(row, channel)
+
+
+async def _send_club_email(subject: str, body: str, *,
+                           idempotency_key: str | None = None) -> None:
     """Send a club-wide cadence email to the mailing list and mirror it to Discord.
 
     This is the charter's "approved cadence path" — a direct send to the whole list,
@@ -1131,17 +1184,28 @@ async def _send_club_email(subject: str, body: str) -> None:
     emailed and Discord-mirrored copies match.
     """
     final = outbound.finalize(body)
+    base_key = outbox.stable_key(
+        "club-email",
+        {"subject": subject, "body": final},
+        explicit=idempotency_key,
+    )
     await asyncio.to_thread(
         outbound.send,
         to=[config.BOOK_CLUB_MAILING_LIST_ADDRESS],
         subject=subject,
         body=final,
         sign=False,  # already finalized above
+        idempotency_key=f"{base_key}:email",
+        policy="cadence",
     )
     main = _client.get_channel(config.MAIN_CHANNEL_ID) if config.MAIN_CHANNEL_ID else None
     if main is not None:
-        for chunk in _chunk(final, config.MAX_DISCORD_LEN):
-            await main.send(chunk)
+        for index, chunk in enumerate(_chunk(final, config.MAX_DISCORD_LEN)):
+            await _send_discord(
+                main,
+                chunk,
+                idempotency_key=f"{base_key}:discord:{index}",
+            )
 
 
 async def _maybe_send_postscript(now: datetime) -> int:
@@ -1158,7 +1222,11 @@ async def _maybe_send_postscript(now: datetime) -> int:
     if not (start + timedelta(days=7) <= now <= start + timedelta(days=10)):
         return 0
     email = await asyncio.to_thread(meeting_emails.postscript_email, recent)
-    await _send_club_email(email["subject"], email["body"])
+    await _send_club_email(
+        email["subject"],
+        email["body"],
+        idempotency_key=f"club-email:postscript:{meeting_id}",
+    )
     db.record_group_event(meeting_id, meeting_emails.POSTSCRIPT_KIND, actor="oliver",
                           surface="email", detail=json.dumps({"featured": email["offered"]}))
     db.add_activity("club_email_sent", "Postscript sent to the mailing list",
@@ -1178,6 +1246,10 @@ async def run_scheduler() -> int:
         return 0
     posted = 0
     now = _club_now()
+
+    # Recover delivery intents persisted before a crash, plus known-safe email retries. Ambiguous
+    # in-flight attempts are quarantined by the outbox and are deliberately absent from this drain.
+    posted += await delivery.drain(_client)
 
     # 0. Self-heal the deployed site if it doesn't reflect the current next book (a lost deferred
     # publish, or a meeting rollover). Runs on startup (first tick) + hourly — no human needed.
@@ -1244,7 +1316,11 @@ async def run_scheduler() -> int:
             msg = await asyncio.to_thread(
                 oliver.compose, note.kind, note.facts, fallback=note.fallback
             )
-            await main.send(msg)
+            await _send_discord(
+                main,
+                msg,
+                idempotency_key=f"discord:notification:{note.key}",
+            )
             db.mark_sent(note.key)
             posted += 1
 
@@ -1291,7 +1367,11 @@ async def run_scheduler() -> int:
                     },
                     fallback="⚠️ Attendance may need attention.\n\n" + meeting_rules.format_status(status),
                 )
-                await main.send(alert)
+                await _send_discord(
+                    main,
+                    alert,
+                    idempotency_key=f"discord:attendance-alert:{meeting_id}",
+                )
                 db.record_group_event(meeting_id, "attendance_alert_sent", actor="oliver",
                                       surface="discord")
                 db.add_activity(
@@ -1310,7 +1390,11 @@ async def run_scheduler() -> int:
                 if (meeting_dt - timedelta(days=7) <= now <= meeting_dt
                         and not db.has_group_event(meeting_id, "week_reminder_sent")):
                     email = await asyncio.to_thread(meeting_emails.week_reminder, meeting, status)
-                    await _send_club_email(email["subject"], email["body"])
+                    await _send_club_email(
+                        email["subject"],
+                        email["body"],
+                        idempotency_key=f"club-email:week-reminder:{meeting_id}",
+                    )
                     db.record_group_event(meeting_id, "week_reminder_sent", actor="oliver",
                                           surface="email")
                     db.add_activity("club_email_sent", "1-week reminder sent to the mailing list",
@@ -1319,7 +1403,11 @@ async def run_scheduler() -> int:
                 if (meeting_dt - timedelta(days=2) <= now <= meeting_dt
                         and not db.has_group_event(meeting_id, "briefing_sent")):
                     email = await asyncio.to_thread(meeting_emails.topic_email, meeting)
-                    await _send_club_email(email["subject"], email["body"])
+                    await _send_club_email(
+                        email["subject"],
+                        email["body"],
+                        idempotency_key=f"club-email:briefing:{meeting_id}",
+                    )
                     db.record_group_event(meeting_id, "briefing_sent", actor="oliver",
                                           surface="email")
                     db.add_activity("club_email_sent", "2-day topic email sent to the mailing list",
@@ -1344,7 +1432,11 @@ async def run_scheduler() -> int:
         if r.get("created_by"):
             msg += f"\n_(set by {r['created_by']})_"
         try:
-            await target.send(msg)
+            await _send_discord(
+                target,
+                msg,
+                idempotency_key=f"discord:reminder:{r['id']}",
+            )
             db.mark_reminder_fired(r["id"])
             db.add_activity(
                 "reminder_sent",
@@ -1352,8 +1444,8 @@ async def run_scheduler() -> int:
                 f"Reminder ID: {r['id']}\nChannel: {target_id}\nText: {r['text'][:500]}",
             )
             posted += 1
-        except discord.HTTPException:
-            log.exception("Failed to post reminder %s; will retry next tick", r["id"])
+        except (discord.HTTPException, outbox.OutboxError):
+            log.exception("Failed to post reminder %s; delivery was not confirmed", r["id"])
 
     return posted
 

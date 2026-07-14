@@ -229,6 +229,29 @@ CREATE TABLE IF NOT EXISTS activity_events (
 );
 CREATE INDEX IF NOT EXISTS idx_activity_events_status ON activity_events(status, id);
 
+CREATE TABLE IF NOT EXISTS outbox_messages (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    idempotency_key TEXT NOT NULL UNIQUE,
+    kind            TEXT NOT NULL,                 -- email | discord
+    payload_json    TEXT NOT NULL,
+    status          TEXT NOT NULL DEFAULT 'pending',
+                    -- pending | claimed | delivering | retry | delivered | uncertain | dead
+    attempts        INTEGER NOT NULL DEFAULT 0,
+    max_attempts    INTEGER NOT NULL DEFAULT 5,
+    available_at    TEXT NOT NULL,
+    lease_owner     TEXT,
+    lease_expires_at TEXT,
+    provider_ref_json TEXT,
+    last_error      TEXT,
+    created_at      TEXT NOT NULL,
+    updated_at      TEXT NOT NULL,
+    delivered_at    TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_outbox_status_available
+    ON outbox_messages(status, available_at, id);
+CREATE INDEX IF NOT EXISTS idx_outbox_lease
+    ON outbox_messages(status, lease_expires_at);
+
 -- The club's append-only event log / timeline. Both member_id and meeting_id are NULLABLE:
 -- a member+meeting event is meeting ops; a member-only event is a life event; an untagged event
 -- is a club happening. `occurred_at` = when it happened/will happen (timeline), `created_at` = when
@@ -2562,3 +2585,153 @@ def mark_activity_failed(activity_id: int, error: str, *, max_attempts: int = 5,
             "next_attempt_at = ? WHERE id = ?",
             (status, attempts, error[:500], next_attempt_at, activity_id),
         )
+
+
+# ── Durable outbound effects ─────────────────────────────────────────────────
+def enqueue_outbox(*, idempotency_key: str, kind: str, payload_json: str,
+                   max_attempts: int = 5) -> dict:
+    now = _now()
+    with connect() as conn:
+        conn.execute(
+            "INSERT OR IGNORE INTO outbox_messages "
+            "(idempotency_key, kind, payload_json, max_attempts, available_at, created_at, updated_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (idempotency_key, kind, payload_json, max(1, int(max_attempts)), now, now, now),
+        )
+        row = conn.execute(
+            "SELECT * FROM outbox_messages WHERE idempotency_key = ?", (idempotency_key,)
+        ).fetchone()
+        if row and (row["kind"] != kind or row["payload_json"] != payload_json):
+            raise ValueError("outbox idempotency key was reused with a different payload")
+    return dict(row)
+
+
+def outbox_by_key(idempotency_key: str) -> dict | None:
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT * FROM outbox_messages WHERE idempotency_key = ?", (idempotency_key,)
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def pending_outbox(*, limit: int = 20, now: str | None = None) -> list[dict]:
+    now = now or _now()
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT * FROM outbox_messages "
+            "WHERE status IN ('pending', 'retry') AND available_at <= ? "
+            "ORDER BY available_at, id LIMIT ?",
+            (now, max(1, min(int(limit), 100))),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def claim_outbox(idempotency_key: str, *, worker_id: str, lease_expires_at: str,
+                 now: str | None = None) -> dict | None:
+    now = now or _now()
+    with connect() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        row = conn.execute(
+            "SELECT * FROM outbox_messages WHERE idempotency_key = ?", (idempotency_key,)
+        ).fetchone()
+        eligible = bool(row and (
+            (row["status"] in {"pending", "retry"} and row["available_at"] <= now)
+            or (row["status"] == "claimed" and (row["lease_expires_at"] or "") <= now)
+        ))
+        if not eligible:
+            return None
+        conn.execute(
+            "UPDATE outbox_messages SET status='claimed', attempts=attempts+1, lease_owner=?, "
+            "lease_expires_at=?, updated_at=? WHERE id=?",
+            (worker_id, lease_expires_at, now, row["id"]),
+        )
+        claimed = conn.execute(
+            "SELECT * FROM outbox_messages WHERE id = ?", (row["id"],)
+        ).fetchone()
+    return dict(claimed)
+
+
+def mark_outbox_delivering(outbox_id: int, *, worker_id: str, now: str | None = None) -> bool:
+    now = now or _now()
+    with connect() as conn:
+        cur = conn.execute(
+            "UPDATE outbox_messages SET status='delivering', updated_at=? "
+            "WHERE id=? AND status='claimed' AND lease_owner=?",
+            (now, outbox_id, worker_id),
+        )
+    return cur.rowcount > 0
+
+
+def mark_outbox_delivered(outbox_id: int, *, worker_id: str, provider_ref_json: str,
+                          now: str | None = None) -> bool:
+    now = now or _now()
+    with connect() as conn:
+        cur = conn.execute(
+            "UPDATE outbox_messages SET status='delivered', provider_ref_json=?, delivered_at=?, "
+            "updated_at=?, lease_owner=NULL, lease_expires_at=NULL, last_error=NULL "
+            "WHERE id=? AND status='delivering' AND lease_owner=?",
+            (provider_ref_json, now, now, outbox_id, worker_id),
+        )
+    return cur.rowcount > 0
+
+
+def mark_outbox_retry(outbox_id: int, *, worker_id: str, error: str, available_at: str,
+                      now: str | None = None) -> str | None:
+    now = now or _now()
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT attempts, max_attempts FROM outbox_messages "
+            "WHERE id=? AND status='delivering' AND lease_owner=?",
+            (outbox_id, worker_id),
+        ).fetchone()
+        if not row:
+            return None
+        status = "dead" if row["attempts"] >= row["max_attempts"] else "retry"
+        conn.execute(
+            "UPDATE outbox_messages SET status=?, available_at=?, last_error=?, updated_at=?, "
+            "lease_owner=NULL, lease_expires_at=NULL WHERE id=?",
+            (status, available_at, error[:500], now, outbox_id),
+        )
+    return status
+
+
+def mark_outbox_uncertain(outbox_id: int, *, worker_id: str, error: str,
+                          now: str | None = None) -> bool:
+    now = now or _now()
+    with connect() as conn:
+        cur = conn.execute(
+            "UPDATE outbox_messages SET status='uncertain', last_error=?, updated_at=?, "
+            "lease_owner=NULL, lease_expires_at=NULL "
+            "WHERE id=? AND status='delivering' AND lease_owner=?",
+            (error[:500], now, outbox_id, worker_id),
+        )
+    return cur.rowcount > 0
+
+
+def recover_expired_outbox(*, now: str | None = None) -> dict:
+    """Recover safe pre-send claims and quarantine ambiguous in-flight deliveries."""
+    now = now or _now()
+    with connect() as conn:
+        claimed = conn.execute(
+            "UPDATE outbox_messages SET status='retry', available_at=?, updated_at=?, "
+            "lease_owner=NULL, lease_expires_at=NULL, "
+            "last_error=COALESCE(last_error, 'worker lease expired before provider attempt') "
+            "WHERE status='claimed' AND lease_expires_at <= ?",
+            (now, now, now),
+        ).rowcount
+        uncertain = conn.execute(
+            "UPDATE outbox_messages SET status='uncertain', updated_at=?, lease_owner=NULL, "
+            "lease_expires_at=NULL, "
+            "last_error=COALESCE(last_error, 'worker lease expired during provider attempt') "
+            "WHERE status='delivering' AND lease_expires_at <= ?",
+            (now, now),
+        ).rowcount
+    return {"retry": claimed, "uncertain": uncertain}
+
+
+def outbox_status_counts() -> dict[str, int]:
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT status, COUNT(*) AS n FROM outbox_messages GROUP BY status"
+        ).fetchall()
+    return {row["status"]: row["n"] for row in rows}

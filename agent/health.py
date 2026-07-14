@@ -55,6 +55,7 @@ def snapshot() -> dict:
         "memories": db.count_memories(),
         "reflectionRanAt": (db.get_job_state("reflection") or {}).get("ran_at", "")[:10] or "never",
         "enrichSweep": db.get_job_state("enrichment_sweep") or {},
+        "outbox": db.outbox_status_counts(),
         "nextMeeting": (meeting.get("book") or {}).get("title"),
         "daysToMeeting": days_out,
         "release": (db.current_release() or {}).get("name") or "unnamed",
@@ -63,7 +64,9 @@ def snapshot() -> dict:
 
 def digest_email(facts: dict) -> tuple[str, str]:
     today = meeting_rules.friendly_date(clock.club_today_iso())
-    ok = facts["warnings7d"] == 0 and (facts["backupAgeDays"] is not None and facts["backupAgeDays"] <= 1)
+    delivery_alerts = facts["outbox"].get("uncertain", 0) + facts["outbox"].get("dead", 0)
+    ok = (facts["warnings7d"] == 0 and not delivery_alerts
+          and (facts["backupAgeDays"] is not None and facts["backupAgeDays"] <= 1))
     opener = oliver.compose(
         "one or two sentences opening your weekly health report to Jamie — your own status, "
         "in your voice, honest about the headline (all quiet, or something needs a look)",
@@ -77,6 +80,11 @@ def digest_email(facts: dict) -> tuple[str, str]:
         + (" ⚠️" if (99 if facts["backupAgeDays"] is None else facts["backupAgeDays"]) > 1 else " ✓"),
         f"- **Warnings (7d)**: {facts['warnings7d']}"
         + (" ✓" if not facts["warnings7d"] else " ⚠️ — " + "; ".join(facts["recentWarnings"])),
+        f"- **Outbox**: {facts['outbox'].get('pending', 0)} pending · "
+        f"{facts['outbox'].get('retry', 0)} retrying · "
+        f"{facts['outbox'].get('uncertain', 0)} uncertain · "
+        f"{facts['outbox'].get('dead', 0)} dead"
+        + (" ✓" if not delivery_alerts else " ⚠️"),
         f"- **Database**: {facts['dbMB']} MB · {facts['memories']} active memories · "
         f"last reflection {facts['reflectionRanAt']}",
         f"- **Usage (7d)**: ~{facts['kTokens7d']}k tokens",
@@ -107,7 +115,13 @@ def run(now) -> bool:
         log.warning("health digest: no admin email linked; skipping")
         return False
     subject, body = digest_email(snapshot())
-    outbound.send(to=[rec["email"]], subject=subject, body=body)
+    outbound.send(
+        to=[rec["email"]],
+        subject=subject,
+        body=body,
+        idempotency_key=f"email:health:{week}",
+        policy="linked_member",
+    )
     db.set_job_state(JOB_KEY, {"week": week, "sent_at": db._now()})
     log.info("health digest sent to admin (%s)", week)
     return True
