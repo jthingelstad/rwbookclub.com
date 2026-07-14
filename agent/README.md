@@ -79,7 +79,10 @@ agent/
   notes to `DISCORD_MAIN_CHANNEL_ID` — deduped, and a no-op until that channel id is set.
   Once a member confirms attendance, Oliver may email reading-status check-ins at most three
   times before the meeting: first in the 14-day window, second in the 7-day window, and final
-  in the 2-day window, with at least two days between automated asks.
+  in the 2-day window, with at least two days between automated asks. A persistent renewable
+  lease prevents overlapping hourly/manual ticks; recurring components also record start/end,
+  outcome, duration, processed count, and privacy-safe error class in `job_runs`. Inspect current
+  owners, expiry, last success/failure, and overdue state with `python -m agent.jobs status`.
 - **Email** (`email_jmap.py` + `bot.py`): optional Fastmail JMAP integration. Oliver sends HTML
   plus plain-text alternative mail from
   `OLIVER_EMAIL_ADDRESS`, polls only `Inbox/Oliver` for unread mail, replies through the normal

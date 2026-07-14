@@ -252,6 +252,31 @@ CREATE INDEX IF NOT EXISTS idx_outbox_status_available
 CREATE INDEX IF NOT EXISTS idx_outbox_lease
     ON outbox_messages(status, lease_expires_at);
 
+CREATE TABLE IF NOT EXISTS job_leases (
+    job_name        TEXT PRIMARY KEY,
+    lease_owner     TEXT,
+    lease_expires_at TEXT,
+    acquired_at     TEXT,
+    updated_at      TEXT NOT NULL,
+    expected_interval_seconds INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS job_runs (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_name        TEXT NOT NULL,
+    lease_owner     TEXT NOT NULL,
+    started_at      TEXT NOT NULL,
+    finished_at     TEXT,
+    outcome         TEXT NOT NULL DEFAULT 'running',
+    duration_ms     INTEGER,
+    processed_count INTEGER NOT NULL DEFAULT 0,
+    error           TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_job_runs_job_started
+    ON job_runs(job_name, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_job_runs_outcome
+    ON job_runs(outcome, finished_at DESC);
+
 -- The club's append-only event log / timeline. Both member_id and meeting_id are NULLABLE:
 -- a member+meeting event is meeting ops; a member-only event is a life event; an untagged event
 -- is a club happening. `occurred_at` = when it happened/will happen (timeline), `created_at` = when
@@ -2735,3 +2760,130 @@ def outbox_status_counts() -> dict[str, int]:
             "SELECT status, COUNT(*) AS n FROM outbox_messages GROUP BY status"
         ).fetchall()
     return {row["status"]: row["n"] for row in rows}
+
+
+# ── Scheduled-job leases and run ledger ─────────────────────────────────────
+def begin_job_run(job_name: str, *, lease_owner: str, lease_expires_at: str,
+                  expected_interval_seconds: int, now: str | None = None) -> dict | None:
+    """Atomically acquire a job lease and open its run row; None means another owner is active."""
+    now = now or _now()
+    with connect() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        lease = conn.execute(
+            "SELECT * FROM job_leases WHERE job_name=?", (job_name,)
+        ).fetchone()
+        if (lease and lease["lease_owner"]
+                and (lease["lease_expires_at"] or "") > now):
+            return None
+        if lease and lease["lease_owner"]:
+            # A dead worker's run is made terminal before takeover. The error is deliberately a
+            # fixed code: no member content or provider payload reaches the operational ledger.
+            conn.execute(
+                "UPDATE job_runs SET outcome='abandoned', finished_at=?, "
+                "duration_ms=CAST(MAX(0, (julianday(?) - julianday(started_at)) * 86400000) AS INT), "
+                "error='lease_expired' WHERE job_name=? AND lease_owner=? AND outcome='running'",
+                (now, now, job_name, lease["lease_owner"]),
+            )
+        conn.execute(
+            "INSERT INTO job_leases "
+            "(job_name, lease_owner, lease_expires_at, acquired_at, updated_at, "
+            "expected_interval_seconds) VALUES (?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(job_name) DO UPDATE SET lease_owner=excluded.lease_owner, "
+            "lease_expires_at=excluded.lease_expires_at, acquired_at=excluded.acquired_at, "
+            "updated_at=excluded.updated_at, "
+            "expected_interval_seconds=excluded.expected_interval_seconds",
+            (job_name, lease_owner, lease_expires_at, now, now,
+             max(1, int(expected_interval_seconds))),
+        )
+        cur = conn.execute(
+            "INSERT INTO job_runs (job_name, lease_owner, started_at) VALUES (?, ?, ?)",
+            (job_name, lease_owner, now),
+        )
+    return {"run_id": cur.lastrowid, "job_name": job_name, "lease_owner": lease_owner,
+            "started_at": now, "lease_expires_at": lease_expires_at}
+
+
+def renew_job_lease(job_name: str, *, lease_owner: str, lease_expires_at: str,
+                    now: str | None = None) -> bool:
+    now = now or _now()
+    with connect() as conn:
+        cur = conn.execute(
+            "UPDATE job_leases SET lease_expires_at=?, updated_at=? "
+            "WHERE job_name=? AND lease_owner=?",
+            (lease_expires_at, now, job_name, lease_owner),
+        )
+    return cur.rowcount > 0
+
+
+def finish_job_run(run_id: int, *, job_name: str, lease_owner: str, outcome: str,
+                   duration_ms: int, processed_count: int = 0, error: str | None = None,
+                   now: str | None = None) -> bool:
+    if outcome not in {"succeeded", "failed"}:
+        raise ValueError("job outcome must be succeeded or failed")
+    now = now or _now()
+    with connect() as conn:
+        cur = conn.execute(
+            "UPDATE job_runs SET finished_at=?, outcome=?, duration_ms=?, processed_count=?, "
+            "error=? WHERE id=? AND job_name=? AND lease_owner=? AND outcome='running'",
+            (now, outcome, max(0, int(duration_ms)), max(0, int(processed_count)),
+             (error or "")[:120] or None, run_id, job_name, lease_owner),
+        )
+        if cur.rowcount:
+            conn.execute(
+                "UPDATE job_leases SET lease_owner=NULL, lease_expires_at=NULL, updated_at=? "
+                "WHERE job_name=? AND lease_owner=?",
+                (now, job_name, lease_owner),
+            )
+    return cur.rowcount > 0
+
+
+def job_run(run_id: int) -> dict | None:
+    with connect() as conn:
+        row = conn.execute("SELECT * FROM job_runs WHERE id=?", (run_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def job_statuses(*, now: str | None = None) -> list[dict]:
+    """Operational-only job status. Contains names/timestamps/error classes, never job payloads."""
+    now = now or _now()
+    now_dt = datetime.fromisoformat(now)
+    with connect() as conn:
+        leases = conn.execute("SELECT * FROM job_leases ORDER BY job_name").fetchall()
+        out = []
+        for lease in leases:
+            success = conn.execute(
+                "SELECT finished_at, duration_ms, processed_count FROM job_runs "
+                "WHERE job_name=? AND outcome='succeeded' ORDER BY id DESC LIMIT 1",
+                (lease["job_name"],),
+            ).fetchone()
+            failure = conn.execute(
+                "SELECT finished_at, outcome, error FROM job_runs "
+                "WHERE job_name=? AND outcome IN ('failed','abandoned') "
+                "ORDER BY id DESC LIMIT 1",
+                (lease["job_name"],),
+            ).fetchone()
+            last_success = success["finished_at"] if success else None
+            overdue = True
+            if last_success:
+                overdue = (now_dt - datetime.fromisoformat(last_success)).total_seconds() > int(
+                    lease["expected_interval_seconds"]
+                )
+            active = bool(
+                lease["lease_owner"] and (lease["lease_expires_at"] or "") > now
+            )
+            if active:
+                overdue = False
+            out.append({
+                "job_name": lease["job_name"],
+                "last_success": last_success,
+                "last_duration_ms": success["duration_ms"] if success else None,
+                "last_processed_count": success["processed_count"] if success else None,
+                "last_failure": failure["finished_at"] if failure else None,
+                "last_failure_outcome": failure["outcome"] if failure else None,
+                "last_error": failure["error"] if failure else None,
+                "lease_owner": lease["lease_owner"] if active else None,
+                "lease_expires_at": lease["lease_expires_at"] if active else None,
+                "expected_interval_seconds": lease["expected_interval_seconds"],
+                "overdue": overdue,
+            })
+    return out

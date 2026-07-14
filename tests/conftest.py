@@ -110,7 +110,7 @@ def fresh_db():
         "usage_log", "notifications_sent", "responses", "feedback",
         "member_identities", "events", "meeting_member_status", "proposals",
         "inbound_emails", "webapp_tokens", "review_drafts",
-        "activity_events", "outbox_messages",
+        "activity_events", "outbox_messages", "job_runs", "job_leases",
         "mail_message_fts", "mail_messages", "mail_threads",
     ]
     with _db.connect() as conn:

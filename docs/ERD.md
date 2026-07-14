@@ -274,6 +274,8 @@ the club record by design — these are operational and disposable).
 | `usage_log` | `id` | Per-turn token/cost accounting (`model`, tokens, `rounds`). |
 | `book_cloud` | `id` (idx `title`, `created_at`) | Books the club mentions but hasn't read — who/when/why per mention (no dedupe). |
 | `job_state` | `key` | Cursors/watermarks for recurring jobs (weekly reflection, archive miners). |
+| `job_leases` | `job_name` | Renewable single-owner lease and expected check interval for each scheduled job. |
+| `job_runs` | `id` (idx `job_name`, `started_at`) | Privacy-safe scheduler run ledger: outcome, duration, count, and error class. |
 | `webapp_tokens` | `token` | Single-use web-app login tokens (minted by /oliver my-club, consumed on first tap). |
 
 ---

@@ -19,7 +19,7 @@ import requests
 from discord.ext import tasks
 
 from agent import (backup, clock, clubdb, config, context as kb, corpus_read, db, delivery, health,
-                   oliver, outbox, publish, reflection, scheduler, webapp)
+                   jobs, oliver, outbox, publish, reflection, scheduler, webapp)
 from agent.enrich import loop as enrich_loop
 from agent.mail import email_jmap, mail_archive, outbound
 from agent.club import (meeting_campaign, meeting_emails, meeting_rules,
@@ -626,6 +626,7 @@ async def oliver_status(interaction: discord.Interaction) -> None:
     memories = await asyncio.to_thread(db.count_memories)
     reflected = db.get_job_state("reflection") or {}  # 'ran_at' stamped by each reflection pass
     proposals = await asyncio.to_thread(db.list_proposals, 10)
+    job_rows = await asyncio.to_thread(jobs.status)
     lines = [
         release_line,
         f"**Models:** chat {oliver.MODEL} · generate {oliver.OPUS_MODEL}",
@@ -633,8 +634,12 @@ async def oliver_status(interaction: discord.Interaction) -> None:
         f"**Memory:** {memories} active memories · last reflection "
         f"{(reflected.get('ran_at') or 'never')[:10]}",
         f"**Proposals pending:** {len(proposals)}",
+        "**Scheduled jobs:**",
+        *jobs.format_status(job_rows).splitlines(),
     ]
-    await interaction.response.send_message("\n".join(lines), ephemeral=True)
+    await interaction.response.send_message(
+        "\n".join(lines)[:config.MAX_DISCORD_LEN], ephemeral=True
+    )
 
 
 @admin_cmds.command(name="release-notes",
@@ -1234,7 +1239,17 @@ async def _maybe_send_postscript(now: datetime) -> int:
     return 1
 
 
-async def run_scheduler() -> int:
+async def _scheduled_job(name: str, work) -> object | None:
+    """Run one scheduler component under its own observable renewable lease."""
+    try:
+        result = await jobs.run(name, work)
+    except Exception:
+        log.exception("scheduled job %s failed", name)
+        return None
+    return result.value if result.executed else None
+
+
+async def _run_scheduler_unleased() -> int:
     """Post anything due to its target channel; returns the count posted.
 
     Two sources:
@@ -1249,62 +1264,64 @@ async def run_scheduler() -> int:
 
     # Recover delivery intents persisted before a crash, plus known-safe email retries. Ambiguous
     # in-flight attempts are quarantined by the outbox and are deliberately absent from this drain.
-    posted += await delivery.drain(_client)
+    delivered = await _scheduled_job("outbox_delivery", lambda: delivery.drain(_client))
+    posted += int(delivered or 0)
 
     # 0. Self-heal the deployed site if it doesn't reflect the current next book (a lost deferred
     # publish, or a meeting rollover). Runs on startup (first tick) + hourly — no human needed.
-    try:
-        await ensure_site_reflects_next_book()
-    except Exception:
-        log.exception("site self-heal check failed")
+    await _scheduled_job("site_reconcile", ensure_site_reflects_next_book)
 
     # 0a2. Daily off-machine backup (iCloud Drive). Date-gated inside run(), so it fires on the
     # first tick of each club-local day — whenever the Mac happens to be awake — and no-ops the
     # rest. Failures post to #oliver-log from inside run(); never let it break the tick.
-    try:
-        await asyncio.to_thread(backup.run)
-    except Exception:
-        log.exception("offsite backup step failed")
+    async def _backup_job() -> int:
+        return int(bool(await asyncio.to_thread(backup.run)))
+
+    await _scheduled_job("offsite_backup", _backup_job)
 
     # 0a3. Daily enrichment sweep: new books/authors get enriched, incomplete rows retry with a
     # capped attempt count (exhausted rows are flagged to #oliver-log and parked). Date-gated
     # like the backup; network failures abort quietly inside run_pending and retry tomorrow.
-    if config.ENRICH_SWEEP_ENABLED and (db.get_job_state("enrichment_sweep") or {}).get("date") != clock.club_today_iso():
-        try:
-            summary = await asyncio.to_thread(enrich_loop.run_pending, limit=config.ENRICH_SWEEP_LIMIT)
-            db.set_job_state("enrichment_sweep", {"date": clock.club_today_iso(), **{
-                k: v for k, v in summary.items() if k != "exhausted"},
-                "exhausted": len(summary["exhausted"])})
-            if summary["enriched"] or summary["retried"]:
-                log.info("enrichment sweep: %s", summary)
-                schedule_publish()  # new synopses/bios/covers should reach the site
-        except Exception:
-            log.exception("enrichment sweep failed")
+    async def _enrichment_job() -> int:
+        if (not config.ENRICH_SWEEP_ENABLED
+                or (db.get_job_state("enrichment_sweep") or {}).get("date")
+                == clock.club_today_iso()):
+            return 0
+        summary = await asyncio.to_thread(
+            enrich_loop.run_pending, limit=config.ENRICH_SWEEP_LIMIT
+        )
+        db.set_job_state("enrichment_sweep", {"date": clock.club_today_iso(), **{
+            k: v for k, v in summary.items() if k != "exhausted"},
+            "exhausted": len(summary["exhausted"])})
+        if summary["enriched"] or summary["retried"]:
+            log.info("enrichment sweep: %s", summary)
+            schedule_publish()  # new synopses/bios/covers should reach the site
+        return summary["enriched"] + summary["retried"]
+
+    await _scheduled_job("enrichment_sweep", _enrichment_job)
 
     # 0a4. Weekly review drive (Wednesday morning): ask each allowlisted member for ONE written
     # review of a book they rated but never wrote up. All gating inside review_drive.run().
-    try:
-        await asyncio.to_thread(review_drive.run, now)
-    except Exception:
-        log.exception("review drive failed")
+    await _scheduled_job(
+        "review_drive", lambda: asyncio.to_thread(review_drive.run, now)
+    )
 
     # 0a5. Weekly health digest to the admin (Monday morning): inverted alarming — the missing
     # email is the alarm. All gating inside health.run().
-    try:
-        await asyncio.to_thread(health.run, now)
-    except Exception:
-        log.exception("health digest failed")
+    await _scheduled_job("health_digest", lambda: asyncio.to_thread(health.run, now))
 
     # 0b. Weekly reflective memory (Sunday early morning): distill the week's conversations into
     # durable member memories. Internal + audited in #oliver-log. The hourly loop ticks once inside
     # the gate hour; if a restart double-fires it, the advanced watermark makes the second run a
     # quiet no-op — and a failed run keeps its watermark so it retries next week.
-    if (config.OLIVER_REFLECTION_ENABLED and now.weekday() == REFLECTION_WEEKDAY
-            and now.hour == REFLECTION_HOUR):
-        try:
-            await asyncio.to_thread(reflection.run)
-        except Exception:
-            log.exception("weekly reflection failed")
+    async def _reflection_job() -> int:
+        if not (config.OLIVER_REFLECTION_ENABLED and now.weekday() == REFLECTION_WEEKDAY
+                and now.hour == REFLECTION_HOUR):
+            return 0
+        summary = await asyncio.to_thread(reflection.run)
+        return int(summary.get("members") or 0)
+
+    await _scheduled_job("reflection", _reflection_job)
 
     # 1. Corpus-derived notifications → main channel.
     main = _client.get_channel(config.MAIN_CHANNEL_ID) if config.MAIN_CHANNEL_ID else None
@@ -1448,6 +1465,12 @@ async def run_scheduler() -> int:
             log.exception("Failed to post reminder %s; delivery was not confirmed", r["id"])
 
     return posted
+
+
+async def run_scheduler() -> int:
+    """Run one scheduler tick under a top-level lease; overlapping/manual ticks no-op safely."""
+    result = await jobs.run("scheduler_tick", _run_scheduler_unleased)
+    return int(result.value or 0) if result.executed else 0
 
 
 # Hourly, not daily: corpus-derived notifications are deduped by key

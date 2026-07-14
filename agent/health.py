@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 
-from agent import clock, config, db, oliver
+from agent import clock, config, db, jobs, oliver
 from agent.club import meeting_rules
 from agent.mail import outbound
 
@@ -47,6 +47,13 @@ def snapshot() -> dict:
             days_out = (date.fromisoformat(meeting["date"]) - clock.club_today()).days
         except (ValueError, TypeError):
             pass
+    job_rows = jobs.status()
+    overdue_jobs = [row["job_name"] for row in job_rows if row["overdue"]]
+    failed_jobs = [
+        row["job_name"] for row in job_rows
+        if row["last_failure"]
+        and (not row["last_success"] or row["last_failure"] > row["last_success"])
+    ]
     return {
         "backupFile": backup.get("file"), "backupAgeDays": backup_age,
         "dbMB": round(db.DB_PATH.stat().st_size / 1e6, 1) if db.DB_PATH.exists() else None,
@@ -56,6 +63,8 @@ def snapshot() -> dict:
         "reflectionRanAt": (db.get_job_state("reflection") or {}).get("ran_at", "")[:10] or "never",
         "enrichSweep": db.get_job_state("enrichment_sweep") or {},
         "outbox": db.outbox_status_counts(),
+        "jobs": {"total": len(job_rows), "overdue": overdue_jobs, "failed": failed_jobs,
+                 "active": sum(bool(row["lease_owner"]) for row in job_rows)},
         "nextMeeting": (meeting.get("book") or {}).get("title"),
         "daysToMeeting": days_out,
         "release": (db.current_release() or {}).get("name") or "unnamed",
@@ -65,7 +74,8 @@ def snapshot() -> dict:
 def digest_email(facts: dict) -> tuple[str, str]:
     today = meeting_rules.friendly_date(clock.club_today_iso())
     delivery_alerts = facts["outbox"].get("uncertain", 0) + facts["outbox"].get("dead", 0)
-    ok = (facts["warnings7d"] == 0 and not delivery_alerts
+    job_alerts = len(facts["jobs"]["overdue"]) + len(facts["jobs"]["failed"])
+    ok = (facts["warnings7d"] == 0 and not delivery_alerts and not job_alerts
           and (facts["backupAgeDays"] is not None and facts["backupAgeDays"] <= 1))
     opener = oliver.compose(
         "one or two sentences opening your weekly health report to Jamie — your own status, "
@@ -85,6 +95,10 @@ def digest_email(facts: dict) -> tuple[str, str]:
         f"{facts['outbox'].get('uncertain', 0)} uncertain · "
         f"{facts['outbox'].get('dead', 0)} dead"
         + (" ✓" if not delivery_alerts else " ⚠️"),
+        f"- **Scheduler jobs**: {facts['jobs']['total']} tracked · "
+        f"{len(facts['jobs']['overdue'])} overdue · {len(facts['jobs']['failed'])} failed · "
+        f"{facts['jobs']['active']} active"
+        + (" ✓" if not job_alerts else " ⚠️"),
         f"- **Database**: {facts['dbMB']} MB · {facts['memories']} active memories · "
         f"last reflection {facts['reflectionRanAt']}",
         f"- **Usage (7d)**: ~{facts['kTokens7d']}k tokens",
