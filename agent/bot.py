@@ -380,13 +380,30 @@ async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
         review_draft = db.draft_for_thread(msg.thread_id)
         if review_draft and review_draft["member_id"] == member_id:
             try:
-                await asyncio.to_thread(review_drive.handle_reply, review_draft, msg)
+                publish_needed = await asyncio.to_thread(
+                    review_drive.handle_reply, review_draft, msg)
             except Exception as e:
                 db.mark_email_processed(msg.id, status="failed",
                                         error=f"review_drive:{type(e).__name__}: {e}")
                 log.exception("review-drive reply handling failed for %s", msg.id)
                 return
+            # Lock in the successful state before mailbox or publish bookkeeping. Neither a JMAP
+            # keyword failure nor a publisher-scheduling failure should make the member's message
+            # re-claimable and repeat a completed review write/reply every poll.
             db.mark_email_processed(msg.id)
+            try:
+                await asyncio.to_thread(email_jmap.mark_seen, msg.id, answered=True)
+            except Exception:
+                log.exception("Handled review email %s but failed to mark it seen", msg.id)
+            if publish_needed:
+                try:
+                    commands.schedule_publish()
+                except Exception:
+                    log.exception("Review %s was recorded but publish scheduling failed", msg.id)
+                    db.add_activity(
+                        "warning", "Review site publish was not scheduled",
+                        f"Inbound email {msg.id} completed; run `python -m agent.publish`.",
+                    )
             return
 
     if decision.is_mailing_list:

@@ -2129,11 +2129,13 @@ def list_mail_threads(*, limit: int | None = None) -> list[dict]:
 
 # ── Oliver action proposals ─────────────────────────────────────────────────
 # ── Review drafts (the review-drive email state machine) ─────────────────────
-def create_review_draft(*, member_id: int, book_slug: str, thread_id: str | None) -> int:
+def create_review_draft(*, member_id: int, book_slug: str, thread_id: str | None,
+                        draft_json: str | None = None) -> int:
     with connect() as conn:
         cur = conn.execute(
-            "INSERT INTO review_drafts (member_id, book_slug, thread_id) VALUES (?, ?, ?)",
-            (member_id, book_slug, thread_id))
+            "INSERT INTO review_drafts (member_id, book_slug, thread_id, draft_json) "
+            "VALUES (?, ?, ?, ?)",
+            (member_id, book_slug, thread_id, draft_json))
         return cur.lastrowid
 
 
@@ -2317,5 +2319,4 @@ def mark_activity_failed(activity_id: int, error: str, *, max_attempts: int = 5,
             "next_attempt_at = ? WHERE id = ?",
             (status, attempts, error[:500], next_attempt_at, activity_id),
         )
-
 

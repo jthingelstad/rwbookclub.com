@@ -1,8 +1,9 @@
 """Review drive: candidate selection, allowlist gating, and the reply state machine."""
 
+import asyncio
 import json
 
-from agent import clubdb, config, db
+from agent import bot, clubdb, commands, config, db, publish
 from agent.club import review_drive as rd
 from agent.mail.email_jmap import InboundEmail
 
@@ -101,21 +102,108 @@ def test_reply_extracts_and_asks_for_confirmation(fresh_db, monkeypatch):
     assert sent[0]["in_reply_to"] == "msg1@example.test"
 
 
+def test_first_reply_keeps_the_rating_quoted_in_the_ask(fresh_db, monkeypatch):
+    _rated_unreviewed(rating=5)
+    fresh_db.link_member_email("jamie@example.test", "jamie")
+    sent = []
+
+    def send(**kw):
+        sent.append(kw)
+        return {"emailId": f"e{len(sent)}", "threadId": "T1"}
+
+    monkeypatch.setattr(rd.outbound, "send", send)
+    monkeypatch.setattr(rd.oliver, "compose", lambda kind, facts, fallback="": fallback)
+    monkeypatch.setattr(rd.oliver, "complete", lambda *a, **kw: json.dumps({
+        "body": "A dark, riveting read.", "rating": None, "recommend": None,
+        "discussion": None, "quote": None, "declined": False, "stop_asking": False}))
+
+    cand = rd.next_candidate("jamie")
+    assert cand and cand["rating"] == 5
+    rd.send_ask("jamie", cand)
+    draft = db.draft_for_thread("T1")
+    assert json.loads(draft["draft_json"])["rating"] == 5
+
+    assert rd.handle_reply(draft, _msg("A dark, riveting read.")) is False
+    updated = db.draft_for_thread("T1")
+    assert json.loads(updated["draft_json"])["rating"] == 5
+    assert "★★★★★" in sent[-1]["body"]
+
+
 def test_confirmation_yes_writes_review(fresh_db, monkeypatch):
     sent = _mute_mail(monkeypatch)
     written = []
     monkeypatch.setattr(rd.reviews, "write_review",
                         lambda *a, **kw: written.append((a, kw)) or {"rating": 4})
-    monkeypatch.setattr("agent.commands.schedule_publish", lambda: None)
     draft = _draft(fresh_db, state="awaiting_confirm", draft_json=json.dumps(
         {"body": "A dark, riveting read.", "rating": 4, "recommend": True}))
-    rd.handle_reply(draft, _msg("Yes, looks good!"))
+    assert rd.handle_reply(draft, _msg("Yes, looks good!")) is True
     assert written and written[0][0] == ("heart-of-darkness", "Jamie")
     assert written[0][1]["rating"] == "4" and written[0][1]["review"] == "A dark, riveting read."
     assert db.draft_for_thread("T1") is None  # state=written → no longer open
     with db.connect() as conn:
         assert conn.execute("SELECT 1 FROM events WHERE kind='review_recorded'").fetchone()
     assert "Recorded" in sent[0]["body"]
+
+
+def test_confirmation_preserves_canonical_fields_missing_from_old_draft(fresh_db, monkeypatch):
+    mid = _rated_unreviewed(rating=5)
+    with db.connect() as conn:
+        bid = conn.execute(
+            "SELECT id FROM club_books WHERE slug='heart-of-darkness'").fetchone()[0]
+        clubdb.upsert_review(
+            conn, book_id=bid, member_id=mid, rating=5, discussion_quality=4,
+            would_recommend=True, favorite_quote="The horror!", body=None)
+    _mute_mail(monkeypatch)
+    draft = _draft(fresh_db, state="awaiting_confirm", draft_json=json.dumps({
+        "body": "A dark, riveting read.", "rating": None, "recommend": None,
+        "discussion": None, "quote": None}))
+
+    assert rd.handle_reply(draft, _msg("YES")) is True
+    with db.connect() as conn:
+        row = conn.execute(
+            "SELECT rating, discussion_quality, would_recommend, favorite_quote, body "
+            "FROM club_reviews WHERE member_id=? AND book_id=("
+            "SELECT id FROM club_books WHERE slug='heart-of-darkness')", (mid,)).fetchone()
+    assert dict(row) == {
+        "rating": 5, "discussion_quality": 4, "would_recommend": 1,
+        "favorite_quote": "The horror!", "body": "A dark, riveting read.",
+    }
+
+
+def test_inbound_confirmation_publishes_on_bot_event_loop(fresh_db, monkeypatch):
+    """Production seam: reply handling is threaded, but task creation must stay on the bot loop."""
+    mid = _rated_unreviewed(rating=5)
+    fresh_db.link_member_email("jamie@example.test", "jamie")
+    did = db.create_review_draft(
+        member_id=mid, book_slug="heart-of-darkness", thread_id="T1",
+        draft_json=json.dumps({"body": "A dark, riveting read.", "rating": 5,
+                               "recommend": True, "discussion": None, "quote": None}),
+    )
+    db.update_review_draft(did, state="awaiting_confirm")
+    _mute_mail(monkeypatch)
+    seen = []
+    deployed = []
+    monkeypatch.setattr(bot.email_jmap, "mark_seen",
+                        lambda email_id, answered=False: seen.append((email_id, answered)))
+    monkeypatch.setattr(publish, "publish_site", lambda: deployed.append(True) or {"deployed": True})
+    monkeypatch.setattr(commands, "_publisher_task", None)
+    monkeypatch.setattr(commands, "_publish_dirty", False)
+
+    async def run():
+        await bot._handle_inbound_email(_msg("YES"))
+        assert commands._publisher_task is not None
+        await commands._publisher_task
+
+    asyncio.run(run())
+
+    assert db.email_processed("m1")
+    assert seen == [("m1", True)]
+    assert deployed == [True]
+    assert db.draft_for_thread("T1") is None
+    with db.connect() as conn:
+        assert conn.execute(
+            "SELECT 1 FROM events WHERE kind='review_recorded' AND member_id=?", (mid,)
+        ).fetchone()
 
 
 def test_corrections_reextract_and_two_round_park(fresh_db, monkeypatch):

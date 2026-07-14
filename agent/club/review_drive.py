@@ -156,8 +156,16 @@ def send_ask(slug: str, candidate: dict | None = None) -> dict | None:
                   "Just reply to this email in your own words — a few sentences is a great "
                   "review, and I'll take care of recording it."))
     sent = outbound.send(to=[rec["email"]], subject=f"Your review of {cand['title']}?", body=body)
+    # The rating is already an explicit, canonical member statement from the web app. Seed it
+    # into the draft so the extraction turn cannot forget it merely because the member replies
+    # with prose rather than repeating a number Oliver just quoted back to them.
+    initial = {
+        "body": "", "rating": cand["rating"], "recommend": None,
+        "discussion": None, "quote": None,
+    }
     draft_id = db.create_review_draft(member_id=cand["memberId"], book_slug=cand["slug"],
-                                      thread_id=sent.get("threadId"))
+                                      thread_id=sent.get("threadId"),
+                                      draft_json=json.dumps(initial))
     db.record_event(actor="oliver", kind="review_requested", member_id=cand["memberId"],
                     surface="email", category="reading",
                     detail=json.dumps({"book_slug": cand["slug"],
@@ -237,19 +245,47 @@ def _confirmation_body(first: str, book_title: str, d: dict) -> str:
 def _write(draft: dict, d: dict) -> dict:
     member_name = next((m["name"] for m in cr.members()
                         if clubdb.lookup_member_id(m["slug"]) == draft["member_id"]), None)
+    # Review-drive candidates already have a structured review row (at least a rating). A prose
+    # reply may omit those fields, which means "unchanged", not "clear them". Read the canonical
+    # row as a final deterministic guard even for drafts created before rating seeding shipped.
+    with db.connect() as conn:
+        existing = conn.execute(
+            "SELECT r.rating, r.dnf, r.discussion_quality, r.would_recommend, "
+            "r.favorite_quote, r.body FROM club_reviews r "
+            "JOIN club_books b ON b.id = r.book_id "
+            "WHERE r.member_id = ? AND b.slug = ?",
+            (draft["member_id"], draft["book_slug"]),
+        ).fetchone()
+    existing = dict(existing) if existing else {}
     rating = d.get("rating")
+    if rating is None:
+        rating = "DNF" if existing.get("dnf") else existing.get("rating")
+    recommend = d.get("recommend")
+    if recommend is None and existing:
+        recommend = bool(existing.get("would_recommend"))
+    discussion = d.get("discussion")
+    if discussion is None:
+        discussion = existing.get("discussion_quality")
+    quote = d.get("quote")
+    if quote is None:
+        quote = existing.get("favorite_quote")
+    body = d.get("body") or existing.get("body")
     return reviews.write_review(
         draft["book_slug"], member_name,
         rating=str(rating) if rating else None,
-        review=d.get("body") or None,
-        recommend="yes" if d.get("recommend") else None,
-        discussion=str(d["discussion"]) if d.get("discussion") else None,
-        quote=d.get("quote") or None)
+        review=body or None,
+        recommend="yes" if recommend else None,
+        discussion=str(discussion) if discussion else None,
+        quote=quote or None)
 
 
-def handle_reply(draft: dict, msg) -> None:
-    """One inbound email on a draft's thread. Sends whatever reply the state calls for."""
-    from agent.commands import schedule_publish
+def handle_reply(draft: dict, msg) -> bool:
+    """Handle one inbound review email.
+
+    Returns True only when a confirmed review write needs a site publish. The caller owns
+    scheduling that publish because this function runs in a worker thread and the publisher must
+    be created on the bot's asyncio event loop.
+    """
 
     member = next((m for m in cr.members()
                    if clubdb.lookup_member_id(m["slug"]) == draft["member_id"]), None)
@@ -267,23 +303,22 @@ def handle_reply(draft: dict, msg) -> None:
     if draft["state"] == "awaiting_confirm" and YES_RE.search(text):
         d = json.loads(draft["draft_json"] or "{}")
         result = _write(draft, d)
-        schedule_publish()
-        db.record_event(actor="member", kind="review_recorded", member_id=draft["member_id"],
-                        surface="email", category="reading",
-                        detail=json.dumps({"book_slug": draft["book_slug"]}))
         outbound.send(body=oliver.compose(
             "a one-or-two sentence warm thanks: their review is recorded and will be on the "
             "club site shortly", {"member": first, "book": book["title"]},
             fallback=f"Recorded — thanks, {first}! Your review of *{book['title']}* will be on "
                      "the club site shortly."), **reply_kw)
+        db.record_event(actor="member", kind="review_recorded", member_id=draft["member_id"],
+                        surface="email", category="reading",
+                        detail=json.dumps({"book_slug": draft["book_slug"]}))
         _finish("written", f"review written ({result.get('rating') or 'no rating'})")
-        return
+        return True
 
-    d0 = json.loads(draft["draft_json"] or "null") if draft["state"] == "awaiting_confirm" else None
+    d0 = json.loads(draft["draft_json"] or "null")
     if draft["state"] == "awaiting_confirm" and NO_RE.search(text) and len(text) < 80:
         outbound.send(body=f"No problem, {first} — I'll leave it be.", **reply_kw)
         _finish("declined", "member declined at confirmation")
-        return
+        return False
 
     d = _extract(book["title"], text, d0)
     if d is None:
@@ -294,7 +329,14 @@ def handle_reply(draft: dict, msg) -> None:
                             "gets you a link, and your email is safe with me meanwhile."),
                       **reply_kw)
         _finish("parked", "extraction unparseable")
-        return
+        return False
+
+    # Missing structured fields mean the member did not change the prior canonical values. Keep
+    # those values deterministically instead of relying on the extractor to reproduce them.
+    if d0:
+        for field in ("rating", "recommend", "discussion", "quote"):
+            if d.get(field) is None and d0.get(field) is not None:
+                d[field] = d0[field]
 
     if d.get("stop_asking"):
         db.record_event(actor="member", kind="review_optout", member_id=draft["member_id"],
@@ -305,12 +347,12 @@ def handle_reply(draft: dict, msg) -> None:
         outbound.send(body=f"Understood, {first} — no more review emails from me. "
                            "The web app's always there if the mood ever strikes.", **reply_kw)
         _finish("declined", "member opted out of review emails")
-        return
+        return False
 
     if d.get("declined"):
         outbound.send(body=f"Fair enough, {first} — skipping that one.", **reply_kw)
         _finish("declined", "member declined this book")
-        return
+        return False
 
     rounds = draft["rounds"] + (1 if draft["state"] == "awaiting_confirm" else 0)
     if rounds > MAX_CORRECTION_ROUNDS:
@@ -318,10 +360,11 @@ def handle_reply(draft: dict, msg) -> None:
                             "`/oliver my-club` in Discord opens the web app and your words so "
                             "far are saved in this thread."), **reply_kw)
         _finish("parked", "correction rounds exhausted")
-        return
+        return False
 
     db.update_review_draft(draft["id"], state="awaiting_confirm",
                            draft_json=json.dumps(d), rounds=rounds)
     outbound.send(body=_confirmation_body(first, book["title"], d), **reply_kw)
     db.add_activity("review_drive", "Review draft awaiting confirmation",
                     f"{(member or {}).get('slug', '?')} / {book['title']} (round {rounds})")
+    return False
