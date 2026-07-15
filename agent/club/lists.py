@@ -54,7 +54,6 @@ def create_list(name: str, description: str | None = None, *,
     name = (name or "").strip()
     if not name:
         raise ListError("A list needs a name.")
-    clubdb.ensure_schema()
     with db.connect() as conn:
         owner_id = None
         if scope == "member":
@@ -70,7 +69,6 @@ def create_list(name: str, description: str | None = None, *,
 
 def add_book(list_ref: str, book_query: str, note: str | None = None, *,
              actor_slug: str | None, is_admin: bool) -> dict:
-    clubdb.ensure_schema()
     book = cr.find_book(book_query)
     if not book:
         raise ListError(f"No book matching {book_query!r} in our corpus.")
@@ -87,7 +85,6 @@ def add_book(list_ref: str, book_query: str, note: str | None = None, *,
 def move_book(list_ref: str, book_query: str, *, up: bool, actor_slug: str | None,
               is_admin: bool) -> dict:
     """Move a book one step up/down within a list (preserving its note)."""
-    clubdb.ensure_schema()
     book = cr.find_book(book_query)
     if not book:
         raise ListError(f"No book matching {book_query!r} in our corpus.")
@@ -104,7 +101,6 @@ def move_book(list_ref: str, book_query: str, *, up: bool, actor_slug: str | Non
 def reorder(list_ref: str, book_slugs: list[str], *, actor_slug: str | None,
             is_admin: bool) -> dict:
     """Set a list's order to the given sequence of book slugs (drag-and-drop)."""
-    clubdb.ensure_schema()
     with db.connect() as conn:
         row = _resolve_list(conn, list_ref, actor_slug=actor_slug, is_admin=is_admin)
         _authorize(row, actor_slug=actor_slug, is_admin=is_admin)
@@ -118,7 +114,6 @@ def reorder(list_ref: str, book_slugs: list[str], *, actor_slug: str | None,
 def set_note(list_ref: str, book_query: str, note: str | None, *,
              actor_slug: str | None, is_admin: bool) -> dict:
     """Set (or clear) the note on a book already in the list. Errors if the book isn't present."""
-    clubdb.ensure_schema()
     book = cr.find_book(book_query)
     if not book:
         raise ListError(f"No book matching {book_query!r} in our corpus.")
@@ -136,7 +131,6 @@ def set_note(list_ref: str, book_query: str, note: str | None, *,
 
 
 def remove_book(list_ref: str, book_query: str, *, actor_slug: str | None, is_admin: bool) -> dict:
-    clubdb.ensure_schema()
     book = cr.find_book(book_query)
     if not book:
         raise ListError(f"No book matching {book_query!r} in our corpus.")
@@ -154,7 +148,6 @@ def edit_list(list_ref: str, *, name: str | None = None, description: str | None
               actor_slug: str | None, is_admin: bool) -> dict:
     if name is not None and not name.strip():
         raise ListError("A list name can't be empty.")
-    clubdb.ensure_schema()
     with db.connect() as conn:
         row = _resolve_list(conn, list_ref, actor_slug=actor_slug, is_admin=is_admin)
         _authorize(row, actor_slug=actor_slug, is_admin=is_admin)
@@ -167,7 +160,6 @@ def edit_list(list_ref: str, *, name: str | None = None, description: str | None
 
 
 def delete_list(list_ref: str, *, actor_slug: str | None, is_admin: bool) -> dict:
-    clubdb.ensure_schema()
     with db.connect() as conn:
         row = _resolve_list(conn, list_ref, actor_slug=actor_slug, is_admin=is_admin)
         _authorize(row, actor_slug=actor_slug, is_admin=is_admin)

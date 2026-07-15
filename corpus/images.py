@@ -84,7 +84,8 @@ def process_image(url: str, base_filename: str, out_dir, widths: list[int]) -> l
 def main() -> None:
     # Read OL identifiers from the authoritative DB (ol_cover_id preferred, else the
     # Work key) rather than the generated corpus files.
-    from agent import clubdb, db
+    from agent import clubdb, database, db
+    database.initialize()
 
     with db.connect() as conn:
         books = [

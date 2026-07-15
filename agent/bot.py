@@ -27,7 +27,7 @@ import discord
 import requests
 from discord.ext import tasks
 
-from agent import commands, config, context as kb, db, oliver, outbox, publish, security
+from agent import commands, config, context as kb, database, db, oliver, outbox, publish, security
 from agent.mail import email_jmap
 from agent.mail import inbound as inbound_email
 
@@ -450,6 +450,7 @@ def _rotate_launchd_log(name: str, fd: int) -> None:
 
 
 def main() -> None:
+    database.initialize()
     permission_report = security.enforce_runtime_permissions(repair=True)
     if not permission_report.ok:
         raise SystemExit(

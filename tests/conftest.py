@@ -70,8 +70,8 @@ def _corpus_on_disk():
     """Generate the test corpus from the fixture DB once per session, into the temp
     OLIVER_CORPUS_DIR, so tests that read corpus/data directly work without the live corpus."""
     global _PRISTINE_CORPUS_SIG
-    from agent import clubdb, corpus_gen, corpus_read, db
-    clubdb.ensure_schema()
+    from agent import corpus_gen, corpus_read, database, db
+    database.initialize()
     with db.connect() as conn:
         _reseed_club(conn)
     corpus_gen.generate()  # DEFAULT_OUT honors OLIVER_CORPUS_DIR

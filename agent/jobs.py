@@ -144,6 +144,8 @@ def format_status(rows: list[dict] | None = None) -> str:
 
 
 if __name__ == "__main__":
+    from agent import database
+    database.initialize()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", nargs="?", choices=["status"], default="status")
     parser.add_argument("--json", action="store_true")

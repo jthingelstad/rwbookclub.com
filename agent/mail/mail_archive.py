@@ -492,6 +492,8 @@ def import_mbox(path: str | Path, *, write: bool = False) -> ImportReport:
 
 
 def _main() -> None:
+    from agent import database
+    database.initialize()
     parser = argparse.ArgumentParser(description="Import Oliver mailing-list mbox archive.")
     parser.add_argument("mbox", help="Path to mbox file")
     parser.add_argument("--write", action="store_true", help="Write to Oliver's SQLite database")

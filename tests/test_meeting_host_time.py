@@ -52,13 +52,15 @@ def test_club_migration_converts_utc_meeting_date_to_local(fresh_db):
             "INSERT INTO club_meetings(id, date) VALUES (9001, ?)",
             ("2026-01-28T01:00:00.000Z",),   # 7:00pm CST on Jan 27 local
         )
-    clubdb.ensure_schema()                    # runs _migrate_club
+    with db.connect() as conn:
+        clubdb.migrate_legacy_club_schema(conn)
     with db.connect() as conn:
         row = conn.execute("SELECT date, start_time FROM club_meetings WHERE id = 9001").fetchone()
     assert row["date"] == "2026-01-27"
     assert row["start_time"] == "19:00"
     # idempotent: a second run leaves the already-local row untouched
-    clubdb.ensure_schema()
+    with db.connect() as conn:
+        clubdb.migrate_legacy_club_schema(conn)
     with db.connect() as conn:
         again = conn.execute("SELECT date FROM club_meetings WHERE id = 9001").fetchone()
     assert again["date"] == "2026-01-27"

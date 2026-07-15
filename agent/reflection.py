@@ -294,6 +294,8 @@ def run(*, dry_run: bool = False) -> dict:
 
 
 if __name__ == "__main__":
+    from agent import database
+    database.initialize()
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dry-run", action="store_true",
                     help="print proposed add/update/retire without writing anything")

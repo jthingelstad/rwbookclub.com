@@ -194,7 +194,7 @@ def test_admin_can_touch_any_list():
 
 # ── award → list migration round-trip ────────────────────────────────────────
 def test_award_to_list_migration_round_trip(tmp_path):
-    """Seed the legacy 3 award tables in a scratch DB, run _migrate_club, and confirm the one
+    """Seed the legacy 3 award tables in a scratch DB, run the retained migration, and confirm the one
     award became the "Books of the Year" club list (note = year), the award tables are gone, and
     foreign keys are clean."""
     conn = sqlite3.connect(tmp_path / "legacy.db")
@@ -216,7 +216,7 @@ def test_award_to_list_migration_round_trip(tmp_path):
     )
     conn.commit()
 
-    clubdb._migrate_club(conn)
+    clubdb.migrate_legacy_club_schema(conn)
 
     # award tables dropped
     tables = {r["name"] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
@@ -233,7 +233,7 @@ def test_award_to_list_migration_round_trip(tmp_path):
     assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
 
     # idempotent: a second run is a no-op (no award tables left to migrate, no dup list)
-    clubdb._migrate_club(conn)
+    clubdb.migrate_legacy_club_schema(conn)
     assert conn.execute(
         "SELECT COUNT(*) AS c FROM club_lists WHERE slug = 'books-of-the-year'"
     ).fetchone()["c"] == 1

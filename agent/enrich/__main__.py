@@ -8,6 +8,8 @@ from agent.enrich.loop import run
 
 
 def main() -> None:
+    from agent import database
+    database.initialize()
     ap = argparse.ArgumentParser(description="Fill the club_*_enrichment sidecars.")
     ap.add_argument("--books", action="store_true", help="enrich books")
     ap.add_argument("--authors", action="store_true", help="enrich authors")

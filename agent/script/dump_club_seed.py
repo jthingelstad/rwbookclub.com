@@ -5,7 +5,7 @@ committed corpus files. Instead it seeds from this fixture. The ``club_*`` table
 **no PII** (emails / mailing list / mail archive live in ``member_identities`` / ``mail_*``,
 which are NOT dumped here), so the fixture is safe to commit.
 
-Data-only INSERTs (the schema is created by ``clubdb.ensure_schema()`` in conftest), emitted
+Data-only INSERTs (the schema is created by ``database.initialize()`` in conftest), emitted
 in ``CLUB_TABLES`` order (parents before children) so a straight replay is FK-safe.
 
 Regenerate after a club_* schema or seed-data change::
@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import sys
 
-from agent import clubdb, db
+from agent import clubdb, database, db
 
 
 def _lit(v) -> str:
@@ -33,6 +33,7 @@ def _lit(v) -> str:
 
 
 def main() -> None:
+    database.initialize()
     out = sys.stdout
     out.write("-- Public-safe club_* seed for tests/CI (NO PII). Regenerate with:\n")
     out.write("--   python -m agent.script.dump_club_seed > tests/fixtures/club_seed.sql\n")

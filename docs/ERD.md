@@ -280,9 +280,10 @@ the club record by design — these are operational and disposable).
 | `webapp_tokens` | `token` | Single-use web-app login tokens (minted by /oliver my-club, consumed on first tap). |
 
 Outbox and scheduler persistence live in focused modules under `agent/repositories/`; `agent.db`
-keeps a compatibility façade for the rest of Oliver. Declarative tables are safe to create
-repeatedly, while legacy data-moving and destructive transforms run in version order and are
-recorded in `schema_migrations`.
+keeps a compatibility façade for the rest of Oliver. Runtime and CLI composition roots call
+`agent.database.initialize()` explicitly: it installs both declarative schemas, then runs legacy
+data-moving transforms in version order and records them in `schema_migrations`. Importing
+`agent.db` or `agent.clubdb` never creates or migrates a database.
 
 ---
 

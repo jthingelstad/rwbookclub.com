@@ -91,7 +91,7 @@ Consequences: a book **re-read at a later meeting** gains that meeting's host as
 picker, so **"picks" counts pick-events** and summing picks across members can exceed the number
 of distinct books read (this is intended — see the stats page). Historically `picker` was a
 separate `club_book_pickers` *table* materialized from host (they were identical for all 176
-books); it was collapsed to the view in `_migrate_club` so the two can never diverge. There is
+books); migration 9 collapsed it to the view so the two can never diverge. There is
 no `set_book_picker` — set the meeting host instead.
 
 ### Time & timezone — the club runs on US Central (America/Chicago)
@@ -115,8 +115,8 @@ calendar facts, and must NOT use `agent.clock`.
 
 **Meeting dates/times are stored LOCAL:** `club_meetings.date` is the local `YYYY-MM-DD` and
 `start_time` the local `HH:MM`. The original Airtable import stored a UTC instant (wrong day for
-evening meetings — 6-7pm local rolls past midnight UTC in winter); `clubdb._migrate_club`
-normalized them to local, and the iCal feed (`DTSTART;TZID=America/Chicago`) builds on that.
+evening meetings — 6-7pm local rolls past midnight UTC in winter); the retained legacy-club
+migration normalized them to local, and the iCal feed (`DTSTART;TZID=America/Chicago`) builds on that.
 
 **Upcoming vs past is derived, not flagged.** There is **no `placeholder` column** (retired
 2026-06-30 — it was an Airtable-era "is this date real yet?" flag, obsoleted by the predictive

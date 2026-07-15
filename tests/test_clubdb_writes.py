@@ -39,7 +39,6 @@ def test_upsert_book_dedupes_repeated_authors(fresh_db):
     # Regression: Open Library sometimes lists the same author twice (e.g. Blindsight →
     # ["Peter Watts", "Peter Watts"]); upsert must not trip the (book_id, author_id) UNIQUE
     # constraint. One link should survive, in order.
-    clubdb.ensure_schema()
     with db.connect() as conn:
         res = clubdb.upsert_book(conn, {"title": "Blindsight", "authors": ["Peter Watts", "Peter Watts"]})
         links = conn.execute(
@@ -57,7 +56,6 @@ def test_schedule_meeting_persists_picker_and_meeting(monkeypatch, tmp_path):
     monkeypatch.setattr(corpus_write, "DATA_DIR", data)
 
     # Seed a member (id+row) and its corpus file (validate needs the member file).
-    clubdb.ensure_schema()
     with db.connect() as conn:
         conn.execute(
             "INSERT OR REPLACE INTO club_members(id, slug, name, is_current) VALUES (61, 'pat', 'Pat', 1)"

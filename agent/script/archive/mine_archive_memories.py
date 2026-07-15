@@ -96,6 +96,8 @@ def _report() -> None:
 
 
 def main() -> None:
+    from agent import database
+    database.initialize()
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dry-run", action="store_true", help="preview proposals; write nothing")
     ap.add_argument("--member", help="mine only this member slug")

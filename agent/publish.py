@@ -157,6 +157,8 @@ def publish_site() -> dict:
 
 
 def main() -> None:
+    from agent import database
+    database.initialize()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     print(publish_site())
 

@@ -83,6 +83,8 @@ def backfill(*, dry_run: bool = False) -> dict:
 
 
 if __name__ == "__main__":
+    from agent import database
+    database.initialize()
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dry-run", action="store_true", help="report counts without writing")
     print(backfill(dry_run=ap.parse_args().dry_run))

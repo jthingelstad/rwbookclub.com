@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
+import os
 import sqlite3
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
+
+from agent import database
 
 
 def _ledger(db) -> list[tuple[int, str, str]]:
@@ -21,7 +27,7 @@ def test_fresh_database_has_complete_ordered_ledger(fresh_db):
     rows = _ledger(fresh_db)
 
     assert [(version, name) for version, name, _ in rows] == [
-        (version, name) for version, name, _ in fresh_db._MIGRATIONS
+        (version, name) for version, name, _ in database.MIGRATIONS
     ]
     assert all(applied_at for _, _, applied_at in rows)
 
@@ -29,7 +35,7 @@ def test_fresh_database_has_complete_ordered_ledger(fresh_db):
 def test_run_migrations_is_idempotent(fresh_db):
     before = _ledger(fresh_db)
 
-    fresh_db.run_migrations()
+    database.run_migrations()
 
     assert _ledger(fresh_db) == before
 
@@ -47,14 +53,13 @@ def test_runner_applies_each_migration_once_in_order(monkeypatch, fresh_db):
         return lambda _conn: calls.append(version)
 
     monkeypatch.setattr(
-        fresh_db,
-        "_MIGRATIONS",
+        database,
+        "MIGRATIONS",
         ((1, "first", migration(1)), (2, "second", migration(2))),
     )
-    monkeypatch.setattr(fresh_db, "_migration_ready", lambda _conn, _version: True)
 
-    fresh_db._run_migrations(conn)
-    fresh_db._run_migrations(conn)
+    database._run_migrations(conn)
+    database._run_migrations(conn)
 
     assert calls == [1, 2]
     assert [tuple(row) for row in conn.execute(
@@ -74,7 +79,7 @@ def test_runner_rejects_a_gapped_ledger(fresh_db):
     )
 
     with pytest.raises(RuntimeError, match="ledger has a gap"):
-        fresh_db._run_migrations(conn)
+        database._run_migrations(conn)
     conn.close()
 
 
@@ -86,7 +91,7 @@ def test_legacy_email_tracking_upgrade_is_recorded(fresh_db):
             "CREATE TABLE email_opens (id INTEGER PRIMARY KEY, token TEXT);"
         )
 
-    fresh_db.run_migrations()
+    database.run_migrations()
 
     with fresh_db.connect() as conn:
         tables = {
@@ -96,7 +101,21 @@ def test_legacy_email_tracking_upgrade_is_recorded(fresh_db):
             )
         }
     assert tables == set()
-    assert [(version, name) for version, name, _ in _ledger(fresh_db)][-2:] == [
+    assert [(version, name) for version, name, _ in _ledger(fresh_db)][-3:] == [
         (7, "drop_email_open_tracking"),
         (8, "unified_meeting_events"),
+        (9, "legacy_club_schema"),
     ]
+
+
+def test_importing_database_modules_is_inert(tmp_path):
+    target = tmp_path / "not-created-by-import.db"
+    env = os.environ.copy()
+    env["OLIVER_DB_PATH"] = str(target)
+    subprocess.run(
+        [sys.executable, "-c", "from agent import db, clubdb"],
+        cwd=Path(__file__).resolve().parents[1],
+        env=env,
+        check=True,
+    )
+    assert not target.exists()

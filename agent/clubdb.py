@@ -208,14 +208,12 @@ CLUB_TABLES = [
 MEETING_TZ = "America/Chicago"  # the club's single timezone (Minneapolis)
 
 
-def _migrate_club(conn: sqlite3.Connection) -> None:
-    """Additive club-schema migrations (idempotent).
+def migrate_legacy_club_schema(conn: sqlite3.Connection) -> None:
+    """Bring pre-ledger club schemas to the current declarative shape.
 
-    Runs on every `ensure_schema()`. Steps 2 and 3 are one-time data migrations retained only
-    for long-lived DBs that predate them; for a freshly seeded DB they are no-ops — the local
-    date normalization finds nothing to convert, and `import_airtable` already seeds
-    club_meeting_hosts directly, so the host backfill touches no rows. Cheap and idempotent,
-    so they stay rather than being gated behind a version flag.
+    This is migration 9 in :mod:`agent.database` and runs once. The transforms remain idempotent
+    so retained older backups can still be restored safely; fresh databases already contain the
+    current columns and views, making every step a no-op.
 
     1. Add club_meetings.start_time if missing.
     2. Normalize club_meetings.date from the legacy UTC ISO datetime to the club's LOCAL
@@ -359,16 +357,6 @@ def _migrate_club(conn: sqlite3.Connection) -> None:
         dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
         if dangling:
             raise RuntimeError(f"awards->lists migration left dangling refs: {[tuple(r) for r in dangling]}")
-
-
-def ensure_schema() -> None:
-    """Create the club-record tables idempotently. Safe to call repeatedly."""
-    with db.connect() as conn:
-        conn.executescript(CLUB_SCHEMA)
-        _migrate_club(conn)
-    # db.py owns the cross-domain legacy migrations. Fresh databases pause its ordered ledger
-    # until the club tables exist; resume it now that this schema owner has finished.
-    db.run_migrations()
 
 
 # ── Small read helpers (used by the generator and future corpus_read) ─────────
@@ -983,10 +971,7 @@ def hosts_for_meeting(meeting_id: int | None) -> list[dict]:
     return [dict(r) for r in rows]
 
 
-# Ensure the club schema + migrations at import (symmetric with db._ensure_schema), so a
-# bot restart always lands the full schema (e.g. the local meeting-date normalization).
-ensure_schema()
-
-
 if __name__ == "__main__":
+    from agent import database
+    database.initialize()
     print(json.dumps(counts(), indent=2))

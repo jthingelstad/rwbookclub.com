@@ -394,6 +394,8 @@ DEFAULT_MODEL = "claude-sonnet-5"  # mining is constrained extraction — no nee
 
 
 def main(argv: list[str] | None = None) -> int:
+    from agent import database
+    database.initialize()
     p = argparse.ArgumentParser(description="Mine the email archive into Oliver's club timeline.")
     mode = p.add_mutually_exclusive_group()
     mode.add_argument("--load", action="store_true",

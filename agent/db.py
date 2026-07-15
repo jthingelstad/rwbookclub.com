@@ -4,9 +4,9 @@ Holds what doesn't belong in the club record or the generated corpus: durable no
 per-channel conversation history + rolling summaries, reminders, and usage logs.
 Gitignored, local to wherever Oliver runs; backup is a deployment concern.
 
-Tables are created idempotently on import; ordered legacy transforms are recorded in
-``schema_migrations`` and run once. Each helper opens a short-lived connection so the
-module is safe to call from the bot's worker threads.
+Schema creation is an explicit lifecycle step owned by :mod:`agent.database`; importing this
+module never creates or migrates a database. Each helper opens a short-lived connection so the
+module is safe to call from the bot's worker threads after bootstrap.
 """
 
 from __future__ import annotations
@@ -21,14 +21,12 @@ from pathlib import Path
 from typing import Iterator
 from urllib.parse import urlsplit
 
-from agent import security
 from agent.repositories import jobs as _jobs_repo
 from agent.repositories import outbox as _outbox_repo
 
 DB_PATH = Path(os.environ.get("OLIVER_DB_PATH") or Path(__file__).resolve().parent / "oliver.db")
-security.set_private_umask()
 
-_SCHEMA = """
+RUNTIME_SCHEMA = """
 CREATE TABLE IF NOT EXISTS memories (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     scope      TEXT NOT NULL DEFAULT 'general',   -- member | club | general
@@ -79,7 +77,7 @@ CREATE TABLE IF NOT EXISTS member_identities (
     updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (surface, identifier)
 );
--- member_id indexes for these tables are created post-migration (see _ensure_member_indexes),
+-- member_id indexes for these tables are created post-migration (see ensure_member_indexes),
 -- because on a pre-migration DB the member_id column doesn't exist yet.
 
 CREATE TABLE IF NOT EXISTS conversations (
@@ -787,7 +785,7 @@ def migrate_meeting_events(conn: sqlite3.Connection) -> None:
     member_contacts, roll_calls) into the unified `events` log + the `meeting_member_status`
     projection. Preserves current per-member status and best-effort backfills the event history
     (timestamps from the source rows), then drops the four tables. Guarded on member_contacts
-    existing; idempotent. (`events`/`meeting_member_status` are created by _SCHEMA first.)
+    existing; idempotent. (`events`/`meeting_member_status` are created by RUNTIME_SCHEMA first.)
     """
     if not _table_exists(conn, "member_contacts"):
         return
@@ -853,14 +851,14 @@ def migrate_meeting_events(conn: sqlite3.Connection) -> None:
         raise RuntimeError(f"meeting-events migration left dangling references: {[tuple(r) for r in dangling]}")
 
 
-def _ensure_member_indexes(conn: sqlite3.Connection) -> None:
+def ensure_member_indexes(conn: sqlite3.Connection) -> None:
     """Indexes on member_id columns that only exist once the table is in its new shape
-    (fresh DB via _SCHEMA, or existing DB via migrate_identity_to_fk). Safe + idempotent."""
+    (fresh DB via RUNTIME_SCHEMA, or existing DB via migrate_identity_to_fk). Safe + idempotent."""
     if "member_id" in _columns(conn, "member_identities"):
         conn.execute("CREATE INDEX IF NOT EXISTS idx_member_identities_member ON member_identities(member_id, surface)")
 
 
-_MIGRATIONS = (
+RUNTIME_MIGRATIONS = (
     (1, "additive_runtime_columns", _migrate),
     (2, "meeting_ops_foreign_keys", migrate_ops_to_fk),
     (3, "unified_member_identities", migrate_identity_to_fk),
@@ -870,73 +868,6 @@ _MIGRATIONS = (
     (7, "drop_email_open_tracking", migrate_drop_email_tracking),
     (8, "unified_meeting_events", migrate_meeting_events),
 )
-
-
-def _migration_ready(conn: sqlite3.Connection, version: int) -> bool:
-    """Whether a legacy transform has the source schema needed to run or baseline safely."""
-    if version == 2 and "meeting_key" in _columns(conn, "meeting_attendance"):
-        return _table_exists(conn, "club_books") and _table_exists(conn, "club_members")
-    if version == 3 and "discord_user_id" in _columns(conn, "member_identities"):
-        return _table_exists(conn, "club_members") and _table_exists(conn, "member_emails")
-    if version == 4 and "sender_participant_id" in _columns(conn, "mail_messages"):
-        return "member_id" in _columns(conn, "mail_messages")
-    if version == 5:
-        return _table_exists(conn, "club_members")
-    if version == 6:
-        return _table_exists(conn, "club_reviews")
-    return True
-
-
-def _run_migrations(conn: sqlite3.Connection) -> None:
-    rows = conn.execute(
-        "SELECT version, name FROM schema_migrations ORDER BY version"
-    ).fetchall()
-    applied = {int(row["version"]): row["name"] for row in rows}
-    known_versions = {version for version, _, _ in _MIGRATIONS}
-    unknown = sorted(set(applied) - known_versions)
-    if unknown:
-        raise RuntimeError(f"database has migrations newer than this code: {unknown}")
-    if applied:
-        expected = list(range(1, max(applied) + 1))
-        if sorted(applied) != expected:
-            raise RuntimeError(
-                f"database migration ledger has a gap: {sorted(applied)}, expected {expected}"
-            )
-    for version, name, migration in _MIGRATIONS:
-        if version in applied:
-            if applied[version] != name:
-                raise RuntimeError(
-                    f"migration {version} is recorded as {applied[version]!r}, expected {name!r}"
-                )
-            continue
-        # Migrations are strictly ordered. A pre-club legacy DB pauses here until clubdb creates
-        # or imports the authoritative club tables, then clubdb.ensure_schema resumes the ledger.
-        if not _migration_ready(conn, version):
-            break
-        migration(conn)
-        conn.execute(
-            "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)",
-            (version, name, datetime.now(timezone.utc).isoformat()),
-        )
-
-
-def run_migrations() -> None:
-    """Resume pending ordered migrations after another schema owner (clubdb) is ready."""
-    with connect() as conn:
-        _run_migrations(conn)
-        _ensure_member_indexes(conn)
-
-
-def _ensure_schema() -> None:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with connect() as conn:
-        conn.executescript(_SCHEMA)
-        _run_migrations(conn)
-        _ensure_member_indexes(conn)
-
-
-_ensure_schema()
-security.secure_database_files(DB_PATH)
 
 
 def _now() -> str:

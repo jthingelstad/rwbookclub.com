@@ -346,6 +346,8 @@ def week_reminder(meeting: dict | None = None, status: dict | None = None) -> di
 
 
 def _main() -> None:
+    from agent import database
+    database.initialize()
     parser = argparse.ArgumentParser(description="Preview (and optionally send) a club meeting email.")
     parser.add_argument("kind", choices=["topic", "week", "postscript"])
     parser.add_argument("--send", metavar="EMAIL", help="also deliver the draft to this address")

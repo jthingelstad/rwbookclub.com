@@ -18,10 +18,10 @@ def main() -> None:
 
     # These imports must follow the environment guard: db.DB_PATH and
     # corpus.paths.DATA_DIR are resolved at import time.
-    from agent import clubdb, corpus_gen, db
+    from agent import corpus_gen, database, db
 
     fixture = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "club_seed.sql"
-    clubdb.ensure_schema()
+    database.initialize()
     with db.connect() as conn:
         conn.executescript(fixture.read_text())
     written = corpus_gen.generate()

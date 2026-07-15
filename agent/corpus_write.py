@@ -66,7 +66,6 @@ def write_book(meta: dict) -> dict:
     title = (meta.get("title") or "").strip()
     if not title:
         raise WriteError("A book needs a title.")
-    clubdb.ensure_schema()
     with db.connect() as conn:                          # transaction = commit point
         res = clubdb.upsert_book(conn, meta)
         corpus_gen.write_book_file(conn, res["id"], DATA_DIR)
@@ -82,7 +81,6 @@ def write_book(meta: dict) -> dict:
 
 
 def schedule_meeting(book_query: str, date_iso: str, picker_query: str) -> dict:
-    clubdb.ensure_schema()
     book = cr.find_book(book_query)
     if not book:
         raise WriteError(f"No book matching {book_query!r} — add it first in the web app (Books → Add).")

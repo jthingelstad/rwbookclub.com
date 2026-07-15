@@ -30,7 +30,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from agent import clubdb, db  # noqa: E402
+from agent import clubdb, database, db  # noqa: E402
 
 CACHE_DIR = REPO_ROOT / "agent" / "script" / "_airtable_cache"
 DATA_DIR = REPO_ROOT / "corpus" / "data"
@@ -104,7 +104,7 @@ def _build_airtable_maps() -> dict:
 
 # ── import ───────────────────────────────────────────────────────────────────
 def run_import(*, write: bool = True) -> dict:
-    clubdb.ensure_schema()
+    database.initialize()
     at = _build_airtable_maps()
     warnings: list[str] = []
 

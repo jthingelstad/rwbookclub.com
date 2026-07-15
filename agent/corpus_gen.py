@@ -260,6 +260,8 @@ def remove_list_file(slug: str, out_root: Path = DEFAULT_OUT) -> None:
 
 
 def main() -> None:
+    from agent import database
+    database.initialize()
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(DEFAULT_OUT), help="output corpus root")
     args = ap.parse_args()

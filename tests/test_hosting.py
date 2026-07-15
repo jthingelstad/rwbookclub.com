@@ -68,7 +68,8 @@ def test_migrate_does_not_invent_host_without_picker():
         conn.execute("INSERT INTO club_meeting_books(meeting_id, book_id, ordinal) VALUES (?,?,0)",
                      (mid, bid))
 
-    clubdb.ensure_schema()
+    with db.connect() as conn:
+        clubdb.migrate_legacy_club_schema(conn)
 
     with db.connect() as conn:
         assert conn.execute(

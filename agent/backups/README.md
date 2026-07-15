@@ -17,4 +17,13 @@ migration. Retention: keep the 2 most-recent uncompressed for a quick restore, g
 `python -m agent.script.prune_backups`.
 
 Restore: copy a `.db` back over `agent/oliver.db` while Oliver is stopped; `gunzip <file>.db.gz`
-first for a gzipped one.
+first for a gzipped one. The next `agent.bot` start explicitly runs `agent.database.initialize()`
+and upgrades the restored file through the ordered `schema_migrations` ledger before connecting to
+Discord.
+
+## Migration support floor
+
+Every retained restart or migration snapshot is supported, including pre-ledger databases. Do not
+delete or squash a migration while any retained backup may predate it. A future baseline/squash is
+safe only after the oldest supported local and off-machine backup was created at or beyond that
+baseline, and after a restore rehearsal has verified the replacement bootstrap.

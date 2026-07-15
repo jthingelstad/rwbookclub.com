@@ -288,6 +288,8 @@ def create_github_release(*, name: str, commit: str, body: str) -> str | None:
 
 
 def _main() -> None:
+    from agent import database
+    database.initialize()
     parser = argparse.ArgumentParser(description="Preview (and optionally send) Oliver's release-notes email.")
     parser.add_argument("--days", type=int, default=None, help="look back this many days (default 7)")
     parser.add_argument("--since", metavar="COMMIT", help="scope to changes since this commit-ish (overrides --days)")

@@ -19,11 +19,12 @@ import asyncio
 
 from aiohttp import web
 
-from agent import clubdb, config
+from agent import clubdb, config, database
 from agent.webapp import server, sessions
 
 
 async def _main() -> None:
+    database.initialize()
     parser = argparse.ArgumentParser(description="Serve the web app locally with a fresh session link.")
     parser.add_argument("--member", default=config.OLIVER_MEMBER_SLUG,
                         help=f"member slug to log in as (default: {config.OLIVER_MEMBER_SLUG})")

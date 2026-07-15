@@ -35,7 +35,7 @@ atexit.register(shutil.rmtree, SCRATCH_ROOT, ignore_errors=True)
 
 import anthropic  # noqa: E402
 
-from agent import clubdb, corpus_gen, corpus_read, db, oliver as oliver_mod  # noqa: E402
+from agent import corpus_gen, corpus_read, db, oliver as oliver_mod  # noqa: E402
 
 CLIENT = anthropic.Anthropic()
 MODEL = "claude-sonnet-5"
@@ -401,7 +401,8 @@ def round_summary(singles, multis):
 
 def _prepare_fixture() -> None:
     """Build one coherent, public-safe DB + corpus snapshot for this eval process."""
-    clubdb.ensure_schema()
+    from agent import database
+    database.initialize()
     seed_sql = (pathlib.Path(__file__).parent / "fixtures" / "club_seed.sql").read_text()
     with db.connect() as conn:
         conn.executescript(seed_sql)
