@@ -66,7 +66,7 @@ def pick_fit(tool_input: dict, request: RequestContext) -> dict:
     else:
         try:
             document = enrich_ol.search_best_match(title, [author] if author else [])
-        except Exception:  # noqa: BLE001 - external enrichment is optional dossier context
+        except Exception:
             document = None
         if document:
             subjects = enrich_ol.clean_subjects(document.get("subject"))

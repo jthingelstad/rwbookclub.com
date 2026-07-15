@@ -130,7 +130,7 @@ async def book_add(request: web.Request) -> web.Response:
         return await _render_books(request, status=400, error="A book needs a title.")
     try:
         res = await asyncio.to_thread(_add_book, title, isbn)
-    except Exception as e:  # noqa: BLE001 — surface the real reason instead of a silent 500
+    except Exception as e:
         log.exception("add-book failed for title=%r isbn=%r", title, isbn)
         return await _render_books(
             request, status=500,
@@ -171,7 +171,7 @@ def _meeting_id_or_404(request: web.Request) -> int:
     try:
         return int(request.match_info["id"])
     except (KeyError, ValueError):
-        raise web.HTTPNotFound(text="No such meeting.")
+        raise web.HTTPNotFound(text="No such meeting.") from None
 
 
 def _add_meeting(date: str, book_slugs: list[str],
@@ -204,7 +204,7 @@ async def meeting_add(request: web.Request) -> web.Response:
     try:
         created = await asyncio.to_thread(_add_meeting, form.get("date", ""), books,
                                           hosts, types)
-    except Exception as e:  # noqa: BLE001 — surface the reason instead of a raw 500
+    except Exception as e:
         log.exception("add-meeting failed")
         return await _render_meetings(request, status=400,
                                       error=f"Couldn't add the meeting: {type(e).__name__}: {e}")
@@ -283,7 +283,7 @@ async def meeting_save(request: web.Request) -> web.Response:
     types = form.getall("types", []) if hasattr(form, "getall") else []
     try:
         await asyncio.to_thread(_save_meeting, mid, form, host_slugs, book_slugs, types)
-    except Exception as e:  # noqa: BLE001 — surface the reason instead of a raw 500
+    except Exception as e:
         log.exception("save-meeting failed for id=%s", mid)
         return await _render_meeting_edit(request, mid, status=400,
                                           error=f"Couldn't save the meeting: {type(e).__name__}: {e}")
@@ -335,7 +335,7 @@ async def member_action(request: web.Request) -> web.Response:
     try:
         changed = await asyncio.to_thread(_member_action, form.get("op", ""),
                                           form.get("name", ""), form.get("slug", ""))
-    except Exception as e:  # noqa: BLE001 — surface the reason instead of a raw 500
+    except Exception as e:
         log.exception("member action failed")
         return await _render_members(request, status=400,
                                      error=f"Couldn't complete that: {type(e).__name__}: {e}")

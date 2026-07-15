@@ -87,7 +87,7 @@ def _decode_header(value: str | None) -> str:
         return ""
     try:
         return str(make_header(decode_header(value))).strip()
-    except Exception:  # noqa: BLE001 - malformed historical headers should not abort import
+    except Exception:
         return str(value).strip()
 
 
@@ -164,7 +164,7 @@ def _decode_part(part) -> str:
     charset = part.get_content_charset()
     try:
         payload = part.get_payload(decode=True)
-    except Exception:  # noqa: BLE001
+    except Exception:
         payload = None
     if payload is None:
         raw = part.get_payload()
@@ -206,7 +206,7 @@ def _body_parts(msg) -> tuple[str, str, list[dict]]:
             try:
                 payload = part.get_payload(decode=True) or b""
                 size = len(payload)
-            except Exception:  # noqa: BLE001
+            except Exception:
                 pass
             attachments.append({
                 "contentType": content_type,

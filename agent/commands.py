@@ -619,13 +619,15 @@ def _save_private_book_feedback(*, user_id: int | str, book_value: str, note: st
 
 
 class PrivateBookFeedbackModal(discord.ui.Modal):
-    note = discord.ui.TextInput(
-        label="What should Oliver remember?",
-        placeholder="Fit, discussion, DNF reason, or what this means for future picks…",
-        style=discord.TextStyle.paragraph,
-        min_length=1,
-        max_length=2000,
-        required=True,
+    note = discord.ui.Label(
+        text="What should Oliver remember?",
+        component=discord.ui.TextInput(
+            placeholder="Fit, discussion, DNF reason, or what this means for future picks…",
+            style=discord.TextStyle.paragraph,
+            min_length=1,
+            max_length=2000,
+            required=True,
+        ),
     )
 
     def __init__(self, *, book: dict) -> None:
@@ -638,7 +640,7 @@ class PrivateBookFeedbackModal(discord.ui.Modal):
             _save_private_book_feedback(
                 user_id=interaction.user.id,
                 book_value=self.book_slug,
-                note=str(self.note.value),
+                note=str(self.note.component.value),
                 source_message_id=str(interaction.id),
             )
         except ValueError as exc:

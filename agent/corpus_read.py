@@ -584,7 +584,7 @@ def compare_books(book_refs: list[str]) -> dict:
             for b in books_found
         ],
         "missing": [
-            ref for ref, book in zip(book_refs[:5], found)
+            ref for ref, book in zip(book_refs[:5], found, strict=True)
             if book is None
         ],
         "sharedSubjects": shared_subjects[:10],

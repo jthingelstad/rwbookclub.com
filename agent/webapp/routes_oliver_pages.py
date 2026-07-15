@@ -71,7 +71,7 @@ async def event_delete(request: web.Request) -> web.Response:
     try:
         event_id = int(form.get("id", ""))
     except ValueError:
-        raise web.HTTPFound("/webapp/admin/events")
+        raise web.HTTPFound("/webapp/admin/events") from None
     await asyncio.to_thread(db.delete_event, event_id)
     ret = (form.get("return") or "").strip()
     if not ret.startswith("/webapp/admin/events"):

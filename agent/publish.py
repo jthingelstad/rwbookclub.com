@@ -129,7 +129,7 @@ def publish_site() -> dict:
     unless those exist AND at least MIN_BOOK_PAGES book pages rendered. Builds from a clean
     `_site` so a crash-orphaned `_site/.git` or stale pages can never ride along. Raises
     PublishBusy if a publish is already running (non-blocking lock)."""
-    lock_file = open(LOCK_PATH, "w")  # noqa: SIM115 - held for the duration below
+    lock_file = open(LOCK_PATH, "w")
     try:
         try:
             fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)

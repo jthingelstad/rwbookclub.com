@@ -464,7 +464,7 @@ def _now_line() -> str:
 
     try:
         meeting = meeting_rules.next_meeting()
-    except Exception:  # noqa: BLE001 — the clock line must never take down an answer
+    except Exception:
         meeting = None
     if meeting and meeting.get("book") and meeting.get("date"):
         when = meeting_rules.friendly_when(meeting["date"], meeting.get("startTime"))
@@ -659,7 +659,7 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
                     usage["out"] += u.output_tokens
                     usage["cr"] += u.cache_read_input_tokens or 0
                     usage["cc"] += u.cache_creation_input_tokens or 0
-                except Exception:  # noqa: BLE001 — best-effort
+                except Exception:
                     log.warning("answer(): forced final-answer call failed after round cap",
                                 exc_info=True)
                 text = _text_of(resp.content)
@@ -686,7 +686,7 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
                         usage["cr"] += u.cache_read_input_tokens or 0
                         usage["cc"] += u.cache_creation_input_tokens or 0
                         text = _text_of(resp.content)
-                    except Exception:  # noqa: BLE001 — best-effort retry
+                    except Exception:
                         log.warning("answer(): empty-text nudge retry failed", exc_info=True)
             reply = text or "I'm not sure how to answer that one."
             break
@@ -786,7 +786,7 @@ def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -
             messages=[{"role": "user", "content": prompt}],
         )
         return _text_of(resp.content).strip() or fallback
-    except Exception:  # noqa: BLE001 — proactive copy must degrade to its template
+    except Exception:
         log.warning("compose(%s) failed; using fallback template", kind, exc_info=True)
         return fallback
 
@@ -861,7 +861,7 @@ def decide_outreach(facts: dict) -> bool:
     )
     try:
         reply = complete(system, user, model=MODEL, thinking=False, max_tokens=16)
-    except Exception:  # noqa: BLE001 — a decision error must never stall collection
+    except Exception:
         log.warning("decide_outreach failed; defaulting to REACH", exc_info=True)
         return True
     return "WAIT" not in reply.strip().upper()

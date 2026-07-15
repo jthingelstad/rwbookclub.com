@@ -138,13 +138,33 @@ def test_valid_command_opens_one_private_note_modal(fresh_db):
     modal = interaction.response.modal
     assert isinstance(modal, commands.PrivateBookFeedbackModal)
     assert modal.book_slug == "watchmen"
-    assert "DNF reason" in modal.note.placeholder
+    assert modal.note.text == "What should Oliver remember?"
+    assert "DNF reason" in modal.note.component.placeholder
+    payload = modal.to_dict()["components"][0]
+    assert payload["type"] == 18  # Discord label container, not a legacy top-level TextInput
+    assert payload["component"]["type"] == 4
     assert _memory_count() == 0  # opening the modal never records a partial note
     confirmation = commands.PRIVATE_FEEDBACK_CONFIRMATION.lower()
     assert "privately" in confirmation
     assert "oliver's memory" in confirmation
     assert "public review" in confirmation
     assert "website" in confirmation
+
+
+def test_modal_submission_saves_private_feedback(fresh_db):
+    fresh_db.link_member_identity(str(USER_ID), "jamie", linked_by="test")
+    modal = commands.PrivateBookFeedbackModal(
+        book={"slug": "watchmen", "title": "Watchmen"}
+    )
+    modal.note.component._value = NOTE
+    interaction = _Interaction(USER_ID)
+
+    asyncio.run(modal.on_submit(interaction))
+
+    memories = fresh_db.get_memories(subject="jamie")
+    assert len(memories) == 1
+    assert NOTE in memories[0]["note"]
+    assert interaction.response.messages == [(commands.PRIVATE_FEEDBACK_CONFIRMATION, True)]
 
 
 def test_private_dnf_reason_is_recallable_only_by_its_member(fresh_db):

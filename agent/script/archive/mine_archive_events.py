@@ -246,7 +246,7 @@ def mine(*, limit: int | None, force: bool, thread_id: str | None, sample: int |
             continue
         try:
             reply = oliver.complete(system, _thread_prompt(full), model=model, thinking=thinking)
-        except Exception as e:  # noqa: BLE001 — one bad thread shouldn't abort a 543-thread run
+        except Exception as e:
             stats["errors"] += 1
             print(f"  [{i}/{len(todo)}] {tid}: ERROR {type(e).__name__}: {e} — leaving for a re-run")
             continue

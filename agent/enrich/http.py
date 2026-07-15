@@ -28,7 +28,7 @@ def get_json(url: str, params: dict | None = None, timeout: int = DEFAULT_TIMEOU
         r = SESSION.get(url, params=params, timeout=timeout)
         ok = r.ok
         data = r.json() if ok else None
-    except Exception:  # noqa: BLE001 - network/parse errors are non-fatal
+    except Exception:
         data = None
     time.sleep(SLEEP_BETWEEN)
     return data
@@ -39,7 +39,7 @@ def get_bytes(url: str, timeout: int = 60) -> bytes | None:
     try:
         r = SESSION.get(url, timeout=timeout)
         content = r.content if r.ok else None
-    except Exception:  # noqa: BLE001
+    except Exception:
         content = None
     time.sleep(SLEEP_BETWEEN)
     return content

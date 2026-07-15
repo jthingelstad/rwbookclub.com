@@ -204,7 +204,7 @@ def run(now) -> int:
         try:
             if send_ask(slug, idempotency_key=f"email:review-ask:{week}:{slug}"):
                 sent += 1
-        except Exception:  # noqa: BLE001 — one member's failure must not block the rest
+        except Exception:
             log.exception("review ask failed for %s", slug)
     db.set_job_state(JOB_KEY, {"week": week, "sent": sent})
     return sent

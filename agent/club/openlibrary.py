@@ -18,7 +18,7 @@ def _work_meta(work_key: str | None) -> dict:
         return {}
     try:
         w = requests.get(f"{OL}{work_key}.json", timeout=20).json()
-    except Exception:  # noqa: BLE001
+    except Exception:
         return {}
     desc = w.get("description")
     if isinstance(desc, dict):
@@ -40,7 +40,7 @@ def _by_isbn(isbn: str) -> dict | None:
         if not r.ok:
             return None
         ed = r.json()
-    except Exception:  # noqa: BLE001
+    except Exception:
         return None
     work_key = (ed.get("works") or [{}])[0].get("key")
     meta = _work_meta(work_key)
@@ -68,7 +68,7 @@ def _by_title(title: str) -> dict | None:
             timeout=20,
         )
         docs = (r.json().get("docs") or []) if r.ok else []
-    except Exception:  # noqa: BLE001
+    except Exception:
         return None
     if not docs:
         return None

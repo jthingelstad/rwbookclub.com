@@ -226,7 +226,7 @@ def _gh_world(monkeypatch, *, tag_exists, view_rc, create_rc=0):
 
     def fake_sub(cmd, **kw):
         calls.append(("sub", cmd))
-        class R:  # noqa: N801
+        class R:
             pass
         r = R()
         if "view" in cmd:

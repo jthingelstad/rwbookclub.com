@@ -58,7 +58,7 @@ def _enrich_new_book(book_id: int, author_ids: list[int], out_dir) -> None:
             corpus_gen.write_book_file(conn, book_id, out_dir)
             for aid in author_ids:
                 corpus_gen.write_author_file(conn, aid, out_dir)
-    except Exception:  # noqa: BLE001 - enrichment is best-effort
+    except Exception:
         log.exception("inline enrichment failed (non-fatal)")
 
 

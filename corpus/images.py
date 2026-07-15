@@ -49,7 +49,7 @@ def ol_cover_url(ol_key: str) -> str | None:
         covers = [c for c in (r.json().get("covers") or []) if isinstance(c, int) and c > 0]
         if covers:
             return cover_url_from_id(covers[0])
-    except Exception as e:  # noqa: BLE001 - network/parse errors are non-fatal
+    except Exception as e:
         print(f"    OL lookup failed for {ol_key}: {e}", file=sys.stderr)
     return None
 
@@ -104,7 +104,7 @@ def main() -> None:
         try:
             widths = process_image(url, slug, COVERS_DIR, COVER_WIDTHS)
             print(f"  ✓ {slug} ({', '.join(str(w) for w in widths)})")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             print(f"  ✗ {slug}: {e}", file=sys.stderr)
     print("Done.")
 

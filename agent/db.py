@@ -1436,7 +1436,7 @@ def update_member_website(old_url: str, member_slug: str, *, url: str | None = N
                 "WHERE surface = 'website' AND member_id = ? AND identifier = ?",
                 (new, label, _now(), mid, old))
         except sqlite3.IntegrityError:
-            raise ValueError("you already have that website")
+            raise ValueError("you already have that website") from None
         return cur.rowcount > 0
 
 

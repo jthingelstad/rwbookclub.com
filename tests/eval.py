@@ -360,7 +360,7 @@ def fmt_single(num, r, j):
 
 def fmt_multi(num, conv, turns, judgments):
     lines = [f"\n#### M{num} · _{conv['category']}_ · **{conv['speaker']}** ({len(turns)} turns)\n"]
-    for i, (t, j) in enumerate(zip(turns, judgments), 1):
+    for i, (t, j) in enumerate(zip(turns, judgments, strict=True), 1):
         lines.append(f"**T{i}** \"{t['question']}\"")
         lines.append(f"_Tools:_ {fmt_tools(t['tools'])}")
         lines.append(f"_Response:_ {t['reply']}")

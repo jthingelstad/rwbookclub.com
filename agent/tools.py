@@ -701,7 +701,7 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
             return _dump({"error": f"unknown tool {name}"})
         request = RequestContext.from_runtime(ctx, actor=actor)
         return _dump(handler(name, tool_input, request))
-    except Exception as exc:  # noqa: BLE001 - tool errors are results, not loop failures
+    except Exception as exc:
         log.exception("tool %s failed (input=%r)", name, tool_input)
         return _dump({"error": f"{type(exc).__name__}: {exc}"})
 

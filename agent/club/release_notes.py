@@ -280,7 +280,7 @@ def create_github_release(*, name: str, commit: str, body: str) -> str | None:
         if made.returncode != 0:
             raise RuntimeError((made.stderr or made.stdout or "")[-500:])
         return made.stdout.strip() or None
-    except Exception as e:  # noqa: BLE001 — best-effort by contract
+    except Exception as e:
         log.exception("GitHub release for %r failed", tag)
         db.add_activity("warning", "GitHub release failed",
                         f"Tag: {tag}\nCommit: {commit}\n{type(e).__name__}: {e}")

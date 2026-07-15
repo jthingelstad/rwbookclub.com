@@ -4,6 +4,9 @@
 target-version = "py313"
 
 [lint]
+# Bugbear catches a small set of correctness hazards; RUF100 keeps suppressions aligned with the
+# rules this project actually enforces.
+extend-select = ["B", "RUF100"]
 # E702 (';'-separated compound statements) is an intentional compact pattern in
 # db.py's SQL builders ("sql += ...; args.append(...)"); keep it.
 ignore = ["E702"]

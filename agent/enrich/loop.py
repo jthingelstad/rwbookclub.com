@@ -57,7 +57,7 @@ def _fetch_image(url: str | None, slug: str, out_dir, widths) -> list[int] | Non
         return None
     try:
         return images.process_image(url, slug, out_dir, widths)
-    except Exception as e:  # noqa: BLE001 - image fetch is non-fatal
+    except Exception as e:
         print(f"      image fetch failed for {slug}: {e}", file=sys.stderr)
         return None
 
@@ -241,7 +241,7 @@ def run_pending(*, limit: int = 8, fetch_images: bool = True) -> dict:
                 try:
                     enrich_fn(conn, entity, fetch_images=fetch_images)
                     conn.commit()
-                except Exception:  # noqa: BLE001 — network/source failure: stop, retry tomorrow
+                except Exception:
                     log.exception("enrichment sweep aborted on %s %r (source down?)",
                                   kind, entity["slug"])
                     return summary

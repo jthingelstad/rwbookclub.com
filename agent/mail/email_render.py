@@ -25,7 +25,7 @@ class _EscapeRawHtmlPostprocessor(_RawHtmlPostprocessor):
 
 
 class _EscapeRawHtmlExtension(_Extension):
-    def extendMarkdown(self, md) -> None:  # noqa: N802 (markdown API name)
+    def extendMarkdown(self, md) -> None:
         md.postprocessors.register(_EscapeRawHtmlPostprocessor(md), "raw_html", 30)
 
 
