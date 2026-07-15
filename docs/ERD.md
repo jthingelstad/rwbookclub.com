@@ -4,7 +4,7 @@ Entity-relationship reference for `agent/oliver.db` (SQLite). Originally generat
 the live schema on 2026-06-27; the 6 `mail_message_fts*` tables are one FTS5 virtual table + its
 shadows, shown here as one node.
 
-The database holds **two classes** of data (see `agent/docs/ROADMAP.md`):
+The database holds **two classes** of data (see `CLAUDE.md` for the maintained architecture):
 
 - **Class A — canonical club record** (`club_*` tables): books, authors, meetings, members, reviews,
   lists. Integer surrogate PKs, real foreign keys, `ON DELETE CASCADE` within the core. The Git

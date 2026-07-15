@@ -41,8 +41,9 @@ counterpart to Elixir's Data Analyst. Commit lanes and the approval gate are in 
 
 Before role-specific work, every agent reads: `agent/docs/SOUL.md` (who Oliver is),
 `agent/docs/PURPOSE.md` (what Oliver is for), `agent/docs/PROCESS.md` (how Oliver operates,
-incl. the member-communication cadence), `agent/docs/ROADMAP.md`, and `CLAUDE.md` (architecture,
-schema, build/deploy, the full "things not to do").
+incl. the member-communication cadence), and `CLAUDE.md` (architecture, schema, build/deploy,
+the full "things not to do"). GitHub Issues are the current roadmap; completed design records
+live under `AGENT-TEAM/work/` and `docs/archive/`.
 
 ## Guardrails (Oliver specifics)
 

@@ -7,8 +7,8 @@ subject + body out of `<subject>`/`<email>` tags. The body is returned UNSIGNED 
 signature is appended by `outbound.finalize`/`outbound.send`, exactly like the topic email.
 
 Source material is the repo itself: git history over the look-back window (commit subjects,
-bodies, and file stats, plus the merge lines that mark each shipped feature) and the
-capability docs (ROADMAP — the de-facto changelog — and which docs changed in the window).
+bodies, and file stats, plus the merge lines that mark each shipped feature) and the current
+capability guide (`agent/README.md`) plus the docs changed in the window.
 The grounding rule in the prompt is strict: describe only what's in the material, never
 invent a capability.
 
@@ -46,7 +46,7 @@ from agent.mail import outbound
 # stays bounded, and tell the model (and the reader) when we truncated rather than dropping
 # silently.
 _COMMIT_CAP = 60
-_ROADMAP_PATH = publish.REPO_ROOT / "agent" / "docs" / "ROADMAP.md"
+_CAPABILITIES_PATH = publish.REPO_ROOT / "agent" / "README.md"
 _SUBJECT_TAG = re.compile(r"<subject>(.*?)</subject>", re.S | re.I)
 
 
@@ -107,9 +107,9 @@ def recent_changes(*, days: int | None = None, since_commit: str | None = None) 
     changed_docs = sorted({ln.strip() for ln in doc_lines if ln.strip().endswith(".md")})
 
     try:
-        roadmap = _ROADMAP_PATH.read_text()
+        capabilities = _CAPABILITIES_PATH.read_text()
     except OSError:
-        roadmap = ""
+        capabilities = ""
 
     return {
         "window": window,
@@ -120,7 +120,7 @@ def recent_changes(*, days: int | None = None, since_commit: str | None = None) 
         "merges": merges,
         "commits": commits,
         "changed_docs": changed_docs,
-        "roadmap": roadmap,
+        "capabilities": capabilities,
     }
 
 
@@ -228,8 +228,8 @@ def release_notes_prompt(material: dict) -> str:
         f"{material['commits'] or '(none)'}\n\n"
         "--- Docs changed in this window ---\n"
         f"{docs}\n\n"
-        "--- Current ROADMAP.md (the running feature log, for context on why things matter) ---\n"
-        f"{material['roadmap'] or '(unavailable)'}\n"
+        "--- Current agent capability guide (for context on what is already live) ---\n"
+        f"{material['capabilities'] or '(unavailable)'}\n"
     )
 
 

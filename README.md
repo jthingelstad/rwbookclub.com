@@ -56,4 +56,7 @@ The club's data lives in **SQLite** (`agent/oliver.db`, the `club_*` tables — 
 
 **The members' web app** (`agent/webapp/`) runs *inside* Oliver's process — a small aiohttp app reached over Tailscale Funnel, authed by a Discord-minted one-time link (`/oliver my-club`). Members rate/review books, manage lists, and edit their profile there; admins edit books, meetings, hosts/pickers, and members. It writes the same DB through the same writers Oliver uses. This is where "structured, deliberate editing" lives — Discord stays for conversation, attendance, and reading status.
 
-See [`CLAUDE.md`](CLAUDE.md) for the data schema and conventions, [`corpus/README.md`](corpus/README.md) for the data layer, and [`agent/docs/ROADMAP.md`](agent/docs/ROADMAP.md) for where Oliver is headed.
+See [`CLAUDE.md`](CLAUDE.md) for the canonical architecture and operating guide,
+[`corpus/README.md`](corpus/README.md) for the generated data layer, and
+[`agent/README.md`](agent/README.md) for Oliver's current capabilities. GitHub Issues are the
+project roadmap; completed designs and migrations live in [`docs/archive/`](docs/archive/README.md).

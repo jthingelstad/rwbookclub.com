@@ -33,7 +33,7 @@ agent/
 ├── mail/           # Fastmail JMAP send/receive + the mail archive
 ├── enrich/         # external enrichment loop (Open Library + Wikidata + Wikipedia)
 ├── script/         # current ops helpers; retired one-time tools live under script/archive/
-└── docs/ · team/   # charters + roadmap · AI-persona role prompts
+└── docs/ · team/   # live persona/behavior charters · AI-persona role prompts
 ```
 
 ## How Oliver works

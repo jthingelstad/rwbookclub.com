@@ -11,8 +11,8 @@ MATERIAL = {
     "truncated": False,
     "merges": "- abc123 Merge feature-x: a shiny thing",
     "commits": "### abc123 2026-06-26 Add a shiny thing\nbody detail here\n",
-    "changed_docs": ["agent/docs/ROADMAP.md"],
-    "roadmap": "# Roadmap\nPhase 7 — shiny things.",
+    "changed_docs": ["agent/README.md"],
+    "capabilities": "# Oliver\nShiny things are live.",
 }
 
 
@@ -35,7 +35,7 @@ def test_prompt_embeds_material_and_contract():
     assert "<subject>" in p and "<email>" in p
     # Source material is actually included, not just described.
     assert "a shiny thing" in p
-    assert "Phase 7" in p
+    assert "Shiny things are live" in p
     # New contract: an opening framing sentence, a terse changelog, and a closing sign-off.
     assert "OPEN:" in p and "framing sentence" in p
     assert "CLOSE:" in p and "sign-off" in p
