@@ -8,7 +8,9 @@ proactive scheduler.
 
 ```
 agent/
-├── bot.py          # Discord client: /oliver group, #ask-oliver listener, scheduler loop
+├── bot.py          # Discord client lifecycle, message routing, reactions, email polling
+├── commands.py     # /oliver slash commands and persistent interaction views
+├── proactive.py    # hourly durable-job/cadence/reminder coordinator and channel delivery
 ├── oliver.py       # the agent loop (tool use, caching, conversation history)
 ├── tools.py        # single registry/authorization/dispatch gate
 ├── tool_catalog/   # stable API contracts grouped by capability, assembled in cache-safe order
@@ -27,7 +29,7 @@ agent/
 ├── persona.py      # loads the SOUL/PURPOSE/PROCESS charters from docs/
 ├── config.py · db.py · database.py  # config; SQLite façade; explicit bootstrap + migrations
 ├── repositories/      # focused persistence for outbox delivery and scheduled jobs
-├── club/           # reviews (→ club_reviews), meeting_rules, openlibrary, campaign/emails
+├── club/           # reviews, meeting rules, outreach, Open Library, campaign/emails
 ├── mail/           # Fastmail JMAP send/receive + the mail archive
 ├── enrich/         # external enrichment loop (Open Library + Wikidata + Wikipedia)
 ├── script/         # current ops helpers; retired one-time tools live under script/archive/
@@ -83,7 +85,7 @@ agent/
   **not** cancel, reschedule, or change reading order. Attendance/reading state lives in the
   event-sourced `events` log + `meeting_member_status` projection (see `docs/ERD.md` §2), so once a
   member's attendance or reading is confirmed Oliver stops asking.
-- **Proactive scheduler** (`scheduler.py` + `commands.py`): a daily loop posts
+- **Proactive scheduler** (`scheduler.py` + `proactive.py`): an hourly loop posts
   upcoming-meeting reminders, starts roll call 14 days before the next meeting, flags
   unresolved attendance trouble within 3 days, posts review nudges, and milestone/anniversary
   notes to `DISCORD_MAIN_CHANNEL_ID` — deduped, and a no-op until that channel id is set.
@@ -93,6 +95,8 @@ agent/
   lease prevents overlapping hourly/manual ticks; recurring components also record start/end,
   outcome, duration, processed count, and privacy-safe error class in `job_runs`. Inspect current
   owners, expiry, last success/failure, and overdue state with `python -m agent.jobs status`.
+  `club/outreach.py` owns member-scoped roll-call and reading-check-in email delivery; slash
+  commands and the proactive runtime call the same capability.
 - **Email** (`email_jmap.py` + `bot.py`): optional Fastmail JMAP integration. Oliver sends HTML
   plus plain-text alternative mail from
   `OLIVER_EMAIL_ADDRESS`, polls only `Inbox/Oliver` for unread mail, replies through the normal

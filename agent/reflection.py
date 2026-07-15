@@ -14,7 +14,7 @@ Safety properties:
 - Auditable: one #oliver-log activity per run with per-member counts; tokens logged to usage_log
   (channel 'reflection'); everything inspectable in the web app (admin Memories page).
 
-Run weekly from the scheduler (commands.run_scheduler), or manually:
+Run weekly from the scheduler (`proactive.run`), or manually:
     python -m agent.reflection --dry-run    # preview proposals, write nothing
     python -m agent.reflection              # run for real
 """

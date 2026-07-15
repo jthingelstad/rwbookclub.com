@@ -1,6 +1,6 @@
 """Club-wide meeting-cadence emails: the 1-week reminder and the 2-day topic email.
 
-Both go to the whole mailing list at their cadence window (wired in run_scheduler).
+Both go to the whole mailing list at their cadence window (wired in `proactive.run`).
 The 1-week reminder just voices attendance facts via oliver.compose; the 2-day topic
 email runs Oliver's tool loop (oliver.generate) so he mines the club's reading history
 for real, non-obvious discussion provocations. Each closes with the contextual signature.

@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import asyncio
 
-from agent import clubdb, commands, identities, oliver
-from agent.club import meeting_campaign, meeting_rules
+from agent import clubdb, identities, oliver
+from agent.club import meeting_campaign, meeting_rules, outreach
 
 # ── oliver.decide_outreach ──────────────────────────────────────────────────
 
@@ -61,7 +61,7 @@ def _setup(fresh_db, monkeypatch, *, decide):
     monkeypatch.setattr(oliver, "decide_outreach", lambda c: consulted.append(c["memberSlug"]) or decide)
     monkeypatch.setattr(oliver, "compose", lambda *a, **k: "Email body.")  # no real LLM
     sent = []
-    monkeypatch.setattr(commands.outbound, "send",
+    monkeypatch.setattr(outreach.outbound, "send",
                         lambda **kw: sent.append(kw) or {"emailId": f"e{len(sent)}"})
     return db, meeting, status, jamie, tom, consulted, sent
 
@@ -70,7 +70,7 @@ def test_dispatch_forces_mustreach_and_consults_oliver_for_the_rest(fresh_db, mo
     db, meeting, status, jamie, tom, consulted, sent = _setup(fresh_db, monkeypatch, decide=True)
     mid = meeting["meetingId"]
 
-    posted = asyncio.run(commands._run_meeting_outreach(meeting, status))
+    posted = asyncio.run(outreach.run(meeting, status))
 
     assert posted == 2
     # Oliver was asked ONLY about the discretionary candidate (tom); jamie was forced (mustReach).
@@ -87,7 +87,7 @@ def test_dispatch_respects_oliver_waiting(fresh_db, monkeypatch):
     db, meeting, status, jamie, tom, consulted, sent = _setup(fresh_db, monkeypatch, decide=False)
     mid = meeting["meetingId"]
 
-    posted = asyncio.run(commands._run_meeting_outreach(meeting, status))
+    posted = asyncio.run(outreach.run(meeting, status))
 
     # Only the forced (mustReach) attendance email goes out; Oliver chose WAIT for tom's reading.
     assert posted == 1

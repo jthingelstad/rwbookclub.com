@@ -7,7 +7,7 @@ import asyncio
 import json
 from datetime import timedelta
 
-from agent import clock, commands, db, oliver
+from agent import clock, db, oliver, proactive
 from agent.club import meeting_emails as me
 
 
@@ -107,7 +107,7 @@ def _anchor_book():
 
 def test_maybe_send_postscript_fires_once_in_window(monkeypatch, fresh_db):
     monkeypatch.setattr(me, "_most_recent_read_book", _anchor_book)
-    monkeypatch.setattr(commands.clubdb, "meeting_id_for_book_slug", lambda slug: 42)
+    monkeypatch.setattr(proactive.clubdb, "meeting_id_for_book_slug", lambda slug: 42)
     monkeypatch.setattr(me, "postscript_email",
                         lambda anchor=None: {"subject": "Postscript", "body": "hi",
                                              "offered": ["recent", "x"]})
@@ -115,25 +115,25 @@ def test_maybe_send_postscript_fires_once_in_window(monkeypatch, fresh_db):
 
     async def fake_send(subject, body, **_kwargs):
         sent.append((subject, body))
-    monkeypatch.setattr(commands, "_send_club_email", fake_send)
+    monkeypatch.setattr(proactive, "send_club_email", fake_send)
 
     start = clock.meeting_start("2026-06-01", "18:30")
     now = start + timedelta(days=8)                     # inside [+7, +10]
-    assert asyncio.run(commands._maybe_send_postscript(now)) == 1
+    assert asyncio.run(proactive._maybe_send_postscript(now)) == 1
     assert len(sent) == 1
     assert db.has_group_event(42, me.POSTSCRIPT_KIND)   # dedup event recorded
     assert me._recent_featured_slugs() == {"recent", "x"}  # offered slugs stored for rotation
     # A second tick in the same window does not re-send.
-    assert asyncio.run(commands._maybe_send_postscript(now)) == 0
+    assert asyncio.run(proactive._maybe_send_postscript(now)) == 0
     assert len(sent) == 1
 
 
 def test_maybe_send_postscript_outside_window(monkeypatch, fresh_db):
     monkeypatch.setattr(me, "_most_recent_read_book", _anchor_book)
-    monkeypatch.setattr(commands.clubdb, "meeting_id_for_book_slug", lambda slug: 43)
+    monkeypatch.setattr(proactive.clubdb, "meeting_id_for_book_slug", lambda slug: 43)
     fired = []
     monkeypatch.setattr(me, "postscript_email", lambda anchor=None: fired.append(1) or {})
     start = clock.meeting_start("2026-06-01", "18:30")
-    assert asyncio.run(commands._maybe_send_postscript(start + timedelta(days=3))) == 0   # too early
-    assert asyncio.run(commands._maybe_send_postscript(start + timedelta(days=20))) == 0  # too late
+    assert asyncio.run(proactive._maybe_send_postscript(start + timedelta(days=3))) == 0   # too early
+    assert asyncio.run(proactive._maybe_send_postscript(start + timedelta(days=20))) == 0  # too late
     assert fired == []  # never even drafted outside the window

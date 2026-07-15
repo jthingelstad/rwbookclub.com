@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
-from agent import commands, config
+from agent import commands, config, proactive
 
 
 class _Client:
@@ -15,10 +15,15 @@ class _Client:
         return self.channel if channel_id else None
 
 
+def test_commands_does_not_reexport_the_proactive_runtime():
+    removed = {"run_scheduler", "start_scheduler", "scheduler_loop", "_client"}
+    assert all(not hasattr(commands, name) for name in removed)
+
+
 def test_scheduler_coordinator_counts_each_stage(monkeypatch):
     calls = []
     channel = object()
-    monkeypatch.setattr(commands, "_client", _Client(channel))
+    monkeypatch.setattr(proactive, "_client", _Client(channel))
     monkeypatch.setattr(config, "MAIN_CHANNEL_ID", 123)
 
     async def maintenance(now):
@@ -39,18 +44,18 @@ def test_scheduler_coordinator_counts_each_stage(monkeypatch):
         calls.append("reminders")
         return 5
 
-    monkeypatch.setattr(commands, "_run_maintenance_jobs", maintenance)
-    monkeypatch.setattr(commands, "_post_due_notifications", notifications)
-    monkeypatch.setattr(commands, "_run_meeting_jobs", meetings)
-    monkeypatch.setattr(commands, "_post_due_reminders", reminders)
+    monkeypatch.setattr(proactive, "_run_maintenance_jobs", maintenance)
+    monkeypatch.setattr(proactive, "_post_due_notifications", notifications)
+    monkeypatch.setattr(proactive, "_run_meeting_jobs", meetings)
+    monkeypatch.setattr(proactive, "_post_due_reminders", reminders)
 
-    assert asyncio.run(commands._run_scheduler_unleased()) == 14
+    assert asyncio.run(proactive._run_unleased()) == 14
     assert calls == ["maintenance", "notifications", "meetings", "reminders"]
 
 
 def test_scheduler_still_runs_reminders_without_main_channel(monkeypatch):
     calls = []
-    monkeypatch.setattr(commands, "_client", _Client(None))
+    monkeypatch.setattr(proactive, "_client", _Client(None))
     monkeypatch.setattr(config, "MAIN_CHANNEL_ID", 0)
 
     async def maintenance(now):
@@ -61,8 +66,8 @@ def test_scheduler_still_runs_reminders_without_main_channel(monkeypatch):
         calls.append("reminders")
         return 2
 
-    monkeypatch.setattr(commands, "_run_maintenance_jobs", maintenance)
-    monkeypatch.setattr(commands, "_post_due_reminders", reminders)
+    monkeypatch.setattr(proactive, "_run_maintenance_jobs", maintenance)
+    monkeypatch.setattr(proactive, "_post_due_reminders", reminders)
 
-    assert asyncio.run(commands._run_scheduler_unleased()) == 3
+    assert asyncio.run(proactive._run_unleased()) == 3
     assert calls == ["maintenance", "reminders"]

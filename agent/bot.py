@@ -37,6 +37,7 @@ from agent import (
     outbox,
     publish,
     publishing,
+    proactive,
     security,
 )
 from agent import (
@@ -107,7 +108,8 @@ class OliverClient(discord.Client):
 
 
 client = OliverClient()
-commands.setup(client)  # attach the /oliver group + stash the client reference
+commands.setup(client)
+proactive.configure(client)
 _channel_locks: defaultdict[int, asyncio.Lock] = defaultdict(asyncio.Lock)
 _email_lock = asyncio.Lock()
 
@@ -197,7 +199,7 @@ async def on_ready() -> None:
         body += "\nPermission gaps:\n" + "\n".join(perm_issues)
     db.add_activity("startup", "Oliver online", body)
 
-    commands.start_scheduler()
+    proactive.start()
     start_activity_logger()
     start_email_poller()
     # The member web app is NOT started here — it starts on demand when a member runs
