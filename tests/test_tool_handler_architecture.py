@@ -5,7 +5,8 @@ import inspect
 import json
 
 from agent import model_readers
-from agent.tool_handlers import mail, meeting, memory, picking
+from agent.tool_catalog import CAPABILITY_TOOLS
+from agent.tool_handlers import core, mail, meeting, memory, picking
 from agent.tool_handlers.context import RequestContext
 from agent.tools import TOOL_HANDLERS, TOOLS, dispatch
 
@@ -26,8 +27,22 @@ def test_registry_has_exactly_one_handler_for_every_client_tool():
         if definition.get("type") != "web_search_20250305"
     }
     assert set(TOOL_HANDLERS) == expected
-    capability_names = [meeting.NAMES, memory.NAMES, mail.NAMES, picking.NAMES]
+    capability_names = [core.NAMES, meeting.NAMES, memory.NAMES, mail.NAMES, picking.NAMES]
     assert sum(len(names) for names in capability_names) == len(set().union(*capability_names))
+
+
+def test_catalog_capabilities_match_their_handlers():
+    handlers = {
+        "core": core,
+        "meeting": meeting,
+        "memory": memory,
+        "mail": mail,
+        "picking": picking,
+    }
+
+    for capability, handler in handlers.items():
+        schema_names = {definition["name"] for definition in CAPABILITY_TOOLS[capability]}
+        assert schema_names == handler.NAMES
 
 
 def test_dispatch_passes_typed_trusted_context(monkeypatch):

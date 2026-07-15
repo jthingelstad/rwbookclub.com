@@ -10,8 +10,9 @@ proactive scheduler.
 agent/
 ├── bot.py          # Discord client: /oliver group, #ask-oliver listener, scheduler loop
 ├── oliver.py       # the agent loop (tool use, caching, conversation history)
-├── tools.py        # stable schemas + the single registry/authorization/dispatch gate
-├── tool_handlers/  # capability handlers: meeting, memory/retrieval, mail, Book Cloud/picking
+├── tools.py        # single registry/authorization/dispatch gate
+├── tool_catalog/   # stable API contracts grouped by capability, assembled in cache-safe order
+├── tool_handlers/  # matching capability handlers: core, meeting, memory, mail, picking
 ├── model_readers.py # actor-required private readers (separate from raw internal DB APIs)
 ├── identities.py   # Discord/email/SMS/website links to member IDs; private contacts stay in SQLite
 ├── clubdb.py       # the authoritative club_* tables + read/write helpers
