@@ -133,7 +133,7 @@ function eventLines(m, bookBySlug, nameBySlug, baseUrl) {
   return out;
 }
 
-module.exports = class {
+class MeetingsCalendar {
   data() {
     return { permalink: "/meetings.ics", eleventyExcludeFromCollections: true };
   }
@@ -161,4 +161,7 @@ module.exports = class {
 
     return lines.map(fold).join("\r\n") + "\r\n";
   }
-};
+}
+
+module.exports = MeetingsCalendar;
+module.exports.fold = fold;

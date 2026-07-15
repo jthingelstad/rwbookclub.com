@@ -6,8 +6,9 @@
 const fs = require("fs");
 const path = require("path");
 const matter = require("gray-matter");
+const corpus = require("../../lib/corpus");
 
-const DATA = path.join(__dirname, "..", "..", "..", "corpus", "data");
+const DATA = corpus.dataDir();
 const REVIEWS_DIR = path.join(DATA, "reviews");
 const MEMBERS_DIR = path.join(DATA, "members");
 

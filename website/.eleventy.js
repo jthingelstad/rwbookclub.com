@@ -1,9 +1,11 @@
 const markdownIt = require("markdown-it");
+const { assertCorpusContract } = require("./lib/corpus");
 // Member-authored review bodies are Markdown. html:false escapes any raw HTML in the source, so
 // rendering member content is XSS-safe; linkify turns bare URLs into links; breaks honors newlines.
 const _reviewMd = markdownIt({ html: false, linkify: true, breaks: true });
 
 module.exports = function (eleventyConfig) {
+  assertCorpusContract();
   // Pass static assets through unchanged
   eleventyConfig.addPassthroughCopy({ "src/assets": "assets" });
   eleventyConfig.addPassthroughCopy({ "src/CNAME": "CNAME" });

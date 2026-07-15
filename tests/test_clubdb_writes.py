@@ -61,7 +61,7 @@ def test_schedule_meeting_persists_picker_and_meeting(monkeypatch, tmp_path):
             "INSERT OR REPLACE INTO club_members(id, slug, name, is_current) VALUES (61, 'pat', 'Pat', 1)"
         )
     (data / "members" / "pat.json").write_text(
-        json.dumps({"name": "Pat", "isCurrent": True, "website": None}) + "\n"
+        json.dumps({"name": "Pat", "isCurrent": True, "joined": None, "websites": []}) + "\n"
     )
 
     corpus_write.write_book({"title": "The Next Pick", "authors": ["Some One"]})

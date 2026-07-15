@@ -7,7 +7,6 @@ const path = require("path");
 
 const buildBooks = require("./books.js");
 
-const MEMBERS_DIR = path.join(__dirname, "..", "..", "..", "corpus", "data", "members");
 const PHOTOS_DIR = path.join(__dirname, "..", "assets", "images", "members");
 const FILENAME_RE = /^(.+)-(\d+)\.jpg$/;
 

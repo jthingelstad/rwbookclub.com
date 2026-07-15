@@ -28,6 +28,8 @@ class WriteError(Exception):
 
 
 def _validate_or_raise() -> None:
+    # Incremental projections use the same versioned contract as a full regeneration.
+    corpus_gen.write_manifest(DATA_DIR)
     errors = validate_data_dir(DATA_DIR)
     if errors:
         preview = "; ".join(errors[:3])

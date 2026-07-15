@@ -9,8 +9,9 @@
 const fs = require("fs");
 const path = require("path");
 const clock = require("../../lib/clock");
+const corpus = require("../../lib/corpus");
 
-const DATA = path.join(__dirname, "..", "..", "..", "corpus", "data");
+const DATA = corpus.dataDir();
 const COVERS_DIR = path.join(__dirname, "..", "assets", "images", "covers");
 const FILENAME_RE = /^(.+)-(\d+)\.jpg$/;
 
@@ -248,3 +249,5 @@ function enrich() {
 module.exports = enrich;
 module.exports.readJsonDir = readJsonDir;
 module.exports.earliestMeetingBySlug = earliestMeetingBySlug;
+module.exports.attachRelated = attachRelated;
+module.exports.cleanSubjects = cleanSubjects;

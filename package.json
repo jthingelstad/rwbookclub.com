@@ -11,6 +11,7 @@
   ],
   "scripts": {
     "build": "npm run build -w website",
+    "test": "npm run test -w website",
     "serve": "npm run serve -w website",
     "clean": "npm run clean -w website",
     "covers": "python3 -m corpus.images",

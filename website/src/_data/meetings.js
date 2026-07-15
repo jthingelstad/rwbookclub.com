@@ -8,8 +8,9 @@ const fs = require("fs");
 const path = require("path");
 
 const buildBooks = require("./books.js");
+const corpus = require("../../lib/corpus");
 
-const DIR = path.join(__dirname, "..", "..", "..", "corpus", "data", "meetings");
+const DIR = path.join(corpus.dataDir(), "meetings");
 
 module.exports = function () {
   if (!fs.existsSync(DIR)) return [];

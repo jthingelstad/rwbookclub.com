@@ -16,7 +16,8 @@ corpus/
 ├── paths.py        # filesystem paths + the slug helper
 ├── requirements.txt
 └── data/                       # GENERATED from the club_* tables; gitignored (private, on-disk only)
-    ├── books/<slug>.json
+    ├── manifest.json              # { "schemaVersion": 1 }; checked before every website build
+    ├── books/<slug>.json
     ├── members/<slug>.json
     ├── meetings/<date>--<id>.json   # first-class meeting records
     ├── authors/<slug>.json
@@ -31,7 +32,9 @@ Everything derivable — a book's meeting date, a member's picks, review counts,
 behind slugs — is **computed at build/read time**, not stored, so there's nothing to
 keep in sync. The website (`website/src/_data/*.js`) and the agent
 (`agent/corpus_read.py`) each do these joins. Records are JSON; reviews are Markdown +
-YAML frontmatter (body = the prose). `corpus/validate.py` checks every reference resolves.
+YAML frontmatter (body = the prose). `corpus/schema.py` is the tracked, versioned Python contract;
+`corpus/validate.py` checks every document and every cross-file reference. The website refuses to
+build when `manifest.json` is missing or declares a schema version it does not support.
 
 ## Editing
 
@@ -65,6 +68,9 @@ One-time re-seed of the DB from the original Airtable snapshot (reads the on-dis
 cache under `agent/script/_airtable_cache/`, not the API — no credentials needed):
 `python -m agent.script.archive.import_airtable` (the table IDs live in that script).
 
-## Schema
+## Contract changes
 
-The full club schema (tables, fields, conventions) is documented in the repo-root `CLAUDE.md`.
+The full authoritative SQLite schema (tables, fields, conventions) is documented in the repo-root
+`CLAUDE.md`. The generated-file contract is defined by `corpus/schema.py` and currently has version
+1. Any field or layout change must update the models, generator, Python and JavaScript consumers,
+shared contract tests, and the manifest version when the change is not backwards compatible.

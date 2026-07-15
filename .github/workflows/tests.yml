@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - run: pip install -c agent/constraints.txt -r agent/requirements.txt -r tests/requirements.txt
+      - run: pip install -c agent/constraints.txt -r agent/requirements.txt -r corpus/requirements.txt -r tests/requirements.txt
       - name: Lint (ruff)
         run: ruff check .
       - name: Tests
@@ -38,10 +38,12 @@ jobs:
         with:
           node-version-file: .node-version
           cache: npm
-      - run: pip install -c agent/constraints.txt -r agent/requirements.txt
+      - run: pip install -c agent/constraints.txt -r agent/requirements.txt -r corpus/requirements.txt
       - run: npm ci
       - name: Audit JavaScript dependencies
         run: npm audit --audit-level=moderate
+      - name: Test JavaScript corpus consumers
+        run: npm test
       - name: Generate public-safe fixture corpus
         env:
           OLIVER_DB_PATH: ${{ runner.temp }}/oliver-site-build.db

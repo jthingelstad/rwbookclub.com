@@ -26,8 +26,8 @@ function centralParts(date = new Date()) {
 const pad = (n) => String(n).padStart(2, "0");
 
 // Today's date in the club timezone as 'YYYY-MM-DD'.
-function centralToday() {
-  const { y, m, d } = centralParts();
+function centralToday(now = new Date()) {
+  const { y, m, d } = centralParts(now);
   return `${y}-${pad(m)}-${pad(d)}`;
 }
 
@@ -39,7 +39,7 @@ function addDaysIso(iso, days) {
 
 // True if the meeting has not yet passed — now (Central wall clock) is before start + buffer.
 // Both sides are compared as Central wall-clock 'YYYY-MM-DDTHH:MM' strings (lexicographic).
-function isUpcoming(meetingDate, startTime) {
+function isUpcoming(meetingDate, startTime, now = new Date()) {
   if (!meetingDate) return false;
   const day = String(meetingDate).slice(0, 10);
   let hh = DEFAULT_MEETING_HOUR, mm = 0;
@@ -51,7 +51,7 @@ function isUpcoming(meetingDate, startTime) {
   let endDay = day;
   while (mins >= 24 * 60) { mins -= 24 * 60; endDay = addDaysIso(endDay, 1); }
   const endKey = `${endDay}T${pad(Math.floor(mins / 60))}:${pad(mins % 60)}`;
-  const { y, m, d, H, M } = centralParts();
+  const { y, m, d, H, M } = centralParts(now);
   const nowKey = `${y}-${pad(m)}-${pad(d)}T${pad(H)}:${pad(M)}`;
   return nowKey < endKey;
 }

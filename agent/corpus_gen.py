@@ -29,6 +29,8 @@ if str(REPO_ROOT) not in sys.path:
 
 from agent import clubdb, db  # noqa: E402
 from corpus.paths import DATA_DIR  # noqa: E402
+from corpus.schema import SCHEMA_VERSION  # noqa: E402
+from corpus.validate import validate_data_dir  # noqa: E402
 
 # The corpus is a private, on-disk artifact; DATA_DIR honors OLIVER_CORPUS_DIR so a test run
 # regenerates into a temp dir instead of the developer's real corpus/data.
@@ -39,6 +41,13 @@ ENTITY_DIRS = ["books", "meetings", "members", "authors", "reviews", "lists"]
 def _write_json(path: Path, obj: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n")
+
+
+def write_manifest(out_root: Path = DEFAULT_OUT) -> Path:
+    """Declare the contract version emitted by this projection code."""
+    path = out_root / "manifest.json"
+    _write_json(path, {"schemaVersion": SCHEMA_VERSION})
+    return path
 
 
 def _add(doc: dict, key: str, value) -> None:
@@ -206,6 +215,11 @@ def generate(out_root: Path = DEFAULT_OUT) -> dict:
             written["reviews"] += 1
 
     written["_pruned"] = sum(_prune(out_root / d, keep[d]) for d in ENTITY_DIRS)
+    write_manifest(out_root)
+    errors = validate_data_dir(out_root)
+    if errors:
+        details = "\n".join(f"- {error}" for error in errors[:20])
+        raise RuntimeError(f"generated corpus violates its v{SCHEMA_VERSION} contract:\n{details}")
     _invalidate_read_cache()
     return written
 

@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "eleventy",
+    "test": "node --test test/*.test.js",
     "serve": "eleventy --serve",
     "clean": "rm -rf _site"
   },
