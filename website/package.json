@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "gray-matter": "^4.0.3",
-    "markdown-it": "^14.0.0"
+    "markdown-it": "^14.3.0"
   },
   "devDependencies": {
     "@11ty/eleventy": "^3.0.0"
