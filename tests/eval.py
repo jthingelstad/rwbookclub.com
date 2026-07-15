@@ -35,7 +35,13 @@ atexit.register(shutil.rmtree, SCRATCH_ROOT, ignore_errors=True)
 
 import anthropic  # noqa: E402
 
-from agent import corpus_gen, corpus_read, db, oliver as oliver_mod  # noqa: E402
+from agent import (  # noqa: E402
+    corpus_gen,
+    corpus_read,
+    db,
+    identities,
+)
+from agent import oliver as oliver_mod  # noqa: E402
 
 CLIENT = anthropic.Anthropic()
 MODEL = "claude-sonnet-5"
@@ -425,7 +431,7 @@ def main() -> None:
     # see one coherent snapshot, independent of the developer's live private corpus.
     _prepare_fixture()
     for name, user_id in FAKE_MEMBER_IDS.items():
-        db.link_member_identity(user_id, name.lower(), linked_by="eval")
+        identities.link_member_identity(user_id, name.lower(), linked_by="eval")
     qs = generate_questions(args.round, args.n_single, args.n_multi)
     qs["single"] = GOLDEN_SINGLE + qs["single"]
     qs["multi"] = GOLDEN_MULTI + qs["multi"]

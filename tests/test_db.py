@@ -6,6 +6,8 @@ import sqlite3
 
 import pytest
 
+from agent import identities
+
 
 class TestConnectionLifecycle:
     def test_connect_closes_after_context(self, fresh_db):
@@ -57,29 +59,26 @@ class TestMemories:
 
 class TestMemberIdentities:
     def test_link_and_lookup(self, fresh_db):
-        db = fresh_db
-        db.link_member_identity("123", "jamie", linked_by="admin")
-        assert db.member_slug_for_user("123") == "jamie"
-        assert db.member_slug_for_user("999") is None
-        row = next(r for r in db.list_member_identities() if r["member_slug"] == "jamie")
+        identities.link_member_identity("123", "jamie", linked_by="admin")
+        assert identities.member_slug_for_user("123") == "jamie"
+        assert identities.member_slug_for_user("999") is None
+        row = next(r for r in identities.list_member_identities() if r["member_slug"] == "jamie")
         assert row["discord_user_id"] == "123"
         assert row["linked_by"] == "admin"
 
     def test_relink_updates(self, fresh_db):
-        db = fresh_db
-        db.link_member_identity("123", "jamie")
-        db.link_member_identity("123", "tom")
-        assert db.member_slug_for_user("123") == "tom"
-        rows = db.list_member_identities()
+        identities.link_member_identity("123", "jamie")
+        identities.link_member_identity("123", "tom")
+        assert identities.member_slug_for_user("123") == "tom"
+        rows = identities.list_member_identities()
         assert len(rows) == 1
         assert rows[0]["member_slug"] == "tom"
 
     def test_email_link_and_lookup(self, fresh_db):
-        db = fresh_db
-        db.link_member_email("Jamie@Thingelstad.COM", "jamie", linked_by="admin")
-        assert db.member_slug_for_email("jamie@thingelstad.com") == "jamie"
-        assert db.member_slug_for_email("JAMIE@THINGELSTAD.COM") == "jamie"
-        row = db.email_for_member("jamie")
+        identities.link_member_email("Jamie@Thingelstad.COM", "jamie", linked_by="admin")
+        assert identities.member_slug_for_email("jamie@thingelstad.com") == "jamie"
+        assert identities.member_slug_for_email("JAMIE@THINGELSTAD.COM") == "jamie"
+        row = identities.email_for_member("jamie")
         assert row["email"] == "jamie@thingelstad.com"
         assert row["linked_by"] == "admin"
 
@@ -251,7 +250,7 @@ class TestInboundEmail:
 class TestMailArchive:
     def test_upsert_search_and_thread_round_trip(self, fresh_db):
         db = fresh_db
-        db.link_member_email("jamie@example.test", "jamie")
+        identities.link_member_email("jamie@example.test", "jamie")
         message = {
             "message_id": "<m1@example.test>",
             "thread_id": "x-gm-thrid:t1",
@@ -261,7 +260,7 @@ class TestMailArchive:
             "list_id": "rwbookclub@googlegroups.com",
             "from_email": "jamie@example.test",
             "from_name": "Jamie",
-            "member_slug": db.member_slug_for_email("jamie@example.test"),
+            "member_slug": identities.member_slug_for_email("jamie@example.test"),
             "to": [{"name": "Club", "email": "rwbookclub@googlegroups.com"}],
             "cc": [],
             "reply_to": [],
@@ -301,13 +300,13 @@ class TestMailArchive:
         msg = {
             "message_id": "<guest1@example.test>", "thread_id": "x-gm-thrid:g1",
             "source": "historical_import", "from_email": "newaddr@example.test",
-            "from_name": "Someone Unknown", "member_slug": db.member_slug_for_email("newaddr@example.test"),
+            "from_name": "Someone Unknown", "member_slug": identities.member_slug_for_email("newaddr@example.test"),
             "subject": "hi", "subject_normalized": "hi", "sent_at": "2026-06-25T12:00:00+00:00",
             "body_clean": "waterways and canals", "headers": {},
         }
         assert db.upsert_mail_message(msg)
         assert db.mail_archive_counts()["attributed"] == 0       # nobody owns that address yet
-        db.link_member_email("newaddr@example.test", "jamie")     # link it (auto-reattribute is in the command)
+        identities.link_member_email("newaddr@example.test", "jamie")     # link it (auto-reattribute is in the command)
         changed = mail_archive.reattribute_archive("newaddr@example.test")
         assert changed == 1
         assert db.mail_archive_counts()["attributed"] == 1
@@ -316,15 +315,14 @@ class TestMailArchive:
 
 class TestSmsHandle:
     def test_link_sms_and_list(self, fresh_db):
-        db = fresh_db
-        db.link_member_sms("+1 (612) 555-0100", "jamie")
-        assert db.sms_for_member("jamie") == ["+16125550100"]
-        assert {r["member_slug"] for r in db.list_member_sms()} == {"jamie"}
+        identities.link_member_sms("+1 (612) 555-0100", "jamie")
+        assert identities.sms_for_member("jamie") == ["+16125550100"]
+        assert {r["member_slug"] for r in identities.list_member_sms()} == {"jamie"}
 
     def test_link_sms_rejects_junk(self, fresh_db):
         import pytest
         with pytest.raises(ValueError):
-            fresh_db.link_member_sms("123", "jamie")
+            identities.link_member_sms("123", "jamie")
 
 
 class TestReadingStatus:
@@ -392,5 +390,3 @@ class TestInboundEmails:
                 "UPDATE inbound_emails SET processed_at = '2000-01-01 00:00:00' WHERE email_id = 'm1'"
             )
         assert db.mark_email_processing(email_id="m1", from_email="jamie@example.test")
-
-

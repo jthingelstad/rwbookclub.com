@@ -10,8 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from agent import config, db
-
+from agent import config, identities
 
 # These tools expose club-operational or private state, or create durable/outward effects.  Keeping
 # the list here makes ambient model authority reviewable in one place instead of scattered across
@@ -73,7 +72,7 @@ def actor_from_ctx(ctx: dict) -> Actor:
     # Identity is unified across Discord/email.  Once the configured Discord admin is linked to a
     # member, that same member's allowlisted email is an admin surface too.
     if not is_admin and admin_user_id and member_slug:
-        is_admin = db.member_slug_for_user(admin_user_id) == member_slug
+        is_admin = identities.member_slug_for_user(admin_user_id) == member_slug
     return Actor(member_slug=member_slug, is_admin=is_admin)
 
 

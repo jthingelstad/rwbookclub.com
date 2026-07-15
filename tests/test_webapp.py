@@ -9,7 +9,7 @@ from datetime import timedelta
 import aiohttp
 import pytest
 
-from agent import clubdb, config, db, webapp
+from agent import clubdb, config, db, identities, webapp
 from agent.webapp import routes_oliver_pages, server, sessions
 
 pytestmark = pytest.mark.usefixtures("fresh_db")
@@ -81,9 +81,9 @@ def test_csrf_ok():
 def test_website_rejects_dangerous_schemes():
     import pytest
     # http(s) and scheme-less (→ https) are accepted and stored.
-    db.link_member_website("https://blog.example.com", "jamie", linked_by="t")
-    db.link_member_website("example.org/path", "jamie", linked_by="t")  # gets https:// prefix
-    stored = {h["identifier"] for h in db.member_handles("jamie", "website")}
+    identities.link_member_website("https://blog.example.com", "jamie", linked_by="t")
+    identities.link_member_website("example.org/path", "jamie", linked_by="t")  # gets https:// prefix
+    stored = {h["identifier"] for h in identities.member_handles("jamie", "website")}
     assert "https://blog.example.com" in stored and "https://example.org/path" in stored
     # javascript:/data: must be rejected even when crafted to carry "://" and a dotted host —
     # otherwise it renders as a clickable XSS href on the public member page.
@@ -91,32 +91,32 @@ def test_website_rejects_dangerous_schemes():
                 "javascript:alert(1)", "data:text/html,<script>alert(1)</script>",
                 "ftp://example.com"):
         with pytest.raises(ValueError):
-            db.link_member_website(bad, "jamie", linked_by="t")
+            identities.link_member_website(bad, "jamie", linked_by="t")
 
 
 def test_update_member_website_renames_and_repoints(fresh_db):
-    db.link_member_website("https://old.example.com", "jamie", linked_by="t", label="Blog")
+    identities.link_member_website("https://old.example.com", "jamie", linked_by="t", label="Blog")
     # rename only — same URL, new label
-    assert db.update_member_website("https://old.example.com", "jamie", label="My Blog") is True
-    h = db.member_handles("jamie", "website")[0]
+    assert identities.update_member_website("https://old.example.com", "jamie", label="My Blog") is True
+    h = identities.member_handles("jamie", "website")[0]
     assert h["identifier"] == "https://old.example.com" and h["label"] == "My Blog"
     # change the URL and clear the label in one edit
-    assert db.update_member_website("https://old.example.com", "jamie",
+    assert identities.update_member_website("https://old.example.com", "jamie",
                                     url="https://new.example.com", label="") is True
-    h = db.member_handles("jamie", "website")[0]
+    h = identities.member_handles("jamie", "website")[0]
     assert h["identifier"] == "https://new.example.com" and h["label"] is None
     # an unknown old URL changes nothing
-    assert db.update_member_website("https://missing.example.com", "jamie", label="x") is False
+    assert identities.update_member_website("https://missing.example.com", "jamie", label="x") is False
 
 
 def test_update_member_website_rejects_bad_url_and_collision(fresh_db):
     import pytest
-    db.link_member_website("https://a.example.com", "jamie", linked_by="t")
-    db.link_member_website("https://b.example.com", "jamie", linked_by="t")
+    identities.link_member_website("https://a.example.com", "jamie", linked_by="t")
+    identities.link_member_website("https://b.example.com", "jamie", linked_by="t")
     with pytest.raises(ValueError):  # XSS scheme rejected, same as add
-        db.update_member_website("https://a.example.com", "jamie", url="javascript:alert(1)")
+        identities.update_member_website("https://a.example.com", "jamie", url="javascript:alert(1)")
     with pytest.raises(ValueError):  # collide with the member's other website
-        db.update_member_website("https://a.example.com", "jamie", url="https://b.example.com")
+        identities.update_member_website("https://a.example.com", "jamie", url="https://b.example.com")
 
 
 def test_delete_event(fresh_db):
@@ -214,7 +214,7 @@ def test_webapp_email_link_reattributes_archive(fresh_db, monkeypatch):
                         lambda email=None: calls.append(email) or 0)
     routes_member.apply_identity_op("jamie", "add-email", "jamie@example.test")
     assert calls == ["jamie@example.test"]
-    rows = fresh_db.list_member_emails()
+    rows = identities.list_member_emails()
     assert any(r["email"] == "jamie@example.test" for r in rows)
 
 
@@ -277,6 +277,7 @@ def test_topics_constant():
 
 def test_meeting_id_or_404_rejects_non_int():
     import pytest
+
     from agent.webapp import routes_admin
 
     class _Req:
@@ -396,13 +397,13 @@ def test_move_list_book_preserves_notes():
 
 
 def test_member_handles_and_set_primary():
-    db.link_member_email("a@x.com", "jamie", linked_by="t")
-    db.link_member_email("b@x.com", "jamie", linked_by="t")
-    assert {h["identifier"] for h in db.member_handles("jamie", "email")} >= {"a@x.com", "b@x.com"}
-    assert db.set_primary_identity("jamie", "email", "b@x.com") is True
-    by = {h["identifier"]: h["is_primary"] for h in db.member_handles("jamie", "email")}
+    identities.link_member_email("a@x.com", "jamie", linked_by="t")
+    identities.link_member_email("b@x.com", "jamie", linked_by="t")
+    assert {h["identifier"] for h in identities.member_handles("jamie", "email")} >= {"a@x.com", "b@x.com"}
+    assert identities.set_primary_identity("jamie", "email", "b@x.com") is True
+    by = {h["identifier"]: h["is_primary"] for h in identities.member_handles("jamie", "email")}
     assert by["b@x.com"] is True and by["a@x.com"] is False
-    assert db.set_primary_identity("jamie", "email", "nobody@x.com") is False  # not this member's
+    assert identities.set_primary_identity("jamie", "email", "nobody@x.com") is False  # not this member's
 
 
 def test_create_bookless_meeting_and_set_books():
@@ -616,9 +617,9 @@ def test_routes_end_to_end(monkeypatch):
     assert sorted(pickers) == ensh_hosts               # picker is derived from the meeting host(s)
     assert wtm and wtm[0]["is_current"] == 0           # member added then retired
     assert [e["book_slug"] for e in e2e["entries"]] == ["enshittification", "heart-of-darkness"]  # reordered
-    primary = next((h["identifier"] for h in db.member_handles("jamie", "email") if h["is_primary"]), None)
+    primary = next((h["identifier"] for h in identities.member_handles("jamie", "email") if h["is_primary"]), None)
     assert primary == "two@x.com"
-    sites = {h["identifier"]: h["label"] for h in db.member_handles("jamie", "website")}
+    sites = {h["identifier"]: h["label"] for h in identities.member_handles("jamie", "website")}
     assert sites == {"https://new.example.com": "My Blog"}     # renamed + re-pointed in place
     assert all(e["detail"] != "webtest-event" for e in db.timeline(limit=500))  # event deleted
 

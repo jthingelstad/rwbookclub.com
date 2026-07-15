@@ -87,8 +87,8 @@ def test_digest_sends_once_per_week_at_the_gate(fresh_db, monkeypatch):
     sent = []
     monkeypatch.setattr(health.outbound, "send",
                         lambda **kw: sent.append(kw) or {"emailId": "x"})
-    monkeypatch.setattr(health.db, "member_slug_for_user", lambda uid: "jamie")
-    monkeypatch.setattr(health.db, "email_for_member",
+    monkeypatch.setattr(health.identities, "member_slug_for_user", lambda uid: "jamie")
+    monkeypatch.setattr(health.identities, "email_for_member",
                         lambda slug: {"email": "jamie@example.test"})
     monkeypatch.setattr(health.oliver, "compose",
                         lambda kind, facts, fallback="": fallback)

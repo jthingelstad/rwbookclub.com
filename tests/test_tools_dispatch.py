@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import json
 
-from agent import clubdb, config
-
+from agent import clubdb, config, identities
 
 JAMIE_CTX = {"speaker": "Jamie", "speaker_user_id": "u1", "member_slug": "jamie"}
 NICK_CTX = {"speaker": "Nick", "speaker_user_id": "u2", "member_slug": "nick"}
@@ -106,8 +105,8 @@ class TestDispatchHappyPaths:
     def test_identity_status_uses_linked_speaker(self, fresh_db):
         from agent.tools import dispatch
 
-        fresh_db.link_member_identity("u1", "jamie")
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_identity("u1", "jamie")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
         result = json.loads(dispatch("identity_status", {}, {
             "speaker_user_id": "u1",
             "member_slug": "jamie",
@@ -132,7 +131,7 @@ class TestDispatchHappyPaths:
     def test_record_availability_saves_for_speaker(self, fresh_db):
         from agent.tools import dispatch
 
-        fresh_db.link_member_identity("u1", "jamie")
+        identities.link_member_identity("u1", "jamie")
         result = json.loads(dispatch("record_availability", {"status": "yes"}, {
             "speaker_user_id": "u1",
             "member_slug": "jamie",
@@ -191,7 +190,7 @@ class TestDispatchHappyPaths:
     def test_request_reading_update_requires_email_config_before_send(self, fresh_db):
         from agent.tools import dispatch
 
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
         result = json.loads(dispatch("request_reading_update", {"member": "jamie"}, {
             "speaker_user_id": "u1",
             "member_slug": "jamie",
@@ -223,7 +222,7 @@ class TestDispatchHappyPaths:
             "to": kwargs["to"],
             "subject": kwargs["subject"],
         })
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
         result = json.loads(dispatch("send_email", {
             "to": ["jamie@thingelstad.com"],
             "subject": "test",
@@ -237,7 +236,7 @@ class TestDispatchHappyPaths:
         from agent.tools import dispatch
 
         monkeypatch.setattr(email_jmap, "enabled", lambda: True)
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
         result = json.loads(dispatch("send_email", {
             "to": ["outsider@example.test"],
             "subject": "test",
@@ -268,7 +267,7 @@ class TestDispatchHappyPaths:
         from agent.tools import dispatch
 
         monkeypatch.setattr(email_jmap, "enabled", lambda: True)
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
         result = json.loads(dispatch("request_reading_update", {"member": "jamie"}, {
             "channel_id": "email:thread1",
             "speaker_user_id": "email:jamie@thingelstad.com",
@@ -279,7 +278,7 @@ class TestDispatchHappyPaths:
     def test_request_roll_call_update_requires_email_config_before_send(self, fresh_db):
         from agent.tools import dispatch
 
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
         result = json.loads(dispatch("request_roll_call_update", {"member": "jamie"}, {
             "speaker_user_id": "email:jamie@thingelstad.com",
             "member_slug": "jamie",
@@ -298,8 +297,8 @@ class TestDispatchHappyPaths:
             "to": kwargs["to"],
             "subject": kwargs["subject"],
         })
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
-        fresh_db.link_member_email("tom@tomeri.org", "tom")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("tom@tomeri.org", "tom")
         result = json.loads(dispatch("request_roll_call_update", {}, {
             "speaker_user_id": str(config.ADMIN_USER_ID),
             "member_slug": "jamie",
@@ -313,8 +312,8 @@ class TestDispatchHappyPaths:
 
     def test_request_roll_call_update_skips_confirmed_members(self, monkeypatch, fresh_db):
         from agent import config
-        from agent.mail import email_jmap
         from agent.club import meeting_rules
+        from agent.mail import email_jmap
         from agent.tools import dispatch
 
         sent = []
@@ -327,8 +326,8 @@ class TestDispatchHappyPaths:
         meeting = meeting_rules.next_meeting()
         fresh_db.record_attendance_report(
             meeting["meetingId"], clubdb.lookup_member_id("jamie"), "yes", surface="email")
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
-        fresh_db.link_member_email("tom@tomeri.org", "tom")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("tom@tomeri.org", "tom")
         result = json.loads(dispatch("request_roll_call_update", {}, {
             "speaker_user_id": str(config.ADMIN_USER_ID),
             "member_slug": "jamie",
@@ -339,8 +338,8 @@ class TestDispatchHappyPaths:
 
     def test_request_roll_call_update_all_skipped_does_not_open_roll_call(self, monkeypatch, fresh_db):
         from agent import config
-        from agent.mail import email_jmap
         from agent.club import meeting_rules
+        from agent.mail import email_jmap
         from agent.tools import dispatch
 
         sent = []
@@ -352,7 +351,7 @@ class TestDispatchHappyPaths:
         })
         meeting = meeting_rules.next_meeting()
         fresh_db.record_attendance_report(meeting["meetingId"], clubdb.lookup_member_id("jamie"), "yes")
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
         result = json.loads(dispatch("request_roll_call_update", {"member": "jamie"}, {
             "speaker_user_id": str(config.ADMIN_USER_ID),
             "member_slug": "jamie",
@@ -367,7 +366,7 @@ class TestDispatchHappyPaths:
         from agent.tools import dispatch
 
         monkeypatch.setattr(email_jmap, "enabled", lambda: True)
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
         result = json.loads(dispatch("request_roll_call_update", {"member": "jamie"}, {
             "channel_id": "email:thread1",
             "speaker_user_id": "email:jamie@thingelstad.com",
@@ -376,12 +375,12 @@ class TestDispatchHappyPaths:
         assert result == {"error": "roll-call emails cannot be initiated from inbound email"}
 
     def test_request_reading_update_skips_finished_member(self, monkeypatch, fresh_db):
-        from agent.mail import email_jmap
         from agent.club import meeting_rules
+        from agent.mail import email_jmap
         from agent.tools import dispatch
 
         monkeypatch.setattr(email_jmap, "enabled", lambda: True)
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
         meeting = meeting_rules.next_meeting()
         fresh_db.record_reading_report(
             meeting["meetingId"], clubdb.lookup_member_id("jamie"), "finished", surface="email")
@@ -431,7 +430,7 @@ class TestDispatchHappyPaths:
         from agent.tools import dispatch
 
         meeting = meeting_rules.next_meeting()
-        fresh_db.link_member_email("jamie@example.test", "jamie")
+        identities.link_member_email("jamie@example.test", "jamie")
         fresh_db.record_reading_request(
             meeting["meetingId"], clubdb.lookup_member_id("jamie"), surface="email")
         result = json.loads(dispatch("meeting_campaign", {}, ADMIN_CTX))

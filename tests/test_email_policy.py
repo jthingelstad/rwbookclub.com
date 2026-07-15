@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from agent import config
+from agent import config, identities
 from agent.mail import email_policy
 from agent.mail.email_jmap import InboundEmail
 
@@ -42,7 +42,7 @@ class TestInboundEmailPolicy:
         assert decision.reason == "sender_not_allowed"
 
     def test_known_member_direct_email_is_allowed(self, fresh_db):
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
         decision = email_policy.inbound_decision(msg(from_email="Jamie@Thingelstad.com"))
         assert decision.allowed is True
         assert decision.reason == "known_member"
@@ -50,7 +50,7 @@ class TestInboundEmailPolicy:
         assert decision.reply_to == ["jamie@thingelstad.com"]
 
     def test_passive_mailing_list_message_is_ignored(self, fresh_db):
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
         decision = email_policy.inbound_decision(
             msg(
                 from_email="jamie@thingelstad.com",
@@ -65,7 +65,7 @@ class TestInboundEmailPolicy:
         assert decision.member_slug == "jamie"
 
     def test_generic_mailing_list_question_is_model_candidate(self, fresh_db):
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
         decision = email_policy.inbound_decision(
             msg(
                 from_email="jamie@thingelstad.com",
@@ -78,7 +78,7 @@ class TestInboundEmailPolicy:
         assert decision.reason == "mailing_list_candidate"
 
     def test_direct_oliver_question_is_model_candidate(self, fresh_db):
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
         decision = email_policy.inbound_decision(
             msg(
                 from_email="jamie@thingelstad.com",
@@ -135,7 +135,7 @@ class TestInboundEmailPolicy:
         ) == "jamie"
 
     def test_mere_oliver_mention_on_mailing_list_is_model_candidate(self, fresh_db):
-        fresh_db.link_member_email("tom@tomeri.org", "tom")
+        identities.link_member_email("tom@tomeri.org", "tom")
         decision = email_policy.inbound_decision(
             msg(
                 from_email="tom@tomeri.org",
@@ -154,7 +154,7 @@ class TestInboundEmailPolicy:
         assert decision.member_slug == "tom"
 
     def test_current_message_text_strips_html_blockquotes(self, fresh_db):
-        fresh_db.link_member_email("tom@tomeri.org", "tom")
+        identities.link_member_email("tom@tomeri.org", "tom")
         text = email_policy.current_message_text(
             '<html><body><p>I will miss it.</p><blockquote type="cite">'
             "On Jun 25, Oliver wrote:<br>Anything I should answer?"
@@ -183,11 +183,11 @@ class TestInboundEmailPolicy:
 
 class TestOutboundEmailPolicy:
     def test_model_send_allows_linked_member(self, fresh_db):
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
         assert email_policy.validate_model_email_recipients(to=["Jamie <jamie@thingelstad.com>"]) is None
 
     def test_model_send_blocks_unknown_address(self, fresh_db):
-        fresh_db.link_member_email("jamie@thingelstad.com", "jamie")
+        identities.link_member_email("jamie@thingelstad.com", "jamie")
         assert (
             email_policy.validate_model_email_recipients(to=["outsider@example.test"])
             == "Oliver can only email linked book club member addresses from this tool"

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from agent import clock, corpus_read, db
+from agent import clock, corpus_read, db, identities
 from agent.club import meeting_rules
 
 # Dashboard display: a confirmed attendee counts as "reading on track" at on_track/finished. The
@@ -35,8 +35,8 @@ def snapshot() -> dict:
         r["member_id"]: r
         for r in (db.meeting_member_status_for_meeting(meeting_id) if meeting_id is not None else [])
     }
-    discord_linked = {r["member_slug"] for r in db.list_member_identities()}
-    email_linked = {r["member_slug"] for r in db.list_member_emails()}
+    discord_linked = {r["member_slug"] for r in identities.list_member_identities()}
+    email_linked = {r["member_slug"] for r in identities.list_member_emails()}
     members_by_slug = {
         m["slug"]: m for m in corpus_read.human_current_members()
     }

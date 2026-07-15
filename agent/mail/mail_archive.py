@@ -18,7 +18,7 @@ from email.header import decode_header, make_header
 from html import unescape
 from pathlib import Path
 
-from agent import config, db
+from agent import config, db, identities
 from agent.mail import email_policy
 
 GOOGLE_GROUPS_ADDRESS = "rwbookclub@googlegroups.com"
@@ -79,7 +79,7 @@ class ImportReport:
 
 def seed_archive_aliases() -> None:
     for addr, slug in ARCHIVE_ALIASES.items():
-        db.link_member_email(addr, slug, linked_by="mail-archive-import")
+        identities.link_member_email(addr, slug, linked_by="mail-archive-import")
 
 
 def _decode_header(value: str | None) -> str:
@@ -120,7 +120,7 @@ def normalize_subject(subject: str | None) -> str:
 
 
 def member_slug_for_sender(from_email: str | None, from_name: str | None = None) -> str | None:
-    linked = db.member_slug_for_email(from_email)
+    linked = identities.member_slug_for_email(from_email)
     if linked:
         return linked
     if from_name:

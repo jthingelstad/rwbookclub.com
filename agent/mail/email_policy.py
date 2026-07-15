@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import re
-from html import unescape
 from dataclasses import dataclass
 from email.utils import getaddresses
+from html import unescape
 
-from agent import config, corpus_read as cr, db
+from agent import config, identities
+from agent import corpus_read as cr
 
 EMAIL_QUOTE_RE = re.compile(r"^(>|on .+wrote:|from:|sent:|to:|subject:|--\s*$)", re.IGNORECASE)
 
@@ -49,7 +50,7 @@ def parse_addresses(values: list[str] | str | None) -> list[str]:
 
 
 def known_member_slug_for_email(email: str | None) -> str | None:
-    return db.member_slug_for_email(normalize_email(email))
+    return identities.member_slug_for_email(normalize_email(email))
 
 
 def known_member_slug_for_display_name(name: str | None) -> str | None:

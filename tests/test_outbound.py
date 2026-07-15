@@ -1,7 +1,7 @@
 """The single outbound-email path: signature, durable intent, policy, and send."""
 import pytest
 
-from agent import db
+from agent import db, identities
 from agent.mail import outbound
 
 
@@ -45,7 +45,7 @@ def test_linked_member_policy_is_checked_before_delivery(fresh_db, monkeypatch):
     assert calls == []
     assert db.outbox_by_key("email:policy-denied") is None
 
-    fresh_db.link_member_email("jamie@example.test", "jamie")
+    identities.link_member_email("jamie@example.test", "jamie")
     outbound.send(
         to=["jamie@example.test"], subject="S", body="Hi",
         policy="linked_member", idempotency_key="email:policy-allowed",

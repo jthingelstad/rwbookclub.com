@@ -11,7 +11,7 @@ import logging
 
 from aiohttp import web
 
-from agent import clubdb, corpus_gen, corpus_write, db
+from agent import clubdb, corpus_gen, corpus_write, db, identities
 from agent import corpus_read as cr
 from agent.club import openlibrary
 from agent.webapp import state
@@ -296,9 +296,9 @@ def _identity_coverage() -> dict[str, dict]:
     """slug → which identity types are linked (the audit the retired `/oliver contact list`
     command used to give: spot the current member you can't reach before a campaign)."""
     coverage: dict[str, dict] = {}
-    for key, rows in (("discord", db.list_member_identities()),
-                      ("email", db.list_member_emails()),
-                      ("sms", db.list_member_sms())):
+    for key, rows in (("discord", identities.list_member_identities()),
+                      ("email", identities.list_member_emails()),
+                      ("sms", identities.list_member_sms())):
         for r in rows:
             coverage.setdefault(r["member_slug"], {})[key] = True
     return coverage
@@ -354,9 +354,9 @@ def _member_by_slug(slug: str) -> dict | None:
 
 def _member_identities(slug: str) -> dict:
     return {
-        "websites": db.member_handles(slug, "website"),
-        "emails": db.member_handles(slug, "email"),
-        "phones": db.member_handles(slug, "sms"),
+        "websites": identities.member_handles(slug, "website"),
+        "emails": identities.member_handles(slug, "email"),
+        "phones": identities.member_handles(slug, "sms"),
     }
 
 

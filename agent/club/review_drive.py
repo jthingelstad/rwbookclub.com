@@ -27,7 +27,7 @@ import json
 import logging
 import re
 
-from agent import clubdb, config, db, oliver
+from agent import clubdb, config, db, identities, oliver
 from agent import corpus_read as cr
 from agent.club import meeting_rules, reviews
 from agent.mail import email_policy, outbound
@@ -138,7 +138,7 @@ def send_ask(slug: str, candidate: dict | None = None, *,
     """Send one review ask to `slug` (candidate auto-selected if not given). Creates the
     draft row + the review_requested ledger event. Returns {book, threadId} or None."""
     member = cr.find_member(slug)
-    rec = db.email_for_member(slug)
+    rec = identities.email_for_member(slug)
     cand = candidate or next_candidate(slug)
     if not member or not rec or not cand:
         return None

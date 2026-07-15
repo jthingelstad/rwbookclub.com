@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
-from agent import db
+from agent import db, identities
 from agent.mail import inbound
 from agent.mail.email_jmap import InboundEmail
 
@@ -27,7 +27,7 @@ def _message() -> InboundEmail:
 
 
 def test_post_send_bookkeeping_failure_does_not_duplicate_reply(fresh_db, monkeypatch):
-    fresh_db.link_member_email("jamie@example.test", "jamie")
+    identities.link_member_email("jamie@example.test", "jamie")
     sent = []
     monkeypatch.setattr(inbound.mail_archive, "archive_inbound_email", lambda *a, **k: True)
     monkeypatch.setattr(

@@ -10,9 +10,8 @@ from __future__ import annotations
 
 import asyncio
 
-from agent import clubdb, commands, oliver
+from agent import clubdb, commands, identities, oliver
 from agent.club import meeting_campaign, meeting_rules
-
 
 # ── oliver.decide_outreach ──────────────────────────────────────────────────
 
@@ -43,8 +42,8 @@ def test_decide_outreach_ambiguous_defaults_to_reach(monkeypatch):
 def _setup(fresh_db, monkeypatch, *, decide):
     """Seed two reachable members + a fixed plan; stub the LLM + the email send. Returns helpers."""
     db = fresh_db
-    db.link_member_email("jamie@example.test", "jamie")
-    db.link_member_email("tom@example.test", "tom")
+    identities.link_member_email("jamie@example.test", "jamie")
+    identities.link_member_email("tom@example.test", "tom")
     meeting = meeting_rules.next_meeting()
     status = meeting_rules.meeting_status(meeting["meetingId"])
     jamie, tom = clubdb.lookup_member_id("jamie"), clubdb.lookup_member_id("tom")

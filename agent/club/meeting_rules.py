@@ -13,7 +13,7 @@ from __future__ import annotations
 import calendar
 from datetime import date, timedelta
 
-from agent import clock, clubdb, config, corpus_read, db
+from agent import clock, clubdb, config, corpus_read, db, identities
 
 QUORUM_REQUIRED = 3
 MEETING_WEEKDAY = 1  # Tuesday, where Monday is 0.
@@ -317,8 +317,8 @@ def format_status(status: dict) -> str:
 
 def summarize_club_state() -> dict:
     current = _current_members()
-    identities = db.list_member_identities()
-    linked = {r["member_slug"] for r in identities}
+    identity_rows = identities.list_member_identities()
+    linked = {row["member_slug"] for row in identity_rows}
     recent = corpus_read.club_stats()
     return {
         "members": [

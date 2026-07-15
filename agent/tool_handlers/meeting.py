@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from agent import access, clubdb, config, db
+from agent import access, clubdb, config, db, identities
 from agent import corpus_read as cr
 from agent.club import meeting_campaign, meeting_rules
 from agent.mail import email_jmap, outbound
@@ -246,7 +246,7 @@ def _request_reading_update(tool_input: dict, request: RequestContext):
         return {"error": "no such member"}
     if request.member_slug != member["slug"] and not _configured_discord_admin(request):
         return {"error": "only an admin can request check-ins for other members"}
-    email = db.email_for_member(member["slug"])
+    email = identities.email_for_member(member["slug"])
     if not email:
         return {"error": f"{member['name']} has no linked email address"}
     meeting = meeting_rules.next_meeting()
@@ -324,7 +324,7 @@ def _send_roll_call_targets(
     sent_rows = []
     missing = []
     for member in targets:
-        email = db.email_for_member(member["slug"])
+        email = identities.email_for_member(member["slug"])
         member_id = clubdb.lookup_member_id(member["slug"])
         if not email:
             missing.append({"member": member["slug"], "reason": "no linked email address"})

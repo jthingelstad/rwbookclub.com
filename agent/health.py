@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 
-from agent import clock, config, db, jobs, oliver
+from agent import clock, config, db, identities, jobs, oliver
 from agent.club import meeting_rules
 from agent.mail import outbound
 
@@ -123,8 +123,8 @@ def run(now) -> bool:
     state = db.get_job_state(JOB_KEY) or {}
     if state.get("week") == week:
         return False  # restart double-fire inside the gate hour
-    admin_slug = db.member_slug_for_user(str(config.ADMIN_USER_ID))
-    rec = db.email_for_member(admin_slug) if admin_slug else None
+    admin_slug = identities.member_slug_for_user(str(config.ADMIN_USER_ID))
+    rec = identities.email_for_member(admin_slug) if admin_slug else None
     if not rec:
         log.warning("health digest: no admin email linked; skipping")
         return False

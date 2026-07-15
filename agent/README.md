@@ -13,6 +13,7 @@ agent/
 ├── tools.py        # stable schemas + the single registry/authorization/dispatch gate
 ├── tool_handlers/  # capability handlers: meeting, memory/retrieval, mail, Book Cloud/picking
 ├── model_readers.py # actor-required private readers (separate from raw internal DB APIs)
+├── identities.py   # Discord/email/SMS/website links to member IDs; private contacts stay in SQLite
 ├── clubdb.py       # the authoritative club_* tables + read/write helpers
 ├── corpus_gen.py   # generate the (private, gitignored) corpus from the DB
 ├── corpus_read.py  # query/join layer over the generated corpus

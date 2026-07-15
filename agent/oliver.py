@@ -19,11 +19,9 @@ from pathlib import Path
 import anthropic
 from dotenv import load_dotenv
 
-from agent import clock
+from agent import clock, db, identities, persona
 from agent import context as kb
 from agent import corpus_read as cr
-from agent import db
-from agent import persona
 from agent.club import meeting_rules
 from agent.mail import email_policy
 from agent.tools import TOOLS, dispatch
@@ -402,10 +400,10 @@ def _resolve_member(speaker: str | None, speaker_user_id: str | None = None) -> 
         if cr.find_member(member_slug):
             return member_slug
     if speaker_user_id and speaker_user_id.startswith("email:"):
-        linked_email = db.member_slug_for_email(speaker_user_id.removeprefix("email:"))
+        linked_email = identities.member_slug_for_email(speaker_user_id.removeprefix("email:"))
         if linked_email:
             return linked_email
-    linked = db.member_slug_for_user(speaker_user_id)
+    linked = identities.member_slug_for_user(speaker_user_id)
     if linked:
         return linked
     if not speaker:
@@ -455,7 +453,8 @@ def _now_line() -> str:
     """One `[Now: …]` priming line: club-local date and time, the countdown to the next meeting,
     and any greeting-worthy holiday today or tomorrow. Injected per turn (never in the cached
     system prefix), so Oliver always knows what day it is without a tool call."""
-    from datetime import date as _date, timedelta
+    from datetime import date as _date
+    from datetime import timedelta
 
     now = clock.club_now()
     today = now.date()

@@ -8,10 +8,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from agent import commands, db
+from agent import commands, db, identities
 from agent.tools import dispatch
 from corpus.paths import DATA_DIR
-
 
 USER_ID = 314159
 NOTE = "I DNF'd it because the argument felt repetitive; avoid similar picks for me."
@@ -59,7 +58,7 @@ def _invoke_command(interaction: _Interaction, book: str) -> None:
 
 
 def test_linked_member_feedback_is_private_memory_only(fresh_db):
-    fresh_db.link_member_identity(str(USER_ID), "jamie", linked_by="test")
+    identities.link_member_identity(str(USER_ID), "jamie", linked_by="test")
     reviews_before = _reviews()
     corpus_before = _corpus_snapshot()
 
@@ -112,7 +111,7 @@ def test_unlinked_member_is_rejected_without_a_write(fresh_db):
 
 
 def test_unknown_book_is_rejected_without_a_write(fresh_db):
-    fresh_db.link_member_identity(str(USER_ID), "jamie", linked_by="test")
+    identities.link_member_identity(str(USER_ID), "jamie", linked_by="test")
     with pytest.raises(ValueError, match="couldn't find that book"):
         commands._save_private_book_feedback(
             user_id=USER_ID,
@@ -130,7 +129,7 @@ def test_unknown_book_is_rejected_without_a_write(fresh_db):
 
 
 def test_valid_command_opens_one_private_note_modal(fresh_db):
-    fresh_db.link_member_identity(str(USER_ID), "jamie", linked_by="test")
+    identities.link_member_identity(str(USER_ID), "jamie", linked_by="test")
     interaction = _Interaction(USER_ID)
 
     _invoke_command(interaction, "watchmen")
@@ -152,7 +151,7 @@ def test_valid_command_opens_one_private_note_modal(fresh_db):
 
 
 def test_modal_submission_saves_private_feedback(fresh_db):
-    fresh_db.link_member_identity(str(USER_ID), "jamie", linked_by="test")
+    identities.link_member_identity(str(USER_ID), "jamie", linked_by="test")
     modal = commands.PrivateBookFeedbackModal(
         book={"slug": "watchmen", "title": "Watchmen"}
     )
@@ -168,7 +167,7 @@ def test_modal_submission_saves_private_feedback(fresh_db):
 
 
 def test_private_dnf_reason_is_recallable_only_by_its_member(fresh_db):
-    fresh_db.link_member_identity(str(USER_ID), "jamie", linked_by="test")
+    identities.link_member_identity(str(USER_ID), "jamie", linked_by="test")
     commands._save_private_book_feedback(
         user_id=USER_ID,
         book_value="watchmen",

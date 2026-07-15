@@ -11,7 +11,7 @@ import asyncio
 
 from aiohttp import web
 
-from agent import clubdb, corpus_gen, db
+from agent import clubdb, corpus_gen, db, identities
 from agent import corpus_read as cr
 from agent.club import lists as lists_writer
 from agent.club import reviews as reviews_writer
@@ -41,34 +41,34 @@ def apply_identity_op(slug: str, op: str, val: str, label: str | None = None,
     and the admin member editor. Returns True when the change is public (websites).
 
     URL scheme safety (rejecting javascript:/data:/… so nothing dangerous reaches an href on the
-    public site) is enforced in db.link_member_website / db.update_member_website, which raise
+    public site) is enforced in identities.link_member_website / identities.update_member_website, which raise
     ValueError — callers catch it. `new_value` is only used by edit-website (the new URL); `val`
     is the existing URL being edited."""
     if op == "add-website" and val:
-        db.link_member_website(val, slug, linked_by="webapp", label=label)
+        identities.link_member_website(val, slug, linked_by="webapp", label=label)
         return True
     if op == "edit-website" and val:
-        db.update_member_website(val, slug, url=new_value or val, label=label)
+        identities.update_member_website(val, slug, url=new_value or val, label=label)
         return True
     if op == "remove-website" and val:
-        db.remove_member_website(val, slug)
+        identities.remove_member_website(val, slug)
         return True
     if op == "add-email" and val:
-        db.link_member_email(val, slug, linked_by="webapp")
+        identities.link_member_email(val, slug, linked_by="webapp")
         # Archived mail from this address catches up immediately (what the retired Discord
         # link-email command did); scoped to one address, so it's cheap.
         mail_archive.reattribute_archive(val)
     elif op == "add-phone" and val:
-        db.link_member_sms(val, slug, linked_by="webapp")
+        identities.link_member_sms(val, slug, linked_by="webapp")
     elif op == "remove-phone" and val:
-        db.remove_member_sms(val, slug)
+        identities.remove_member_sms(val, slug)
     elif op == "primary-website" and val:
-        db.set_primary_identity(slug, "website", val)
+        identities.set_primary_identity(slug, "website", val)
         return True  # website order is public
     elif op == "primary-email" and val:
-        db.set_primary_identity(slug, "email", val)
+        identities.set_primary_identity(slug, "email", val)
     elif op == "primary-phone" and val:
-        db.set_primary_identity(slug, "sms", val)
+        identities.set_primary_identity(slug, "sms", val)
     return False
 
 
@@ -319,9 +319,9 @@ async def lists_action(request: web.Request) -> web.Response:
 # ── Profile / contact ────────────────────────────────────────────────────────
 async def profile_page(request: web.Request) -> web.Response:
     slug = request["session"]["slug"]
-    websites = await asyncio.to_thread(db.member_handles, slug, "website")
-    emails = await asyncio.to_thread(db.member_handles, slug, "email")
-    phones = await asyncio.to_thread(db.member_handles, slug, "sms")
+    websites = await asyncio.to_thread(identities.member_handles, slug, "website")
+    emails = await asyncio.to_thread(identities.member_handles, slug, "email")
+    phones = await asyncio.to_thread(identities.member_handles, slug, "sms")
     return render("profile.html", request, websites=websites, emails=emails, phones=phones)
 
 

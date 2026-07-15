@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import json
 
-from agent import clubdb, config, db
+from agent import clubdb, config, db, identities
 from agent.club import meeting_rules
 from agent.tools import dispatch
-
 
 JAMIE_CTX = {"speaker": "Jamie", "speaker_user_id": "u1", "member_slug": "jamie"}
 ADMIN_CTX = {
@@ -46,7 +45,7 @@ def test_private_tools_require_linked_identity_but_public_corpus_does_not(fresh_
 
 
 def test_admin_authority_follows_the_linked_member_across_email(fresh_db):
-    db.link_member_identity(str(config.ADMIN_USER_ID), "jamie")
+    identities.link_member_identity(str(config.ADMIN_USER_ID), "jamie")
     email_ctx = {
         "speaker": "Jamie",
         "speaker_user_id": "email:jamie@example.test",

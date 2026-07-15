@@ -30,14 +30,17 @@ from discord.ext import tasks
 from agent import (
     commands,
     config,
-    context as kb,
     database,
     db,
+    identities,
     oliver,
     outbox,
     publish,
     publishing,
     security,
+)
+from agent import (
+    context as kb,
 )
 from agent.mail import email_jmap
 from agent.mail import inbound as inbound_email
@@ -303,7 +306,7 @@ async def on_message(message: discord.Message) -> None:
         is_reply = await _is_reply_to_bot(message)
         if not _is_addressed(is_mention, has_name, is_reply):
             if content.strip():
-                member_slug = db.member_slug_for_user(str(message.author.id))
+                member_slug = identities.member_slug_for_user(str(message.author.id))
                 db.log_message(str(cid), "user", content.strip(),
                                speaker=message.author.display_name, member_slug=member_slug)
             return
@@ -344,13 +347,13 @@ async def on_message(message: discord.Message) -> None:
         if reply.strip().strip("`").startswith(oliver.NO_REPLY_PREFIX):
             # The member was talking about Oliver, not to it — stay silent; keep their message as
             # plain channel context (same as any unaddressed message).
-            member_slug = db.member_slug_for_user(str(message.author.id))
+            member_slug = identities.member_slug_for_user(str(message.author.id))
             db.log_message(str(cid), "user", content.strip(),
                            speaker=message.author.display_name, member_slug=member_slug)
             return
         # It was a genuine ask after all — persist the exchange (the gated call used
         # persist=False), logging the member's ORIGINAL message, not the gate-note prompt.
-        member_slug = db.member_slug_for_user(str(message.author.id))
+        member_slug = identities.member_slug_for_user(str(message.author.id))
         db.log_message(str(cid), "user", question,
                        speaker=message.author.display_name, member_slug=member_slug)
         db.log_message(str(cid), "assistant", reply, member_slug=member_slug)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import mailbox
 from email.message import EmailMessage
 
+from agent import identities
 from agent.mail import mail_archive
 from agent.mail.email_jmap import InboundEmail
 
@@ -34,8 +35,7 @@ def test_clean_body_removes_google_footer_and_quotes():
 
 
 def test_normalized_from_mbox_message_resolves_alias_and_thread(fresh_db):
-    db = fresh_db
-    db.link_member_email("jamie@example.test", "jamie")
+    identities.link_member_email("jamie@example.test", "jamie")
     normalized, stats = mail_archive.normalized_from_mbox_message(
         _message(), source_ref="fixture:1",
     )
@@ -60,14 +60,14 @@ def test_import_mbox_write_seeds_archive_aliases(tmp_path, fresh_db):
     report = mail_archive.import_mbox(path, write=True)
     assert report.total == 1
     assert report.inserted == 1
-    assert fresh_db.member_slug_for_email("terveen@cs.umn.edu") == "loren"
+    assert identities.member_slug_for_email("terveen@cs.umn.edu") == "loren"
     rows = fresh_db.search_mail_archive("nominate", member_slug="loren")
     assert len(rows) == 1
 
 
 def test_archive_inbound_email_uses_live_jmap_source(fresh_db):
     db = fresh_db
-    db.link_member_email("jamie@example.test", "jamie")
+    identities.link_member_email("jamie@example.test", "jamie")
     msg = InboundEmail(
         id="jmap1",
         thread_id="thread1",

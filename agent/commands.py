@@ -17,12 +17,34 @@ from datetime import datetime, timedelta
 import discord
 from discord.ext import tasks
 
-from agent import (backup, clock, clubdb, config, context as kb, corpus_read, db, delivery, health,
-                   jobs, oliver, outbox, publishing, reflection, scheduler, webapp)
+from agent import (
+    backup,
+    clock,
+    clubdb,
+    config,
+    corpus_read,
+    db,
+    delivery,
+    health,
+    identities,
+    jobs,
+    oliver,
+    outbox,
+    publishing,
+    reflection,
+    scheduler,
+    webapp,
+)
+from agent import context as kb
+from agent.club import (
+    meeting_campaign,
+    meeting_emails,
+    meeting_rules,
+    release_notes,
+    review_drive,
+)
 from agent.enrich import loop as enrich_loop
 from agent.mail import email_jmap, mail_archive, outbound
-from agent.club import (meeting_campaign, meeting_emails, meeting_rules,
-                        release_notes, review_drive)
 
 log = logging.getLogger("oliver.commands")
 
@@ -98,7 +120,7 @@ async def member_autocomplete(interaction: discord.Interaction, current: str):
 
 
 def _linked_member_for_user(user_id: int) -> dict | None:
-    slug = db.member_slug_for_user(str(user_id))
+    slug = identities.member_slug_for_user(str(user_id))
     return corpus_read.find_member(slug) if slug else None
 
 
@@ -212,7 +234,7 @@ async def _roll_call_reminder(status: dict) -> str:
 
 async def _send_roll_call_email_to_member(member: dict, status: dict, *,
                                           idempotency_key: str | None = None) -> dict | None:
-    email = db.email_for_member(member["slug"])
+    email = identities.email_for_member(member["slug"])
     if not email:
         return None
     meeting = status["meeting"]
@@ -264,7 +286,7 @@ async def _send_roll_call_email_to_member(member: dict, status: dict, *,
 async def _send_reading_checkin_email_to_member(member: dict, meeting: dict,
                                                 *, note: str | None = None,
                                                 idempotency_key: str | None = None) -> dict | None:
-    email = db.email_for_member(member["slug"])
+    email = identities.email_for_member(member["slug"])
     if not email:
         return None
     title = (meeting.get("book") or {}).get("title") or "the current book"
@@ -330,7 +352,7 @@ async def _run_meeting_outreach(meeting: dict, status: dict) -> int:
     for cand in plan:
         slug = cand["memberSlug"]
         member = corpus_read.find_member(slug)
-        if not member or not db.email_for_member(slug):
+        if not member or not identities.email_for_member(slug):
             continue
         reach = cand["mustReach"] or await asyncio.to_thread(oliver.decide_outreach, cand)
         if not reach:
@@ -391,7 +413,7 @@ async def _email_roll_call(interaction: discord.Interaction) -> None:
     missing: list[str] = []
     await interaction.response.defer(ephemeral=True)
     for member in current:
-        email = db.email_for_member(member["slug"])
+        email = identities.email_for_member(member["slug"])
         if not email:
             missing.append(member["name"])
             continue
@@ -710,8 +732,8 @@ async def release_notes_cmd(interaction: discord.Interaction, days: int | None =
                 f"📣 Sent release notes ({scope}) to the club list and mirrored to the main "
                 f"channel.\nSubject: *{email['subject']}*{christened}{gh_line}", ephemeral=True)
         else:
-            slug = db.member_slug_for_user(str(interaction.user.id))
-            rec = db.email_for_member(slug) if slug else None
+            slug = identities.member_slug_for_user(str(interaction.user.id))
+            rec = identities.email_for_member(slug) if slug else None
             if not rec:
                 await interaction.followup.send(
                     "You don't have a linked email address, so I can only send this to the list "
@@ -749,8 +771,8 @@ async def postscript_cmd(interaction: discord.Interaction) -> None:
             "Email isn't configured (no FASTMAIL_JMAP_TOKEN), so I can't draft Postscript.",
             ephemeral=True)
         return
-    slug = db.member_slug_for_user(str(interaction.user.id))
-    rec = db.email_for_member(slug) if slug else None
+    slug = identities.member_slug_for_user(str(interaction.user.id))
+    rec = identities.email_for_member(slug) if slug else None
     if not rec:
         await interaction.response.send_message(
             "You don't have a linked email address — link one in the web app first "
@@ -799,7 +821,7 @@ async def link_member_cmd(interaction: discord.Interaction, member: str, user: d
     if not m:
         await interaction.response.send_message("I couldn't find that member.", ephemeral=True)
         return
-    db.link_member_identity(str(user.id), m["slug"], linked_by=str(interaction.user.id))
+    identities.link_member_identity(str(user.id), m["slug"], linked_by=str(interaction.user.id))
     await interaction.response.send_message(
         f"Linked {user.mention} to {m['name']} (`{m['slug']}`).", ephemeral=True)
 
@@ -894,7 +916,7 @@ async def reading_checkin_cmd(interaction: discord.Interaction, member: str,
     if not m:
         await interaction.response.send_message("I couldn't find that member.", ephemeral=True)
         return
-    email = db.email_for_member(m["slug"])
+    email = identities.email_for_member(m["slug"])
     if not email:
         await interaction.response.send_message(
             f"{m['name']} does not have a linked email address.", ephemeral=True)

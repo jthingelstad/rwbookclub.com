@@ -18,9 +18,8 @@ from __future__ import annotations
 import json
 import logging
 
-from agent import access
+from agent import access, db, identities
 from agent import corpus_read as cr
-from agent import db
 from agent.tool_handlers import mail, meeting, memory, picking
 from agent.tool_handlers.context import RequestContext
 
@@ -610,10 +609,10 @@ def _handle_core(name: str, tool_input: dict, request: RequestContext):
         return cr.club_stats()
     if name == "identity_status":
         member_slug = request.member_slug
-        linked = {row["member_slug"] for row in db.list_member_identities()}
-        email_linked = {row["member_slug"] for row in db.list_member_emails()}
-        sms_linked = {row["member_slug"] for row in db.list_member_sms()}
-        website_linked = {row["member_slug"] for row in db.list_member_websites()}
+        linked = {row["member_slug"] for row in identities.list_member_identities()}
+        email_linked = {row["member_slug"] for row in identities.list_member_emails()}
+        sms_linked = {row["member_slug"] for row in identities.list_member_sms()}
+        website_linked = {row["member_slug"] for row in identities.list_member_websites()}
         current = cr.human_current_members()
         if not request.actor.is_admin:
             return {

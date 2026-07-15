@@ -3,7 +3,7 @@
 import asyncio
 import json
 
-from agent import bot, clubdb, config, db, publish, publishing
+from agent import bot, clubdb, config, db, identities, publish, publishing
 from agent.club import review_drive as rd
 from agent.mail.email_jmap import InboundEmail
 
@@ -104,7 +104,7 @@ def test_reply_extracts_and_asks_for_confirmation(fresh_db, monkeypatch):
 
 def test_first_reply_keeps_the_rating_quoted_in_the_ask(fresh_db, monkeypatch):
     _rated_unreviewed(rating=5)
-    fresh_db.link_member_email("jamie@example.test", "jamie")
+    identities.link_member_email("jamie@example.test", "jamie")
     sent = []
 
     def send(**kw):
@@ -173,7 +173,7 @@ def test_confirmation_preserves_canonical_fields_missing_from_old_draft(fresh_db
 def test_inbound_confirmation_publishes_on_bot_event_loop(fresh_db, monkeypatch):
     """Production seam: reply handling is threaded, but task creation must stay on the bot loop."""
     mid = _rated_unreviewed(rating=5)
-    fresh_db.link_member_email("jamie@example.test", "jamie")
+    identities.link_member_email("jamie@example.test", "jamie")
     did = db.create_review_draft(
         member_id=mid, book_slug="heart-of-darkness", thread_id="T1",
         draft_json=json.dumps({"body": "A dark, riveting read.", "rating": 5,
@@ -208,7 +208,7 @@ def test_inbound_confirmation_publishes_on_bot_event_loop(fresh_db, monkeypatch)
 
 def test_failed_review_retry_does_not_duplicate_receipt_ledger(fresh_db, monkeypatch):
     mid = _rated_unreviewed(rating=5)
-    fresh_db.link_member_email("jamie@example.test", "jamie")
+    identities.link_member_email("jamie@example.test", "jamie")
     db.create_review_draft(
         member_id=mid, book_slug="heart-of-darkness", thread_id="T1",
         draft_json=json.dumps({"body": "A dark, riveting read.", "rating": 5}),
