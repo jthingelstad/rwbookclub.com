@@ -27,9 +27,9 @@ import discord
 import requests
 from discord.ext import tasks
 
-from agent import clubdb, commands, config, context as kb, db, oliver, outbox, publish, security
-from agent.mail import email_jmap, email_policy, mail_archive, outbound
-from agent.club import meeting_rules, review_drive
+from agent import commands, config, context as kb, db, oliver, outbox, publish, security
+from agent.mail import email_jmap
+from agent.mail import inbound as inbound_email
 
 # Split the streams so launchd's logs are useful: activity (DEBUG/INFO) → stdout (oliver.log),
 # problems (WARNING+) → stderr (oliver.err). So `oliver.err` is the problems-only signal and
@@ -47,11 +47,6 @@ log = logging.getLogger("oliver")
 # Oliver answers everything in #ask-oliver, but in the main channel he speaks only
 # when addressed — @mentioned, called by name, or replied to.
 NAME_RE = re.compile(r"\boliver\b", re.IGNORECASE)
-ROLL_CALL_SUBJECT_RE = re.compile(r"\broll[- ]?call\b", re.IGNORECASE)
-EMAIL_QUOTE_RE = re.compile(r"^(>|on .+wrote:|from:|sent:|to:|subject:|--\s*$)", re.IGNORECASE)
-YES_RE = re.compile(r"\b(yes|yep|yeah|sure|attending|i'?ll be there|i can make it|can make it)\b", re.IGNORECASE)
-NO_RE = re.compile(r"\b(no|nope|cannot make it|can'?t make it|won'?t make it|not attending|unavailable)\b", re.IGNORECASE)
-UNSURE_RE = re.compile(r"\b(unsure|not sure|maybe|tentative|unknown)\b", re.IGNORECASE)
 
 
 def _is_addressed(is_mention: bool, has_name: bool, is_reply_to_bot: bool) -> bool:
@@ -80,45 +75,13 @@ def _strip_address(content: str, bot_id: int) -> str:
 
 
 def _record_ignored_email(msg: email_jmap.InboundEmail, reason: str) -> None:
-    body = (
-        f"From: {msg.speaker} <{msg.from_email}>\n"
-        f"Subject: {msg.subject or '(no subject)'}\nReason: {reason}"
-    )
-    db.add_activity("email_ignored", "Email ignored", body)
-    log.info("Ignored email %s from %s: %s", msg.id, msg.from_email, reason)
-
-
-def _first_reply_text(text: str) -> str:
-    """Return the member-authored top of an email, excluding quoted history."""
-    lines: list[str] = []
-    for raw in text.splitlines():
-        line = raw.strip()
-        if not line:
-            if lines:
-                break
-            continue
-        if EMAIL_QUOTE_RE.match(line):
-            break
-        lines.append(line)
-        if len(lines) >= 3:
-            break
-    return " ".join(lines)
+    """Compatibility wrapper for the pure helper now owned by mail.inbound."""
+    inbound_email.record_ignored_email(msg, reason)
 
 
 def _roll_call_status_from_email(subject: str, text: str) -> str | None:
-    """Parse explicit roll-call replies before the model sees the email."""
-    if not ROLL_CALL_SUBJECT_RE.search(subject or ""):
-        return None
-    reply = _first_reply_text(text).replace("’", "'")
-    if not reply:
-        return None
-    if UNSURE_RE.search(reply):
-        return "unsure"
-    if NO_RE.search(reply):
-        return "no"
-    if YES_RE.search(reply):
-        return "yes"
-    return None
+    """Compatibility wrapper for the pure helper now owned by mail.inbound."""
+    return inbound_email.roll_call_status_from_email(subject, text)
 
 
 class OliverClient(discord.Client):
@@ -299,210 +262,7 @@ async def before_poll_email() -> None:
 
 
 async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
-    if db.email_processed(msg.id):
-        return
-    if msg.from_email.lower() == config.OLIVER_EMAIL_ADDRESS.lower():
-        await asyncio.to_thread(email_jmap.mark_seen, msg.id)
-        db.mark_email_processing(
-            email_id=msg.id, thread_id=msg.thread_id, from_email=msg.from_email,
-            subject=msg.subject, received_at=msg.received_at,
-        )
-        db.mark_email_processed(msg.id, status="ignored")
-        _record_ignored_email(msg, "from_oliver")
-        return
-    decision = email_policy.inbound_decision(msg)
-    if not decision.allowed:
-        await asyncio.to_thread(email_jmap.mark_seen, msg.id)
-        db.mark_email_processing(
-            email_id=msg.id, thread_id=msg.thread_id, from_email=msg.from_email,
-            subject=msg.subject, received_at=msg.received_at,
-        )
-        db.mark_email_processed(msg.id, status="ignored", error=decision.reason)
-        _record_ignored_email(msg, decision.reason)
-        return
-    claimed = db.mark_email_processing(
-        email_id=msg.id, thread_id=msg.thread_id, from_email=msg.from_email,
-        subject=msg.subject, received_at=msg.received_at,
-    )
-    if not claimed:
-        return
-    try:
-        archived_new = await asyncio.to_thread(
-            mail_archive.archive_inbound_email,
-            msg,
-            is_mailing_list=decision.is_mailing_list,
-            member_slug=decision.member_slug,
-        )
-    except Exception as e:
-        db.mark_email_processed(msg.id, status="failed", error=f"archive:{type(e).__name__}: {e}")
-        log.exception("Failed to archive inbound email %s", msg.id)
-        return
-    # The archive upsert is the durable per-message dedupe key. A failed downstream handler may
-    # reclaim the same unread email on the next poll; only the first successful archive insert
-    # should emit receipt activity/timeline rows.
-    if archived_new:
-        db.add_activity(
-            "email_received",
-            "Email received",
-            f"From: {msg.speaker} <{msg.from_email}>\nSubject: {msg.subject or '(no subject)'}",
-        )
-    member_slug = decision.member_slug
-    member_id = clubdb.lookup_member_id(member_slug)
-    recorded_availability: str | None = None
-    meeting = meeting_rules.next_meeting() if (member_slug and member_id is not None) else None
-    meeting_id = meeting["meetingId"] if meeting else None
-    if archived_new and member_slug and member_id is not None:
-        db.record_event(
-            actor="member",
-            kind="email_reply",
-            member_id=member_id,
-            meeting_id=meeting_id,
-            surface="email",
-            detail=msg.subject or None,
-            source=f"email:{msg.id}",
-        )
-    if member_slug and member_id is not None and meeting_id is not None:
-        recorded_availability = _roll_call_status_from_email(msg.subject, msg.text)
-        if recorded_availability:
-            db.record_attendance_report(
-                meeting_id,
-                member_id,
-                recorded_availability,
-                surface="email",
-                updated_by=f"email:{msg.from_email.lower()}",
-            )
-            db.add_activity(
-                "roll_call_update",
-                "Roll-call response recorded",
-                f"Member: {member_slug}\nStatus: {recorded_availability}\n"
-                f"Source: email reply\nMeeting: {meeting['meetingKey']}",
-            )
-    # Review-drive threads are code-driven: if this email continues an open review draft
-    # (JMAP threads the reply automatically), the state machine owns it — the general model
-    # path never sees it and there is no model-side review-write tool.
-    if member_slug and member_id is not None and not decision.is_mailing_list:
-        review_draft = db.draft_for_thread(msg.thread_id)
-        if review_draft and review_draft["member_id"] == member_id:
-            try:
-                publish_needed = await asyncio.to_thread(
-                    review_drive.handle_reply, review_draft, msg)
-            except Exception as e:
-                db.mark_email_processed(msg.id, status="failed",
-                                        error=f"review_drive:{type(e).__name__}: {e}")
-                log.exception("review-drive reply handling failed for %s", msg.id)
-                return
-            # Lock in the successful state before mailbox or publish bookkeeping. Neither a JMAP
-            # keyword failure nor a publisher-scheduling failure should make the member's message
-            # re-claimable and repeat a completed review write/reply every poll.
-            db.mark_email_processed(msg.id)
-            try:
-                await asyncio.to_thread(email_jmap.mark_seen, msg.id, answered=True)
-            except Exception:
-                log.exception("Handled review email %s but failed to mark it seen", msg.id)
-            if publish_needed:
-                try:
-                    commands.schedule_publish()
-                except Exception:
-                    log.exception("Review %s was recorded but publish scheduling failed", msg.id)
-                    db.add_activity(
-                        "warning", "Review site publish was not scheduled",
-                        f"Inbound email {msg.id} completed; run `python -m agent.publish`.",
-                    )
-            return
-
-    if decision.is_mailing_list:
-        channel_id = f"email:list:{msg.thread_id or config.BOOK_CLUB_MAILING_LIST_ADDRESS.lower()}"
-    else:
-        channel_id = f"email:{msg.thread_id or msg.from_email.lower()}"
-    mailing_list_result: oliver.MailingListEmailResult | None = None
-    if decision.is_mailing_list:
-        try:
-            speaker_user_id = (
-                f"member:{member_slug}" if member_slug
-                else f"email:{msg.from_email.lower()}"
-            )
-            mailing_list_result = await asyncio.to_thread(
-                oliver.answer_mailing_list_email,
-                msg,
-                channel_id=channel_id,
-                speaker=msg.speaker,
-                speaker_user_id=speaker_user_id,
-                source_message_id=msg.id,
-            )
-        except Exception as e:
-            db.mark_email_processed(msg.id, status="failed", error=f"{type(e).__name__}: {e}")
-            log.exception("Failed to decide whether to reply to mailing-list email %s", msg.id)
-            return
-        if not mailing_list_result.reply:
-            await asyncio.to_thread(email_jmap.mark_seen, msg.id)
-            reason = f"mailing_list_model_no_reply:{mailing_list_result.reason or 'no_reason'}"
-            db.mark_email_processed(msg.id, status="ignored", error=reason)
-            _record_ignored_email(msg, reason)
-            return
-    runtime_note = ""
-    if recorded_availability:
-        runtime_note = (
-            "[Oliver runtime note: this explicit roll-call reply has already "
-            f"been recorded as {recorded_availability} for {member_slug}. "
-            "Acknowledge the saved status; do not call record_availability again.]\n\n"
-        )
-    prompt = runtime_note + (
-        f"[Email from {msg.speaker} <{msg.from_email}>]\n"
-        f"Subject: {msg.subject or '(no subject)'}\n\n{msg.text}"
-    )
-    # Compose the reply. A failure here is genuinely retryable (nothing was sent yet), so mark
-    # failed and let the next poll re-claim.
-    try:
-        if mailing_list_result is not None:
-            reply = mailing_list_result.body
-        else:
-            reply = await asyncio.to_thread(
-                oliver.answer, prompt, channel_id, msg.speaker, f"email:{msg.from_email.lower()}", msg.id,
-                medium="email", max_tokens=oliver.EMAIL_MAX_TOKENS,
-            )
-    except Exception as e:
-        db.mark_email_processed(msg.id, status="failed", error=f"answer:{type(e).__name__}: {e}")
-        log.exception("Failed to compose reply to inbound email %s", msg.id)
-        return
-    # Send exactly once. If the send itself fails, nothing went out — mark failed and retry.
-    try:
-        sent = await asyncio.to_thread(
-            outbound.send,
-            to=decision.reply_to or [msg.from_email],
-            subject=msg.reply_subject,
-            body=reply,
-            in_reply_to=msg.message_id,
-            references=msg.references,
-            idempotency_key=f"email:inbound-reply:{msg.id}",
-            policy="reply",
-        )
-    except Exception as e:
-        db.mark_email_processed(msg.id, status="failed", error=f"send:{type(e).__name__}: {e}")
-        log.exception("Failed to send reply to inbound email %s", msg.id)
-        return
-    # The reply is out. Lock in "processed" immediately — BEFORE the JMAP mark-seen network call
-    # and the activity write — so a failure in that post-send bookkeeping can never leave the row
-    # re-claimable (status='failed'), which would make the next poll send the member a 2nd reply.
-    db.mark_email_processed(msg.id, reply_email_id=sent.get("emailId"))
-    try:
-        await asyncio.to_thread(email_jmap.mark_seen, msg.id, answered=True)
-        # Archive Oliver's own reply into the same thread as the inbound, so the mail record has
-        # BOTH sides (get_mail_thread / recall show what Oliver sent). member_slug is the recipient
-        # for a 1:1 reply, None for a mailing-list post.
-        await asyncio.to_thread(
-            mail_archive.archive_outbound_email,
-            msg, body=reply, to_emails=decision.reply_to or [msg.from_email],
-            subject=msg.reply_subject, member_slug=decision.member_slug,
-            is_mailing_list=decision.is_mailing_list, sent_email_id=sent.get("emailId"),
-        )
-        db.add_activity(
-            "email_sent",
-            "Email reply sent",
-            f"To: {msg.from_email}\nSubject: {msg.reply_subject}\nEmail ID: {sent.get('emailId')}",
-        )
-    except Exception:
-        log.exception("Replied to email %s but post-send bookkeeping failed", msg.id)
-    log.info("Replied to email %s from %s", msg.id, msg.from_email)
+    await inbound_email.handle(msg, schedule_publish=commands.schedule_publish)
 
 
 async def _is_reply_to_bot(message: discord.Message) -> bool:

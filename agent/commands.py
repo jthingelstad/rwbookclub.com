@@ -1334,6 +1334,207 @@ async def _scheduled_job(name: str, work) -> object | None:
     return result.value if result.executed else None
 
 
+async def _run_maintenance_jobs(now: datetime) -> int:
+    """Run non-channel scheduler components; return recovered deliveries."""
+    delivered = await _scheduled_job("outbox_delivery", lambda: delivery.drain(_client))
+    await _scheduled_job("site_reconcile", ensure_site_reflects_next_book)
+
+    async def backup_job() -> int:
+        return int(bool(await asyncio.to_thread(backup.run)))
+
+    await _scheduled_job("offsite_backup", backup_job)
+
+    async def enrichment_job() -> int:
+        if (not config.ENRICH_SWEEP_ENABLED
+                or (db.get_job_state("enrichment_sweep") or {}).get("date")
+                == clock.club_today_iso()):
+            return 0
+        summary = await asyncio.to_thread(
+            enrich_loop.run_pending, limit=config.ENRICH_SWEEP_LIMIT
+        )
+        db.set_job_state("enrichment_sweep", {
+            "date": clock.club_today_iso(),
+            **{key: value for key, value in summary.items() if key != "exhausted"},
+            "exhausted": len(summary["exhausted"]),
+        })
+        if summary["enriched"] or summary["retried"]:
+            log.info("enrichment sweep: %s", summary)
+            schedule_publish()
+        return summary["enriched"] + summary["retried"]
+
+    await _scheduled_job("enrichment_sweep", enrichment_job)
+    await _scheduled_job("review_drive", lambda: asyncio.to_thread(review_drive.run, now))
+    await _scheduled_job("health_digest", lambda: asyncio.to_thread(health.run, now))
+
+    async def reflection_job() -> int:
+        if not (config.OLIVER_REFLECTION_ENABLED and now.weekday() == REFLECTION_WEEKDAY
+                and now.hour == REFLECTION_HOUR):
+            return 0
+        summary = await asyncio.to_thread(reflection.run)
+        return int(summary.get("members") or 0)
+
+    await _scheduled_job("reflection", reflection_job)
+    return int(delivered or 0)
+
+
+async def _post_due_notifications(main, now: datetime) -> int:
+    posted = 0
+    due = await asyncio.to_thread(scheduler.due_notifications, now, db.sent_keys())
+    for note in due:
+        msg = await asyncio.to_thread(
+            oliver.compose, note.kind, note.facts, fallback=note.fallback
+        )
+        await _send_discord(main, msg, idempotency_key=f"discord:notification:{note.key}")
+        db.mark_sent(note.key)
+        posted += 1
+    return posted
+
+
+async def _maybe_run_meeting_outreach(
+    meeting: dict, status: dict, now: datetime, days: int
+) -> int:
+    meeting_id = meeting["meetingId"]
+    if (email_jmap.enabled() and meeting_id is not None
+            and 0 <= days <= meeting_campaign.OUTREACH_START_DAYS
+            and now.hour == MEETING_OUTREACH_HOUR):
+        return await _run_meeting_outreach(meeting, status)
+    return 0
+
+
+async def _maybe_post_attendance_alert(main, meeting: dict, now: datetime, days: int) -> int:
+    status = await asyncio.to_thread(meeting_rules.meeting_status)
+    meeting_id = meeting["meetingId"]
+    if (not 0 <= days <= 3 or status["recommendation"] == "ready"
+            or meeting_id is None
+            or db.has_group_event(meeting_id, "attendance_alert_sent")):
+        return 0
+    counts = status["counts"]
+    meeting_book = (meeting.get("book") or {}).get("title") or "the next book"
+    alert = await asyncio.to_thread(
+        oliver.compose,
+        "attendance alert nudging the club to confirm before the meeting",
+        {
+            "concern": "attendance for the upcoming meeting may fall short of quorum",
+            "book": meeting_book,
+            "meeting date": meeting["date"],
+            "days away": days,
+            "responses so far": (
+                f"{counts['yes']} yes, {counts['no']} no, "
+                f"{counts['unsure']} unsure, {counts['pending']} pending"
+            ),
+            "yes responses needed": counts["quorumRequired"],
+        },
+        fallback="⚠️ Attendance may need attention.\n\n" + meeting_rules.format_status(status),
+    )
+    await _send_discord(
+        main, alert, idempotency_key=f"discord:attendance-alert:{meeting_id}"
+    )
+    db.record_group_event(
+        meeting_id, "attendance_alert_sent", actor="oliver", surface="discord"
+    )
+    db.add_activity(
+        "attendance_alert",
+        "Attendance alert posted",
+        f"Meeting: {meeting['meetingKey']}\nRecommendation: {status['recommendation']}",
+    )
+    return 1
+
+
+async def _maybe_send_club_cadence(
+    meeting: dict, status: dict, meeting_dt: datetime | None, now: datetime
+) -> int:
+    meeting_id = meeting["meetingId"]
+    if (not config.CLUB_EMAIL_CADENCE_ENABLED or not email_jmap.enabled()
+            or meeting_id is None or meeting_dt is None):
+        return 0
+    posted = 0
+    if (meeting_dt - timedelta(days=7) <= now <= meeting_dt
+            and not db.has_group_event(meeting_id, "week_reminder_sent")):
+        email = await asyncio.to_thread(meeting_emails.week_reminder, meeting, status)
+        await _send_club_email(
+            email["subject"], email["body"],
+            idempotency_key=f"club-email:week-reminder:{meeting_id}",
+        )
+        db.record_group_event(
+            meeting_id, "week_reminder_sent", actor="oliver", surface="email"
+        )
+        db.add_activity(
+            "club_email_sent", "1-week reminder sent to the mailing list",
+            f"Meeting: {meeting['meetingKey']}",
+        )
+        posted += 1
+    if (meeting_dt - timedelta(days=2) <= now <= meeting_dt
+            and not db.has_group_event(meeting_id, "briefing_sent")):
+        email = await asyncio.to_thread(meeting_emails.topic_email, meeting)
+        await _send_club_email(
+            email["subject"], email["body"],
+            idempotency_key=f"club-email:briefing:{meeting_id}",
+        )
+        db.record_group_event(meeting_id, "briefing_sent", actor="oliver", surface="email")
+        db.add_activity(
+            "club_email_sent", "2-day topic email sent to the mailing list",
+            f"Meeting: {meeting['meetingKey']}",
+        )
+        posted += 1
+    return posted
+
+
+async def _run_meeting_jobs(main, now: datetime) -> int:
+    status = await asyncio.to_thread(meeting_rules.meeting_status)
+    meeting = status["meeting"]
+    try:
+        meeting_date = datetime.fromisoformat(meeting["date"])
+    except ValueError:
+        meeting_date = None
+    posted = 0
+    if meeting_date:
+        days = (meeting_date.date() - now.date()).days
+        meeting_dt = _meeting_datetime(meeting)
+        posted += await _maybe_run_meeting_outreach(meeting, status, now, days)
+        posted += await _maybe_post_attendance_alert(main, meeting, now, days)
+        status = await asyncio.to_thread(meeting_rules.meeting_status)
+        posted += await _maybe_send_club_cadence(meeting, status, meeting_dt, now)
+    if config.CLUB_POSTSCRIPT_ENABLED and email_jmap.enabled():
+        posted += await _maybe_send_postscript(now)
+    return posted
+
+
+async def _post_due_reminders() -> int:
+    posted = 0
+    reminders = await asyncio.to_thread(db.due_reminders)
+    for reminder in reminders:
+        target_id = (
+            int(reminder["channel_id"])
+            if reminder.get("channel_id")
+            else config.MAIN_CHANNEL_ID
+        )
+        target = _client.get_channel(target_id) if target_id else None
+        if target is None:
+            log.warning("reminder %s: channel %s not found, skipping", reminder["id"], target_id)
+            db.mark_reminder_fired(reminder["id"])
+            continue
+        msg = f"⏰ Reminder: {reminder['text']}"
+        if reminder.get("created_by"):
+            msg += f"\n_(set by {reminder['created_by']})_"
+        try:
+            await _send_discord(
+                target, msg, idempotency_key=f"discord:reminder:{reminder['id']}"
+            )
+            db.mark_reminder_fired(reminder["id"])
+            db.add_activity(
+                "reminder_sent",
+                "Reminder sent",
+                f"Reminder ID: {reminder['id']}\nChannel: {target_id}\n"
+                f"Text: {reminder['text'][:500]}",
+            )
+            posted += 1
+        except (discord.HTTPException, outbox.OutboxError):
+            log.exception(
+                "Failed to post reminder %s; delivery was not confirmed", reminder["id"]
+            )
+    return posted
+
+
 async def _run_scheduler_unleased() -> int:
     """Post anything due to its target channel; returns the count posted.
 
@@ -1344,212 +1545,19 @@ async def _run_scheduler_unleased() -> int:
     """
     if _client is None:
         return 0
-    posted = 0
     now = _club_now()
-
-    # Recover delivery intents persisted before a crash, plus known-safe email retries. Ambiguous
-    # in-flight attempts are quarantined by the outbox and are deliberately absent from this drain.
-    delivered = await _scheduled_job("outbox_delivery", lambda: delivery.drain(_client))
-    posted += int(delivered or 0)
-
-    # 0. Self-heal the deployed site if it doesn't reflect the current next book (a lost deferred
-    # publish, or a meeting rollover). Runs on startup (first tick) + hourly — no human needed.
-    await _scheduled_job("site_reconcile", ensure_site_reflects_next_book)
-
-    # 0a2. Daily off-machine backup (iCloud Drive). Date-gated inside run(), so it fires on the
-    # first tick of each club-local day — whenever the Mac happens to be awake — and no-ops the
-    # rest. Failures post to #oliver-log from inside run(); never let it break the tick.
-    async def _backup_job() -> int:
-        return int(bool(await asyncio.to_thread(backup.run)))
-
-    await _scheduled_job("offsite_backup", _backup_job)
-
-    # 0a3. Daily enrichment sweep: new books/authors get enriched, incomplete rows retry with a
-    # capped attempt count (exhausted rows are flagged to #oliver-log and parked). Date-gated
-    # like the backup; network failures abort quietly inside run_pending and retry tomorrow.
-    async def _enrichment_job() -> int:
-        if (not config.ENRICH_SWEEP_ENABLED
-                or (db.get_job_state("enrichment_sweep") or {}).get("date")
-                == clock.club_today_iso()):
-            return 0
-        summary = await asyncio.to_thread(
-            enrich_loop.run_pending, limit=config.ENRICH_SWEEP_LIMIT
-        )
-        db.set_job_state("enrichment_sweep", {"date": clock.club_today_iso(), **{
-            k: v for k, v in summary.items() if k != "exhausted"},
-            "exhausted": len(summary["exhausted"])})
-        if summary["enriched"] or summary["retried"]:
-            log.info("enrichment sweep: %s", summary)
-            schedule_publish()  # new synopses/bios/covers should reach the site
-        return summary["enriched"] + summary["retried"]
-
-    await _scheduled_job("enrichment_sweep", _enrichment_job)
-
-    # 0a4. Weekly review drive (Wednesday morning): ask each allowlisted member for ONE written
-    # review of a book they rated but never wrote up. All gating inside review_drive.run().
-    await _scheduled_job(
-        "review_drive", lambda: asyncio.to_thread(review_drive.run, now)
-    )
-
-    # 0a5. Weekly health digest to the admin (Monday morning): inverted alarming — the missing
-    # email is the alarm. All gating inside health.run().
-    await _scheduled_job("health_digest", lambda: asyncio.to_thread(health.run, now))
-
-    # 0b. Weekly reflective memory (Sunday early morning): distill the week's conversations into
-    # durable member memories. Internal + audited in #oliver-log. The hourly loop ticks once inside
-    # the gate hour; if a restart double-fires it, the advanced watermark makes the second run a
-    # quiet no-op — and a failed run keeps its watermark so it retries next week.
-    async def _reflection_job() -> int:
-        if not (config.OLIVER_REFLECTION_ENABLED and now.weekday() == REFLECTION_WEEKDAY
-                and now.hour == REFLECTION_HOUR):
-            return 0
-        summary = await asyncio.to_thread(reflection.run)
-        return int(summary.get("members") or 0)
-
-    await _scheduled_job("reflection", _reflection_job)
+    posted = await _run_maintenance_jobs(now)
 
     # 1. Corpus-derived notifications → main channel.
     main = _client.get_channel(config.MAIN_CHANNEL_ID) if config.MAIN_CHANNEL_ID else None
     if config.MAIN_CHANNEL_ID and main is None:
         log.warning("DISCORD_MAIN_CHANNEL_ID %s not found", config.MAIN_CHANNEL_ID)
     if main is not None:
-        due = await asyncio.to_thread(scheduler.due_notifications, now, db.sent_keys())
-        for note in due:
-            msg = await asyncio.to_thread(
-                oliver.compose, note.kind, note.facts, fallback=note.fallback
-            )
-            await _send_discord(
-                main,
-                msg,
-                idempotency_key=f"discord:notification:{note.key}",
-            )
-            db.mark_sent(note.key)
-            posted += 1
+        posted += await _post_due_notifications(main, now)
 
-        status = await asyncio.to_thread(meeting_rules.meeting_status)
-        meeting = status["meeting"]
-        try:
-            meeting_date = datetime.fromisoformat(meeting["date"])
-        except ValueError:
-            meeting_date = None
-        if meeting_date:
-            days = (meeting_date.date() - now.date()).days
-            # Time-aware meeting start (honors start_time): cadence bounded "N days before" uses
-            # this so it fires at the meeting's hour N days prior, not on the midnight heartbeat.
-            meeting_dt = _meeting_datetime(meeting)
-            meeting_id = meeting["meetingId"]
+        posted += await _run_meeting_jobs(main, now)
 
-            # Autonomous per-member meeting prep (roll call → reading check-ins): email only,
-            # evaluated once a day at MEETING_OUTREACH_HOUR. Oliver paces itself off the event log,
-            # so no admin command is needed to collect attendance + reading for a meeting.
-            if (email_jmap.enabled() and meeting_id is not None
-                    and 0 <= days <= meeting_campaign.OUTREACH_START_DAYS
-                    and now.hour == MEETING_OUTREACH_HOUR):
-                posted += await _run_meeting_outreach(meeting, status)
-
-            status = await asyncio.to_thread(meeting_rules.meeting_status)
-            if (0 <= days <= 3 and status["recommendation"] != "ready"
-                    and meeting_id is not None
-                    and not db.has_group_event(meeting_id, "attendance_alert_sent")):
-                counts = status["counts"]
-                meeting_book = (meeting.get("book") or {}).get("title") or "the next book"
-                alert = await asyncio.to_thread(
-                    oliver.compose,
-                    "attendance alert nudging the club to confirm before the meeting",
-                    {
-                        "concern": "attendance for the upcoming meeting may fall short of quorum",
-                        "book": meeting_book,
-                        "meeting date": meeting["date"],
-                        "days away": days,
-                        "responses so far": (
-                            f"{counts['yes']} yes, {counts['no']} no, "
-                            f"{counts['unsure']} unsure, {counts['pending']} pending"
-                        ),
-                        "yes responses needed": counts["quorumRequired"],
-                    },
-                    fallback="⚠️ Attendance may need attention.\n\n" + meeting_rules.format_status(status),
-                )
-                await _send_discord(
-                    main,
-                    alert,
-                    idempotency_key=f"discord:attendance-alert:{meeting_id}",
-                )
-                db.record_group_event(meeting_id, "attendance_alert_sent", actor="oliver",
-                                      surface="discord")
-                db.add_activity(
-                    "attendance_alert",
-                    "Attendance alert posted",
-                    f"Meeting: {meeting['meetingKey']}\nRecommendation: {status['recommendation']}",
-                )
-                posted += 1
-
-            # Club-wide cadence emails (OFF unless CLUB_EMAIL_CADENCE_ENABLED): the 1-week
-            # reminder and the 2-day discussion-topics email, each once per meeting. The "N days
-            # before" bound honors the meeting's TIME (meeting_dt - N days <= now <= meeting_dt),
-            # so these go out at the meeting's hour N days prior — never at the midnight heartbeat.
-            if (config.CLUB_EMAIL_CADENCE_ENABLED and email_jmap.enabled()
-                    and meeting_id is not None and meeting_dt is not None):
-                if (meeting_dt - timedelta(days=7) <= now <= meeting_dt
-                        and not db.has_group_event(meeting_id, "week_reminder_sent")):
-                    email = await asyncio.to_thread(meeting_emails.week_reminder, meeting, status)
-                    await _send_club_email(
-                        email["subject"],
-                        email["body"],
-                        idempotency_key=f"club-email:week-reminder:{meeting_id}",
-                    )
-                    db.record_group_event(meeting_id, "week_reminder_sent", actor="oliver",
-                                          surface="email")
-                    db.add_activity("club_email_sent", "1-week reminder sent to the mailing list",
-                                    f"Meeting: {meeting['meetingKey']}")
-                    posted += 1
-                if (meeting_dt - timedelta(days=2) <= now <= meeting_dt
-                        and not db.has_group_event(meeting_id, "briefing_sent")):
-                    email = await asyncio.to_thread(meeting_emails.topic_email, meeting)
-                    await _send_club_email(
-                        email["subject"],
-                        email["body"],
-                        idempotency_key=f"club-email:briefing:{meeting_id}",
-                    )
-                    db.record_group_event(meeting_id, "briefing_sent", actor="oliver",
-                                          surface="email")
-                    db.add_activity("club_email_sent", "2-day topic email sent to the mailing list",
-                                    f"Meeting: {meeting['meetingKey']}")
-                    posted += 1
-
-        # Postscript — the ~1-week-AFTER-meeting digest (OFF unless CLUB_POSTSCRIPT_ENABLED),
-        # keyed on the most-recent PAST meeting (independent of the upcoming one above).
-        if config.CLUB_POSTSCRIPT_ENABLED and email_jmap.enabled():
-            posted += await _maybe_send_postscript(now)
-
-    # 2. User-set reminders → their original channel (or main as fallback).
-    reminders = await asyncio.to_thread(db.due_reminders)
-    for r in reminders:
-        target_id = int(r["channel_id"]) if r.get("channel_id") else config.MAIN_CHANNEL_ID
-        target = _client.get_channel(target_id) if target_id else None
-        if target is None:
-            log.warning("reminder %s: channel %s not found, skipping", r["id"], target_id)
-            db.mark_reminder_fired(r["id"])  # don't keep retrying a missing channel
-            continue
-        msg = f"⏰ Reminder: {r['text']}"
-        if r.get("created_by"):
-            msg += f"\n_(set by {r['created_by']})_"
-        try:
-            await _send_discord(
-                target,
-                msg,
-                idempotency_key=f"discord:reminder:{r['id']}",
-            )
-            db.mark_reminder_fired(r["id"])
-            db.add_activity(
-                "reminder_sent",
-                "Reminder sent",
-                f"Reminder ID: {r['id']}\nChannel: {target_id}\nText: {r['text'][:500]}",
-            )
-            posted += 1
-        except (discord.HTTPException, outbox.OutboxError):
-            log.exception("Failed to post reminder %s; delivery was not confirmed", r["id"])
-
-    return posted
+    return posted + await _post_due_reminders()
 
 
 async def run_scheduler() -> int:

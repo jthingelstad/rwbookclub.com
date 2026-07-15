@@ -214,7 +214,7 @@ def test_failed_review_retry_does_not_duplicate_receipt_ledger(fresh_db, monkeyp
         draft_json=json.dumps({"body": "A dark, riveting read.", "rating": 5}),
     )
     monkeypatch.setattr(
-        bot.review_drive, "handle_reply",
+        bot.inbound_email.review_drive, "handle_reply",
         lambda draft, msg: (_ for _ in ()).throw(RuntimeError("test failure")),
     )
 
