@@ -29,6 +29,86 @@ def test_next_meeting_knows_current_scheduled_book():
     assert meeting["book"]["authors"] == ["Michael Pollan"]
 
 
+def test_horizon_current_fixture_matches_canonical_upcoming_books():
+    from agent import corpus_read
+    from agent.club import meeting_rules
+
+    result = meeting_rules.horizon()
+    upcoming = corpus_read.upcoming_meetings()
+    assert result["depth"] == 5
+    assert result["scheduledCount"] == len(upcoming)
+    assert result["emptyCount"] == 5 - len(upcoming)
+    assert result["slots"][0]["book"]["title"] == "A World Appears"
+
+
+def _horizon_world(monkeypatch, *, upcoming_count=1, include_loren=True):
+    from agent.club import meeting_rules
+
+    members = [
+        {"slug": "erik", "name": "Erik"},
+        {"slug": "jamie", "name": "Jamie"},
+        {"slug": "loren", "name": "Loren"},
+        {"slug": "nick", "name": "Nick"},
+        {"slug": "tom", "name": "Tom"},
+    ]
+    if not include_loren:
+        members = [member for member in members if member["slug"] != "loren"]
+    recency = {"loren": "2022-01-01", "nick": "2023-01-01", "erik": "2024-01-01",
+               "tom": "2025-01-01", "jamie": "2026-01-01"}
+    history = [
+        {"slug": f"old-{slug}", "meetingDate": when, "pickerSlugs": [slug]}
+        for slug, when in recency.items() if any(m["slug"] == slug for m in members)
+    ]
+    scheduled_pickers = ["jamie", "loren", "nick", "erik", "tom"][:upcoming_count]
+    upcoming = [
+        {"slug": f"future-{index}", "title": f"Future {index}", "authors": ["Author"],
+         "meetingDate": f"2026-{index + 6:02d}-30", "placeholder": index == 1}
+        for index in range(upcoming_count)
+    ]
+    future_books = {
+        row["slug"]: {**row, "pickerSlugs": [scheduled_pickers[index]]}
+        for index, row in enumerate(upcoming)
+    }
+    monkeypatch.setattr(meeting_rules, "_current_members", lambda: members)
+    monkeypatch.setattr(meeting_rules.corpus_read, "books",
+                        lambda: history + list(future_books.values()))
+    monkeypatch.setattr(meeting_rules.corpus_read, "upcoming_meetings", lambda: upcoming)
+    monkeypatch.setattr(meeting_rules.corpus_read, "find_book",
+                        lambda value: future_books.get(value))
+    return meeting_rules
+
+
+def test_horizon_full_and_soft_scheduled_slots(monkeypatch):
+    rules = _horizon_world(monkeypatch, upcoming_count=5)
+    result = rules.horizon()
+    assert result["scheduledCount"] == 5 and result["emptyCount"] == 0
+    assert result["firstEmptyPicker"] is None
+    assert result["slots"][1]["dateStatus"] == "soft"
+
+
+def test_horizon_thin_runway_uses_loren_as_first_open_picker(monkeypatch):
+    rules = _horizon_world(monkeypatch, upcoming_count=1)
+    result = rules.horizon()
+    assert result["scheduledCount"] == 1 and result["emptyCount"] == 4
+    assert result["firstEmptyPicker"] == {"slug": "loren", "name": "Loren"}
+
+
+def test_horizon_empty_and_membership_change(monkeypatch):
+    rules = _horizon_world(monkeypatch, upcoming_count=0, include_loren=False)
+    result = rules.horizon(depth=4)
+    assert result["scheduledCount"] == 0 and result["emptyCount"] == 4
+    assert [slot["picker"]["slug"] for slot in result["slots"]] == [
+        "nick", "erik", "tom", "jamie"
+    ]
+
+
+def test_horizon_depth_clamps_and_cycles_current_members(monkeypatch):
+    rules = _horizon_world(monkeypatch, upcoming_count=0)
+    assert rules.horizon(depth=0)["depth"] == 1
+    deep = rules.horizon(depth=99)
+    assert deep["depth"] == 8 and len(deep["slots"]) == 8
+
+
 def test_meeting_status_flags_picker_conflict(fresh_db):
     from agent import clubdb, db
     from agent.club import meeting_rules

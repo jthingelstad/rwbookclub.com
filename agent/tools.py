@@ -131,6 +131,19 @@ TOOLS = [
         "input_schema": {"type": "object", "properties": {}},
     },
     {
+        "name": "horizon",
+        "description": "Read-only five-book runway: scheduled upcoming books followed by open "
+                       "picker slots under the least-recently-scheduled fairness rule. Use for "
+                       "what comes after the current book, how thin the runway is, or whose open "
+                       "slot appears next. Empty slots are status, never a nudge or assignment.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "depth": {"type": "integer", "minimum": 1, "maximum": 8, "default": 5},
+            },
+        },
+    },
+    {
         "name": "get_author",
         "description": "Author bio + the books the club has read by them. Use whenever someone asks about an author.",
         "input_schema": {

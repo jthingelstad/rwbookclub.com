@@ -9,7 +9,7 @@ from agent.mail import email_jmap, outbound
 from agent.tool_handlers.context import RequestContext
 
 NAMES = frozenset({
-    "pending_reviews", "current_club_state", "current_meeting_status", "meeting_readiness",
+    "horizon", "pending_reviews", "current_club_state", "current_meeting_status", "meeting_readiness",
     "meeting_campaign", "club_timeline", "record_timeline_event", "record_availability",
     "record_reading_status", "reading_status", "request_reading_update",
     "request_roll_call_update",
@@ -128,6 +128,8 @@ def _configured_discord_admin(request: RequestContext) -> bool:
 
 def handle(name: str, tool_input: dict, request: RequestContext):  # noqa: C901
     actor = request.actor
+    if name == "horizon":
+        return meeting_rules.horizon(tool_input.get("depth", 5))
     if name == "pending_reviews":
         target = _member_slug(tool_input["member"])
         if not target:

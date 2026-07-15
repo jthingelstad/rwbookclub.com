@@ -10,7 +10,7 @@ from agent.tool_handlers.context import RequestContext
 from agent.tools import TOOL_HANDLERS, TOOLS, dispatch
 
 
-SCHEMA_SHA256 = "5f62728e1c5a8f9449b6b0e9fbdcf5e17a3d1c66be2e5d34e2559021d37583b3"
+SCHEMA_SHA256 = "ff57ff4b937a26140dae26810f72b66a632db6f375e5c2b8671aae7cbce6fc96"
 
 
 def test_tool_schema_contract_is_unchanged():

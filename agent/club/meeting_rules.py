@@ -73,6 +73,97 @@ def _current_members() -> list[dict]:
     )
 
 
+def horizon(depth: int = 5) -> dict:
+    """Read-only scheduled-book runway plus fair-recency pickers for open slots.
+
+    Scheduled upcoming books stay authoritative. Empty slots are awareness only: current members
+    are ordered by their least-recently scheduled pick, excluding anyone already represented in
+    the scheduled portion before cycling into a second round for depths beyond membership size.
+    """
+    depth = max(1, min(int(depth), 8))
+    current = _current_members()
+    members_by_slug = {member["slug"]: member for member in current if member.get("slug")}
+    last_scheduled = {slug: None for slug in members_by_slug}
+    for book in corpus_read.books():
+        meeting_date = book.get("meetingDate")
+        if not meeting_date:
+            continue
+        for slug in book.get("pickerSlugs") or []:
+            if slug in last_scheduled and (
+                    last_scheduled[slug] is None or meeting_date > last_scheduled[slug]):
+                last_scheduled[slug] = meeting_date
+
+    ordered = sorted(
+        current,
+        key=lambda member: (
+            last_scheduled.get(member.get("slug")) is not None,
+            last_scheduled.get(member.get("slug")) or "",
+            (member.get("name") or member.get("slug") or "").lower(),
+        ),
+    )
+    rotation = [
+        {"slug": member["slug"], "name": member.get("name"),
+         "lastScheduledPick": last_scheduled.get(member["slug"])}
+        for member in ordered
+    ]
+
+    slots = []
+    scheduled_pickers: set[str] = set()
+    for upcoming in corpus_read.upcoming_meetings()[:depth]:
+        book = corpus_read.find_book(upcoming.get("slug") or upcoming.get("title")) or {}
+        picker_slugs = [slug for slug in (book.get("pickerSlugs") or []) if slug]
+        scheduled_pickers.update(slug for slug in picker_slugs if slug in members_by_slug)
+        pickers = [
+            {"slug": slug, "name": members_by_slug.get(slug, {}).get("name")}
+            for slug in picker_slugs
+        ]
+        placeholder = bool(upcoming.get("placeholder"))
+        slots.append({
+            "position": len(slots) + 1,
+            "status": "scheduled",
+            "book": {"slug": upcoming.get("slug"), "title": upcoming.get("title"),
+                     "authors": upcoming.get("authors") or []},
+            "meetingDate": upcoming.get("meetingDate"),
+            "placeholder": placeholder,
+            "dateStatus": "soft" if placeholder else "scheduled",
+            "picker": pickers[0] if pickers else None,
+            "pickers": pickers,
+        })
+
+    first_pass = [member for member in ordered if member["slug"] not in scheduled_pickers]
+    picker_cycle = first_pass + ordered
+    cycle_index = 0
+    while len(slots) < depth and picker_cycle:
+        if cycle_index >= len(picker_cycle):
+            picker_cycle.extend(ordered)
+            if not ordered:
+                break
+        member = picker_cycle[cycle_index]
+        cycle_index += 1
+        picker = {"slug": member["slug"], "name": member.get("name")}
+        slots.append({
+            "position": len(slots) + 1,
+            "status": "empty",
+            "book": None,
+            "meetingDate": None,
+            "placeholder": False,
+            "dateStatus": "open",
+            "picker": picker,
+            "pickers": [picker],
+        })
+
+    empty_slots = [slot for slot in slots if slot["status"] == "empty"]
+    return {
+        "depth": depth,
+        "rule": "open slots use least-recently-scheduled current-member order",
+        "rotation": rotation,
+        "slots": slots,
+        "scheduledCount": len(slots) - len(empty_slots),
+        "emptyCount": len(empty_slots),
+        "firstEmptyPicker": empty_slots[0]["picker"] if empty_slots else None,
+    }
+
+
 def next_meeting() -> dict:
     upcoming = corpus_read.upcoming_meetings()
     book = None

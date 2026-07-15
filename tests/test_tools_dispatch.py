@@ -42,6 +42,15 @@ class TestDispatchErrors:
 
 
 class TestDispatchHappyPaths:
+    def test_horizon_returns_read_only_runway_and_clamps_depth(self):
+        from agent import corpus_read
+        from agent.tools import dispatch
+
+        result = json.loads(dispatch("horizon", {"depth": 99}, {}))
+        assert result["depth"] == 8
+        assert result["scheduledCount"] == len(corpus_read.upcoming_meetings())
+        assert result["slots"][0]["book"]["title"] == "A World Appears"
+
     def test_find_books_returns_list(self):
         from agent.tools import dispatch
         result = json.loads(dispatch("find_books", {"query": "technology"}, {}))

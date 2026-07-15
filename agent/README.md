@@ -42,7 +42,8 @@ agent/
   per-channel queue so group chat stays in order.
 - **Tools** (`tools.py` + `tool_handlers/`): `find_books`, `search_books`, `get_book`, `member_history`,
   `upcoming_meetings`, `club_stats`, `pending_reviews`, `club_lists` (read the corpus), club-awareness
-  tools (`current_club_state`, `current_meeting_status`, `identity_status`,
+  tools (`horizon` for the read-only five-book runway, `current_club_state`,
+  `current_meeting_status`, `identity_status`,
   `recent_feedback`, `recent_channel_context`), relationship tools (`related_books`,
   `compare_books`, `review_summary`), email (`send_email`, `email_status`), proposal staging
   (`propose_action`, `open_proposals`), the Book Cloud (`book_cloud_add`, `book_cloud_recent` —

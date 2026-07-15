@@ -41,3 +41,10 @@ def test_guardrail_never_posts_to_group_on_a_members_behalf():
     p = oliver.OPERATIONAL_PROMPT
     assert "on another member's behalf" in p
     assert "post it themselves" in p
+
+
+def test_horizon_prompt_is_status_not_picker_pressure():
+    prompt = oliver.OPERATIONAL_PROMPT
+    assert "call horizon" in prompt
+    assert "calm runway/status read" in prompt
+    assert "not that they are behind, summoned, or required to pick" in prompt
