@@ -19,8 +19,9 @@ worst case — the old Mac is gone and all you have is GitHub + iCloud + your pa
    ```bash
    git clone https://github.com/jthingelstad/rwbookclub.com.git ~/Projects/rwbookclub.com
    cd ~/Projects/rwbookclub.com
-   python3 -m venv venv && venv/bin/pip install -r agent/requirements.txt
-   npm install
+   python3.13 -m venv venv
+   venv/bin/pip install -c agent/constraints.txt -r agent/requirements.txt
+   npm ci
    ```
 2. **Secrets** — copy `.env.example` to `.env`, fill values from the password manager
    (Discord tokens/IDs, `ANTHROPIC_API_KEY`, `FASTMAIL_JMAP_TOKEN`, `WEBAPP_SECRET`).

@@ -11,14 +11,43 @@ permissions:
 jobs:
   python:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.14"
+          python-version: ${{ matrix.python-version }}
           cache: pip
-      - run: pip install -r agent/requirements.txt -r tests/requirements.txt
+      - run: pip install -c agent/constraints.txt -r agent/requirements.txt -r tests/requirements.txt
       - name: Lint (ruff)
         run: ruff check .
       - name: Tests
         run: pytest tests/ -q
+
+  website:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: pip install -c agent/constraints.txt -r agent/requirements.txt
+      - run: npm ci
+      - name: Audit JavaScript dependencies
+        run: npm audit --audit-level=moderate
+      - name: Generate public-safe fixture corpus
+        env:
+          OLIVER_DB_PATH: ${{ runner.temp }}/oliver-site-build.db
+          OLIVER_CORPUS_DIR: ${{ runner.temp }}/corpus
+        run: python -m agent.script.build_fixture_corpus
+      - name: Build website
+        env:
+          OLIVER_CORPUS_DIR: ${{ runner.temp }}/corpus
+        run: npm run build

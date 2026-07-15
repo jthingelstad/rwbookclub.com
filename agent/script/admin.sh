@@ -33,7 +33,7 @@ require_venv() {
     if ! VENV="$(resolve_venv)"; then
         echo "Error: no Python venv found." >&2
         echo "  Looked in: \$OLIVER_VENV, $REPO_ROOT/venv, $AGENT_DIR/venv" >&2
-        echo "  Create one with:  python3.13 -m venv $REPO_ROOT/venv && $REPO_ROOT/venv/bin/pip install -r $AGENT_DIR/requirements.txt" >&2
+        echo "  Create one with:  python3.13 -m venv $REPO_ROOT/venv && $REPO_ROOT/venv/bin/pip install -c $AGENT_DIR/constraints.txt -r $AGENT_DIR/requirements.txt" >&2
         exit 1
     fi
     echo "$VENV"
@@ -197,7 +197,7 @@ upgrade_bot() {
     (cd "$REPO_ROOT" && git pull origin main)
 
     echo "==> Updating dependencies..."
-    "$VENV/bin/pip" install -q -r "$AGENT_DIR/requirements.txt"
+    "$VENV/bin/pip" install -q -c "$AGENT_DIR/constraints.txt" -r "$AGENT_DIR/requirements.txt"
 
     start_bot
 }
