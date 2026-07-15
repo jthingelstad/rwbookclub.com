@@ -14,8 +14,8 @@ Airtable is read from the local cache under ``agent/script/_airtable_cache/`` (c
 once; re-fetch by deleting the cache). The corpus is read from ``corpus/data/``.
 
 Idempotent: wipes the ``club_*`` tables and reloads. Run:
-    python -m agent.script.import_airtable           # import + validate
-    python -m agent.script.import_airtable --report   # validate only, no write
+    python -m agent.script.archive.import_airtable           # import + validate
+    python -m agent.script.archive.import_airtable --report   # validate only, no write
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ import re
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 

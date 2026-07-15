@@ -190,7 +190,7 @@ async def ensure_running() -> None:
         # missing key — that would let anyone forge an admin session cookie. Require a real secret.
         if not config.WEBAPP_SECRET or config.WEBAPP_SECRET == config.WEBAPP_DEV_SECRET:
             raise RuntimeError(
-                "Refusing to start the web app: set WEBAPP_SECRET (or DISCORD_BOT_TOKEN) to a real "
+                "Refusing to start the web app: set WEBAPP_SECRET to a dedicated real "
                 "secret — signing sessions with the dev default would allow forged admin cookies.")
         runner = web.AppRunner(_build_app())
         await runner.setup()

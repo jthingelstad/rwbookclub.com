@@ -6,7 +6,7 @@ each user turn's speaker display-name to a member (by name/first-name token matc
 roster); assistant turns inherit the member of the nearest preceding user turn in that channel.
 Rows that can't be resolved stay NULL. Idempotent — only writes rows where member_slug IS NULL.
 
-    python -m agent.script.backfill_conversation_members [--dry-run]
+    python -m agent.script.archive.backfill_conversation_members [--dry-run]
 """
 
 from __future__ import annotations

@@ -4,7 +4,7 @@ This is the inversion: the club's books / meetings / members / authors / reviews
 lists live here under integer primary keys and real foreign keys. The corpus
 (``corpus/data/*``, gitignored) and the 11ty website are *generated* from these tables (see
 ``agent.corpus_gen``); Airtable is retired after the one-time import (see
-``agent.script.import_airtable``).
+``agent.script.archive.import_airtable``).
 
 Identity is an integer surrogate key everywhere — never a slug. The integer ids are
 Airtable's own autonumbers (Book ID / Meeting ID / Member ID / Author ID / Review ID);
@@ -21,7 +21,6 @@ from __future__ import annotations
 import json
 import sqlite3
 from datetime import datetime, timezone
-from typing import Iterator
 
 from agent import clock, db
 from corpus.paths import slugify
@@ -370,12 +369,6 @@ def ensure_schema() -> None:
     # db.py owns the cross-domain legacy migrations. Fresh databases pause its ordered ledger
     # until the club tables exist; resume it now that this schema owner has finished.
     db.run_migrations()
-
-
-# ── Connection helper ────────────────────────────────────────────────────────
-def connect() -> Iterator[sqlite3.Connection]:
-    """Re-export db.connect so callers needn't import both modules."""
-    return db.connect()
 
 
 # ── Small read helpers (used by the generator and future corpus_read) ─────────

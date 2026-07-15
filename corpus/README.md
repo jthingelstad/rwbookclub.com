@@ -63,7 +63,7 @@ python -m corpus.images      # backfill any missing covers
 
 One-time re-seed of the DB from the original Airtable snapshot (reads the on-disk
 cache under `agent/script/_airtable_cache/`, not the API — no credentials needed):
-`python -m agent.script.import_airtable` (the table IDs live in that script).
+`python -m agent.script.archive.import_airtable` (the table IDs live in that script).
 
 ## Schema
 

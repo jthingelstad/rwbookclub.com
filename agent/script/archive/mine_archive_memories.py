@@ -13,10 +13,10 @@ Boundary: only mail with sent_at <= the weekly reflection job's initial mail cur
 
 Run deliberately, like agent/enrich/ — ~66 Sonnet calls over the full archive:
 
-    python -m agent.script.mine_archive_memories --member tom --dry-run   # calibration preview
-    python -m agent.script.mine_archive_memories --club-only --year 2018 --dry-run
-    python -m agent.script.mine_archive_memories                          # the whole archive
-    python -m agent.script.mine_archive_memories --report                 # just print final sets
+    python -m agent.script.archive.mine_archive_memories --member tom --dry-run
+    python -m agent.script.archive.mine_archive_memories --club-only --year 2018 --dry-run
+    python -m agent.script.archive.mine_archive_memories                  # the whole archive
+    python -m agent.script.archive.mine_archive_memories --report         # just print final sets
 
 Resumable: job_state['archive_mining'] records the highest completed year per lane; a re-run
 skips completed years. A lane stops at the first failed year (so chronology and the resume

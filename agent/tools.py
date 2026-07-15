@@ -704,27 +704,3 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
     except Exception as exc:
         log.exception("tool %s failed (input=%r)", name, tool_input)
         return _dump({"error": f"{type(exc).__name__}: {exc}"})
-
-
-# Compatibility aliases for focused tests and internal callers while implementation lives in the
-# capability modules. The dispatcher itself reaches these only through TOOL_HANDLERS.
-def _member_lenses(ctx: dict | None = None) -> dict:
-    runtime = ctx or {}
-    request = RequestContext.from_runtime(runtime, actor=access.actor_from_ctx(runtime))
-    return picking.member_lenses(request)
-
-
-def _pick_fit(tool_input: dict, ctx: dict) -> dict:
-    request = RequestContext.from_runtime(ctx, actor=access.actor_from_ctx(ctx))
-    return picking.pick_fit(tool_input, request)
-
-
-def _pick_prospects(tool_input: dict, ctx: dict) -> dict:
-    request = RequestContext.from_runtime(ctx, actor=access.actor_from_ctx(ctx))
-    return picking.pick_prospects(tool_input, request)
-
-
-_meeting_status_snapshot = meeting.meeting_status_snapshot
-_current_club_state_snapshot = meeting.current_club_state_snapshot
-_reading_status_snapshot = meeting.reading_status_snapshot
-_meeting_readiness_snapshot = meeting.meeting_readiness_snapshot

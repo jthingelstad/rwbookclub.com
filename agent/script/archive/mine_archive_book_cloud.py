@@ -10,9 +10,9 @@ those); the cloud is for the books we orbit but haven't read.
 Boundary: only mail with sent_at <= the weekly reflection job's mail cursor (--until defaults to
 it) — same convention as the memory mining.
 
-    python -m agent.script.mine_archive_book_cloud --member tom --year 2018 --dry-run  # calibrate
-    python -m agent.script.mine_archive_book_cloud                                     # full run
-    python -m agent.script.mine_archive_book_cloud --report                            # aggregated cloud
+    python -m agent.script.archive.mine_archive_book_cloud --member tom --year 2018 --dry-run
+    python -m agent.script.archive.mine_archive_book_cloud             # full run
+    python -m agent.script.archive.mine_archive_book_cloud --report    # aggregated cloud
 
 Resumable: job_state['archive_mining_cloud'] records the highest completed year per member; a
 lane stops at its first failed year and resumes there on re-run.

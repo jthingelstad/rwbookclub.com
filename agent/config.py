@@ -49,12 +49,12 @@ SITE_URL = (os.environ.get("SITE_URL") or "https://rwbookclub.com").rstrip("/")
 # loopback port the in-process aiohttp server binds. Funnel maps the public 443 → this port.
 WEBAPP_PORT = int(os.environ.get("WEBAPP_PORT") or 8765)
 WEBAPP_BASE_URL = (os.environ.get("WEBAPP_BASE_URL") or "https://otto.tail09aaf9.ts.net").rstrip("/")
-# Secret for signing web-app session cookies + CSRF tokens. Prefer a dedicated WEBAPP_SECRET (so the
-# cookie-signing key is separate from the Discord bot token); fall back to the bot token for
-# convenience. The dev literal is ONLY for local/test use — the web-app server refuses to bind with
-# it (agent/webapp/server.py:ensure_running), so a misconfigured prod can't serve forgeable sessions.
+# Secret for signing web-app session cookies + CSRF tokens. This must be independent from every
+# service credential: compromising a session-signing key must not also compromise the Discord bot.
+# The dev literal is ONLY for local/test use — the web-app server refuses to bind with it
+# (agent/webapp/server.py:ensure_running), so a misconfigured production process fails closed.
 WEBAPP_DEV_SECRET = "insecure-dev-secret"
-WEBAPP_SECRET = os.environ.get("WEBAPP_SECRET") or TOKEN or WEBAPP_DEV_SECRET
+WEBAPP_SECRET = os.environ.get("WEBAPP_SECRET") or WEBAPP_DEV_SECRET
 
 # Fastmail/JMAP — optional. If FASTMAIL_JMAP_TOKEN is absent, all email features
 # no-op at runtime so local/dev Discord-only runs keep working.
@@ -64,8 +64,8 @@ FASTMAIL_JMAP_SESSION_URL = os.environ.get(
 )
 OLIVER_EMAIL_ADDRESS = os.environ.get("OLIVER_EMAIL_ADDRESS", "oliver@rwbookclub.com")
 # Review drive: member-slug allowlist for the weekly review-request emails ("all" = every
-# current member; empty = feature off). Starts as just Jamie while the experience is tuned.
-REVIEW_DRIVE_MEMBERS = os.environ.get("OLIVER_REVIEW_DRIVE_MEMBERS", "jamie")
+# current member; empty = feature off). Member-facing automation is opt-in in every environment.
+REVIEW_DRIVE_MEMBERS = os.environ.get("OLIVER_REVIEW_DRIVE_MEMBERS", "")
 
 # Daily enrichment sweep: enrich new books/authors, retry incomplete ones (capped, flagged).
 ENRICH_SWEEP_ENABLED = os.environ.get("OLIVER_ENRICH_SWEEP_ENABLED", "1") not in {"0", "false", "False"}

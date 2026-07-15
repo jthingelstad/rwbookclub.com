@@ -74,16 +74,6 @@ def _strip_address(content: str, bot_id: int) -> str:
     return re.sub(rf"<@!?{bot_id}>", "", content).strip()
 
 
-def _record_ignored_email(msg: email_jmap.InboundEmail, reason: str) -> None:
-    """Compatibility wrapper for the pure helper now owned by mail.inbound."""
-    inbound_email.record_ignored_email(msg, reason)
-
-
-def _roll_call_status_from_email(subject: str, text: str) -> str | None:
-    """Compatibility wrapper for the pure helper now owned by mail.inbound."""
-    return inbound_email.roll_call_status_from_email(subject, text)
-
-
 class OliverClient(discord.Client):
     def __init__(self) -> None:
         intents = discord.Intents.default()

@@ -9,10 +9,9 @@ import pytest
 from agent.bot import (
     _channel_mode,
     _is_addressed,
-    _record_ignored_email,
-    _roll_call_status_from_email,
     _strip_address,
 )
+from agent.mail.inbound import record_ignored_email, roll_call_status_from_email
 from agent.mail.email_jmap import InboundEmail
 
 
@@ -85,7 +84,7 @@ class TestIgnoredEmailLogging:
             references=[],
         )
         with caplog.at_level(logging.INFO, logger="oliver"):
-            _record_ignored_email(msg, "sender_not_allowed")
+            record_ignored_email(msg, "sender_not_allowed")
 
         rows = fresh_db.pending_activity()
         assert len(rows) == 1
@@ -105,19 +104,19 @@ class TestRollCallEmailParsing:
         ("Unsure for now.", "unsure"),
     ])
     def test_explicit_roll_call_replies(self, body, status):
-        assert _roll_call_status_from_email(
+        assert roll_call_status_from_email(
             "Re: Roll call: A World Appears on 2026-06-30",
             body,
         ) == status
 
     def test_ignores_non_roll_call_subjects(self):
-        assert _roll_call_status_from_email(
+        assert roll_call_status_from_email(
             "Re: Reading check-in: A World Appears",
             "Yes, I can make it.",
         ) is None
 
     def test_ignores_quoted_history_after_blank(self):
-        assert _roll_call_status_from_email(
+        assert roll_call_status_from_email(
             "Re: Roll call: A World Appears on 2026-06-30",
             "\n\nOn Jun 9 Oliver wrote:\n> Can you make it?\n> Yes",
         ) is None

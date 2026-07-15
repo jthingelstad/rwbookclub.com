@@ -6,9 +6,11 @@ never target him: it enumerates members via corpus_read.human_current_members() 
 config.OLIVER_MEMBER_SLUG explicitly.
 """
 
-from agent import config, clubdb, db
+from agent import access, config, clubdb, db
 from agent import corpus_read as cr
 from agent.club import meeting_rules
+from agent.tool_handlers import picking
+from agent.tool_handlers.context import RequestContext
 
 
 def _fake_members():
@@ -32,11 +34,16 @@ def test_prompt_roster_excludes_oliver(monkeypatch):
 
 
 def test_member_lenses_exclude_oliver(monkeypatch):
-    from agent import tools
-    monkeypatch.setattr(tools.cr, "members", _fake_members)
-    monkeypatch.setattr(tools.cr, "member_history", lambda slug: {})
-    monkeypatch.setattr(tools.db, "get_memories", lambda **kw: [])
-    lenses = tools._member_lenses()
+    monkeypatch.setattr(picking.cr, "members", _fake_members)
+    monkeypatch.setattr(picking.cr, "member_history", lambda slug: {})
+    request = RequestContext(
+        actor=access.Actor(member_slug=None, is_admin=False),
+        channel_id=None,
+        speaker=None,
+        speaker_user_id=None,
+        source_message_id=None,
+    )
+    lenses = picking.member_lenses(request)
     assert "oliver" not in lenses and "jamie" in lenses
 
 

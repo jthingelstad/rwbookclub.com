@@ -1,11 +1,10 @@
 """Generate the corpus (``corpus/data/*``, gitignored) from the authoritative ``club_*`` tables.
 
-This is the inverse of ``corpus/normalize.py``: it reproduces the exact normalized
-on-disk shape the website (`website/src/_data/*.js`) and Oliver (`agent/corpus_read.py`)
-consume — same keys, same order, same serialization — so the regenerated corpus is a
-faithful, diff-clean artifact of the database.
+It reproduces the normalized on-disk shape the website (`website/src/_data/*.js`) and
+Oliver (`agent/corpus_read.py`) consume — same keys, same order, same serialization — so
+the regenerated corpus is a faithful, diff-clean artifact of the database.
 
-Serialization rules (must match ``corpus/normalize.py``):
+Serialization rules:
   * JSON: ``json.dumps(obj, indent=2, ensure_ascii=False) + "\\n"`` (trailing newline).
   * Review markdown: ``yaml.safe_dump(front, sort_keys=False, allow_unicode=True,
     default_flow_style=False)``, body appended only when present.

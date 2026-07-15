@@ -37,7 +37,7 @@ Run from the **main** working tree once you're watching:
    bar the 2 cleanups, so the public site output is unchanged):
    `git checkout main && git merge sqlite-authoritative`
 2. **Seed the live DB** (additive — creates `club_*`, leaves ops tables untouched):
-   `python -m agent.script.import_airtable` then `python -m agent.script.verify_ops_mapping`
+   `python -m agent.script.archive.import_airtable` then `python -m agent.script.archive.verify_ops_mapping`
    (expect zero orphans).
 3. **Push** → GitHub Pages redeploys the (effectively identical) site:
    `git push origin main`.

@@ -34,7 +34,7 @@ async def _main() -> None:
 
     # Same fail-closed rule as the bot's instance: never sign sessions with the dev literal.
     if not config.WEBAPP_SECRET or config.WEBAPP_SECRET == config.WEBAPP_DEV_SECRET:
-        raise SystemExit("Set WEBAPP_SECRET (or DISCORD_BOT_TOKEN) to a real secret first.")
+        raise SystemExit("Set WEBAPP_SECRET to a dedicated real secret first.")
 
     member_id = clubdb.lookup_member_id(args.member)
     if member_id is None:

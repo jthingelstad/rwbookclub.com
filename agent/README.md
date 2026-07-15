@@ -141,7 +141,7 @@ Run from the **repo root** so the `agent` and `corpus` packages resolve.
 | `DISCORD_ADMIN_USER_ID` | Gates the admin `/oliver` commands (stats, add-book, release-notes, tick) |
 | `DISCORD_SERVER_ID` | Guild for instant (guild-scoped) slash-command sync |
 | `ANTHROPIC_API_KEY` | Claude API key |
-| `DISCORD_BOT_ID` | The bot's user ID (reference) |
+| `WEBAPP_SECRET` | Dedicated signing key for member web-app sessions; must not reuse the bot token |
 | `OLIVER_DB_PATH` | Optional — SQLite path (default `agent/oliver.db`) |
 | `OLIVER_CORPUS_DIR` | Optional — corpus dir override (tests redirect to a temp dir) |
 | `OLIVER_ENRICH_ON_WRITE` | Optional — set to `0` to skip inline enrichment on add-book (tests) |

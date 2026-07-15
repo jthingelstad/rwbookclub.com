@@ -1,7 +1,7 @@
 # Airtable reference (retired — historical import snapshot)
 
 > **This is history, not current guidance.** Airtable was the club's original data store. It was
-> retired after a one-time import (`python -m agent.script.import_airtable`, which now reads the
+> retired after a one-time import (`python -m agent.script.archive.import_airtable`, which now reads the
 > on-disk snapshot under `agent/script/_airtable_cache/`, not the API). **SQLite (`club_*` tables in
 > `agent/oliver.db`) is authoritative** — see the repo `CLAUDE.md`. No code reads `AIRTABLE_*` env
 > vars anymore. The table IDs, field shapes, row counts, and coverage numbers below are frozen at

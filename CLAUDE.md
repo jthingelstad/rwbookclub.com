@@ -6,14 +6,14 @@ Project-specific context for Claude Code. The site is live at rwbookclub.com (se
 
 rwbookclub.com is the home of the R/W Book Club, which has been meeting since April 2003. The club reads about 8 books per year, mostly non-fiction (about 88%), and rotates picking and hosting among members.
 
-**SQLite is the source of truth** for club data — the `club_*` tables in `agent/oliver.db` hold the authoritative club record (books/meetings/members/authors/reviews/lists) under integer primary keys and real foreign keys. The Git corpus (`corpus/data/`) **and** the website are **generated** from it (`python -m agent.corpus_gen`). See [`docs/ERD.md`](docs/ERD.md) for the full database ERD (both the `club_*` record and Oliver's private state). **Do not hand-edit `corpus/data/` — a regen will clobber it.** Change the data through Oliver's write tools / the DB. Airtable was the original home and was retired after a one-time import (`python -m agent.script.import_airtable`). See `docs/archive/MIGRATION-PLAN.md` and `docs/archive/MIGRATION-STATUS.md` for the full inversion history (it happened 2026-06-26), and `docs/archive/AIRTABLE-REFERENCE.md` for the retired Airtable schema.
+**SQLite is the source of truth** for club data — the `club_*` tables in `agent/oliver.db` hold the authoritative club record (books/meetings/members/authors/reviews/lists) under integer primary keys and real foreign keys. The Git corpus (`corpus/data/`) **and** the website are **generated** from it (`python -m agent.corpus_gen`). See [`docs/ERD.md`](docs/ERD.md) for the full database ERD (both the `club_*` record and Oliver's private state). **Do not hand-edit `corpus/data/` — a regen will clobber it.** Change the data through Oliver's write tools / the DB. Airtable was the original home and was retired after a one-time import (`python -m agent.script.archive.import_airtable`). See `docs/archive/MIGRATION-PLAN.md` and `docs/archive/MIGRATION-STATUS.md` for the full inversion history (it happened 2026-06-26), and `docs/archive/AIRTABLE-REFERENCE.md` for the retired Airtable schema.
 
 ## Monorepo layout
 
 This repo is a flat, polyglot monorepo with three top-level concerns:
 
 - **`website/`** — the Eleventy 3 static site (Node). Consumes the corpus.
-- **`corpus/`** — the **generated** knowledge layer (Python). Per-entity text files in `corpus/data/` (`books/`, `members/`, `meetings/`, `authors/`, `reviews/`, `lists/`) are produced from the `club_*` SQLite tables by `agent/corpus_gen.py`, reproducing the normalized on-disk shape: each fact once, relationships by **slug** (slug = filename stem, an output detail — never identity in the DB), derived fields computed at build/read time. Records are JSON, reviews Markdown+frontmatter. `corpus/validate.py` checks reference integrity. `corpus/images.py` backfills covers from Open Library (reads OL ids from the DB). (The legacy Airtable→corpus modules `fetch.py`/`migrate.py`/`normalize.py` were **removed**; the one-time re-seed path is now `agent.script.import_airtable` → DB → `agent.corpus_gen`.) **Oliver now owns this**: writes land in the DB, then the corpus is regenerated on disk (it is **gitignored/private**, never committed) and the site is rebuilt + deployed locally to `gh-pages` (see "Site build + deploy").
+- **`corpus/`** — the **generated** knowledge layer (Python). Per-entity text files in `corpus/data/` (`books/`, `members/`, `meetings/`, `authors/`, `reviews/`, `lists/`) are produced from the `club_*` SQLite tables by `agent/corpus_gen.py`, reproducing the normalized on-disk shape: each fact once, relationships by **slug** (slug = filename stem, an output detail — never identity in the DB), derived fields computed at build/read time. Records are JSON, reviews Markdown+frontmatter. `corpus/validate.py` checks reference integrity. `corpus/images.py` backfills covers from Open Library (reads OL ids from the DB). (The legacy Airtable→corpus modules `fetch.py`/`migrate.py`/`normalize.py` were **removed**; the archived one-time re-seed path is now `agent.script.archive.import_airtable` → DB → `agent.corpus_gen`.) **Oliver now owns this**: writes land in the DB, then the corpus is regenerated on disk (it is **gitignored/private**, never committed) and the site is rebuilt + deployed locally to `gh-pages` (see "Site build + deploy").
 - **External enrichment** lives in **1:1 sidecar tables** (`club_book_enrichment`, `club_author_enrichment`) that the loop `agent/enrich/` owns exclusively — the curated `club_books`/`club_authors` core is never written by enrichment, so it can't be clobbered, and enrichment is regenerable (`DELETE` + re-run). Run it deliberately/online: `python -m agent.enrich [--books] [--authors] [--force] [--limit N] [--slug X]` (sources: Open Library + Wikidata + Wikipedia; Google Books stays blocked). Gap-filling + idempotent (skips rows with `enriched_at` set). `corpus_gen` stays network-free; `all_books`/`all_authors` `COALESCE` the dual-source fields (synopsis/bio/year/pages/isbn/subjects) **core-first**, while net-new fields (ratings/editions/dates/nationality/links/awards/notable works) come straight from the sidecar. Author portraits land in `website/src/assets/images/authors/`. `/oliver add-book` triggers inline enrichment (gated off in tests via `OLIVER_ENRICH_ON_WRITE=0`).
 - **`agent/`** — Oliver, the club's Discord bot (Python). Consumes the corpus; answers questions in `#ask-oliver` via Claude.
 
@@ -48,7 +48,7 @@ Oliver writes nothing to it. The site is built + deployed **locally** to the **`
 
 Separate from the static site: a **live web editor served inside the Oliver bot process** (aiohttp +
 Jinja2), reached over **Tailscale Funnel** (the Mac dials out; `oliver.db` stays local). `/oliver
-webapp` mints a single-use token → signed session cookie (the Discord identity link is the auth). It
+my-club` mints a single-use token → signed session cookie (the Discord identity link is the auth). It
 starts on demand and idles off after ~15 min; edits write the DB immediately but the public site is
 rebuilt only on the in-app **Publish** button or on idle shutdown (deferred publish). Members edit
 ratings/reviews/lists/profile; admins edit book data/meetings/hosts. It **reuses the same writers** as
@@ -64,7 +64,7 @@ Loops and `{% set %}` tags emit a newline per iteration by default. When a loop'
 ## Data Source
 
 **SQLite (`club_*`) is authoritative** (see top). Airtable was the original store and the seed for
-the one-time `agent.script.import_airtable`; it is **no longer a live dependency** and no code reads
+the archived one-time `agent.script.archive.import_airtable`; it is **no longer a live dependency** and no code reads
 `AIRTABLE_*` env vars. The retired Airtable schema (table IDs, field shapes, import-time row/coverage
 counts, REST/API patterns) is preserved for reference in
 [`docs/archive/AIRTABLE-REFERENCE.md`](docs/archive/AIRTABLE-REFERENCE.md) — those IDs became the

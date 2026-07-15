@@ -13,21 +13,21 @@ Extraction defaults to Sonnet (constrained extraction — Opus is overkill); ove
 Usage (from the repo root, with ANTHROPIC_API_KEY in the env / shared .env):
 
     # Mine — append candidates to agent/logs/mined_events.jsonl (resumable; skips done threads):
-    python -m agent.script.mine_archive_events --sample 30 --out /tmp/calib.jsonl  # calibration sample
-    python -m agent.script.mine_archive_events                   # the whole archive (Sonnet)
-    python -m agent.script.mine_archive_events --model claude-haiku-4-5            # cheaper model
-    python -m agent.script.mine_archive_events --thread <id>     # one specific thread
-    python -m agent.script.mine_archive_events --force           # re-mine threads already done
+    python -m agent.script.archive.mine_archive_events --sample 30 --out /tmp/calib.jsonl
+    python -m agent.script.archive.mine_archive_events                # the whole archive (Sonnet)
+    python -m agent.script.archive.mine_archive_events --model claude-haiku-4-5     # cheaper model
+    python -m agent.script.archive.mine_archive_events --thread <id>  # one specific thread
+    python -m agent.script.archive.mine_archive_events --force        # re-mine threads already done
 
     # Review: --stats summarizes counts + lists every privacy-sensitive (member_life/social) event;
     #         --approve bulk-sets approve:true on whole safe categories (sensitive ones refused).
-    python -m agent.script.mine_archive_events --stats
-    python -m agent.script.mine_archive_events --approve meeting,selection,reading,club
+    python -m agent.script.archive.mine_archive_events --stats
+    python -m agent.script.archive.mine_archive_events --approve meeting,selection,reading,club
     #         then hand-edit the file: set "approve": true on the member_life/social keepers
     #         (delete or leave approve:false to reject). Fix dates/slugs/summaries as needed.
 
     # Load — insert approved candidates into the timeline (idempotent; safe to re-run):
-    python -m agent.script.mine_archive_events --load
+    python -m agent.script.archive.mine_archive_events --load
 
 The privacy boundary baked into the prompt: club-operational events + clearly-shared celebratory
 milestones only; never health, finances, relationships, conflict, or anything sensitive.
@@ -43,7 +43,7 @@ from datetime import date
 
 from agent import clubdb, corpus_read, db, oliver
 
-OUT_PATH = pathlib.Path(__file__).resolve().parents[2] / "agent" / "logs" / "mined_events.jsonl"
+OUT_PATH = pathlib.Path(__file__).resolve().parents[3] / "agent" / "logs" / "mined_events.jsonl"
 
 # Token control: archives have a few enormous scheduling threads. Cap how much of each thread we
 # feed the model so one thread can't blow the budget; a typical thread is well under these limits.
