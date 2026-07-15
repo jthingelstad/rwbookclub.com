@@ -15,11 +15,10 @@ import logging
 from datetime import datetime, timedelta
 
 import discord
-import requests
 from discord.ext import tasks
 
 from agent import (backup, clock, clubdb, config, context as kb, corpus_read, db, delivery, health,
-                   jobs, oliver, outbox, publish, reflection, scheduler, webapp)
+                   jobs, oliver, outbox, publishing, reflection, scheduler, webapp)
 from agent.enrich import loop as enrich_loop
 from agent.mail import email_jmap, mail_archive, outbound
 from agent.club import (meeting_campaign, meeting_emails, meeting_rules,
@@ -29,109 +28,6 @@ log = logging.getLogger("oliver.commands")
 
 # Stashed by setup(); used by run_scheduler and helpers that need client.
 _client: discord.Client | None = None
-
-
-# ── Publish (rebuild + deploy the site after a data write) ───────────────────
-# Coalescing single-flight publisher. Each data write marks the site dirty; one publisher
-# task drains it and RE-RUNS if more writes land while it builds — so the last write of a
-# burst is always deployed. The task is held in a module global so the event loop can't
-# garbage-collect it (un-referenced tasks are only weakly held → can vanish mid-run).
-_publisher_task: asyncio.Task | None = None
-_publish_dirty = False
-
-
-def schedule_publish() -> None:
-    """Mark the site dirty and ensure a background publisher is running (fast Discord ack)."""
-    global _publisher_task, _publish_dirty
-    _publish_dirty = True
-    if _publisher_task is not None and not _publisher_task.done():
-        return  # a publisher is already running; its dirty-recheck will cover this write
-    _publisher_task = asyncio.create_task(_drain_publishes())
-
-
-async def _drain_publishes() -> None:
-    global _publish_dirty
-    while _publish_dirty:
-        _publish_dirty = False
-        # publish_site() regenerates the whole corpus from the DB, so any single successful
-        # run captures every write committed so far. PublishBusy only happens if another
-        # process (a manual `python -m agent.publish`) holds the file lock — retry for that.
-        for _ in range(6):
-            try:
-                await asyncio.to_thread(publish.publish_site)
-                break
-            except publish.PublishBusy:
-                await asyncio.sleep(20)
-            except Exception:
-                log.exception("background publish failed")
-                db.add_activity(
-                    "warning", "Site publish failed",
-                    "A data write succeeded but rebuilding/deploying the site failed. "
-                    "Run `python -m agent.publish` manually, or check the logs.",
-                )
-                break
-
-
-# ── Self-healing publish (meeting rollover needs no human) ───────────────────
-# The deployed site is built at a moment in time. If a book is added but its deferred publish is
-# lost (e.g. the bot restarts before the web app idles out), or a meeting simply rolls over so the
-# next book changes, gh-pages goes stale. Each build stamps /next.json with the book it thinks is
-# next; this check compares that to the live corpus and republishes on a mismatch — on startup and
-# hourly, so rollover is fully automatic.
-_NEXT_MARKER_URL = config.SITE_URL + "/next.json"
-
-
-def _expected_next_book_slug() -> str | None:
-    """The earliest still-upcoming book per the live corpus — what a fresh build would stamp into
-    /next.json (same rule the site's journey/homepage use). None if there's no upcoming book."""
-    upcoming = [b for b in corpus_read.books() if b.get("isUpcoming") and b.get("meetingDate")]
-    if not upcoming:
-        return None
-    upcoming.sort(key=lambda b: b.get("meetingDate") or "")
-    return upcoming[0].get("slug")
-
-
-def _deployed_next_book_slug() -> tuple[bool, str | None]:
-    """Read /next.json off the live site. Returns (reachable, nextBookSlug). reachable=False on a
-    network error (can't tell — caller skips); a 404 is reachable with slug=None (a pre-marker
-    build, i.e. genuinely stale)."""
-    try:
-        r = requests.get(_NEXT_MARKER_URL, timeout=15)
-    except requests.RequestException:
-        return (False, None)
-    if r.status_code == 404:
-        return (True, None)
-    if not r.ok:
-        return (False, None)
-    try:
-        return (True, (r.json() or {}).get("nextBookSlug"))
-    except ValueError:
-        return (True, None)
-
-
-async def ensure_site_reflects_next_book() -> bool:
-    """If the deployed site doesn't show the correct next book, trigger a publish. Returns True if
-    it did. Safe to call repeatedly (startup + hourly); skips when a publish is already pending or
-    the marker can't be read, so it never thrashes."""
-    expected = await asyncio.to_thread(_expected_next_book_slug)
-    if expected is None:
-        return False  # nothing upcoming to verify
-    if _publish_dirty or (_publisher_task is not None and not _publisher_task.done()):
-        return False  # a publish is already in flight — it will carry the current state
-    reachable, deployed = await asyncio.to_thread(_deployed_next_book_slug)
-    if not reachable:
-        log.warning("site self-heal: couldn't read %s; skipping this cycle", _NEXT_MARKER_URL)
-        return False
-    if deployed == expected:
-        return False  # site is current
-    log.info("site self-heal: deployed next book %r != expected %r — publishing", deployed, expected)
-    db.add_activity(
-        "site_selfheal", "Auto-publishing to fix a stale site",
-        f"The live site's next book is {deployed or '(none — old build)'} but it should be "
-        f"“{expected}”. Rebuilding and deploying so the site reflects the current meeting — "
-        "no action needed.")
-    schedule_publish()
-    return True
 
 
 # ── Admin gate ───────────────────────────────────────────────────────────────
@@ -1339,7 +1235,7 @@ async def _scheduled_job(name: str, work) -> object | None:
 async def _run_maintenance_jobs(now: datetime) -> int:
     """Run non-channel scheduler components; return recovered deliveries."""
     delivered = await _scheduled_job("outbox_delivery", lambda: delivery.drain(_client))
-    await _scheduled_job("site_reconcile", ensure_site_reflects_next_book)
+    await _scheduled_job("site_reconcile", publishing.reconcile)
 
     async def backup_job() -> int:
         return int(bool(await asyncio.to_thread(backup.run)))
@@ -1361,7 +1257,7 @@ async def _run_maintenance_jobs(now: datetime) -> int:
         })
         if summary["enriched"] or summary["retried"]:
             log.info("enrichment sweep: %s", summary)
-            schedule_publish()
+            publishing.schedule()
         return summary["enriched"] + summary["retried"]
 
     await _scheduled_job("enrichment_sweep", enrichment_job)

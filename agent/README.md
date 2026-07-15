@@ -19,6 +19,7 @@ agent/
 ├── corpus_write.py # web-app write path: club_* DB upsert → corpus regen + validate
 ├── webapp/         # member + admin web editor (aiohttp + Jinja2, Tailscale Funnel, token→cookie auth)
 ├── publish.py      # local build + deploy of the site to the gh-pages branch
+├── publishing.py   # coalesced background publishes + deployed-site reconciliation
 ├── scheduler.py    # pure due_notifications (reminders / nudges / milestones)
 ├── context.py      # compact club overview for the cached system prompt
 ├── persona.py      # loads the SOUL/PURPOSE/PROCESS charters from docs/

@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 
 from aiohttp import web
 
-from agent import config
+from agent import config, publishing
 from agent.webapp import routes_admin, routes_member, routes_oliver_pages, sessions, state
 from agent.webapp.render import render
 
@@ -155,9 +155,7 @@ async def publish_now(request: web.Request) -> web.Response:
 
 
 def _trigger_publish() -> None:
-    # Lazy import avoids a load-time cycle (commands imports webapp).
-    from agent import commands
-    commands.schedule_publish()
+    publishing.schedule()
 
 
 # ── Lifecycle (on-demand start, idle shutdown, publish-if-dirty) ─────────────

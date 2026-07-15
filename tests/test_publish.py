@@ -11,7 +11,7 @@ import asyncio
 
 import pytest
 
-from agent import commands, publish
+from agent import publish, publishing
 
 # Captured before conftest's autouse `_no_publish` fixture stubs the module attr, so the
 # guard tests can exercise the real function (its internals — ensure_corpus/_run/SITE_DIR —
@@ -85,8 +85,8 @@ def test_publish_site_deploys_when_complete(monkeypatch, tmp_path):
 
 # ── coalescing background publisher ──────────────────────────────────────────
 def _reset_publisher(monkeypatch):
-    monkeypatch.setattr(commands, "_publisher_task", None)
-    monkeypatch.setattr(commands, "_publish_dirty", False)
+    monkeypatch.setattr(publishing, "_publisher_task", None)
+    monkeypatch.setattr(publishing, "_publish_dirty", False)
 
 
 def test_publisher_reruns_for_a_write_that_lands_mid_build(monkeypatch):
@@ -98,14 +98,14 @@ def test_publisher_reruns_for_a_write_that_lands_mid_build(monkeypatch):
     def fake_publish():
         calls.append(1)
         if len(calls) == 1:               # simulate a write landing during the first build
-            commands._publish_dirty = True
+            publishing._publish_dirty = True
         return {"deployed": True}
 
     monkeypatch.setattr(publish, "publish_site", fake_publish)
 
     async def run():
-        commands.schedule_publish()
-        await commands._publisher_task
+        publishing.schedule()
+        await publishing._publisher_task
 
     asyncio.run(run())
     assert len(calls) == 2  # re-ran to capture the mid-build write
@@ -117,9 +117,9 @@ def test_publisher_is_strongly_referenced(monkeypatch):
     monkeypatch.setattr(publish, "publish_site", lambda: {"deployed": True})
 
     async def run():
-        commands.schedule_publish()
-        assert commands._publisher_task is not None
-        await commands._publisher_task
+        publishing.schedule()
+        assert publishing._publisher_task is not None
+        await publishing._publisher_task
 
     asyncio.run(run())
 
@@ -139,11 +139,11 @@ def test_publisher_retries_on_busy(monkeypatch):
         pass
 
     monkeypatch.setattr(publish, "publish_site", flaky)
-    monkeypatch.setattr(commands.asyncio, "sleep", _nosleep)  # skip the 20s backoff
+    monkeypatch.setattr(publishing.asyncio, "sleep", _nosleep)  # skip the 20s backoff
 
     async def run():
-        commands.schedule_publish()
-        await commands._publisher_task
+        publishing.schedule()
+        await publishing._publisher_task
 
     asyncio.run(run())
     assert len(calls) == 2
@@ -157,11 +157,11 @@ def test_publisher_surfaces_failure_as_warning(monkeypatch):
 
     activities = []
     monkeypatch.setattr(publish, "publish_site", boom)
-    monkeypatch.setattr(commands.db, "add_activity", lambda *a, **k: activities.append(a))
+    monkeypatch.setattr(publishing.db, "add_activity", lambda *a, **k: activities.append(a))
 
     async def run():
-        commands.schedule_publish()
-        await commands._publisher_task
+        publishing.schedule()
+        await publishing._publisher_task
 
     asyncio.run(run())
     assert any(a[0] == "warning" for a in activities)
@@ -181,69 +181,74 @@ class _Resp:
 
 
 def test_deployed_next_book_slug_reads_marker(monkeypatch):
-    monkeypatch.setattr(commands.requests, "get", lambda *a, **k: _Resp(200, {"nextBookSlug": "blindsight"}))
-    assert commands._deployed_next_book_slug() == (True, "blindsight")
+    monkeypatch.setattr(
+        publishing.requests,
+        "get",
+        lambda *a, **k: _Resp(200, {"nextBookSlug": "blindsight"}),
+    )
+    assert publishing._deployed_next_book_slug() == (True, "blindsight")
 
 
 def test_deployed_next_book_slug_404_is_reachable_but_missing(monkeypatch):
-    monkeypatch.setattr(commands.requests, "get", lambda *a, **k: _Resp(404))
-    assert commands._deployed_next_book_slug() == (True, None)  # pre-marker build → stale
+    monkeypatch.setattr(publishing.requests, "get", lambda *a, **k: _Resp(404))
+    assert publishing._deployed_next_book_slug() == (True, None)  # pre-marker build → stale
 
 
 def test_deployed_next_book_slug_network_error_unreachable(monkeypatch):
     def boom(*a, **k):
-        raise commands.requests.RequestException("no net")
-    monkeypatch.setattr(commands.requests, "get", boom)
-    assert commands._deployed_next_book_slug() == (False, None)  # can't tell → caller skips
+        raise publishing.requests.RequestException("no net")
+
+    monkeypatch.setattr(publishing.requests, "get", boom)
+    assert publishing._deployed_next_book_slug() == (False, None)  # can't tell → caller skips
 
 
 def test_expected_next_book_slug_is_the_upcoming_book(fresh_db, reset_books_cache):
     # Under the frozen test clock, the fixture's upcoming meeting is A World Appears.
-    assert commands._expected_next_book_slug() == "a-world-appears"
+    assert publishing._expected_next_book_slug() == "a-world-appears"
 
 
 def _selfheal_env(monkeypatch, *, deployed, expected="blindsight"):
     _reset_publisher(monkeypatch)
     published = []
-    monkeypatch.setattr(commands, "_expected_next_book_slug", lambda: expected)
-    monkeypatch.setattr(commands, "_deployed_next_book_slug", lambda: deployed)
-    monkeypatch.setattr(commands, "schedule_publish", lambda: published.append(True))
-    monkeypatch.setattr(commands.db, "add_activity", lambda *a, **k: None)
+    monkeypatch.setattr(publishing, "_expected_next_book_slug", lambda: expected)
+    monkeypatch.setattr(publishing, "_deployed_next_book_slug", lambda: deployed)
+    monkeypatch.setattr(publishing, "schedule", lambda: published.append(True))
+    monkeypatch.setattr(publishing.db, "add_activity", lambda *a, **k: None)
     return published
 
 
 def test_selfheal_publishes_when_deployed_next_book_is_stale(monkeypatch):
     published = _selfheal_env(monkeypatch, deployed=(True, "a-world-appears"))  # old next book
-    assert asyncio.run(commands.ensure_site_reflects_next_book()) is True
+    assert asyncio.run(publishing.reconcile()) is True
     assert published == [True]
 
 
 def test_selfheal_publishes_when_marker_missing(monkeypatch):
     published = _selfheal_env(monkeypatch, deployed=(True, None))  # 404 / pre-marker build
-    assert asyncio.run(commands.ensure_site_reflects_next_book()) is True
+    assert asyncio.run(publishing.reconcile()) is True
     assert published == [True]
 
 
 def test_selfheal_noop_when_site_is_current(monkeypatch):
     published = _selfheal_env(monkeypatch, deployed=(True, "blindsight"))
-    assert asyncio.run(commands.ensure_site_reflects_next_book()) is False
+    assert asyncio.run(publishing.reconcile()) is False
     assert published == []
 
 
 def test_selfheal_skips_when_unreachable(monkeypatch):
     published = _selfheal_env(monkeypatch, deployed=(False, None))
-    assert asyncio.run(commands.ensure_site_reflects_next_book()) is False
+    assert asyncio.run(publishing.reconcile()) is False
     assert published == []
 
 
 def test_selfheal_skips_when_publish_already_pending(monkeypatch):
     published = _selfheal_env(monkeypatch, deployed=(True, None))
-    monkeypatch.setattr(commands, "_publish_dirty", True)  # a publish is already in flight
-    assert asyncio.run(commands.ensure_site_reflects_next_book()) is False
+    monkeypatch.setattr(publishing, "_publish_dirty", True)  # a publish is already in flight
+    assert asyncio.run(publishing.reconcile()) is False
     assert published == []
 
 
 def test_selfheal_noop_when_no_upcoming_book(monkeypatch):
     published = _selfheal_env(monkeypatch, deployed=(True, None), expected=None)
-    assert asyncio.run(commands.ensure_site_reflects_next_book()) is False
+    assert asyncio.run(publishing.reconcile()) is False
     assert published == []

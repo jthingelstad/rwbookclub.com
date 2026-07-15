@@ -3,7 +3,7 @@
 import asyncio
 import json
 
-from agent import bot, clubdb, commands, config, db, publish
+from agent import bot, clubdb, config, db, publish, publishing
 from agent.club import review_drive as rd
 from agent.mail.email_jmap import InboundEmail
 
@@ -186,13 +186,13 @@ def test_inbound_confirmation_publishes_on_bot_event_loop(fresh_db, monkeypatch)
     monkeypatch.setattr(bot.email_jmap, "mark_seen",
                         lambda email_id, answered=False: seen.append((email_id, answered)))
     monkeypatch.setattr(publish, "publish_site", lambda: deployed.append(True) or {"deployed": True})
-    monkeypatch.setattr(commands, "_publisher_task", None)
-    monkeypatch.setattr(commands, "_publish_dirty", False)
+    monkeypatch.setattr(publishing, "_publisher_task", None)
+    monkeypatch.setattr(publishing, "_publish_dirty", False)
 
     async def run():
         await bot._handle_inbound_email(_msg("YES"))
-        assert commands._publisher_task is not None
-        await commands._publisher_task
+        assert publishing._publisher_task is not None
+        await publishing._publisher_task
 
     asyncio.run(run())
 

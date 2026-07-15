@@ -27,7 +27,18 @@ import discord
 import requests
 from discord.ext import tasks
 
-from agent import commands, config, context as kb, database, db, oliver, outbox, publish, security
+from agent import (
+    commands,
+    config,
+    context as kb,
+    database,
+    db,
+    oliver,
+    outbox,
+    publish,
+    publishing,
+    security,
+)
 from agent.mail import email_jmap
 from agent.mail import inbound as inbound_email
 
@@ -252,7 +263,7 @@ async def before_poll_email() -> None:
 
 
 async def _handle_inbound_email(msg: email_jmap.InboundEmail) -> None:
-    await inbound_email.handle(msg, schedule_publish=commands.schedule_publish)
+    await inbound_email.handle(msg, schedule_publish=publishing.schedule)
 
 
 async def _is_reply_to_bot(message: discord.Message) -> bool:
