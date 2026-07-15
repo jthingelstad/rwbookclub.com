@@ -4,7 +4,8 @@ The knowledge corpus for the R/W Book Club — per-entity text files consumed by
 website build and by Oliver at runtime. **It is generated from the authoritative
 `club_*` SQLite tables** (`agent/corpus_gen.py`), not hand-edited, and is
 **gitignored/private** (regenerated on disk, never committed — so it can hold
-sensitive context for Oliver). Airtable was the original home, now a cold backup.
+sensitive context for Oliver). Airtable was the original home; its import snapshot is retained
+only for disaster recovery and historical reference.
 
 ## Layout
 
@@ -15,9 +16,9 @@ corpus/
 ├── paths.py        # filesystem paths + the slug helper
 ├── requirements.txt
 └── data/                       # GENERATED from the club_* tables; gitignored (private, on-disk only)
-    ├── books/<slug>.json       # 179
-    ├── members/<slug>.json     # 12
-    ├── meetings/<date>--<id>.json   # 184 (first-class)
+    ├── books/<slug>.json
+    ├── members/<slug>.json
+    ├── meetings/<date>--<id>.json   # first-class meeting records
     ├── authors/<slug>.json
     ├── reviews/<book-slug>--<member-slug>.md   # YAML frontmatter + prose body
     └── lists/<slug>.json       # member + club book lists (ordered entries + notes)

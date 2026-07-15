@@ -123,8 +123,9 @@ Long-running process — **not** GitHub Pages/Actions (that's the website). Run 
 always-on host (VPS, Fly.io, home server). Locally:
 
 ```bash
-pip install -r agent/requirements.txt        # also pulls in corpus deps
-python -m agent.bot                            # run from the repo root
+python3.13 -m venv venv
+venv/bin/pip install -c agent/constraints.txt -r agent/requirements.txt
+venv/bin/python -m agent.bot                 # run from the repo root
 ```
 
 Run from the **repo root** so the `agent` and `corpus` packages resolve.
@@ -206,8 +207,8 @@ they edit on a page. The server starts on demand and idles off after ~15 min; ch
 ## Tests
 
 ```bash
-pip install -r tests/requirements.txt    # one-time
-pytest tests/                             # ~290 tests
+venv/bin/pip install -c agent/constraints.txt -r tests/requirements.txt
+venv/bin/pytest tests/
 ```
 
 Pure helpers (`_is_addressed`, `_strip_address`, rating parsers, `parse_frontmatter`,

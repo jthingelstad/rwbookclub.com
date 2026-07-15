@@ -4,7 +4,7 @@ and append a round to `agent/logs/oliver-eval-log.md` (gitignored — it's gener
 
     python -m tests.eval --round 1 --note "baseline"
 
-Uses a per-process scratch SQLite DB so the live oliver.db isn't touched.
+Uses per-process scratch SQLite and corpus paths so live Oliver state isn't touched.
 Multi-turn conversations use a single channel_id across turns so the rolling
 summary + per-channel history exercise context retention.
 """
@@ -12,25 +12,30 @@ summary + per-channel history exercise context retention.
 from __future__ import annotations
 
 import argparse
+import atexit
 import contextlib
 import json
 import os
 import pathlib
+import shutil
+import tempfile
 import time
 import uuid
 from datetime import datetime, timezone
 
-# Use a scratch DB — set BEFORE importing any agent module so db.py picks it up.
-SCRATCH_DB = "/tmp/oliver-eval.db"
-os.environ["OLIVER_DB_PATH"] = SCRATCH_DB
-for ext in ("", "-wal", "-shm"):
-    p = pathlib.Path(SCRATCH_DB + ext)
-    if p.exists():
-        p.unlink()
+# Use a unique scratch DB and corpus — set BEFORE importing any agent module so
+# db.py and corpus.paths pick them up. A unique directory makes concurrent eval
+# runs independent and cleanup removes SQLite sidecars too.
+SCRATCH_ROOT = pathlib.Path(tempfile.mkdtemp(prefix="oliver-eval-"))
+SCRATCH_DB = SCRATCH_ROOT / "oliver.db"
+SCRATCH_CORPUS = SCRATCH_ROOT / "corpus"
+os.environ["OLIVER_DB_PATH"] = str(SCRATCH_DB)
+os.environ["OLIVER_CORPUS_DIR"] = str(SCRATCH_CORPUS)
+atexit.register(shutil.rmtree, SCRATCH_ROOT, ignore_errors=True)
 
 import anthropic  # noqa: E402
 
-from agent import db, oliver as oliver_mod  # noqa: E402
+from agent import clubdb, corpus_gen, corpus_read, db, oliver as oliver_mod  # noqa: E402
 
 CLIENT = anthropic.Anthropic()
 MODEL = "claude-sonnet-5"
@@ -114,15 +119,40 @@ def _parse_json(text: str) -> dict | list:
 
 
 # ── Question generation ──────────────────────────────────────────────────────
-QGEN_SYSTEM = (
-    "You generate test questions for Oliver, the R/W Book Club's Discord agent. "
-    "The club has met monthly since April 2003 in Minneapolis–Saint Paul, has read "
-    "179 books (~88% non-fiction), and has 5 current members: Jamie, Erik, Tom, Nick, "
-    "Loren. Questions should be terse and natural — how a member actually types in "
-    "chat. Not survey questions, not 'test cases that sound like tests.'"
-)
+def _fixture_facts() -> str:
+    """Current evaluator ground truth, derived from its generated fixture corpus."""
+    stats = corpus_read.club_stats()
+    members = corpus_read.human_current_members()
+    upcoming = corpus_read.upcoming_meetings()
+    review_count = len(corpus_read.reviews())
+    list_names = [item.get("name") for item in corpus_read.lists() if item.get("name")]
+    nonfiction_pct = round(100 * stats["nonfiction"] / stats["totalRead"]) if stats["totalRead"] else 0
+    next_pick = "none scheduled"
+    if upcoming:
+        meeting = upcoming[0]
+        authors = ", ".join(meeting.get("authors") or [])
+        author_note = f" by {authors}" if authors else ""
+        picker_note = f", picked by {meeting['pickedBy']}" if meeting.get("pickedBy") else ""
+        next_pick = f"{meeting['title']}{author_note} on {meeting.get('meetingDate')}{picker_note}"
+    return (
+        f"Fixture truth: {stats['totalRead']} completed books "
+        f"({stats['fiction']} fiction, {stats['nonfiction']} non-fiction; {nonfiction_pct}% non-fiction), "
+        f"{len(corpus_read.meetings())} meetings, {len(members)} current human members "
+        f"({', '.join(m['name'] for m in members)}), {review_count} reviews, "
+        f"lists: {', '.join(list_names) or 'none'}. Next scheduled pick: {next_pick}."
+    )
 
-QGEN_USER = """Generate {n_single} single-turn questions and {n_multi} multi-turn conversations (3–4 turns each) for test round {round_num}. Vary speakers across the 5 current members.
+
+def _qgen_system() -> str:
+    return (
+        "You generate test questions for Oliver, the R/W Book Club's Discord agent. "
+        "The club has met monthly since April 2003 in Minneapolis–Saint Paul. "
+        f"{_fixture_facts()} "
+        "Questions should be terse and natural — how a member actually types in chat. "
+        "Not survey questions, not 'test cases that sound like tests.'"
+    )
+
+QGEN_USER = """Generate {n_single} single-turn questions and {n_multi} multi-turn conversations (3–4 turns each) for test round {round_num}. Vary speakers across the eval-linked current members: {speakers}.
 
 Cover the categories (each represented at least once across the single-turns):
 - recommendations — what should I read after X / what would person Y like
@@ -139,7 +169,7 @@ For multi-turns, each turn should naturally build on prior context (we're testin
 
 Return ONLY valid JSON, no commentary:
 {{
-  "single": [{{"category": "...", "question": "...", "speaker": "Jamie|Erik|Tom|Nick|Loren"}}, ...],
+  "single": [{{"category": "...", "question": "...", "speaker": "{speakers}"}}, ...],
   "multi":  [{{"category": "...", "speaker": "...", "turns": ["...", "...", ...]}}, ...]
 }}"""
 
@@ -148,9 +178,10 @@ def generate_questions(round_num: int, n_single: int, n_multi: int) -> dict:
     msg = CLIENT.messages.create(
         model=MODEL,
         max_tokens=3000,
-        system=QGEN_SYSTEM,
+        system=_qgen_system(),
         messages=[{"role": "user", "content": QGEN_USER.format(
-            n_single=n_single, n_multi=n_multi, round_num=round_num)}],
+            n_single=n_single, n_multi=n_multi, round_num=round_num,
+            speakers="|".join(FAKE_MEMBER_IDS))}],
     )
     text = "".join(b.text for b in msg.content if getattr(b, "type", None) == "text")
     return _parse_json(text)
@@ -174,16 +205,11 @@ JUDGE_SYSTEM = (
     "authoritative. DO NOT flag a tool call as a hallucinated or non-existent tool merely "
     "because the name is unfamiliar to you — only flag tool_choice when a clearly better-suited "
     "tool existed, the inputs were wrong, or a needed lookup was skipped.\n\n"
-    "Corpus: ~178 books read (club_stats is authoritative — do NOT ding Oliver for saying "
-    "178 vs 179, the count drifts as meetings are added), 184 meetings, 5 current members "
-    "(Jamie, Erik, Tom, Nick, Loren) + 7 former, a 'Books of the Year' club list (which holds "
-    "American Nations, the 2016 Book of the Year), few reviews and almost none with a numeric rating (so the club CANNOT be ranked "
-    "by quality — 'best/worst/lowest-rated book' has no data-backed answer; honestly saying so "
-    "is the CORRECT response, not a failure). The current upcoming pick is *A World Appears* "
-    "(Michael Pollan, Jamie's pick, late June 2026) — a real forthcoming meeting, so describing "
-    "it as the current/next pick is correct, not a hallucination. Topic distribution skews "
-    "History & Economics, Politics & Social Sciences, Science Fiction & Fiction (the de-facto "
-    "fiction bucket — ~12% of reads), Brain & Psychology, Science and Math, Technology.\n\n"
+    "The evaluator injects a FIXTURE TRUTH paragraph immediately after this tool summary. "
+    "Treat its counts, roster, lists, reviews, and next scheduled pick as authoritative for this "
+    "run; do not substitute remembered snapshots from older runs. Tool output is authoritative "
+    "when it supplies more detail. Do not assume ratings coverage or rank books unless the "
+    "interaction's tool output supports it.\n\n"
     "WHAT YOU CANNOT SEE (do not infer fabrication from its absence): (1) Oliver carries an "
     "injected, per-speaker memory of that member's saved tastes plus club lore — so a reply "
     "referencing a member's known preference (e.g. Nick's interest in 'weird infrastructure') "
@@ -213,6 +239,10 @@ JUDGE_SYSTEM = (
     "Identity/memory: should use linked member identity when supplied, remember durable "
     "member preferences when explicitly useful, and not invent personal facts."
 )
+
+
+def _judge_system() -> str:
+    return JUDGE_SYSTEM + "\n\n" + _fixture_facts()
 
 JUDGE_USER = """Evaluate this interaction.
 
@@ -261,7 +291,7 @@ def judge_interaction(question, speaker, tools, reply, prior_turns=None):
     msg = CLIENT.messages.create(
         model=MODEL,
         max_tokens=1024,
-        system=JUDGE_SYSTEM,
+        system=_judge_system(),
         messages=[{"role": "user", "content": JUDGE_USER.format(
             speaker=speaker, question=question, prior_block=prior_block,
             tools_block=tools_block, response=reply,
@@ -369,6 +399,15 @@ def round_summary(singles, multis):
     )
 
 
+def _prepare_fixture() -> None:
+    """Build one coherent, public-safe DB + corpus snapshot for this eval process."""
+    clubdb.ensure_schema()
+    seed_sql = (pathlib.Path(__file__).parent / "fixtures" / "club_seed.sql").read_text()
+    with db.connect() as conn:
+        conn.executescript(seed_sql)
+    corpus_gen.generate()
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 def main() -> None:
     ap = argparse.ArgumentParser()
@@ -380,15 +419,10 @@ def main() -> None:
 
     print(f"Round {args.round}: generating {args.n_single} single + {args.n_multi} multi…")
     t0 = time.time()
-    # Seed the scratch DB's club_* tables from the public-safe fixture. The SQLite migration
-    # made link_member_identity validate member_slug against club_members, and a fresh scratch
-    # DB has none; clubdb-backed tools also need the club record. (Corpus tools read corpus/data
-    # on disk regardless.) Mirrors tests/conftest.py.
-    from agent import clubdb
-    clubdb.ensure_schema()
-    seed_sql = (pathlib.Path(__file__).parent / "fixtures" / "club_seed.sql").read_text()
-    with db.connect() as conn:
-        conn.executescript(seed_sql)
+    # Seed the scratch DB's club_* tables from the public-safe fixture, then generate the
+    # evaluator's scratch corpus from that same DB. DB-backed and corpus-backed tools therefore
+    # see one coherent snapshot, independent of the developer's live private corpus.
+    _prepare_fixture()
     for name, user_id in FAKE_MEMBER_IDS.items():
         db.link_member_identity(user_id, name.lower(), linked_by="eval")
     qs = generate_questions(args.round, args.n_single, args.n_multi)
