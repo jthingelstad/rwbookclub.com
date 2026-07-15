@@ -4,8 +4,8 @@ Holds what doesn't belong in the club record or the generated corpus: durable no
 per-channel conversation history + rolling summaries, reminders, and usage logs.
 Gitignored, local to wherever Oliver runs; backup is a deployment concern.
 
-Schema is created idempotently on import (CREATE TABLE IF NOT EXISTS) — no
-migration ordering to remember. Each helper opens a short-lived connection so the
+Tables are created idempotently on import; ordered legacy transforms are recorded in
+``schema_migrations`` and run once. Each helper opens a short-lived connection so the
 module is safe to call from the bot's worker threads.
 """
 
@@ -22,6 +22,8 @@ from typing import Iterator
 from urllib.parse import urlsplit
 
 from agent import security
+from agent.repositories import jobs as _jobs_repo
+from agent.repositories import outbox as _outbox_repo
 
 DB_PATH = Path(os.environ.get("OLIVER_DB_PATH") or Path(__file__).resolve().parent / "oliver.db")
 security.set_private_umask()
@@ -104,6 +106,14 @@ CREATE TABLE IF NOT EXISTS job_state (
     key        TEXT PRIMARY KEY,
     value      TEXT NOT NULL,                     -- JSON blob owned by the job
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Ordered, auditable application migrations. CREATE TABLE schemas remain idempotent;
+-- destructive/data-moving legacy transforms are recorded here and never reprobed after success.
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    version    INTEGER PRIMARY KEY,
+    name       TEXT NOT NULL UNIQUE,
+    applied_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS reminders (
@@ -850,18 +860,78 @@ def _ensure_member_indexes(conn: sqlite3.Connection) -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_member_identities_member ON member_identities(member_id, surface)")
 
 
+_MIGRATIONS = (
+    (1, "additive_runtime_columns", _migrate),
+    (2, "meeting_ops_foreign_keys", migrate_ops_to_fk),
+    (3, "unified_member_identities", migrate_identity_to_fk),
+    (4, "drop_legacy_identity_tables", migrate_drop_legacy_identity),
+    (5, "member_websites_to_identities", migrate_website_to_identities),
+    (6, "drop_review_airtable_id", migrate_drop_review_airtable_id),
+    (7, "drop_email_open_tracking", migrate_drop_email_tracking),
+    (8, "unified_meeting_events", migrate_meeting_events),
+)
+
+
+def _migration_ready(conn: sqlite3.Connection, version: int) -> bool:
+    """Whether a legacy transform has the source schema needed to run or baseline safely."""
+    if version == 2 and "meeting_key" in _columns(conn, "meeting_attendance"):
+        return _table_exists(conn, "club_books") and _table_exists(conn, "club_members")
+    if version == 3 and "discord_user_id" in _columns(conn, "member_identities"):
+        return _table_exists(conn, "club_members") and _table_exists(conn, "member_emails")
+    if version == 4 and "sender_participant_id" in _columns(conn, "mail_messages"):
+        return "member_id" in _columns(conn, "mail_messages")
+    if version == 5:
+        return _table_exists(conn, "club_members")
+    if version == 6:
+        return _table_exists(conn, "club_reviews")
+    return True
+
+
+def _run_migrations(conn: sqlite3.Connection) -> None:
+    rows = conn.execute(
+        "SELECT version, name FROM schema_migrations ORDER BY version"
+    ).fetchall()
+    applied = {int(row["version"]): row["name"] for row in rows}
+    known_versions = {version for version, _, _ in _MIGRATIONS}
+    unknown = sorted(set(applied) - known_versions)
+    if unknown:
+        raise RuntimeError(f"database has migrations newer than this code: {unknown}")
+    if applied:
+        expected = list(range(1, max(applied) + 1))
+        if sorted(applied) != expected:
+            raise RuntimeError(
+                f"database migration ledger has a gap: {sorted(applied)}, expected {expected}"
+            )
+    for version, name, migration in _MIGRATIONS:
+        if version in applied:
+            if applied[version] != name:
+                raise RuntimeError(
+                    f"migration {version} is recorded as {applied[version]!r}, expected {name!r}"
+                )
+            continue
+        # Migrations are strictly ordered. A pre-club legacy DB pauses here until clubdb creates
+        # or imports the authoritative club tables, then clubdb.ensure_schema resumes the ledger.
+        if not _migration_ready(conn, version):
+            break
+        migration(conn)
+        conn.execute(
+            "INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)",
+            (version, name, datetime.now(timezone.utc).isoformat()),
+        )
+
+
+def run_migrations() -> None:
+    """Resume pending ordered migrations after another schema owner (clubdb) is ready."""
+    with connect() as conn:
+        _run_migrations(conn)
+        _ensure_member_indexes(conn)
+
+
 def _ensure_schema() -> None:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with connect() as conn:
         conn.executescript(_SCHEMA)
-        _migrate(conn)
-        migrate_ops_to_fk(conn)
-        migrate_identity_to_fk(conn)
-        migrate_drop_legacy_identity(conn)
-        migrate_website_to_identities(conn)
-        migrate_drop_review_airtable_id(conn)
-        migrate_drop_email_tracking(conn)
-        migrate_meeting_events(conn)
+        _run_migrations(conn)
         _ensure_member_indexes(conn)
 
 
@@ -1819,23 +1889,11 @@ def conversations_after_global(after_id: int, limit: int = 2000) -> list[dict]:
 
 def get_job_state(key: str) -> dict | None:
     """A scheduled job's persisted state blob (JSON), or None if the job has never run."""
-    with connect() as conn:
-        row = conn.execute("SELECT value FROM job_state WHERE key = ?", (key,)).fetchone()
-    if not row:
-        return None
-    try:
-        return json.loads(row["value"])
-    except (ValueError, TypeError):
-        return None
+    return _jobs_repo.get_state(connect, key)
 
 
 def set_job_state(key: str, value: dict) -> None:
-    with connect() as conn:
-        conn.execute(
-            "INSERT INTO job_state (key, value, updated_at) VALUES (?, ?, ?) "
-            "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
-            (key, json.dumps(value, ensure_ascii=False), _now()),
-        )
+    _jobs_repo.set_state(connect, key, value, now=_now())
 
 
 def recent_messages(channel_id: str, limit: int = 12) -> list[dict]:
@@ -2615,275 +2673,98 @@ def mark_activity_failed(activity_id: int, error: str, *, max_attempts: int = 5,
 # ── Durable outbound effects ─────────────────────────────────────────────────
 def enqueue_outbox(*, idempotency_key: str, kind: str, payload_json: str,
                    max_attempts: int = 5) -> dict:
-    now = _now()
-    with connect() as conn:
-        conn.execute(
-            "INSERT OR IGNORE INTO outbox_messages "
-            "(idempotency_key, kind, payload_json, max_attempts, available_at, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (idempotency_key, kind, payload_json, max(1, int(max_attempts)), now, now, now),
-        )
-        row = conn.execute(
-            "SELECT * FROM outbox_messages WHERE idempotency_key = ?", (idempotency_key,)
-        ).fetchone()
-        if row and (row["kind"] != kind or row["payload_json"] != payload_json):
-            raise ValueError("outbox idempotency key was reused with a different payload")
-    return dict(row)
+    return _outbox_repo.enqueue(
+        connect, now=_now(), idempotency_key=idempotency_key, kind=kind,
+        payload_json=payload_json, max_attempts=max_attempts,
+    )
 
 
 def outbox_by_key(idempotency_key: str) -> dict | None:
-    with connect() as conn:
-        row = conn.execute(
-            "SELECT * FROM outbox_messages WHERE idempotency_key = ?", (idempotency_key,)
-        ).fetchone()
-    return dict(row) if row else None
+    return _outbox_repo.by_key(connect, idempotency_key)
 
 
 def pending_outbox(*, limit: int = 20, now: str | None = None) -> list[dict]:
-    now = now or _now()
-    with connect() as conn:
-        rows = conn.execute(
-            "SELECT * FROM outbox_messages "
-            "WHERE status IN ('pending', 'retry') AND available_at <= ? "
-            "ORDER BY available_at, id LIMIT ?",
-            (now, max(1, min(int(limit), 100))),
-        ).fetchall()
-    return [dict(row) for row in rows]
+    return _outbox_repo.pending(connect, limit=limit, now=now or _now())
 
 
 def claim_outbox(idempotency_key: str, *, worker_id: str, lease_expires_at: str,
                  now: str | None = None) -> dict | None:
-    now = now or _now()
-    with connect() as conn:
-        conn.execute("BEGIN IMMEDIATE")
-        row = conn.execute(
-            "SELECT * FROM outbox_messages WHERE idempotency_key = ?", (idempotency_key,)
-        ).fetchone()
-        eligible = bool(row and (
-            (row["status"] in {"pending", "retry"} and row["available_at"] <= now)
-            or (row["status"] == "claimed" and (row["lease_expires_at"] or "") <= now)
-        ))
-        if not eligible:
-            return None
-        conn.execute(
-            "UPDATE outbox_messages SET status='claimed', attempts=attempts+1, lease_owner=?, "
-            "lease_expires_at=?, updated_at=? WHERE id=?",
-            (worker_id, lease_expires_at, now, row["id"]),
-        )
-        claimed = conn.execute(
-            "SELECT * FROM outbox_messages WHERE id = ?", (row["id"],)
-        ).fetchone()
-    return dict(claimed)
+    return _outbox_repo.claim(
+        connect, idempotency_key, worker_id=worker_id,
+        lease_expires_at=lease_expires_at, now=now or _now(),
+    )
 
 
 def mark_outbox_delivering(outbox_id: int, *, worker_id: str, now: str | None = None) -> bool:
-    now = now or _now()
-    with connect() as conn:
-        cur = conn.execute(
-            "UPDATE outbox_messages SET status='delivering', updated_at=? "
-            "WHERE id=? AND status='claimed' AND lease_owner=?",
-            (now, outbox_id, worker_id),
-        )
-    return cur.rowcount > 0
+    return _outbox_repo.mark_delivering(
+        connect, outbox_id, worker_id=worker_id, now=now or _now()
+    )
 
 
 def mark_outbox_delivered(outbox_id: int, *, worker_id: str, provider_ref_json: str,
                           now: str | None = None) -> bool:
-    now = now or _now()
-    with connect() as conn:
-        cur = conn.execute(
-            "UPDATE outbox_messages SET status='delivered', provider_ref_json=?, delivered_at=?, "
-            "updated_at=?, lease_owner=NULL, lease_expires_at=NULL, last_error=NULL "
-            "WHERE id=? AND status='delivering' AND lease_owner=?",
-            (provider_ref_json, now, now, outbox_id, worker_id),
-        )
-    return cur.rowcount > 0
+    return _outbox_repo.mark_delivered(
+        connect, outbox_id, worker_id=worker_id,
+        provider_ref_json=provider_ref_json, now=now or _now(),
+    )
 
 
 def mark_outbox_retry(outbox_id: int, *, worker_id: str, error: str, available_at: str,
                       now: str | None = None) -> str | None:
-    now = now or _now()
-    with connect() as conn:
-        row = conn.execute(
-            "SELECT attempts, max_attempts FROM outbox_messages "
-            "WHERE id=? AND status='delivering' AND lease_owner=?",
-            (outbox_id, worker_id),
-        ).fetchone()
-        if not row:
-            return None
-        status = "dead" if row["attempts"] >= row["max_attempts"] else "retry"
-        conn.execute(
-            "UPDATE outbox_messages SET status=?, available_at=?, last_error=?, updated_at=?, "
-            "lease_owner=NULL, lease_expires_at=NULL WHERE id=?",
-            (status, available_at, error[:500], now, outbox_id),
-        )
-    return status
+    return _outbox_repo.mark_retry(
+        connect, outbox_id, worker_id=worker_id, error=error,
+        available_at=available_at, now=now or _now(),
+    )
 
 
 def mark_outbox_uncertain(outbox_id: int, *, worker_id: str, error: str,
                           now: str | None = None) -> bool:
-    now = now or _now()
-    with connect() as conn:
-        cur = conn.execute(
-            "UPDATE outbox_messages SET status='uncertain', last_error=?, updated_at=?, "
-            "lease_owner=NULL, lease_expires_at=NULL "
-            "WHERE id=? AND status='delivering' AND lease_owner=?",
-            (error[:500], now, outbox_id, worker_id),
-        )
-    return cur.rowcount > 0
+    return _outbox_repo.mark_uncertain(
+        connect, outbox_id, worker_id=worker_id, error=error, now=now or _now()
+    )
 
 
 def recover_expired_outbox(*, now: str | None = None) -> dict:
     """Recover safe pre-send claims and quarantine ambiguous in-flight deliveries."""
-    now = now or _now()
-    with connect() as conn:
-        claimed = conn.execute(
-            "UPDATE outbox_messages SET status='retry', available_at=?, updated_at=?, "
-            "lease_owner=NULL, lease_expires_at=NULL, "
-            "last_error=COALESCE(last_error, 'worker lease expired before provider attempt') "
-            "WHERE status='claimed' AND lease_expires_at <= ?",
-            (now, now, now),
-        ).rowcount
-        uncertain = conn.execute(
-            "UPDATE outbox_messages SET status='uncertain', updated_at=?, lease_owner=NULL, "
-            "lease_expires_at=NULL, "
-            "last_error=COALESCE(last_error, 'worker lease expired during provider attempt') "
-            "WHERE status='delivering' AND lease_expires_at <= ?",
-            (now, now),
-        ).rowcount
-    return {"retry": claimed, "uncertain": uncertain}
+    return _outbox_repo.recover_expired(connect, now=now or _now())
 
 
 def outbox_status_counts() -> dict[str, int]:
-    with connect() as conn:
-        rows = conn.execute(
-            "SELECT status, COUNT(*) AS n FROM outbox_messages GROUP BY status"
-        ).fetchall()
-    return {row["status"]: row["n"] for row in rows}
+    return _outbox_repo.status_counts(connect)
 
 
 # ── Scheduled-job leases and run ledger ─────────────────────────────────────
 def begin_job_run(job_name: str, *, lease_owner: str, lease_expires_at: str,
                   expected_interval_seconds: int, now: str | None = None) -> dict | None:
     """Atomically acquire a job lease and open its run row; None means another owner is active."""
-    now = now or _now()
-    with connect() as conn:
-        conn.execute("BEGIN IMMEDIATE")
-        lease = conn.execute(
-            "SELECT * FROM job_leases WHERE job_name=?", (job_name,)
-        ).fetchone()
-        if (lease and lease["lease_owner"]
-                and (lease["lease_expires_at"] or "") > now):
-            return None
-        if lease and lease["lease_owner"]:
-            # A dead worker's run is made terminal before takeover. The error is deliberately a
-            # fixed code: no member content or provider payload reaches the operational ledger.
-            conn.execute(
-                "UPDATE job_runs SET outcome='abandoned', finished_at=?, "
-                "duration_ms=CAST(MAX(0, (julianday(?) - julianday(started_at)) * 86400000) AS INT), "
-                "error='lease_expired' WHERE job_name=? AND lease_owner=? AND outcome='running'",
-                (now, now, job_name, lease["lease_owner"]),
-            )
-        conn.execute(
-            "INSERT INTO job_leases "
-            "(job_name, lease_owner, lease_expires_at, acquired_at, updated_at, "
-            "expected_interval_seconds) VALUES (?, ?, ?, ?, ?, ?) "
-            "ON CONFLICT(job_name) DO UPDATE SET lease_owner=excluded.lease_owner, "
-            "lease_expires_at=excluded.lease_expires_at, acquired_at=excluded.acquired_at, "
-            "updated_at=excluded.updated_at, "
-            "expected_interval_seconds=excluded.expected_interval_seconds",
-            (job_name, lease_owner, lease_expires_at, now, now,
-             max(1, int(expected_interval_seconds))),
-        )
-        cur = conn.execute(
-            "INSERT INTO job_runs (job_name, lease_owner, started_at) VALUES (?, ?, ?)",
-            (job_name, lease_owner, now),
-        )
-    return {"run_id": cur.lastrowid, "job_name": job_name, "lease_owner": lease_owner,
-            "started_at": now, "lease_expires_at": lease_expires_at}
+    return _jobs_repo.begin_run(
+        connect, job_name, lease_owner=lease_owner, lease_expires_at=lease_expires_at,
+        expected_interval_seconds=expected_interval_seconds, now=now or _now(),
+    )
 
 
 def renew_job_lease(job_name: str, *, lease_owner: str, lease_expires_at: str,
                     now: str | None = None) -> bool:
-    now = now or _now()
-    with connect() as conn:
-        cur = conn.execute(
-            "UPDATE job_leases SET lease_expires_at=?, updated_at=? "
-            "WHERE job_name=? AND lease_owner=?",
-            (lease_expires_at, now, job_name, lease_owner),
-        )
-    return cur.rowcount > 0
+    return _jobs_repo.renew_lease(
+        connect, job_name, lease_owner=lease_owner,
+        lease_expires_at=lease_expires_at, now=now or _now(),
+    )
 
 
 def finish_job_run(run_id: int, *, job_name: str, lease_owner: str, outcome: str,
                    duration_ms: int, processed_count: int = 0, error: str | None = None,
                    now: str | None = None) -> bool:
-    if outcome not in {"succeeded", "failed"}:
-        raise ValueError("job outcome must be succeeded or failed")
-    now = now or _now()
-    with connect() as conn:
-        cur = conn.execute(
-            "UPDATE job_runs SET finished_at=?, outcome=?, duration_ms=?, processed_count=?, "
-            "error=? WHERE id=? AND job_name=? AND lease_owner=? AND outcome='running'",
-            (now, outcome, max(0, int(duration_ms)), max(0, int(processed_count)),
-             (error or "")[:120] or None, run_id, job_name, lease_owner),
-        )
-        if cur.rowcount:
-            conn.execute(
-                "UPDATE job_leases SET lease_owner=NULL, lease_expires_at=NULL, updated_at=? "
-                "WHERE job_name=? AND lease_owner=?",
-                (now, job_name, lease_owner),
-            )
-    return cur.rowcount > 0
+    return _jobs_repo.finish_run(
+        connect, run_id, job_name=job_name, lease_owner=lease_owner, outcome=outcome,
+        duration_ms=duration_ms, processed_count=processed_count, error=error,
+        now=now or _now(),
+    )
 
 
 def job_run(run_id: int) -> dict | None:
-    with connect() as conn:
-        row = conn.execute("SELECT * FROM job_runs WHERE id=?", (run_id,)).fetchone()
-    return dict(row) if row else None
+    return _jobs_repo.run_by_id(connect, run_id)
 
 
 def job_statuses(*, now: str | None = None) -> list[dict]:
     """Operational-only job status. Contains names/timestamps/error classes, never job payloads."""
-    now = now or _now()
-    now_dt = datetime.fromisoformat(now)
-    with connect() as conn:
-        leases = conn.execute("SELECT * FROM job_leases ORDER BY job_name").fetchall()
-        out = []
-        for lease in leases:
-            success = conn.execute(
-                "SELECT finished_at, duration_ms, processed_count FROM job_runs "
-                "WHERE job_name=? AND outcome='succeeded' ORDER BY id DESC LIMIT 1",
-                (lease["job_name"],),
-            ).fetchone()
-            failure = conn.execute(
-                "SELECT finished_at, outcome, error FROM job_runs "
-                "WHERE job_name=? AND outcome IN ('failed','abandoned') "
-                "ORDER BY id DESC LIMIT 1",
-                (lease["job_name"],),
-            ).fetchone()
-            last_success = success["finished_at"] if success else None
-            overdue = True
-            if last_success:
-                overdue = (now_dt - datetime.fromisoformat(last_success)).total_seconds() > int(
-                    lease["expected_interval_seconds"]
-                )
-            active = bool(
-                lease["lease_owner"] and (lease["lease_expires_at"] or "") > now
-            )
-            if active:
-                overdue = False
-            out.append({
-                "job_name": lease["job_name"],
-                "last_success": last_success,
-                "last_duration_ms": success["duration_ms"] if success else None,
-                "last_processed_count": success["processed_count"] if success else None,
-                "last_failure": failure["finished_at"] if failure else None,
-                "last_failure_outcome": failure["outcome"] if failure else None,
-                "last_error": failure["error"] if failure else None,
-                "lease_owner": lease["lease_owner"] if active else None,
-                "lease_expires_at": lease["lease_expires_at"] if active else None,
-                "expected_interval_seconds": lease["expected_interval_seconds"],
-                "overdue": overdue,
-            })
-    return out
+    return _jobs_repo.statuses(connect, now=now or _now())

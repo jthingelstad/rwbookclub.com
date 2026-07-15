@@ -22,7 +22,8 @@ agent/
 ├── scheduler.py    # pure due_notifications (reminders / nudges / milestones)
 ├── context.py      # compact club overview for the cached system prompt
 ├── persona.py      # loads the SOUL/PURPOSE/PROCESS charters from docs/
-├── config.py · db.py   # config; SQLite memory/state (gitignored)
+├── config.py · db.py   # config; SQLite façade + ordered schema migrations (gitignored DB)
+├── repositories/      # focused persistence for outbox delivery and scheduled jobs
 ├── club/           # reviews (→ club_reviews), meeting_rules, openlibrary, campaign/emails
 ├── mail/           # Fastmail JMAP send/receive + the mail archive
 ├── enrich/         # external enrichment loop (Open Library + Wikidata + Wikipedia)

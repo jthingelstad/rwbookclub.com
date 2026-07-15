@@ -367,6 +367,9 @@ def ensure_schema() -> None:
     with db.connect() as conn:
         conn.executescript(CLUB_SCHEMA)
         _migrate_club(conn)
+    # db.py owns the cross-domain legacy migrations. Fresh databases pause its ordered ledger
+    # until the club tables exist; resume it now that this schema owner has finished.
+    db.run_migrations()
 
 
 # ── Connection helper ────────────────────────────────────────────────────────
