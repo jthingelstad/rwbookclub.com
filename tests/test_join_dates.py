@@ -1,9 +1,12 @@
 """Member join dates: backfill, create-member stamp, and pre-join ask filtering everywhere."""
 
+import pytest
 
 from agent import clock, clubdb, db
 from agent import corpus_read as cr
 from agent.club import review_drive as rd
+
+pytestmark = pytest.mark.usefixtures("fresh_db")
 
 
 def _joined(slug):

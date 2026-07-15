@@ -7,9 +7,12 @@ import asyncio
 from datetime import timedelta
 
 import aiohttp
+import pytest
 
 from agent import clubdb, config, db, webapp
 from agent.webapp import routes_oliver_pages, server, sessions
+
+pytestmark = pytest.mark.usefixtures("fresh_db")
 
 
 def _jamie_id() -> int:

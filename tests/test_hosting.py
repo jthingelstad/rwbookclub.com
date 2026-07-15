@@ -4,8 +4,12 @@ view — host is the single source of truth; see clubdb)."""
 
 from __future__ import annotations
 
+import pytest
+
 from agent import clubdb, db
 from agent import corpus_read as cr
+
+pytestmark = pytest.mark.usefixtures("fresh_db")
 
 
 def test_club_stats_has_host_leaderboard(reset_books_cache):

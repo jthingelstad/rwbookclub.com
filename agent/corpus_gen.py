@@ -159,6 +159,12 @@ def _prune(directory: Path, keep: set[str]) -> int:
     return removed
 
 
+def _invalidate_read_cache() -> None:
+    # Local import keeps generation independent from the read layer at module import time.
+    from agent import corpus_read
+    corpus_read.invalidate()
+
+
 def generate(out_root: Path = DEFAULT_OUT) -> dict:
     out_root = Path(out_root)
     for d in ENTITY_DIRS:
@@ -200,6 +206,7 @@ def generate(out_root: Path = DEFAULT_OUT) -> dict:
             written["reviews"] += 1
 
     written["_pruned"] = sum(_prune(out_root / d, keep[d]) for d in ENTITY_DIRS)
+    _invalidate_read_cache()
     return written
 
 
@@ -208,6 +215,7 @@ def write_book_file(conn, book_id: int, out_root: Path = DEFAULT_OUT) -> Path:
     b = next(b for b in clubdb.all_books(conn) if b["id"] == book_id)
     path = Path(out_root) / "books" / f"{b['slug']}.json"
     _write_json(path, _book_doc(b))
+    _invalidate_read_cache()
     return path
 
 
@@ -215,6 +223,7 @@ def write_author_file(conn, author_id: int, out_root: Path = DEFAULT_OUT) -> Pat
     a = next(a for a in clubdb.all_authors(conn) if a["id"] == author_id)
     path = Path(out_root) / "authors" / f"{a['slug']}.json"
     _write_json(path, _author_doc(a))
+    _invalidate_read_cache()
     return path
 
 
@@ -223,6 +232,7 @@ def write_meeting_file(conn, meeting_id: int, out_root: Path = DEFAULT_OUT) -> P
     stem = f"{(m['date'] or 'undated')[:10]}--{m['id']}"
     path = Path(out_root) / "meetings" / f"{stem}.json"
     _write_json(path, _meeting_doc(m))
+    _invalidate_read_cache()
     return path
 
 
@@ -231,6 +241,7 @@ def write_review_file(conn, review_id: int, out_root: Path = DEFAULT_OUT) -> Pat
     path = Path(out_root) / "reviews" / f"{r['book_slug']}--{r['member_slug']}.md"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(_review_text(r))
+    _invalidate_read_cache()
     return path
 
 
@@ -238,12 +249,14 @@ def write_list_file(conn, list_id: int, out_root: Path = DEFAULT_OUT) -> Path:
     lst = next(x for x in clubdb.all_lists(conn) if x["id"] == list_id)
     path = Path(out_root) / "lists" / f"{lst['slug']}.json"
     _write_json(path, _list_doc(lst))
+    _invalidate_read_cache()
     return path
 
 
 def remove_list_file(slug: str, out_root: Path = DEFAULT_OUT) -> None:
     """Delete a list's corpus file on list deletion (full regen would also prune it)."""
     (Path(out_root) / "lists" / f"{slug}.json").unlink(missing_ok=True)
+    _invalidate_read_cache()
 
 
 def main() -> None:

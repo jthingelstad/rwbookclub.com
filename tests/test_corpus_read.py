@@ -86,25 +86,23 @@ class TestBooksCache:
         # Cache hit returns the SAME list object, not a fresh build.
         assert first is second
 
-    def test_cache_invalidates_on_file_touch(self, reset_books_cache, tmp_path):
-        import time
+    def test_cache_invalidates_on_file_touch(self, reset_books_cache):
+        import os
         from agent import corpus_read as cr
 
-        cr.books()  # populate the cache
+        first = cr.books()
         first_sig = cr._books_cache_sig
         # Touch a corpus file to bump mtime (cr.DATA_DIR honors OLIVER_CORPUS_DIR in tests).
         target = next(iter((cr.DATA_DIR / "books").glob("*.json")))
-        original_mtime = target.stat().st_mtime
+        original = target.stat()
         try:
-            time.sleep(0.01)
-            target.touch()
-            second_sig = cr._books_signature()
-            assert second_sig != first_sig
-            cr.books()  # triggers rebuild
-            assert cr._books_cache_sig == second_sig
+            os.utime(target, ns=(original.st_atime_ns, original.st_mtime_ns + 1_000_000))
+            second = cr.books()
+            assert cr._books_cache_sig != first_sig
+            assert second is not first
         finally:
-            import os
-            os.utime(target, (original_mtime, original_mtime))
+            os.utime(target, ns=(original.st_atime_ns, original.st_mtime_ns))
+            cr.invalidate()
 
 
 # ── find_books scoring ──────────────────────────────────────────────────────

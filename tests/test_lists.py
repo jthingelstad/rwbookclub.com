@@ -1,9 +1,8 @@
 """Book lists — clubdb helpers, the lists.py writer (auth + corpus), the award→list
 migration round-trip, and the _list_doc corpus shape.
 
-The club_* tables are seeded per-test from the public-safe fixture (conftest), which already
-contains the migrated "Books of the Year" club list. These tests exercise the live write path
-on top of that seed.
+The isolated DB fixture starts from the public-safe session snapshot, which already contains the
+migrated "Books of the Year" club list. These tests exercise the live write path on top of it.
 """
 
 from __future__ import annotations
@@ -15,6 +14,8 @@ import pytest
 from agent import clubdb, corpus_gen, db
 from agent import corpus_read as cr
 from agent.club import lists as lw
+
+pytestmark = pytest.mark.usefixtures("fresh_db")
 
 
 # ── clubdb helpers ───────────────────────────────────────────────────────────

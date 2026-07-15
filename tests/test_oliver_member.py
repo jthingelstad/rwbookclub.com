@@ -6,11 +6,15 @@ never target him: it enumerates members via corpus_read.human_current_members() 
 config.OLIVER_MEMBER_SLUG explicitly.
 """
 
+import pytest
+
 from agent import access, config, clubdb, db
 from agent import corpus_read as cr
 from agent.club import meeting_rules
 from agent.tool_handlers import picking
 from agent.tool_handlers.context import RequestContext
+
+pytestmark = pytest.mark.usefixtures("fresh_db")
 
 
 def _fake_members():

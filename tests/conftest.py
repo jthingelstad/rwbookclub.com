@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+import sqlite3
 import tempfile
 
 import pytest
@@ -16,6 +17,8 @@ import pytest
 # Set the env vars BEFORE any agent module gets a chance to import db / corpus.paths.
 _TMP_DIR = pathlib.Path(tempfile.mkdtemp(prefix="oliver-tests-"))
 os.environ["OLIVER_DB_PATH"] = str(_TMP_DIR / "test.db")
+_PRISTINE_DB = _TMP_DIR / "pristine.db"
+_PRISTINE_CORPUS_SIG: tuple | None = None
 # Redirect the corpus to a temp dir so a test run never touches the developer's real
 # (gitignored) corpus/data — the session fixture regenerates it here from the SQL fixture.
 os.environ["OLIVER_CORPUS_DIR"] = str(_TMP_DIR / "corpus")
@@ -52,15 +55,28 @@ def _reseed_club(conn) -> None:
     conn.executescript(_FIXTURE_SQL)
 
 
+def _backup_database(source: pathlib.Path, destination: pathlib.Path) -> None:
+    with sqlite3.connect(source) as src, sqlite3.connect(destination) as dst:
+        src.backup(dst)
+
+
+def _restore_pristine_database() -> None:
+    """Restore the complete session baseline using SQLite's consistent backup API."""
+    _backup_database(_PRISTINE_DB, pathlib.Path(os.environ["OLIVER_DB_PATH"]))
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _corpus_on_disk():
     """Generate the test corpus from the fixture DB once per session, into the temp
     OLIVER_CORPUS_DIR, so tests that read corpus/data directly work without the live corpus."""
-    from agent import clubdb, corpus_gen, db
+    global _PRISTINE_CORPUS_SIG
+    from agent import clubdb, corpus_gen, corpus_read, db
     clubdb.ensure_schema()
     with db.connect() as conn:
         _reseed_club(conn)
     corpus_gen.generate()  # DEFAULT_OUT honors OLIVER_CORPUS_DIR
+    _PRISTINE_CORPUS_SIG = corpus_read._corpus_signature()
+    _backup_database(db.DB_PATH, _PRISTINE_DB)
     yield
 
 
@@ -68,8 +84,8 @@ def _corpus_on_disk():
 def _frozen_club_clock(monkeypatch):
     """Freeze the club clock so time-dependent meeting logic is deterministic regardless of when
     the suite runs. The fixture world's upcoming meeting is 2026-06-30 18:30 (A World Appears); pin
-    "now" to the day before so it's reliably upcoming. Also clears the books() cache so isUpcoming
-    is recomputed under the frozen clock. A test needing a specific instant can re-patch
+    "now" to the day before so it's reliably upcoming. Also clears the derived books cache so
+    isUpcoming is recomputed under the frozen clock. A test needing a specific instant can re-patch
     agent.clock.club_now."""
     import datetime as _dt
     from zoneinfo import ZoneInfo
@@ -77,8 +93,7 @@ def _frozen_club_clock(monkeypatch):
     from agent import corpus_read as _cr
     frozen = _dt.datetime(2026, 6, 29, 12, 0, tzinfo=ZoneInfo("America/Chicago"))
     monkeypatch.setattr(clock, "club_now", lambda: frozen)
-    _cr._books_cache = None
-    _cr._books_cache_sig = None
+    _cr.invalidate_books()
     yield
 
 
@@ -91,44 +106,31 @@ def _no_publish(monkeypatch):
 os.environ["FASTMAIL_JMAP_TOKEN"] = ""
 
 
-@pytest.fixture(autouse=True)
-def _seed_club_from_fixture():
-    """Seed the authoritative club_* tables from the public-safe SQL fixture before each test,
-    so the DB-backed meeting/ops/review logic (FKs, member enumeration, meetingId resolution)
-    works. Per-test (not session) so a test that mutates club_* can't leak into another. The
-    fixture is a faithful snapshot of the live club_* (full ids/relations + enrichment)."""
-    from agent import clubdb
-    from agent import db as _db
-    clubdb.ensure_schema()
-    with _db.connect() as conn:
-        _reseed_club(conn)
-    yield
-
-
 @pytest.fixture
-def fresh_db():
-    """Truncate every table; yields the db module."""
+def fresh_db(_corpus_on_disk):
+    """Restore an isolated complete DB snapshot; yields the db module.
+
+    Tests that write either operational or ``club_*`` state request this fixture explicitly.
+    Pure tests share the immutable session seed and avoid all database reset work.
+    """
+    global _PRISTINE_CORPUS_SIG
+    from agent import corpus_gen, corpus_read
     from agent import db as _db
-    tables = [
-        "memories", "book_cloud", "conversations", "channel_summaries", "job_state", "reminders",
-        "usage_log", "notifications_sent", "responses", "feedback",
-        "member_identities", "events", "meeting_member_status", "proposals",
-        "inbound_emails", "webapp_tokens", "review_drafts",
-        "activity_events", "outbox_messages", "job_runs", "job_leases",
-        "mail_message_fts", "mail_messages", "mail_threads",
-    ]
-    with _db.connect() as conn:
-        for t in tables:
-            conn.execute(f"DELETE FROM {t}")
+    _restore_pristine_database()
     yield _db
+    _restore_pristine_database()
+    # Most DB-writing tests never touch the generated corpus. Restore it only when a write-path
+    # test actually changed the configured on-disk generation, preserving order independence
+    # without making every isolated test pay for a full generation.
+    if corpus_read._corpus_signature() != _PRISTINE_CORPUS_SIG:
+        corpus_gen.generate()
+        _PRISTINE_CORPUS_SIG = corpus_read._corpus_signature()
 
 
 @pytest.fixture
 def reset_books_cache():
     """Clear the books() module-level cache before and after a test."""
     from agent import corpus_read as cr
-    cr._books_cache = None
-    cr._books_cache_sig = None
+    cr.invalidate_books()
     yield
-    cr._books_cache = None
-    cr._books_cache_sig = None
+    cr.invalidate_books()

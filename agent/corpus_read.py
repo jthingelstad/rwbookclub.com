@@ -3,14 +3,15 @@
 The corpus is normalized: book files are intrinsic + picker (member slugs); meetings
 own date + book refs; reviews/lists reference by slug. This module mirrors the
 website's build-time joins — it enriches books with their meeting date, picker names,
-placeholder, etc. — so the query functions return the same shapes as before. Reads
-fresh from disk each call (the corpus is small).
+placeholder, etc. — so the query functions return the same shapes as before. One immutable,
+indexed snapshot is shared until the generated corpus changes on disk.
 """
 
 from __future__ import annotations
 
 import json
-from collections import Counter
+from collections import Counter, defaultdict
+from dataclasses import dataclass
 from statistics import mean
 
 import yaml
@@ -39,8 +40,132 @@ def parse_frontmatter(text: str) -> tuple[dict, str]:
     return {}, text.strip()
 
 
+def _load_reviews() -> list[dict]:
+    d = DATA_DIR / "reviews"
+    if not d.exists():
+        return []
+    out = []
+    for p in sorted(d.glob("*.md")):
+        data, body = parse_frontmatter(p.read_text())
+        data["review"] = body or None
+        out.append(data)
+    return out
+
+
+@dataclass(frozen=True)
+class CorpusSnapshot:
+    """One coherent, indexed view of a generated corpus generation."""
+
+    books: tuple[dict, ...]
+    members: tuple[dict, ...]
+    meetings: tuple[dict, ...]
+    authors: tuple[dict, ...]
+    lists: tuple[dict, ...]
+    reviews: tuple[dict, ...]
+    members_by_slug: dict[str, dict]
+    book_titles_by_slug: dict[str, str | None]
+    earliest_meeting_by_book: dict[str, dict]
+    reviews_by_book: dict[str, tuple[dict, ...]]
+    reviews_by_member: dict[str, tuple[dict, ...]]
+
+    @classmethod
+    def load(cls) -> "CorpusSnapshot":
+        raw_books = tuple(_load_json_dir("books"))
+        raw_members = tuple(_load_json_dir("members"))
+        raw_meetings = tuple(_load_json_dir("meetings"))
+        raw_authors = tuple(_load_json_dir("authors"))
+        raw_lists = tuple(_load_json_dir("lists"))
+        raw_reviews = tuple(_load_reviews())
+
+        earliest: dict[str, dict] = {}
+        for meeting in raw_meetings:
+            for book_slug in meeting.get("books") or []:
+                current = earliest.get(book_slug)
+                if not current or (meeting.get("date") or "") < (current.get("date") or ""):
+                    earliest[book_slug] = meeting
+
+        by_book: defaultdict[str, list[dict]] = defaultdict(list)
+        by_member: defaultdict[str, list[dict]] = defaultdict(list)
+        for review in raw_reviews:
+            if review.get("book"):
+                by_book[review["book"]].append(review)
+            if review.get("member"):
+                by_member[review["member"]].append(review)
+
+        return cls(
+            books=raw_books,
+            members=raw_members,
+            meetings=raw_meetings,
+            authors=raw_authors,
+            lists=raw_lists,
+            reviews=raw_reviews,
+            members_by_slug={member["slug"]: member for member in raw_members},
+            book_titles_by_slug={book["slug"]: book.get("title") for book in raw_books},
+            earliest_meeting_by_book=earliest,
+            reviews_by_book={key: tuple(value) for key, value in by_book.items()},
+            reviews_by_member={key: tuple(value) for key, value in by_member.items()},
+        )
+
+
+_snapshot_cache: CorpusSnapshot | None = None
+_snapshot_cache_sig: tuple | None = None
+_books_cache: list[dict] | None = None
+_books_cache_sig: tuple | None = None
+
+
+def _corpus_signature() -> tuple:
+    parts = []
+    for sub, pattern in (
+        ("books", "*.json"),
+        ("members", "*.json"),
+        ("meetings", "*.json"),
+        ("authors", "*.json"),
+        ("lists", "*.json"),
+        ("reviews", "*.md"),
+    ):
+        directory = DATA_DIR / sub
+        if not directory.exists():
+            parts.append((sub, 0, 0, 0))
+            continue
+        files = list(directory.glob(pattern))
+        stats = [path.stat() for path in files]
+        parts.append((
+            sub,
+            len(files),
+            sum(stat.st_mtime_ns for stat in stats),
+            sum(stat.st_size for stat in stats),
+        ))
+    return tuple(parts)
+
+
+def snapshot() -> CorpusSnapshot:
+    """Return the current corpus snapshot, rebuilding atomically after any on-disk change."""
+    global _snapshot_cache, _snapshot_cache_sig
+    signature = _corpus_signature()
+    if _snapshot_cache is None or signature != _snapshot_cache_sig:
+        _snapshot_cache = CorpusSnapshot.load()
+        _snapshot_cache_sig = signature
+        invalidate_books()
+    return _snapshot_cache
+
+
+def invalidate_books() -> None:
+    """Clear fields derived from both corpus data and the moving club clock."""
+    global _books_cache, _books_cache_sig
+    _books_cache = None
+    _books_cache_sig = None
+
+
+def invalidate() -> None:
+    """Drop all cached corpus state after a successful generation."""
+    global _snapshot_cache, _snapshot_cache_sig
+    _snapshot_cache = None
+    _snapshot_cache_sig = None
+    invalidate_books()
+
+
 def members() -> list[dict]:
-    return _load_json_dir("members")
+    return list(snapshot().members)
 
 
 def human_current_members() -> list[dict]:
@@ -53,61 +178,23 @@ def human_current_members() -> list[dict]:
 
 
 def meetings() -> list[dict]:
-    return _load_json_dir("meetings")
+    return list(snapshot().meetings)
 
 
 def authors() -> list[dict]:
-    return _load_json_dir("authors")
+    return list(snapshot().authors)
 
 
 def lists() -> list[dict]:
-    return _load_json_dir("lists")
+    return list(snapshot().lists)
 
 
 def reviews() -> list[dict]:
-    d = DATA_DIR / "reviews"
-    if not d.exists():
-        return []
-    out = []
-    for p in sorted(d.glob("*.md")):
-        data, body = parse_frontmatter(p.read_text())
-        data["review"] = body or None
-        out.append(data)
-    return out
+    return list(snapshot().reviews)
 
 
 def _earliest_meeting_by_book() -> dict[str, dict]:
-    m: dict[str, dict] = {}
-    for mt in meetings():
-        for bslug in mt.get("books") or []:
-            cur = m.get(bslug)
-            if not cur or (mt.get("date") or "") < (cur.get("date") or ""):
-                m[bslug] = mt
-    return m
-
-
-# ── books() cache ────────────────────────────────────────────────────────────
-# books() does ~375 file reads + a join, and Oliver's tools call it many times
-# per turn (find_books → books(); get_book → find_book → books(); etc.). We
-# cache the enriched list keyed on a signature (file count + max mtime) over
-# the three dirs it composes from — any add, remove, or edit changes the
-# signature and the cache rebuilds. Stat overhead is ~370 syscalls (<1ms);
-# savings on a cache hit are the JSON parse + enrichment loop (~10–50ms).
-_books_cache: list[dict] | None = None
-_books_cache_sig: tuple | None = None
-
-
-def _books_signature() -> tuple:
-    parts = []
-    for sub in ("books", "meetings", "members"):
-        d = DATA_DIR / sub
-        if not d.exists():
-            parts.append((sub, 0, 0.0))
-            continue
-        files = list(d.glob("*.json"))
-        mt = max((f.stat().st_mtime for f in files), default=0.0)
-        parts.append((sub, len(files), mt))
-    return tuple(parts)
+    return snapshot().earliest_meeting_by_book
 
 
 def _today_iso() -> str:
@@ -118,17 +205,19 @@ def _today_iso() -> str:
 def books() -> list[dict]:
     """Books enriched with their derived meeting + picker fields (keeps `picker` too).
 
-    Cached on a (count, max-mtime) signature over books/, meetings/, members/.
+    Cached on the corpus snapshot plus the current club-clock minute so a meeting rolls from
+    upcoming to past in a long-running Oliver process without requiring a corpus rewrite.
     """
     global _books_cache, _books_cache_sig
-    sig = _books_signature()
+    corpus = snapshot()
+    sig = (_snapshot_cache_sig, clock.club_now().isoformat(timespec="minutes"))
     if _books_cache is not None and sig == _books_cache_sig:
         return _books_cache
 
-    mbs = _earliest_meeting_by_book()
-    member_by_slug = {m["slug"]: m for m in members()}
+    mbs = corpus.earliest_meeting_by_book
+    member_by_slug = corpus.members_by_slug
     out = []
-    for b in _load_json_dir("books"):
+    for b in corpus.books:
         mt = mbs.get(b["slug"])
         md = mt.get("date") if mt else None
         # Upcoming vs past is derived purely from the meeting's local date+time (no placeholder
@@ -362,10 +451,17 @@ def get_author(name_or_slug: str) -> dict | None:
 
 
 def _reviews_for(*, book_slug: str | None = None, member_slug: str | None = None) -> list[dict]:
-    titles = {b["slug"]: b.get("title") for b in _load_json_dir("books")}
-    names = {m["slug"]: m.get("name") for m in members()}
+    corpus = snapshot()
+    titles = corpus.book_titles_by_slug
+    names = {slug: member.get("name") for slug, member in corpus.members_by_slug.items()}
+    if book_slug:
+        candidates = corpus.reviews_by_book.get(book_slug, ())
+    elif member_slug:
+        candidates = corpus.reviews_by_member.get(member_slug, ())
+    else:
+        candidates = corpus.reviews
     out = []
-    for r in reviews():
+    for r in candidates:
         if book_slug and r.get("book") != book_slug:
             continue
         if member_slug and r.get("member") != member_slug:
@@ -591,8 +687,8 @@ def compare_books(book_refs: list[str]) -> dict:
     }
 
 
-def _book_titles_by_slug() -> dict[str, str]:
-    return {b["slug"]: b.get("title") for b in _load_json_dir("books")}
+def _book_titles_by_slug() -> dict[str, str | None]:
+    return snapshot().book_titles_by_slug
 
 
 def _hosted_meetings_for(member_slug: str) -> list[dict]:
