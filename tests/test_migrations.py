@@ -40,6 +40,21 @@ def test_run_migrations_is_idempotent(fresh_db):
     assert _ledger(fresh_db) == before
 
 
+def test_author_validation_migration_upgrades_existing_sidecar():
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    conn.execute("CREATE TABLE club_author_enrichment (author_id INTEGER PRIMARY KEY)")
+
+    database._add_author_enrichment_validation(conn)
+    database._add_author_enrichment_validation(conn)
+    conn.execute("INSERT INTO club_author_enrichment(author_id) VALUES (1)")
+    row = conn.execute("SELECT * FROM club_author_enrichment").fetchone()
+
+    assert row["validation_status"] == "unvalidated"
+    assert row["validation_warnings_json"] == "[]"
+    conn.close()
+
+
 def test_runner_applies_each_migration_once_in_order(monkeypatch, fresh_db):
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
@@ -101,10 +116,11 @@ def test_legacy_email_tracking_upgrade_is_recorded(fresh_db):
             )
         }
     assert tables == set()
-    assert [(version, name) for version, name, _ in _ledger(fresh_db)][-3:] == [
+    assert [(version, name) for version, name, _ in _ledger(fresh_db)][-4:] == [
         (7, "drop_email_open_tracking"),
         (8, "unified_meeting_events"),
         (9, "legacy_club_schema"),
+        (10, "author_enrichment_validation"),
     ]
 
 

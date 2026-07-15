@@ -190,7 +190,10 @@ CREATE TABLE IF NOT EXISTS club_author_enrichment (
     notable_works_json TEXT,                -- JSON array of notable work titles
     photo_credit       TEXT,               -- image source / attribution
     enriched_at        TEXT,
-    enrichment_json    TEXT
+    enrichment_json    TEXT,
+    validation_status  TEXT NOT NULL DEFAULT 'unvalidated'
+                       CHECK (validation_status IN ('unvalidated', 'accepted', 'partial')),
+    validation_warnings_json TEXT NOT NULL DEFAULT '[]'
 );
 """
 
@@ -603,7 +606,8 @@ _BOOK_ENRICH_COLS = (
 _AUTHOR_ENRICH_COLS = (
     "bio", "birth_year", "death_year", "nationality", "ol_author_key",
     "wikidata_id", "wikipedia_url", "website", "notable_works_json",
-    "photo_credit", "enriched_at", "enrichment_json",
+    "photo_credit", "enriched_at", "enrichment_json", "validation_status",
+    "validation_warnings_json",
 )
 
 

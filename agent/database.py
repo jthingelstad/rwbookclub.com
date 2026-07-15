@@ -13,9 +13,27 @@ from datetime import datetime, timezone
 from agent import clubdb, db, security
 
 
+def _add_author_enrichment_validation(conn: sqlite3.Connection) -> None:
+    columns = {
+        row["name"] for row in conn.execute("PRAGMA table_info(club_author_enrichment)")
+    }
+    if "validation_status" not in columns:
+        conn.execute(
+            "ALTER TABLE club_author_enrichment ADD COLUMN validation_status TEXT "
+            "NOT NULL DEFAULT 'unvalidated' CHECK (validation_status IN "
+            "('unvalidated', 'accepted', 'partial'))"
+        )
+    if "validation_warnings_json" not in columns:
+        conn.execute(
+            "ALTER TABLE club_author_enrichment ADD COLUMN validation_warnings_json TEXT "
+            "NOT NULL DEFAULT '[]'"
+        )
+
+
 MIGRATIONS = (
     *db.RUNTIME_MIGRATIONS,
     (9, "legacy_club_schema", clubdb.migrate_legacy_club_schema),
+    (10, "author_enrichment_validation", _add_author_enrichment_validation),
 )
 
 

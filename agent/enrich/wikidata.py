@@ -1,10 +1,11 @@
 """Wikidata client — structured facts for authors and books, with verification.
 
 The hard part is resolution: a bare name search can return the wrong same-named
-entity. We defend against that by (a) preferring the Wikidata link Open Library
-already stores on the author record, and (b) otherwise verifying the candidate's
-type (P31) and — for authors — a writing occupation (P106) and/or a birth-year
-hint before trusting it. A low-confidence candidate is skipped, not guessed.
+entity. We defend against that by corroborating a candidate against the Wikidata
+author(s) of books the club has read, an Open Library link, or a birth-year hint.
+A writing occupation is useful context, but is not identity evidence: same-named
+screenwriters and authors are exactly the ambiguity this layer must reject. A
+low-confidence candidate is skipped, not guessed.
 
 Facts come from ``Special:EntityData/{qid}.json``; human-readable labels for
 referenced entities (nationality, notable works, awards) are resolved in one
@@ -14,6 +15,8 @@ batched ``wbgetentities`` call.
 from __future__ import annotations
 
 import re
+import unicodedata
+from dataclasses import dataclass
 from urllib.parse import quote
 
 from agent.enrich import http
@@ -33,21 +36,24 @@ WRITTEN_WORK = {
     "Q1279564",  # short-story collection
     "Q23927052", # essay
 }
-# Writing-related occupations (for author verification).
-WRITER_OCCUPATIONS = {
-    "Q36180",    # writer
-    "Q482980",   # author
-    "Q6625963",  # novelist
-    "Q49757",    # poet
-    "Q201788",   # historian
-    "Q1930187",  # journalist
-    "Q11774202", # essayist
-    "Q28389",    # screenwriter
-    "Q4853732",  # children's writer
-    "Q18844224", # science-fiction writer
-    "Q15980158", # non-fiction writer
-    "Q214917",   # playwright
-}
+@dataclass(frozen=True)
+class AuthorResolution:
+    """A selected entity plus the evidence that made the identity safe to use."""
+
+    entity: dict | None
+    source: str | None
+    evidence: tuple[str, ...] = ()
+    warnings: tuple[str, ...] = ()
+    considered_candidates: int = 0
+
+    def diagnostics(self) -> dict:
+        return {
+            "selectedQid": self.entity.get("id") if self.entity else None,
+            "source": self.source,
+            "evidence": list(self.evidence),
+            "warnings": list(self.warnings),
+            "consideredCandidates": self.considered_candidates,
+        }
 
 
 # ── Low-level API ────────────────────────────────────────────────────────────
@@ -144,25 +150,101 @@ def commons_image_url(filename: str | None, width: int = 600) -> str | None:
 
 
 # ── Resolution (verified) ────────────────────────────────────────────────────
-def resolve_author(name: str, *, ol_wikidata: str | None = None,
-                   birth_year_hint: int | None = None) -> dict | None:
-    """Return the verified author entity, or None. Trusts an OL→Wikidata link;
-    otherwise requires P31=human plus a writing occupation and/or birth-year match."""
+def _name_tokens(value: str | None) -> tuple[str, ...]:
+    """Comparable name tokens, ignoring accents, punctuation, and middle initials."""
+    normalized = unicodedata.normalize("NFKD", value or "").encode("ascii", "ignore").decode()
+    tokens = re.findall(r"[a-z0-9]+", normalized.lower())
+    return tuple(token for token in tokens if len(token) > 1)
+
+
+def _entity_name(ent: dict) -> str | None:
+    label = ((ent.get("labels") or {}).get("en") or {}).get("value")
+    if label:
+        return label
+    title, _ = enwiki(ent)
+    return title.split(" (")[0] if title else None
+
+
+def _author_ids_for_works(work_qids: list[str]) -> set[str]:
+    author_ids: set[str] = set()
+    for qid in dict.fromkeys(work_qids):
+        work = entity(qid)
+        if work:
+            author_ids.update(_ids(work, "P50"))
+    return author_ids
+
+
+def resolve_author(
+    name: str,
+    *,
+    ol_wikidata: str | None = None,
+    birth_year_hint: int | None = None,
+    known_work_qids: list[str] | None = None,
+) -> AuthorResolution:
+    """Resolve an author only when independent identity evidence corroborates it.
+
+    Book authorship is strongest: when one of the club's known work entities names
+    its author(s), a candidate must be one of them. Otherwise an exact compatible
+    name plus an Open Library link or matching birth year is required. A mere
+    writing occupation never selects a same-named person.
+    """
+    candidate_sources: dict[str, str] = {}
     if ol_wikidata:
-        ent = entity(ol_wikidata)
-        if ent and HUMAN in _ids(ent, "P31"):
-            return ent
+        candidate_sources[ol_wikidata] = "openlibrary"
     for qid in search(name):
+        candidate_sources.setdefault(qid, "search")
+
+    expected_author_ids = _author_ids_for_works(known_work_qids or [])
+    eligible: list[tuple[int, dict, str, tuple[str, ...]]] = []
+    plausible_but_uncorroborated = False
+    for qid, source in candidate_sources.items():
         ent = entity(qid)
         if not ent or HUMAN not in _ids(ent, "P31"):
             continue
-        occ = set(_ids(ent, "P106"))
-        has_writer_occ = bool(occ & WRITER_OCCUPATIONS)
+        if _name_tokens(_entity_name(ent)) != _name_tokens(name):
+            continue
+
+        evidence: list[str] = []
+        if qid in expected_author_ids:
+            evidence.append("known_work_author")
         birth = _year_from_time(ent, "P569")
-        birth_matches = birth_year_hint and birth and abs(birth - birth_year_hint) <= 1
-        if has_writer_occ or birth_matches:
-            return ent
-    return None
+        if (
+            birth_year_hint is not None
+            and birth is not None
+            and abs(birth - birth_year_hint) <= 1
+        ):
+            evidence.append("birth_year")
+        if source == "openlibrary":
+            evidence.append("openlibrary_link")
+
+        # When a known work supplies author IDs, it is decisive: conflicting
+        # Open Library links and same-name search results are quarantined.
+        if expected_author_ids and qid not in expected_author_ids:
+            plausible_but_uncorroborated = True
+            continue
+        if not evidence:
+            plausible_but_uncorroborated = True
+            continue
+
+        score = (
+            (100 if "known_work_author" in evidence else 0)
+            + (60 if "birth_year" in evidence else 0)
+            + (30 if "openlibrary_link" in evidence else 0)
+        )
+        eligible.append((score, ent, source, tuple(evidence)))
+
+    if eligible:
+        _, ent, source, evidence = max(eligible, key=lambda item: item[0])
+        return AuthorResolution(
+            ent, source, evidence, considered_candidates=len(candidate_sources)
+        )
+    warnings = ("wikidata_identity_not_corroborated",) if plausible_but_uncorroborated else ()
+    return AuthorResolution(
+        None,
+        None,
+        warnings=warnings,
+        considered_candidates=len(candidate_sources),
+    )
 
 
 def resolve_book(title: str, authors: list[str]) -> dict | None:

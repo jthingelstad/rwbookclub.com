@@ -13,7 +13,7 @@ from agent.enrich import wikipedia as wp
 
 # ── Wikidata: claim parsing + extraction ─────────────────────────────────────
 def _ent(qid, *, p31=(), p106=(), p569=None, p570=None, p27=None, p50=(),
-         p800=(), p856=None, enwiki=None):
+         p800=(), p856=None, enwiki=None, label=None):
     def idclaims(ids):
         return [{"mainsnak": {"datavalue": {"value": {"id": i}}}} for i in ids]
 
@@ -35,7 +35,9 @@ def _ent(qid, *, p31=(), p106=(), p569=None, p570=None, p27=None, p50=(),
         claims["P570"] = timeclaim(p570)
     if p856:
         claims["P856"] = strclaim(p856)
-    ent = {"id": qid, "claims": claims, "sitelinks": {}}
+    ent = {"id": qid, "claims": claims, "sitelinks": {}, "labels": {}}
+    if label:
+        ent["labels"]["en"] = {"value": label}
     if enwiki:
         ent["sitelinks"]["enwiki"] = {"title": enwiki}
     return ent
@@ -60,21 +62,57 @@ def test_author_facts_extracts_fields(monkeypatch):
 
 
 def test_resolve_author_trusts_ol_wikidata_link(monkeypatch):
-    human = _ent("Q2", p31=["Q5"])
+    human = _ent("Q2", p31=["Q5"], label="Whoever")
     monkeypatch.setattr(wd, "entity", lambda qid: human if qid == "Q2" else None)
-    assert wd.resolve_author("Whoever", ol_wikidata="Q2") is human
+    monkeypatch.setattr(wd, "search", lambda name, limit=8: [])
+    result = wd.resolve_author("Whoever", ol_wikidata="Q2")
+    assert result.entity is human
+    assert result.evidence == ("openlibrary_link",)
 
 
-def test_resolve_author_requires_writer_occupation_or_birth(monkeypatch):
-    writer = _ent("Q10", p31=["Q5"], p106=["Q36180"])              # human + writer
-    non_writer = _ent("Q11", p31=["Q5"], p106=["Q937857"])         # human, footballer
-    monkeypatch.setattr(wd, "search", lambda name, limit=8: ["Q11", "Q10"])
-    monkeypatch.setattr(wd, "entity", lambda qid: {"Q10": writer, "Q11": non_writer}[qid])
-    # Q11 (no writer occ, no birth hint) is rejected; Q10 (writer) accepted.
-    assert wd.resolve_author("Common Name") is writer
-    # With only the non-writer candidate and no hint → None.
+def test_resolve_author_rejects_writer_only_name_match(monkeypatch):
+    writer = _ent("Q10", p31=["Q5"], p106=["Q36180"], label="Common Name")
+    monkeypatch.setattr(wd, "search", lambda name, limit=8: ["Q10"])
+    monkeypatch.setattr(wd, "entity", lambda qid: writer)
+
+    result = wd.resolve_author("Common Name")
+
+    assert result.entity is None
+    assert result.warnings == ("wikidata_identity_not_corroborated",)
+
+
+def test_resolve_author_uses_known_work_to_disambiguate_same_name(monkeypatch):
+    actor = _ent(
+        "QACTOR", p31=["Q5"], p106=["Q28389"], p569="+1968-01-01T00:00:00Z",
+        label="Matthew Walker", enwiki="Matthew Walker (American actor)",
+    )
+    scientist = _ent(
+        "QSCI", p31=["Q5"], p106=["Q212980"], p569="+1973-01-01T00:00:00Z",
+        label="Matthew P. Walker", enwiki="Matthew Walker (scientist)",
+    )
+    work = _ent("QWORK", p31=["Q571"], p50=["QSCI"], label="Why We Sleep")
+    entities = {"QACTOR": actor, "QSCI": scientist, "QWORK": work}
+    monkeypatch.setattr(wd, "search", lambda name, limit=8: ["QACTOR", "QSCI"])
+    monkeypatch.setattr(wd, "entity", entities.get)
+
+    result = wd.resolve_author("Matthew Walker", known_work_qids=["QWORK"])
+
+    assert result.entity is scientist
+    assert result.evidence == ("known_work_author",)
+
+
+def test_resolve_author_accepts_birth_year_corroboration(monkeypatch):
+    scientist = _ent(
+        "Q11", p31=["Q5"], p106=["Q937857"],
+        p569="+1973-01-01T00:00:00Z", label="Common Name",
+    )
     monkeypatch.setattr(wd, "search", lambda name, limit=8: ["Q11"])
-    assert wd.resolve_author("Common Name") is None
+    monkeypatch.setattr(wd, "entity", lambda qid: scientist)
+
+    result = wd.resolve_author("Common Name", birth_year_hint=1973)
+
+    assert result.entity is scientist
+    assert result.evidence == ("birth_year",)
 
 
 def test_resolve_book_rejects_substring_author_false_positive(monkeypatch):

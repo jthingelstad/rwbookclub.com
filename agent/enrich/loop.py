@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 
 from agent import clubdb, db
 from agent.enrich import openlibrary as ol
+from agent.enrich import validation
 from agent.enrich import wikidata as wd
 from agent.enrich import wikipedia as wp
 from corpus import images
@@ -130,28 +131,56 @@ def _discover_ol_author_key(conn, author_id: int, name: str) -> str | None:
     return None
 
 
+def _known_work_qids(conn, author_id: int) -> list[str]:
+    """Wikidata work IDs already verified for books attributed to this author."""
+    return [
+        row["wikidata_id"]
+        for row in conn.execute(
+            "SELECT DISTINCT e.wikidata_id FROM club_book_authors ba "
+            "JOIN club_book_enrichment e ON e.book_id = ba.book_id "
+            "WHERE ba.author_id = ? AND e.wikidata_id IS NOT NULL",
+            (author_id,),
+        )
+    ]
+
+
 def enrich_author(conn, author: dict, *, force: bool = False, fetch_images: bool = True) -> dict:
     name, slug = author["name"], author["slug"]
     ol_author_key = author.get("ol_author_key") or _discover_ol_author_key(
         conn, author["id"], name)
     olf = ol.author_facts(ol.author(ol_author_key))
 
-    ent = wd.resolve_author(name, ol_wikidata=olf.get("wikidata_id"),
-                            birth_year_hint=olf.get("birth_year"))
-    wdf = wd.author_facts(ent) if ent else {}
+    resolution = wd.resolve_author(
+        name,
+        ol_wikidata=olf.get("wikidata_id"),
+        birth_year_hint=olf.get("birth_year"),
+        known_work_qids=_known_work_qids(conn, author["id"]),
+    )
+    wdf = wd.author_facts(resolution.entity)
+    validated = validation.validate_author_facts(olf, wdf, resolution)
     wpf = wp.summary(slug, name, wikipedia_title=wdf.get("wikipedia_title")) or {}
 
     fields: dict = {}
     if not author.get("bio"):  # gap-fill curated bio: OL bio, else Wikipedia extract
         _put(fields, "bio", olf.get("bio") or wpf.get("extract"))
-    _put(fields, "birth_year", olf.get("birth_year") or wdf.get("birth_year"))
-    _put(fields, "death_year", olf.get("death_year") or wdf.get("death_year"))
-    _put(fields, "nationality", wdf.get("nationality"))
+    # These are owned by external enrichment, so explicit NULLs must replace stale
+    # values when a source disappears or a formerly trusted identity is rejected.
+    fields["birth_year"] = validated.birth_year
+    fields["death_year"] = validated.death_year
+    fields["nationality"] = wdf.get("nationality")
     _put(fields, "ol_author_key", ol_author_key)
-    _put(fields, "wikidata_id", wdf.get("wikidata_id"))
-    _put(fields, "wikipedia_url", wdf.get("wikipedia_url") or wpf.get("wikipedia_url"))
-    _put(fields, "website", olf.get("website") or wdf.get("website"))
-    _put_json(fields, "notable_works_json", wdf.get("notable_works"))
+    fields["wikidata_id"] = wdf.get("wikidata_id")
+    fields["wikipedia_url"] = wdf.get("wikipedia_url") or wpf.get("wikipedia_url")
+    fields["website"] = olf.get("website") or wdf.get("website")
+    fields["notable_works_json"] = (
+        json.dumps(wdf["notable_works"], ensure_ascii=False)
+        if wdf.get("notable_works")
+        else None
+    )
+    fields["validation_status"] = validated.status
+    fields["validation_warnings_json"] = json.dumps(
+        validated.warnings, ensure_ascii=False
+    )
 
     # Portrait: OL author photo → Wikidata Commons image → Wikipedia thumbnail.
     photo_url = credit = None
@@ -167,9 +196,18 @@ def enrich_author(conn, author: dict, *, force: bool = False, fetch_images: bool
 
     fields["enriched_at"] = _now()
     fields["enrichment_json"] = json.dumps(
-        {"openlibrary": olf, "wikidata": wdf,
-         "wikipedia": {k: v for k, v in wpf.items() if k != "extract"}},
-        ensure_ascii=False)
+        {
+            "openlibrary": olf,
+            "wikidata": wdf,
+            "wikipedia": {k: v for k, v in wpf.items() if k != "extract"},
+            "validation": {
+                "status": validated.status,
+                "warnings": list(validated.warnings),
+                "identity": resolution.diagnostics(),
+            },
+        },
+        ensure_ascii=False,
+    )
     clubdb.upsert_author_enrichment(conn, author["id"], fields)
     return fields
 
@@ -294,5 +332,3 @@ def run(*, do_books: bool, do_authors: bool, force: bool = False,
                 print(f"  ✓ {a['slug']}  "
                       f"[{', '.join(k for k in f if k not in ('enriched_at', 'enrichment_json'))}]")
     return counts
-
-

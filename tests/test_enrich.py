@@ -10,6 +10,7 @@ import pytest
 from agent import clubdb, corpus_gen, db
 from agent.enrich import loop
 from agent.enrich import openlibrary as ol
+from agent.enrich import validation
 from agent.enrich import wikidata as wd
 from agent.enrich import wikipedia as wp
 
@@ -106,7 +107,13 @@ class TestEnrichAuthor:
         monkeypatch.setattr(ol, "author_facts", lambda rec: {
             "bio": None, "birth_year": 1970, "death_year": None,
             "website": "https://site", "wikidata_id": "Q2", "ol_photo_id": None})
-        monkeypatch.setattr(wd, "resolve_author", lambda *a, **k: {"id": "Q2"})
+        monkeypatch.setattr(
+            wd,
+            "resolve_author",
+            lambda *a, **k: wd.AuthorResolution(
+                {"id": "Q2"}, "openlibrary", ("openlibrary_link",)
+            ),
+        )
         monkeypatch.setattr(wd, "author_facts", lambda ent: {
             "wikidata_id": "Q2", "birth_year": 1970, "death_year": None,
             "nationality": "Canada", "notable_works": ["Book A"], "website": None,
@@ -124,8 +131,63 @@ class TestEnrichAuthor:
         assert e["bio"] == "Wikipedia bio"   # OL had none → Wikipedia extract
         assert e["birth_year"] == 1970 and e["nationality"] == "Canada"
         assert json.loads(e["notable_works_json"]) == ["Book A"]
+        assert e["validation_status"] == "accepted"
+        assert json.loads(e["validation_warnings_json"]) == []
         assert a2["bio"] == "Wikipedia bio"  # surfaced via COALESCE
         assert a2["birth_year"] == 1970
+
+    def test_invalid_chronology_is_quarantined_but_raw_provenance_remains(
+        self, monkeypatch
+    ):
+        monkeypatch.setattr(loop, "_discover_ol_author_key", lambda *a, **k: "/authors/OLA")
+        monkeypatch.setattr(ol, "author", lambda key: {})
+        monkeypatch.setattr(ol, "author_facts", lambda rec: {
+            "bio": None, "birth_year": None, "death_year": None,
+            "website": None, "wikidata_id": None, "ol_photo_id": None,
+        })
+        monkeypatch.setattr(
+            wd,
+            "resolve_author",
+            lambda *a, **k: wd.AuthorResolution(
+                {"id": "QBAD"}, "search", ("known_work_author",)
+            ),
+        )
+        monkeypatch.setattr(wd, "author_facts", lambda ent: {
+            "wikidata_id": "QBAD", "birth_year": 1952, "death_year": 1900,
+            "nationality": None, "notable_works": [], "website": None,
+            "image_filename": None, "wikipedia_url": None, "wikipedia_title": None,
+        })
+        monkeypatch.setattr(wp, "summary", lambda *a, **k: {})
+        with db.connect() as conn:
+            aid = clubdb._author_id(conn, "Chronology Author")
+            clubdb.upsert_author_enrichment(conn, aid, {"death_year": 1900})
+            author = next(a for a in clubdb.all_authors(conn) if a["id"] == aid)
+            loop.enrich_author(conn, author, force=True, fetch_images=False)
+            enriched = clubdb.author_enrichment(conn, aid)
+            projected = next(a for a in clubdb.all_authors(conn) if a["id"] == aid)
+
+        assert enriched["birth_year"] == 1952
+        assert enriched["death_year"] is None
+        assert enriched["validation_status"] == "partial"
+        assert json.loads(enriched["validation_warnings_json"]) == [
+            "death_year_before_birth_year"
+        ]
+        raw = json.loads(enriched["enrichment_json"])
+        assert raw["wikidata"]["death_year"] == 1900
+        assert raw["validation"]["status"] == "partial"
+        assert "deathYear" not in corpus_gen._author_doc(projected)
+
+
+def test_validate_author_facts_preserves_bce_chronology():
+    result = validation.validate_author_facts(
+        {},
+        {"birth_year": -525, "death_year": -456},
+        wd.AuthorResolution({"id": "Q1"}, "search", ("known_work_author",)),
+        current_year=2026,
+    )
+
+    assert (result.birth_year, result.death_year) == (-525, -456)
+    assert result.status == "accepted"
 
 
 class TestCorpusGenEmitsEnrichment:

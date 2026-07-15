@@ -139,6 +139,8 @@ erDiagram
         int death_year
         text nationality
         text wikidata_id
+        text validation_status
+        text validation_warnings_json
         text enriched_at
     }
 ```
