@@ -5,16 +5,39 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from agent import db
 from agent.tools import dispatch
 
 
 def test_add_requires_title_and_reason(fresh_db):
-    import pytest
     with pytest.raises(ValueError):
         db.add_book_cloud_entry(title="X", reason="   ", surface="discord")
     with pytest.raises(ValueError):
         db.add_book_cloud_entry(title="", reason="why", surface="discord")
+
+
+def test_in_turn_reason_taxonomy_matches_approved_vocabulary():
+    from agent.tools import TOOLS
+
+    definition = next(tool for tool in TOOLS if tool["name"] == "book_cloud_add")
+    reason_kinds = definition["input_schema"]["properties"]["reason_kind"]["enum"]
+    assert reason_kinds == [
+        "nomination", "recommendation", "comparison", "caution", "context", "inquiry", "joke"
+    ]
+
+
+@pytest.mark.parametrize("reason_kind", ["inquiry", "caution"])
+def test_revised_reason_kinds_round_trip(fresh_db, reason_kind):
+    result = json.loads(dispatch(
+        "book_cloud_add",
+        {"title": "Piranesi", "reason": "title-specific future pick signal",
+         "reason_kind": reason_kind},
+        {"member_slug": "jamie", "speaker": "Jamie", "channel_id": "123"},
+    ))
+    assert result["saved"] is True
+    assert db.recent_book_cloud()[0]["reason_kind"] == reason_kind
 
 
 def test_no_dedupe_and_aggregation(fresh_db):

@@ -48,3 +48,10 @@ def test_horizon_prompt_is_status_not_picker_pressure():
     assert "call horizon" in prompt
     assert "calm runway/status read" in prompt
     assert "not that they are behind, summoned, or required to pick" in prompt
+
+
+def test_book_mention_memory_uses_cultural_language_and_revised_tags():
+    prompt = oliver.OPERATIONAL_PROMPT
+    assert "caution (negative fit, DNF, or too long), context, inquiry, or joke" in prompt
+    assert "never call it the Book Cloud unless the member used that term first" in prompt
+    assert "books we've been circling" in prompt

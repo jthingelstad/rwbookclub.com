@@ -43,6 +43,10 @@ For each mention, capture:
 - why it was referenced;
 - the related book, meeting, topic, comparison, or argument.
 
+`reason_kind` is optional and advisory: `nomination`, `recommendation`, `comparison`,
+`caution`, `context`, `inquiry`, or `joke`. A bare title is not enough; the recoverable reason is
+the useful memory.
+
 Do not ask follow-up questions merely because a book was mentioned. A book
 cloud entry is not a nomination unless a member says it is.
 
@@ -51,6 +55,8 @@ necessary, and their value often comes from old connections resurfacing later.
 
 The book cloud should be visible to members on demand and ready for discussion:
 "what books have we been circling lately?" should have a useful answer.
+In ordinary member-facing language, call these books the club has been circling or informal
+mentions; use the internal term "Book Cloud" only after a member uses it first.
 
 ## Meeting Process
 

@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS book_cloud (
     channel_id        TEXT,
     source_message_id TEXT,
     reason            TEXT NOT NULL,         -- WHY it came up — the cultural payload
-    reason_kind       TEXT,                  -- advisory: nomination|comparison|objection|recommendation|side_reference|joke|pick_candidate
+    reason_kind       TEXT,                  -- advisory: nomination|recommendation|comparison|caution|context|inquiry|joke (plus internal pick_candidate)
     created_at        TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_book_cloud_created ON book_cloud(created_at);

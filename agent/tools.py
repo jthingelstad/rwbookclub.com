@@ -505,19 +505,22 @@ TOOLS = [
                            "description": "Why it came up — the specific connection, comparison, or context."},
                 "author": {"type": "string"},
                 "reason_kind": {"type": "string",
-                                "enum": ["nomination", "comparison", "objection", "recommendation",
-                                         "side_reference", "joke", "pick_candidate"]},
+                                "enum": ["nomination", "recommendation", "comparison", "caution",
+                                         "context", "inquiry", "joke"]},
             },
             "required": ["title", "reason"],
         },
     },
     {
         "name": "book_cloud_recent",
-        "description": "Read the club's private Book Cloud — books members have referenced but "
+        "description": "Read the club's private book-mention memory — books members have "
+                       "referenced but "
                        "(usually) not read. Default: raw recent mentions, newest first. Pass "
                        "titles=true for the aggregated orbit view (one row per title: first/last "
                        "mention, who, how often, recent reasons). Frame results as books orbiting "
-                       "the conversation — not a queue, ranking, or commitment.",
+                       "the conversation — not a queue, ranking, or commitment. In member-facing "
+                       "language say books we've been circling or informal mentions; do not say "
+                       "Book Cloud unless the member used that term first.",
         "input_schema": {
             "type": "object",
             "properties": {
