@@ -164,7 +164,9 @@ Thing pattern). Oliver enforces owner-only modes for `.env`, SQLite and its side
 
 `/oliver` is organized into subcommand groups by purpose (Discord's 2-level nesting:
 `/oliver <group> <subcommand> [options]`). Quick top-level commands: `/oliver ping`, `/oliver whoami`,
-and `/oliver my-club` (see "Member + admin web app" below).
+`/oliver my-club` (see "Member + admin web app" below), and `/oliver private-feedback book:`
+for a private, member-scoped note about a club book. Private feedback is retained only in Oliver's
+memory for future pick/recommendation context; it never changes a public review or the website.
 
 Structured, public, deliberate editing — **book ratings/reviews, lists, profile/contact, and admin
 data management** — moved to the web app. Discord stays primary for the conversational, private,

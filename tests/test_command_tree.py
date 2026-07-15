@@ -14,7 +14,10 @@ def _names(group) -> set[str]:
 
 def test_top_level_groups_and_commands():
     top = _names(commands.oliver_cmds)
-    assert {"ping", "my-club", "whoami", "reading", "meeting", "timeline", "admin"} <= top
+    assert {
+        "ping", "my-club", "private-feedback", "whoami", "reading", "meeting", "timeline",
+        "admin",
+    } <= top
     # retired groups + old command names must not come back
     assert {"contact", "memory", "library", "webapp"}.isdisjoint(top)
 

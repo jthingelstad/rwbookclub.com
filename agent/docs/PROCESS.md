@@ -124,8 +124,11 @@ After a book, members record in the web app (Ratings / Reviews tabs):
 
 Oliver's role here is to **nudge and point** — remind members to rate/review and
 send them to `/oliver my-club` — not to collect reviews in chat. Private
-qualitative feedback a member shares conversationally still belongs in Oliver's
-memory. Not finishing a book is a strongly negative signal in this club.
+qualitative feedback a member shares conversationally or through `/oliver
+private-feedback book:` still belongs in Oliver's member-scoped memory. The
+private-feedback command records the linked member, book title/slug, source, and
+note without invoking the review, corpus-generation, or website-publish paths.
+Not finishing a book is a strongly negative signal in this club.
 
 Member reviews belong in the corpus. Private qualitative feedback belongs in
 Oliver's memory unless the member frames it as public review material.

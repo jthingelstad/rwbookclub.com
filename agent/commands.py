@@ -586,6 +586,67 @@ async def record_attendance_response(interaction: discord.Interaction, status: s
         ephemeral=True)
 
 
+PRIVATE_FEEDBACK_CONFIRMATION = (
+    "Saved privately in Oliver's memory for future pick and recommendation context. This does "
+    "not change your public review and will not appear on the club website."
+)
+
+
+def _save_private_book_feedback(*, user_id: int | str, book_value: str, note: str,
+                                source_message_id: str | None = None) -> dict:
+    """Private member-memory write only; deliberately has no review/corpus/publish path."""
+    member = _linked_member_for_user(int(user_id))
+    if not member:
+        raise ValueError("I can only save private feedback for a linked club member.")
+    book = corpus_read.find_book(book_value)
+    if not book:
+        raise ValueError("I couldn't find that book in the club record.")
+    text = note.strip()
+    if not text:
+        raise ValueError("Private feedback needs a note.")
+    book_slug = book["slug"]
+    book_title = book["title"]
+    memory_id = db.add_memory(
+        f"Private book feedback on {book_title} ({book_slug}): {text}",
+        scope="member",
+        subject=member["slug"],
+        source="private_book_feedback",
+        source_user_id=str(user_id),
+        source_message_id=source_message_id,
+    )
+    return {"id": memory_id, "member_slug": member["slug"],
+            "book_slug": book_slug, "book_title": book_title}
+
+
+class PrivateBookFeedbackModal(discord.ui.Modal):
+    note = discord.ui.TextInput(
+        label="What should Oliver remember?",
+        placeholder="Fit, discussion, DNF reason, or what this means for future picks…",
+        style=discord.TextStyle.paragraph,
+        min_length=1,
+        max_length=2000,
+        required=True,
+    )
+
+    def __init__(self, *, book: dict) -> None:
+        title = f"Private note: {book['title']}"[:45]
+        super().__init__(title=title)
+        self.book_slug = book["slug"]
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        try:
+            _save_private_book_feedback(
+                user_id=interaction.user.id,
+                book_value=self.book_slug,
+                note=str(self.note.value),
+                source_message_id=str(interaction.id),
+            )
+        except ValueError as exc:
+            await interaction.response.send_message(str(exc), ephemeral=True)
+            return
+        await interaction.response.send_message(PRIVATE_FEEDBACK_CONFIRMATION, ephemeral=True)
+
+
 # ── Subcommands ──────────────────────────────────────────────────────────────
 @oliver_cmds.command(name="ping", description="Check that Oliver is awake.")
 async def oliver_ping(interaction: discord.Interaction) -> None:
@@ -614,6 +675,30 @@ async def oliver_webapp(interaction: discord.Interaction) -> None:
         f"🔧 Your private link (good for ~15 minutes, just for you):\n<{url}>\n"
         "_Blank page? The editor sleeps after ~15 min idle (or a restart) — just run "
         "`/oliver my-club` again to wake it._", ephemeral=True)
+
+
+@oliver_cmds.command(
+    name="private-feedback",
+    description="Privately tell Oliver what to remember about a book (not a public review).",
+)
+@discord.app_commands.describe(book="Book from the club record")
+@discord.app_commands.autocomplete(book=book_autocomplete)
+async def private_feedback_cmd(interaction: discord.Interaction, book: str) -> None:
+    if not _linked_member_for_user(interaction.user.id):
+        await interaction.response.send_message(
+            "I can only save private book feedback for linked club members — ask an admin to "
+            "link your Discord account first.",
+            ephemeral=True,
+        )
+        return
+    resolved = corpus_read.find_book(book)
+    if not resolved:
+        await interaction.response.send_message(
+            "I couldn't find that book in the club record, so I didn't save anything.",
+            ephemeral=True,
+        )
+        return
+    await interaction.response.send_modal(PrivateBookFeedbackModal(book=resolved))
 
 
 @admin_cmds.command(name="status", description="Oliver at a glance — release, models, data, memory (admin).")
