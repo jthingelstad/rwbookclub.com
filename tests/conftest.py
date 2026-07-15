@@ -21,6 +21,10 @@ os.environ["OLIVER_DB_PATH"] = str(_TMP_DIR / "test.db")
 os.environ["OLIVER_CORPUS_DIR"] = str(_TMP_DIR / "corpus")
 # Keep /oliver add-book offline in tests — no inline external enrichment (network).
 os.environ["OLIVER_ENRICH_ON_WRITE"] = "0"
+# Admin-authorization tests must not depend on the developer's private .env. Set a realistic,
+# nonzero test snowflake before agent.config is imported; python-dotenv leaves explicit env values
+# untouched, so the same identity is used locally and in clean GitHub runners.
+os.environ["DISCORD_ADMIN_USER_ID"] = "999000000000000001"
 # Give the web app a real (test) signing secret so session-cookie tests work and the
 # fail-closed guard in server.ensure_running doesn't trip in CI (which has no bot token).
 os.environ.setdefault("WEBAPP_SECRET", "test-webapp-signing-secret-not-the-dev-default")
