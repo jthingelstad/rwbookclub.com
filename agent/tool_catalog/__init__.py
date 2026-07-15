@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from agent.tool_catalog import core, mail, meeting, memory, picking, server
 
-CAPABILITY_TOOLS = {
+ToolDefinition = dict[str, Any]
+
+CAPABILITY_TOOLS: dict[str, list[ToolDefinition]] = {
     "server": server.TOOLS,
     "core": core.TOOLS,
     "meeting": meeting.TOOLS,
@@ -59,8 +63,8 @@ _ORDER = (
 )
 
 
-def _build_catalog() -> list[dict]:
-    by_name: dict[str, dict] = {}
+def _build_catalog() -> list[ToolDefinition]:
+    by_name: dict[str, ToolDefinition] = {}
     for capability, definitions in CAPABILITY_TOOLS.items():
         for definition in definitions:
             name = definition["name"]
@@ -77,5 +81,4 @@ def _build_catalog() -> list[dict]:
 
 
 # Exact order is part of the prompt-cache contract.
-TOOLS = _build_catalog()
-
+TOOLS: list[ToolDefinition] = _build_catalog()

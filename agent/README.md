@@ -216,7 +216,11 @@ they edit on a page. The server starts on demand and idles off after ~15 min; ch
 
 ```bash
 venv/bin/pip install -c agent/constraints.txt -r tests/requirements.txt
+venv/bin/ruff check .
+venv/bin/mypy                      # incremental typed infrastructure scope (see pyproject.toml)
 venv/bin/pytest tests/
+venv/bin/pytest tests/ -q --cov=agent --cov=corpus --cov-fail-under=75
+venv/bin/pip-audit -r agent/constraints.txt
 ```
 
 Pure helpers (`_is_addressed`, `_strip_address`, rating parsers, `parse_frontmatter`,
@@ -227,6 +231,11 @@ and `OLIVER_CORPUS_DIR` before any agent module imports), seed `club_*` from the
 `tests/fixtures/club_seed.sql`, and never touch the live state. An autouse fixture stubs
 `publish.publish_site`, and `OLIVER_ENRICH_ON_WRITE=0` keeps add-book offline — so no test builds,
 deploys, or hits the network.
+
+CI runs on Python 3.13 and 3.14. Ruff includes a transitional McCabe complexity ceiling of 18;
+coverage excludes only archived one-time scripts and cannot fall below 75%. Mypy deliberately
+starts at the configuration/security/bootstrap, publishing, repository, identity, tool-contract,
+and enrichment-validation seams; expand its `files` list as neighboring modules gain useful types.
 
 For behavioral quality, `python -m tests.eval --round N --note "..."` runs Oliver through
 generated plus golden Discord-style conversations and judges tool choice, grounding, tone,

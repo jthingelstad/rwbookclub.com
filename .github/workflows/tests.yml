@@ -23,7 +23,17 @@ jobs:
       - run: pip install -c agent/constraints.txt -r agent/requirements.txt -r corpus/requirements.txt -r tests/requirements.txt
       - name: Lint (ruff)
         run: ruff check .
+      - name: Static types (incremental scope)
+        if: matrix.python-version == '3.13'
+        run: mypy
+      - name: Audit pinned Python dependencies
+        if: matrix.python-version == '3.13'
+        run: pip-audit -r agent/constraints.txt
+      - name: Tests with coverage floor
+        if: matrix.python-version == '3.13'
+        run: pytest tests/ -q --cov=agent --cov=corpus --cov-report=term-missing:skip-covered --cov-fail-under=75
       - name: Tests
+        if: matrix.python-version != '3.13'
         run: pytest tests/ -q
 
   website:

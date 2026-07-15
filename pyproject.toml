@@ -10,3 +10,39 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+
+[tool.mypy]
+python_version = "3.13"
+# Start with the typed infrastructure seams where static contracts pay off most. Expand this
+# list as adjacent modules are annotated; do not silence the rest of the repository wholesale.
+files = [
+    "agent/config.py",
+    "agent/security.py",
+    "agent/database.py",
+    "agent/identities.py",
+    "agent/publishing.py",
+    "agent/repositories",
+    "agent/enrich/validation.py",
+    "agent/tools.py",
+    "agent/tool_catalog",
+    "agent/tool_handlers/context.py",
+    "corpus/paths.py",
+]
+follow_imports = "skip"
+ignore_missing_imports = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_error_codes = true
+
+[tool.coverage.run]
+source = ["agent", "corpus"]
+# Retired, one-time migration/mining scripts are preserved for history and restore work, but are
+# not part of the live runtime coverage budget.
+omit = ["agent/script/archive/*"]
+
+[tool.coverage.report]
+fail_under = 75
+show_missing = true
+skip_covered = true

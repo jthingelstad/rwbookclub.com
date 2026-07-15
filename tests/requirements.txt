@@ -8,3 +8,8 @@ pytest>=9.1.1,<10
 # `rev:`) so a passing local hook can't fail CI lint on a newer ruff. Bump both
 # together.
 ruff==0.15.20
+# Incremental static typing, measured coverage, and pinned-dependency vulnerability audit.
+# These are CI gates as well as local maintenance tools; pin deliberately for reproducibility.
+mypy==2.2.0
+pytest-cov==7.1.0
+pip-audit==2.10.1

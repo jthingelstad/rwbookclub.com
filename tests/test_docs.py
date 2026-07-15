@@ -15,7 +15,7 @@ def _markdown_files() -> list[Path]:
     return [
         path
         for path in ROOT.rglob("*.md")
-        if not ({".git", "node_modules", "_site"} & set(path.parts))
+        if not ({".git", ".venv", "venv", "node_modules", "_site"} & set(path.parts))
     ]
 
 

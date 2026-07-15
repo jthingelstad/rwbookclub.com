@@ -3,6 +3,7 @@
 import gzip
 import sqlite3
 import stat
+from contextlib import closing
 
 from agent import backup, config
 
@@ -25,7 +26,7 @@ def test_backup_writes_valid_snapshot_and_gates_daily(fresh_db, monkeypatch, tmp
     # The gzip really is a working SQLite database with the club record inside.
     restored = tmp_path / "restored.db"
     restored.write_bytes(gzip.decompress(target.read_bytes()))
-    with sqlite3.connect(restored) as conn:
+    with closing(sqlite3.connect(restored)) as conn:
         n = conn.execute("SELECT COUNT(*) FROM club_books").fetchone()[0]
     assert n > 100
 

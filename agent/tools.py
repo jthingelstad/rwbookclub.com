@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
+from typing import Any
 
 from agent import access
 from agent.tool_catalog import TOOLS
@@ -25,9 +27,11 @@ from agent.tool_handlers.context import RequestContext
 
 log = logging.getLogger("oliver.tools")
 
+ToolHandler = Callable[[str, dict, RequestContext], Any]
 
-def _build_registry():
-    registry = {}
+
+def _build_registry() -> dict[str, ToolHandler]:
+    registry: dict[str, ToolHandler] = {}
     for capability in (core, meeting, memory, mail, picking):
         overlap = set(registry) & capability.NAMES
         if overlap:

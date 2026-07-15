@@ -10,6 +10,9 @@ _site/
 venv/
 __pycache__/
 *.pyc
+.coverage
+coverage.xml
+htmlcov/
 
 # Oliver's private SQLite memory (class B — never committed)
 *.db

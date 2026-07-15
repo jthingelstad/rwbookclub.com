@@ -6,7 +6,16 @@ target-version = "py313"
 [lint]
 # Bugbear catches a small set of correctness hazards; RUF100 keeps suppressions aligned with the
 # rules this project actually enforces.
-extend-select = ["B", "RUF100"]
+extend-select = ["B", "C90", "RUF100"]
 # E702 (';'-separated compound statements) is an intentional compact pattern in
 # db.py's SQL builders ("sql += ...; args.append(...)"); keep it.
 ignore = ["E702"]
+
+[lint.mccabe]
+# Current live-code maximum is 18. This is a ratchet against new oversized functions; reduce it
+# as the remaining orchestration/validation hotspots are decomposed.
+max-complexity = 18
+
+[lint.per-file-ignores]
+# Archived import/mining utilities are retained restore artifacts, not evolving runtime code.
+"agent/script/archive/*.py" = ["C901"]

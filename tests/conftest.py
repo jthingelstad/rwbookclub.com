@@ -11,6 +11,7 @@ import os
 import pathlib
 import sqlite3
 import tempfile
+from contextlib import closing
 
 import pytest
 
@@ -56,7 +57,9 @@ def _reseed_club(conn) -> None:
 
 
 def _backup_database(source: pathlib.Path, destination: pathlib.Path) -> None:
-    with sqlite3.connect(source) as src, sqlite3.connect(destination) as dst:
+    # sqlite3.Connection's context manager commits/rolls back but does not close; explicit
+    # closing avoids leaking two file descriptors for every per-test snapshot restore.
+    with closing(sqlite3.connect(source)) as src, closing(sqlite3.connect(destination)) as dst:
         src.backup(dst)
 
 

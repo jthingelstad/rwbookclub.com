@@ -19,6 +19,7 @@ import gzip
 import logging
 import sqlite3
 import tempfile
+from contextlib import closing
 from pathlib import Path
 
 from agent import clock, config, db, security
@@ -34,7 +35,8 @@ def _target_dir() -> Path:
 
 def _snapshot_to(dst: Path) -> None:
     """A consistent online snapshot of oliver.db → dst (WAL-safe, same API admin.sh uses)."""
-    with sqlite3.connect(db.DB_PATH) as src, sqlite3.connect(dst) as out:
+    # A sqlite3 connection context commits/rolls back but does not close the connection.
+    with closing(sqlite3.connect(db.DB_PATH)) as src, closing(sqlite3.connect(dst)) as out:
         src.backup(out)
 
 
