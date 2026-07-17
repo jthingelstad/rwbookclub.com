@@ -44,7 +44,7 @@ def test_backup_retention_prunes_oldest(fresh_db, monkeypatch, tmp_path):
         (icloud / f"oliver-{d}.db.gz").write_bytes(b"old")
     backup.run()
     kept = sorted(p.name for p in icloud.glob("oliver-*.db.gz"))
-    assert len(kept) == 3                      # KEEP=3
+    assert len(kept) == 3  # KEEP=3
     assert "oliver-2026-06-01.db.gz" not in kept  # oldest pruned
     # conftest freezes the club clock at 2026-06-29 — that's "today's" snapshot name
     assert "oliver-2026-06-29.db.gz" in kept

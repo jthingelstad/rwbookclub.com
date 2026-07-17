@@ -20,22 +20,25 @@ def _call(name: str, tool_input: dict, ctx: dict) -> object:
     return json.loads(dispatch(name, tool_input, ctx))
 
 
-def _mail(message_id: str, thread_id: str, member: str, body: str, *,
-          list_id: str | None = None) -> None:
-    db.upsert_mail_message({
-        "message_id": message_id,
-        "thread_id": thread_id,
-        "source": "test",
-        "list_id": list_id,
-        "from_email": f"{member}@example.test",
-        "from_name": member.title(),
-        "member_slug": member,
-        "subject": "Lighthouse candidates",
-        "sent_at": f"2026-06-0{message_id[-1]}T12:00:00Z",
-        "received_at": f"2026-06-0{message_id[-1]}T12:00:00Z",
-        "body_text": body,
-        "body_clean": body,
-    })
+def _mail(
+    message_id: str, thread_id: str, member: str, body: str, *, list_id: str | None = None
+) -> None:
+    db.upsert_mail_message(
+        {
+            "message_id": message_id,
+            "thread_id": thread_id,
+            "source": "test",
+            "list_id": list_id,
+            "from_email": f"{member}@example.test",
+            "from_name": member.title(),
+            "member_slug": member,
+            "subject": "Lighthouse candidates",
+            "sent_at": f"2026-06-0{message_id[-1]}T12:00:00Z",
+            "received_at": f"2026-06-0{message_id[-1]}T12:00:00Z",
+            "body_text": body,
+            "body_clean": body,
+        }
+    )
 
 
 def test_private_tools_require_linked_identity_but_public_corpus_does_not(fresh_db):
@@ -80,16 +83,25 @@ def test_memory_recall_is_self_plus_club_and_admin_can_audit(fresh_db):
 def test_discussion_search_shares_club_channels_but_isolates_direct_email(fresh_db):
     db.log_message("123", "user", "lighthouse shared discord", speaker="Nick", member_slug="nick")
     db.log_message(
-        "email:list:club", "user", "lighthouse shared mailing list",
-        speaker="Nick", member_slug="nick",
+        "email:list:club",
+        "user",
+        "lighthouse shared mailing list",
+        speaker="Nick",
+        member_slug="nick",
     )
     db.log_message(
-        "email:jamie-private", "user", "lighthouse Jamie private",
-        speaker="Jamie", member_slug="jamie",
+        "email:jamie-private",
+        "user",
+        "lighthouse Jamie private",
+        speaker="Jamie",
+        member_slug="jamie",
     )
     db.log_message(
-        "email:nick-private", "user", "lighthouse Nick private",
-        speaker="Nick", member_slug="nick",
+        "email:nick-private",
+        "user",
+        "lighthouse Nick private",
+        speaker="Nick",
+        member_slug="nick",
     )
 
     visible = _call("search_discussion", {"query": "lighthouse"}, JAMIE_CTX)
@@ -103,15 +115,19 @@ def test_discussion_search_shares_club_channels_but_isolates_direct_email(fresh_
         "error": "another member's private conversation history is unavailable",
     }
     admin_content = {
-        row["content"] for row in _call(
-            "search_discussion", {"query": "lighthouse"}, ADMIN_CTX)
+        row["content"] for row in _call("search_discussion", {"query": "lighthouse"}, ADMIN_CTX)
     }
     assert admin_content == content | {"lighthouse Nick private"}
 
 
 def test_mail_search_and_thread_reads_are_row_scoped_and_pii_minimized(fresh_db):
-    _mail("m1", "shared-thread", "nick", "lighthouse shared list message",
-          list_id="rwbookclub@googlegroups.com")
+    _mail(
+        "m1",
+        "shared-thread",
+        "nick",
+        "lighthouse shared list message",
+        list_id="rwbookclub@googlegroups.com",
+    )
     _mail("m2", "jamie-thread", "jamie", "lighthouse Jamie direct message")
     _mail("m3", "nick-thread", "nick", "lighthouse Nick direct message")
     db.rebuild_mail_thread_stats()
@@ -130,7 +146,9 @@ def test_mail_search_and_thread_reads_are_row_scoped_and_pii_minimized(fresh_db)
 
     admin_rows = _call("search_mail_archive", {"query": "lighthouse"}, ADMIN_CTX)
     assert {row["thread_id"] for row in admin_rows} == {
-        "shared-thread", "jamie-thread", "nick-thread",
+        "shared-thread",
+        "jamie-thread",
+        "nick-thread",
     }
     assert all("from_email" not in row for row in admin_rows)
     assert _call("get_mail_thread", {"thread_id": "nick-thread"}, ADMIN_CTX)["messages"]
@@ -138,17 +156,22 @@ def test_mail_search_and_thread_reads_are_row_scoped_and_pii_minimized(fresh_db)
 
 def test_book_cloud_keeps_direct_email_mentions_private(fresh_db):
     db.add_book_cloud_entry(
-        title="Shared Book", reason="lighthouse shared", surface="discord", mentioned_by="nick")
+        title="Shared Book", reason="lighthouse shared", surface="discord", mentioned_by="nick"
+    )
     db.add_book_cloud_entry(
-        title="Jamie's Book", reason="lighthouse own", surface="email", mentioned_by="jamie")
+        title="Jamie's Book", reason="lighthouse own", surface="email", mentioned_by="jamie"
+    )
     db.add_book_cloud_entry(
-        title="Nick's Book", reason="lighthouse other", surface="email", mentioned_by="nick")
+        title="Nick's Book", reason="lighthouse other", surface="email", mentioned_by="nick"
+    )
 
     member_rows = _call("book_cloud_recent", {}, JAMIE_CTX)
     assert {row["title"] for row in member_rows} == {"Shared Book", "Jamie's Book"}
     admin_rows = _call("book_cloud_recent", {}, ADMIN_CTX)
     assert {row["title"] for row in admin_rows} == {
-        "Shared Book", "Jamie's Book", "Nick's Book",
+        "Shared Book",
+        "Jamie's Book",
+        "Nick's Book",
     }
 
 
@@ -180,9 +203,7 @@ def test_meeting_tools_expose_only_own_member_signals_outside_admin(fresh_db):
     club_state = _call("current_club_state", {}, JAMIE_CTX)
     assert "feedback" not in club_state
     assert all("discordLinked" not in member for member in club_state["members"])
-    assert [
-        row["memberSlug"] for row in club_state["nextMeeting"]["attendance"]
-    ] == ["jamie"]
+    assert [row["memberSlug"] for row in club_state["nextMeeting"]["attendance"]] == ["jamie"]
 
     assert _call("meeting_campaign", {}, JAMIE_CTX) == {
         "error": "this tool is available only to the club admin",

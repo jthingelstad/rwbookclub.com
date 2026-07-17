@@ -6,9 +6,15 @@ from agent import access, config, db, model_readers
 from agent import corpus_read as cr
 from agent.tool_handlers.context import RequestContext
 
-NAMES = frozenset({
-    "recent_channel_context", "search_discussion", "remember", "recall", "set_reminder",
-})
+NAMES = frozenset(
+    {
+        "recent_channel_context",
+        "search_discussion",
+        "remember",
+        "recall",
+        "set_reminder",
+    }
+)
 
 
 def _member_slug(value: str | None) -> str | None:
@@ -38,17 +44,19 @@ def handle(name: str, tool_input: dict, request: RequestContext):
         for row in rows:
             try:
                 channel_key = int(row["channel_id"])
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 channel_key = row["channel_id"]
-            out.append({
-                "medium": db.conversation_medium(row["channel_id"]),
-                "channel": config.CHANNEL_NAMES.get(channel_key, row["channel_id"]),
-                "who": row.get("speaker"),
-                "member": row.get("member_slug"),
-                "role": row["role"],
-                "when": row.get("created_at"),
-                "content": (row["content"] or "")[:300],
-            })
+            out.append(
+                {
+                    "medium": db.conversation_medium(row["channel_id"]),
+                    "channel": config.CHANNEL_NAMES.get(channel_key, row["channel_id"]),
+                    "who": row.get("speaker"),
+                    "member": row.get("member_slug"),
+                    "role": row["role"],
+                    "when": row.get("created_at"),
+                    "content": (row["content"] or "")[:300],
+                }
+            )
         return out
     if name == "remember":
         scope = tool_input.get("scope") or "member"
@@ -81,9 +89,7 @@ def handle(name: str, tool_input: dict, request: RequestContext):
                 return {"error": f"no such member: {subject}"}
             if not access.can_access_member(actor, target):
                 return {"error": "another member's private memories are unavailable"}
-        return model_readers.memories(
-            actor=actor, subject=target, query=tool_input.get("query")
-        )
+        return model_readers.memories(actor=actor, subject=target, query=tool_input.get("query"))
     if name == "set_reminder":
         reminder_id = db.add_reminder(
             tool_input["due"],

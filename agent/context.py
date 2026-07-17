@@ -24,7 +24,7 @@ def _picks_by_slug() -> Counter:
     it's derived from books.picker, same as corpus_read.member_history)."""
     picks: Counter = Counter()
     for b in cr.books():
-        for slug in (b.get("picker") or []):
+        for slug in b.get("picker") or []:
             picks[slug] += 1
     return picks
 
@@ -33,7 +33,7 @@ def _hosts_by_slug() -> Counter:
     """Career meetings-hosted count per member slug (derived from meetings.host)."""
     hosts: Counter = Counter()
     for mt in cr.meetings():
-        for slug in (mt.get("host") or []):
+        for slug in mt.get("host") or []:
             hosts[slug] += 1
     return hosts
 
@@ -47,7 +47,9 @@ def _club_date(occurred_at: str | None) -> str:
             instant = instant.replace(tzinfo=timezone.utc)
     except ValueError:
         return "recently"
-    return meeting_rules.friendly_date(instant.astimezone(clock.tz()).date().isoformat()) or "recently"
+    return (
+        meeting_rules.friendly_date(instant.astimezone(clock.tz()).date().isoformat()) or "recently"
+    )
 
 
 def club_context() -> str:
@@ -74,7 +76,8 @@ def club_context() -> str:
         + ", ".join(
             f"{m['name']} ({picks[m.get('slug')]} picks, {hosts[m.get('slug')]} hosted)"
             for m in current
-        ) + ".",
+        )
+        + ".",
     ]
     if upcoming:
         parts = []
@@ -94,5 +97,6 @@ def club_context() -> str:
             f'Your software: you are running the release named "{release["name"]}" '
             f"(christened {when} — every release of your software is named with an alliteration "
             "on a title from the club's shelf). If asked what release or version you're running, "
-            "that's the answer.")
+            "that's the answer."
+        )
     return "\n".join(lines)

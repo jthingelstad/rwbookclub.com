@@ -56,9 +56,17 @@ FAKE_MEMBER_IDS = {
 
 GOLDEN_SINGLE = [
     {"category": "identity", "speaker": "Jamie", "question": "who do you think is asking?"},
-    {"category": "memory", "speaker": "Nick", "question": "remember that I like weird infrastructure books"},
+    {
+        "category": "memory",
+        "speaker": "Nick",
+        "question": "remember that I like weird infrastructure books",
+    },
     {"category": "grounding", "speaker": "Tom", "question": "what are we reading next?"},
-    {"category": "past_placeholder", "speaker": "Jamie", "question": "did we already read Patterns in Nature?"},
+    {
+        "category": "past_placeholder",
+        "speaker": "Jamie",
+        "question": "did we already read Patterns in Nature?",
+    },
 ]
 
 GOLDEN_MULTI = [
@@ -132,7 +140,9 @@ def _fixture_facts() -> str:
     upcoming = corpus_read.upcoming_meetings()
     review_count = len(corpus_read.reviews())
     list_names = [item.get("name") for item in corpus_read.lists() if item.get("name")]
-    nonfiction_pct = round(100 * stats["nonfiction"] / stats["totalRead"]) if stats["totalRead"] else 0
+    nonfiction_pct = (
+        round(100 * stats["nonfiction"] / stats["totalRead"]) if stats["totalRead"] else 0
+    )
     next_pick = "none scheduled"
     if upcoming:
         meeting = upcoming[0]
@@ -157,6 +167,7 @@ def _qgen_system() -> str:
         "Questions should be terse and natural — how a member actually types in chat. "
         "Not survey questions, not 'test cases that sound like tests.'"
     )
+
 
 QGEN_USER = """Generate {n_single} single-turn questions and {n_multi} multi-turn conversations (3–4 turns each) for test round {round_num}. Vary speakers across the eval-linked current members: {speakers}.
 
@@ -185,9 +196,17 @@ def generate_questions(round_num: int, n_single: int, n_multi: int) -> dict:
         model=MODEL,
         max_tokens=3000,
         system=_qgen_system(),
-        messages=[{"role": "user", "content": QGEN_USER.format(
-            n_single=n_single, n_multi=n_multi, round_num=round_num,
-            speakers="|".join(FAKE_MEMBER_IDS))}],
+        messages=[
+            {
+                "role": "user",
+                "content": QGEN_USER.format(
+                    n_single=n_single,
+                    n_multi=n_multi,
+                    round_num=round_num,
+                    speakers="|".join(FAKE_MEMBER_IDS),
+                ),
+            }
+        ],
     )
     text = "".join(b.text for b in msg.content if getattr(b, "type", None) == "text")
     return _parse_json(text)
@@ -222,7 +241,7 @@ JUDGE_SYSTEM = (
     "WITHOUT a visible recall() call may be perfectly grounded in that injected memory; do not "
     "flag it as invented unless it contradicts the conversation. This injected context ALSO "
     "carries the club's top-line totals and a per-member picks/meetings-hosted line (e.g. "
-    "\"Tom: 32 picks, 35 hosted\"), so Oliver stating a member's pick or host count, or the "
+    '"Tom: 32 picks, 35 hosted"), so Oliver stating a member\'s pick or host count, or the '
     "club total, WITHOUT a visible tool call can be grounded in that cache — don't auto-flag "
     "those numbers as fabricated. (2) web_search is an Anthropic "
     "SERVER-SIDE tool whose calls do NOT appear in the tool trace above — so when Oliver leads "
@@ -239,7 +258,7 @@ JUDGE_SYSTEM = (
     "Oliver should ground CLUB facts (specific books, reviews, picker assignments, "
     "meeting dates) in tool output. For WORLD facts (an author's wider bibliography, "
     "public history) he may speak from general knowledge but must lead with an explicit "
-    "off-corpus marker (\"outside our reading list…\" / \"not in our corpus, but…\"). "
+    'off-corpus marker ("outside our reading list…" / "not in our corpus, but…"). '
     "Persona: warm, opinionated, brief (≤3 sentences usually), no markdown headings, "
     "no help-desk tone, no sign-offs. Italics around book titles in Discord are fine. "
     "Identity/memory: should use linked member identity when supplied, remember durable "
@@ -249,6 +268,7 @@ JUDGE_SYSTEM = (
 
 def _judge_system() -> str:
     return JUDGE_SYSTEM + "\n\n" + _fixture_facts()
+
 
 JUDGE_USER = """Evaluate this interaction.
 
@@ -288,7 +308,7 @@ def judge_interaction(question, speaker, tools, reply, prior_turns=None):
         context_field = ""
     tools_block = (
         "\n".join(
-            f"  {i+1}. {t['tool']}({json.dumps(t['input'], ensure_ascii=False)}) →\n"
+            f"  {i + 1}. {t['tool']}({json.dumps(t['input'], ensure_ascii=False)}) →\n"
             f"     {t['output_snippet'][:8000]}"
             for i, t in enumerate(tools)
         )
@@ -298,10 +318,20 @@ def judge_interaction(question, speaker, tools, reply, prior_turns=None):
         model=MODEL,
         max_tokens=1024,
         system=_judge_system(),
-        messages=[{"role": "user", "content": JUDGE_USER.format(
-            speaker=speaker, question=question, prior_block=prior_block,
-            tools_block=tools_block, response=reply,
-            context_axis=context_axis, context_field=context_field)}],
+        messages=[
+            {
+                "role": "user",
+                "content": JUDGE_USER.format(
+                    speaker=speaker,
+                    question=question,
+                    prior_block=prior_block,
+                    tools_block=tools_block,
+                    response=reply,
+                    context_axis=context_axis,
+                    context_field=context_field,
+                ),
+            }
+        ],
     )
     text = "".join(b.text for b in msg.content if getattr(b, "type", None) == "text")
     return _parse_json(text)
@@ -311,7 +341,9 @@ def judge_interaction(question, speaker, tools, reply, prior_turns=None):
 def run_single(q: dict, channel_id: str) -> dict:
     with trace_dispatch() as tools:
         reply = oliver_mod.answer(
-            q["question"], channel_id=channel_id, speaker=q["speaker"],
+            q["question"],
+            channel_id=channel_id,
+            speaker=q["speaker"],
             speaker_user_id=FAKE_MEMBER_IDS.get(q["speaker"]),
         )
     return {**q, "tools": tools, "reply": reply}
@@ -322,11 +354,12 @@ def run_multi(conv: dict, channel_id: str) -> list[dict]:
     for turn in conv["turns"]:
         with trace_dispatch() as tools:
             reply = oliver_mod.answer(
-                turn, channel_id=channel_id, speaker=conv["speaker"],
+                turn,
+                channel_id=channel_id,
+                speaker=conv["speaker"],
                 speaker_user_id=FAKE_MEMBER_IDS.get(conv["speaker"]),
             )
-        out.append({"question": turn, "speaker": conv["speaker"],
-                    "tools": tools, "reply": reply})
+        out.append({"question": turn, "speaker": conv["speaker"], "tools": tools, "reply": reply})
     return out
 
 
@@ -356,7 +389,7 @@ def fmt_issues(j):
 
 def fmt_single(num, r, j):
     return (
-        f"\n#### S{num} · _{r['category']}_ · **{r['speaker']}**: \"{r['question']}\"\n\n"
+        f'\n#### S{num} · _{r["category"]}_ · **{r["speaker"]}**: "{r["question"]}"\n\n'
         f"**Tools:**\n{fmt_tools(r['tools'])}\n\n"
         f"**Response:** {r['reply']}\n\n"
         f"**Scores:** `{fmt_scores(j)}` — {j['notes']}\n\n"
@@ -367,7 +400,7 @@ def fmt_single(num, r, j):
 def fmt_multi(num, conv, turns, judgments):
     lines = [f"\n#### M{num} · _{conv['category']}_ · **{conv['speaker']}** ({len(turns)} turns)\n"]
     for i, (t, j) in enumerate(zip(turns, judgments, strict=True), 1):
-        lines.append(f"**T{i}** \"{t['question']}\"")
+        lines.append(f'**T{i}** "{t["question"]}"')
         lines.append(f"_Tools:_ {fmt_tools(t['tools'])}")
         lines.append(f"_Response:_ {t['reply']}")
         lines.append(f"_Scores:_ `{fmt_scores(j)}` — {j['notes']}")
@@ -383,12 +416,16 @@ def round_summary(singles, multis):
     for _, _, jl in multis:
         all_j.extend(jl)
     n = len(all_j)
+
     def avg(k):
         vals = [j[k] for j in all_j if j.get(k) is not None]
         return round(sum(vals) / len(vals), 2) if vals else 0
+
     fails = sum(
-        1 for j in all_j
-        if min(j["tool_choice"], j["accuracy"], j["relevance"], j["tone"], j["identity_memory"]) <= 3
+        1
+        for j in all_j
+        if min(j["tool_choice"], j["accuracy"], j["relevance"], j["tone"], j["identity_memory"])
+        <= 3
     )
     crit = sum(len(j.get("critical_issues") or []) for j in all_j)
     avg_ctx = avg("context_retention")
@@ -408,6 +445,7 @@ def round_summary(singles, multis):
 def _prepare_fixture() -> None:
     """Build one coherent, public-safe DB + corpus snapshot for this eval process."""
     from agent import database
+
     database.initialize()
     seed_sql = (pathlib.Path(__file__).parent / "fixtures" / "club_seed.sql").read_text()
     with db.connect() as conn:
@@ -435,7 +473,7 @@ def main() -> None:
     qs = generate_questions(args.round, args.n_single, args.n_multi)
     qs["single"] = GOLDEN_SINGLE + qs["single"]
     qs["multi"] = GOLDEN_MULTI + qs["multi"]
-    print(f"  questions generated in {time.time()-t0:.1f}s")
+    print(f"  questions generated in {time.time() - t0:.1f}s")
 
     print("Running single-turns…")
     singles = []
@@ -454,7 +492,9 @@ def main() -> None:
         judgments = []
         prior = []
         for t in turns:
-            j = judge_interaction(t["question"], t["speaker"], t["tools"], t["reply"], prior_turns=prior)
+            j = judge_interaction(
+                t["question"], t["speaker"], t["tools"], t["reply"], prior_turns=prior
+            )
             judgments.append(j)
             prior.append({"question": t["question"], "reply": t["reply"]})
         multis.append((conv, turns, judgments))
@@ -485,7 +525,7 @@ def main() -> None:
         )
     with LOG_PATH.open("a") as f:
         f.write("\n".join(parts))
-    print(f"\nAppended round {args.round} to {LOG_PATH} ({time.time()-t0:.1f}s total)")
+    print(f"\nAppended round {args.round} to {LOG_PATH} ({time.time() - t0:.1f}s total)")
 
 
 if __name__ == "__main__":

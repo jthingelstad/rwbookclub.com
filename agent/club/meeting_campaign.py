@@ -33,13 +33,13 @@ def snapshot() -> dict:
     meeting_id = meeting["meetingId"]
     status_rows = {
         r["member_id"]: r
-        for r in (db.meeting_member_status_for_meeting(meeting_id) if meeting_id is not None else [])
+        for r in (
+            db.meeting_member_status_for_meeting(meeting_id) if meeting_id is not None else []
+        )
     }
     discord_linked = {r["member_slug"] for r in identities.list_member_identities()}
     email_linked = {r["member_slug"] for r in identities.list_member_emails()}
-    members_by_slug = {
-        m["slug"]: m for m in corpus_read.human_current_members()
-    }
+    members_by_slug = {m["slug"]: m for m in corpus_read.human_current_members()}
     needs_roll_call = []
     needs_reading = []
     member_rows = []
@@ -189,12 +189,21 @@ def outreach_plan(data: dict | None = None, *, today: date | None = None) -> lis
         kind = _outreach_kind(member)
         if kind is None:
             continue
-        asks = int((member.get("attendanceAsks") if kind == "attendance"
-                    else member.get("readingCheckinCount")) or 0)
+        asks = int(
+            (
+                member.get("attendanceAsks")
+                if kind == "attendance"
+                else member.get("readingCheckinCount")
+            )
+            or 0
+        )
         # "Responded to this kind" = they've answered roll call / reported any reading. A member who
         # never responds is given up on after GIVE_UP_AFTER_ASKS, so we don't pester the silent.
-        responded = (member.get("attendance") != "pending") if kind == "attendance" \
+        responded = (
+            (member.get("attendance") != "pending")
+            if kind == "attendance"
             else (member.get("reading") != "unknown")
+        )
         if not responded and asks >= GIVE_UP_AFTER_ASKS:
             continue
         since = _age_days(member.get("lastAskedAt"), today=today)
@@ -203,62 +212,80 @@ def outreach_plan(data: dict | None = None, *, today: date | None = None) -> lis
         # Force only the first contact (never asked AND never responded) — the kickoff. Everything
         # after that is Oliver's judgment, so an already-engaged member is never force-pinged.
         must_reach = since is None and not responded
-        plan.append({
-            "memberSlug": member["memberSlug"],
-            "memberId": member["memberId"],
-            "member": member["member"],
-            "kind": kind,
-            "attendance": member["attendance"],
-            "reading": member["reading"],
-            "readingProgress": member.get("readingProgress"),
-            "daysSinceLastAsk": since,
-            "asksSoFar": asks,
-            "daysUntilMeeting": days,
-            "mustReach": must_reach,
-        })
+        plan.append(
+            {
+                "memberSlug": member["memberSlug"],
+                "memberId": member["memberId"],
+                "member": member["member"],
+                "kind": kind,
+                "attendance": member["attendance"],
+                "reading": member["reading"],
+                "readingProgress": member.get("readingProgress"),
+                "daysSinceLastAsk": since,
+                "asksSoFar": asks,
+                "daysUntilMeeting": days,
+                "mustReach": must_reach,
+            }
+        )
     return plan
 
 
-def _recommended_actions(*, meeting_status: dict, needs_roll_call: list[dict],
-                         needs_reading: list[dict], ready: bool) -> list[dict]:
+def _recommended_actions(
+    *, meeting_status: dict, needs_roll_call: list[dict], needs_reading: list[dict], ready: bool
+) -> list[dict]:
     if ready:
-        return [{"kind": "ready", "label": "No action needed; quorum, picker, and reading status are in shape."}]
+        return [
+            {
+                "kind": "ready",
+                "label": "No action needed; quorum, picker, and reading status are in shape.",
+            }
+        ]
     actions = []
     if "quorum_impossible" in meeting_status["risks"]:
-        actions.append({
-            "kind": "admin_attention",
-            "label": "Quorum is impossible from current replies; humans need to decide whether to adjust.",
-        })
+        actions.append(
+            {
+                "kind": "admin_attention",
+                "label": "Quorum is impossible from current replies; humans need to decide whether to adjust.",
+            }
+        )
     elif not meeting_status["hasQuorum"] and needs_roll_call:
         names = ", ".join(m["member"] for m in needs_roll_call)
-        actions.append({
-            "kind": "roll_call",
-            "label": f"Ask pending members for roll call: {names}.",
-            "members": [m["memberSlug"] for m in needs_roll_call],
-        })
+        actions.append(
+            {
+                "kind": "roll_call",
+                "label": f"Ask pending members for roll call: {names}.",
+                "members": [m["memberSlug"] for m in needs_roll_call],
+            }
+        )
 
     if "picker_unavailable" in meeting_status["risks"]:
-        actions.append({
-            "kind": "admin_attention",
-            "label": "The picker cannot attend; humans need to decide how to handle the meeting.",
-        })
+        actions.append(
+            {
+                "kind": "admin_attention",
+                "label": "The picker cannot attend; humans need to decide how to handle the meeting.",
+            }
+        )
     elif not meeting_status["pickerAvailable"]:
         picker_slugs = set(meeting_status["meeting"].get("pickerSlugs") or [])
         pickers = [m for m in meeting_status["attendance"] if m["memberSlug"] in picker_slugs]
         names = ", ".join(m["member"] for m in pickers) or "the picker"
-        actions.append({
-            "kind": "picker_roll_call",
-            "label": f"Confirm picker attendance with {names}.",
-            "members": [m["memberSlug"] for m in pickers],
-        })
+        actions.append(
+            {
+                "kind": "picker_roll_call",
+                "label": f"Confirm picker attendance with {names}.",
+                "members": [m["memberSlug"] for m in pickers],
+            }
+        )
 
     if needs_reading:
         names = ", ".join(m["member"] for m in needs_reading)
-        actions.append({
-            "kind": "reading_checkin",
-            "label": f"Ask attending members for reading progress: {names}.",
-            "members": [m["memberSlug"] for m in needs_reading],
-        })
+        actions.append(
+            {
+                "kind": "reading_checkin",
+                "label": f"Ask attending members for reading progress: {names}.",
+                "members": [m["memberSlug"] for m in needs_reading],
+            }
+        )
     return actions
 
 

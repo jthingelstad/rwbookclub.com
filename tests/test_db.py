@@ -86,19 +86,23 @@ class TestMemberIdentities:
 class TestFeedback:
     def test_response_log_and_lookup(self, fresh_db):
         db = fresh_db
-        db.log_response(message_id="abc", channel_id="ch1",
-                        speaker="Jamie", question="hi", reply="hello")
+        db.log_response(
+            message_id="abc", channel_id="ch1", speaker="Jamie", question="hi", reply="hello"
+        )
         assert db.is_oliver_message("abc")
         assert not db.is_oliver_message("xyz")
 
     def test_feedback_round_trip(self, fresh_db):
         db = fresh_db
-        db.log_response(message_id="msg1", channel_id="ch1",
-                        speaker="Jamie", question="q?", reply="a.")
-        db.add_feedback(message_id="msg1", channel_id="ch1",
-                        user_id="u1", user_name="Jamie", reaction="up")
-        db.add_feedback(message_id="msg1", channel_id="ch1",
-                        user_id="u2", user_name="Tom", reaction="down")
+        db.log_response(
+            message_id="msg1", channel_id="ch1", speaker="Jamie", question="q?", reply="a."
+        )
+        db.add_feedback(
+            message_id="msg1", channel_id="ch1", user_id="u1", user_name="Jamie", reaction="up"
+        )
+        db.add_feedback(
+            message_id="msg1", channel_id="ch1", user_id="u2", user_name="Tom", reaction="down"
+        )
         stats = db.feedback_stats()
         assert stats["up"] == 1
         assert stats["down"] == 1
@@ -112,8 +116,9 @@ class TestReminders:
     def test_due_then_marked(self, fresh_db):
         """T1.3 regression: reminders are queryable and can be marked fired."""
         db = fresh_db
-        rid = db.add_reminder("2020-01-01T00:00:00+00:00", "old reminder",
-                              channel_id="ch1", created_by="Jamie")
+        rid = db.add_reminder(
+            "2020-01-01T00:00:00+00:00", "old reminder", channel_id="ch1", created_by="Jamie"
+        )
         due = db.due_reminders()
         assert len(due) == 1
         assert due[0]["id"] == rid
@@ -141,11 +146,13 @@ class TestNotificationsDedup:
 class TestRollCall:
     def test_roll_call_and_attendance_round_trip(self, fresh_db):
         from agent import clubdb
+
         db = fresh_db
         mid = clubdb.meeting_id_for_book_slug("a-world-appears")
         jamie, tom = clubdb.lookup_member_id("jamie"), clubdb.lookup_member_id("tom")
         db.record_group_event(
-            mid, "roll_call_opened",
+            mid,
+            "roll_call_opened",
             detail={"channel_id": "ch1", "message_id": "msg1", "opened_by": "admin"},
         )
         row = db.current_roll_call(mid)
@@ -296,21 +303,33 @@ class TestMailArchive:
         """A message from an unlinked address is NULL-attributed until the address is linked
         and reattribute runs — proving member_identities is the single source the archive follows."""
         from agent.mail import mail_archive
+
         db = fresh_db
         msg = {
-            "message_id": "<guest1@example.test>", "thread_id": "x-gm-thrid:g1",
-            "source": "historical_import", "from_email": "newaddr@example.test",
-            "from_name": "Someone Unknown", "member_slug": identities.member_slug_for_email("newaddr@example.test"),
-            "subject": "hi", "subject_normalized": "hi", "sent_at": "2026-06-25T12:00:00+00:00",
-            "body_clean": "waterways and canals", "headers": {},
+            "message_id": "<guest1@example.test>",
+            "thread_id": "x-gm-thrid:g1",
+            "source": "historical_import",
+            "from_email": "newaddr@example.test",
+            "from_name": "Someone Unknown",
+            "member_slug": identities.member_slug_for_email("newaddr@example.test"),
+            "subject": "hi",
+            "subject_normalized": "hi",
+            "sent_at": "2026-06-25T12:00:00+00:00",
+            "body_clean": "waterways and canals",
+            "headers": {},
         }
         assert db.upsert_mail_message(msg)
-        assert db.mail_archive_counts()["attributed"] == 0       # nobody owns that address yet
-        identities.link_member_email("newaddr@example.test", "jamie")     # link it (auto-reattribute is in the command)
+        assert db.mail_archive_counts()["attributed"] == 0  # nobody owns that address yet
+        identities.link_member_email(
+            "newaddr@example.test", "jamie"
+        )  # link it (auto-reattribute is in the command)
         changed = mail_archive.reattribute_archive("newaddr@example.test")
         assert changed == 1
         assert db.mail_archive_counts()["attributed"] == 1
-        assert db.search_mail_archive("canals", member_slug="jamie")[0]["message_id"] == "<guest1@example.test>"
+        assert (
+            db.search_mail_archive("canals", member_slug="jamie")[0]["message_id"]
+            == "<guest1@example.test>"
+        )
 
 
 class TestSmsHandle:
@@ -321,6 +340,7 @@ class TestSmsHandle:
 
     def test_link_sms_rejects_junk(self, fresh_db):
         import pytest
+
         with pytest.raises(ValueError):
             identities.link_member_sms("123", "jamie")
 
@@ -328,6 +348,7 @@ class TestSmsHandle:
 class TestReadingStatus:
     def test_set_and_get_reading_status(self, fresh_db):
         from agent import clubdb
+
         db = fresh_db
         mid = clubdb.meeting_id_for_book_slug("a-world-appears")
         jamie = clubdb.lookup_member_id("jamie")

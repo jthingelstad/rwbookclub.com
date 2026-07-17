@@ -52,8 +52,9 @@ def stable_key(kind: str, payload: dict, explicit: str | None = None) -> str:
     return f"{kind}:content:{digest}"
 
 
-def enqueue(*, kind: str, payload: dict, idempotency_key: str | None = None,
-            max_attempts: int = 5) -> dict:
+def enqueue(
+    *, kind: str, payload: dict, idempotency_key: str | None = None, max_attempts: int = 5
+) -> dict:
     key = stable_key(kind, payload, idempotency_key)
     return db.enqueue_outbox(
         idempotency_key=key,
@@ -106,8 +107,9 @@ def _claim(row: dict, *, worker_id: str, now: datetime) -> dict:
     return claimed
 
 
-def _retry(outbox_id: int, worker_id: str, attempts: int, exc: BaseException,
-           *, retry_delay_seconds: int) -> None:
+def _retry(
+    outbox_id: int, worker_id: str, attempts: int, exc: BaseException, *, retry_delay_seconds: int
+) -> None:
     delay = min(retry_delay_seconds * (2 ** max(0, attempts - 1)), MAX_RETRY_DELAY_SECONDS)
     now = _now()
     db.mark_outbox_retry(
@@ -119,9 +121,13 @@ def _retry(outbox_id: int, worker_id: str, attempts: int, exc: BaseException,
     )
 
 
-def deliver_sync(row: dict, deliver: Callable[[], dict], *,
-                 retryable_errors: tuple[type[BaseException], ...] = (),
-                 retry_delay_seconds: int = 60) -> dict:
+def deliver_sync(
+    row: dict,
+    deliver: Callable[[], dict],
+    *,
+    retryable_errors: tuple[type[BaseException], ...] = (),
+    retry_delay_seconds: int = 60,
+) -> dict:
     existing = _existing_result(row)
     if existing is not None:
         return existing
@@ -135,8 +141,13 @@ def deliver_sync(row: dict, deliver: Callable[[], dict], *,
     try:
         result = deliver()
     except retryable_errors as exc:
-        _retry(claimed["id"], worker_id, claimed["attempts"], exc,
-               retry_delay_seconds=retry_delay_seconds)
+        _retry(
+            claimed["id"],
+            worker_id,
+            claimed["attempts"],
+            exc,
+            retry_delay_seconds=retry_delay_seconds,
+        )
         raise
     except BaseException as exc:
         db.mark_outbox_uncertain(
@@ -144,18 +155,20 @@ def deliver_sync(row: dict, deliver: Callable[[], dict], *,
         )
         raise
     encoded = canonical_payload(result or {})
-    if not db.mark_outbox_delivered(
-        claimed["id"], worker_id=worker_id, provider_ref_json=encoded
-    ):
+    if not db.mark_outbox_delivered(claimed["id"], worker_id=worker_id, provider_ref_json=encoded):
         raise DeliveryUncertain(
             f"provider returned but delivery receipt was not recorded for {claimed['idempotency_key']}"
         )
     return result or {}
 
 
-async def deliver_async(row: dict, deliver: Callable[[], Awaitable[dict]], *,
-                        retryable_errors: tuple[type[BaseException], ...] = (),
-                        retry_delay_seconds: int = 60) -> dict:
+async def deliver_async(
+    row: dict,
+    deliver: Callable[[], Awaitable[dict]],
+    *,
+    retryable_errors: tuple[type[BaseException], ...] = (),
+    retry_delay_seconds: int = 60,
+) -> dict:
     existing = _existing_result(row)
     if existing is not None:
         return existing
@@ -164,16 +177,18 @@ async def deliver_async(row: dict, deliver: Callable[[], Awaitable[dict]], *,
     claimed = await asyncio.to_thread(_claim, row, worker_id=worker_id, now=_now())
     if "_already_delivered" in claimed:
         return claimed["_already_delivered"]
-    marked = await asyncio.to_thread(
-        db.mark_outbox_delivering, claimed["id"], worker_id=worker_id
-    )
+    marked = await asyncio.to_thread(db.mark_outbox_delivering, claimed["id"], worker_id=worker_id)
     if not marked:
         raise DeliveryDeferred(f"lost outbox claim for {claimed['idempotency_key']}")
     try:
         result = await deliver()
     except retryable_errors as exc:
         await asyncio.to_thread(
-            _retry, claimed["id"], worker_id, claimed["attempts"], exc,
+            _retry,
+            claimed["id"],
+            worker_id,
+            claimed["attempts"],
+            exc,
             retry_delay_seconds=retry_delay_seconds,
         )
         raise

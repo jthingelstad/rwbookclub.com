@@ -6,11 +6,25 @@ from agent import corpus_read as cr
 from agent import db, identities
 from agent.tool_handlers.context import RequestContext
 
-NAMES = frozenset({
-    "find_books", "search_books", "get_book", "related_books", "compare_books",
-    "review_summary", "member_history", "upcoming_meetings", "get_author", "club_lists",
-    "club_stats", "identity_status", "recent_feedback", "propose_action", "open_proposals",
-})
+NAMES = frozenset(
+    {
+        "find_books",
+        "search_books",
+        "get_book",
+        "related_books",
+        "compare_books",
+        "review_summary",
+        "member_history",
+        "upcoming_meetings",
+        "get_author",
+        "club_lists",
+        "club_stats",
+        "identity_status",
+        "recent_feedback",
+        "propose_action",
+        "open_proposals",
+    }
+)
 
 
 def handle(name: str, tool_input: dict, request: RequestContext):
@@ -64,11 +78,13 @@ def handle(name: str, tool_input: dict, request: RequestContext):
             "websiteLinkedCurrentMembers": sorted(website_linked),
             "missingCurrentMembers": [
                 {"slug": member["slug"], "name": member.get("name")}
-                for member in current if member["slug"] not in linked
+                for member in current
+                if member["slug"] not in linked
             ],
             "missingEmailCurrentMembers": [
                 {"slug": member["slug"], "name": member.get("name")}
-                for member in current if member["slug"] not in email_linked
+                for member in current
+                if member["slug"] not in email_linked
             ],
         }
     if name == "recent_feedback":
@@ -86,4 +102,3 @@ def handle(name: str, tool_input: dict, request: RequestContext):
         limit = max(1, min(int(tool_input.get("limit", 10)), 10))
         return db.list_proposals(limit=limit)
     raise KeyError(name)
-

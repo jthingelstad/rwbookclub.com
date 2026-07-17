@@ -54,6 +54,7 @@ _FM = re.compile(r"^---\n(.*?)\n---\n?(.*)$", re.S)
 
 def _corpus_reviews() -> list[dict]:
     import yaml
+
     out = []
     for p in sorted((DATA_DIR / "reviews").glob("*.md")):
         m = _FM.match(p.read_text())
@@ -108,17 +109,17 @@ def run_import(*, write: bool = True) -> dict:
     at = _build_airtable_maps()
     warnings: list[str] = []
 
-    members = _corpus_json("members")          # slug -> {name, isCurrent, websites[]}
-    authors = _corpus_json("authors")          # slug -> {name, bio?}
-    books = _corpus_json("books")              # slug -> full book record
-    meetings = _corpus_json("meetings")        # stem -> meeting record (has meetingId)
-    reviews = _corpus_reviews()                # list of frontmatter dicts (+ _body)
+    members = _corpus_json("members")  # slug -> {name, isCurrent, websites[]}
+    authors = _corpus_json("authors")  # slug -> {name, bio?}
+    books = _corpus_json("books")  # slug -> full book record
+    meetings = _corpus_json("meetings")  # stem -> meeting record (has meetingId)
+    reviews = _corpus_reviews()  # list of frontmatter dicts (+ _body)
 
     # Resolve integer ids for members/authors (corpus has none) via Airtable name maps.
     member_id_for_slug: dict[str, int] = {}
     member_rows = []
-    email_identity_rows = []     # member emails -> member_identities(surface='email')
-    website_identity_rows = []   # member websites -> member_identities(surface='website')
+    email_identity_rows = []  # member emails -> member_identities(surface='email')
+    website_identity_rows = []  # member websites -> member_identities(surface='website')
     for slug, m in members.items():
         mid = at["member_name_to_id"].get(m["name"])
         if mid is None:
@@ -128,11 +129,15 @@ def run_import(*, write: bool = True) -> dict:
         member_rows.append((mid, slug, m["name"], 1 if m.get("isCurrent") else 0))
         contact = at["member_contact"].get(mid, {})
         if contact.get("email"):
-            email_identity_rows.append(("email", contact["email"].strip().lower(), mid, 1, "airtable_import"))
+            email_identity_rows.append(
+                ("email", contact["email"].strip().lower(), mid, 1, "airtable_import")
+            )
         # websites now live in member_identities (tolerate the legacy single-string corpus too)
         member_websites = m.get("websites") or ([m["website"]] if m.get("website") else [])
         for i, url in enumerate(member_websites):
-            website_identity_rows.append(("website", url, mid, 1 if i == 0 else 0, "airtable_import"))
+            website_identity_rows.append(
+                ("website", url, mid, 1 if i == 0 else 0, "airtable_import")
+            )
 
     author_id_for_slug: dict[str, int] = {}
     author_rows = []
@@ -145,8 +150,11 @@ def run_import(*, write: bool = True) -> dict:
         author_rows.append((aid, slug, a["name"], a.get("bio")))
 
     # name -> author id (for book.authors which are names, not slugs)
-    author_id_for_name = {a["name"]: author_id_for_slug.get(slug)
-                          for slug, a in authors.items() if slug in author_id_for_slug}
+    author_id_for_name = {
+        a["name"]: author_id_for_slug.get(slug)
+        for slug, a in authors.items()
+        if slug in author_id_for_slug
+    }
 
     book_id_for_slug: dict[str, int] = {}
     book_rows = []
@@ -156,10 +164,22 @@ def run_import(*, write: bool = True) -> dict:
         bid = b["bookId"]
         book_id_for_slug[slug] = bid
         subjects_json = json.dumps(b["subjects"], ensure_ascii=False) if "subjects" in b else None
-        book_rows.append((bid, slug, b["title"], b.get("subtitle"), b.get("topic"),
-                          1 if b.get("fiction") else 0, b.get("publicationYear"),
-                          b.get("pageCount"), b.get("isbn13"), b.get("olKey"),
-                          b.get("synopsis"), subjects_json))
+        book_rows.append(
+            (
+                bid,
+                slug,
+                b["title"],
+                b.get("subtitle"),
+                b.get("topic"),
+                1 if b.get("fiction") else 0,
+                b.get("publicationYear"),
+                b.get("pageCount"),
+                b.get("isbn13"),
+                b.get("olKey"),
+                b.get("synopsis"),
+                subjects_json,
+            )
+        )
         for i, name in enumerate(b.get("authors") or []):
             aid = author_id_for_name.get(name)
             if aid is None:
@@ -173,19 +193,27 @@ def run_import(*, write: bool = True) -> dict:
             if mid is None:
                 warnings.append(f"book '{slug}' picker slug '{ps}' did not resolve to a member id")
                 continue
-            if mid in seen_pickers:   # de-dupe the ['dan','dan'] quirk
+            if mid in seen_pickers:  # de-dupe the ['dan','dan'] quirk
                 continue
             seen_pickers.add(mid)
-            book_picker_rows.append((bid, mid, ordinal)); ordinal += 1
+            book_picker_rows.append((bid, mid, ordinal))
+            ordinal += 1
 
     meeting_rows = []
     meeting_book_rows = []
     meeting_host_rows = []
     for stem, mt in meetings.items():
         mid = mt["meetingId"]
-        meeting_rows.append((mid, mt.get("date"), mt.get("startTime"),
-                             json.dumps(mt.get("type") or [], ensure_ascii=False),
-                             mt.get("location"), mt.get("notes")))
+        meeting_rows.append(
+            (
+                mid,
+                mt.get("date"),
+                mt.get("startTime"),
+                json.dumps(mt.get("type") or [], ensure_ascii=False),
+                mt.get("location"),
+                mt.get("notes"),
+            )
+        )
         for i, bslug in enumerate(mt.get("books") or []):
             bid = book_id_for_slug.get(bslug)
             if bid is None:
@@ -200,24 +228,40 @@ def run_import(*, write: bool = True) -> dict:
         rec = r.get("id")
         rid = at["review_rec_to_id"].get(rec)
         if rid is None:
-            warnings.append(f"review {rec} (book={r.get('book')}) not in Airtable — dropped (Oliver test write)")
+            warnings.append(
+                f"review {rec} (book={r.get('book')}) not in Airtable — dropped (Oliver test write)"
+            )
             continue
         bid = book_id_for_slug.get(r.get("book"))
         mid = member_id_for_slug.get(r.get("member"))
         if bid is None or mid is None:
             warnings.append(f"review {rec} book/member slug did not resolve — skipped")
             continue
-        review_rows.append((rid, bid, mid, r.get("rating"),
-                            1 if r.get("dnf") else 0, r.get("discussionQuality"),
-                            1 if r.get("wouldRecommend") else 0, r.get("favoriteQuote"),
-                            r.get("_body") or None, r.get("createdAt")))
+        review_rows.append(
+            (
+                rid,
+                bid,
+                mid,
+                r.get("rating"),
+                1 if r.get("dnf") else 0,
+                r.get("discussionQuality"),
+                1 if r.get("wouldRecommend") else 0,
+                r.get("favoriteQuote"),
+                r.get("_body") or None,
+                r.get("createdAt"),
+            )
+        )
 
     result = {
         "rows": {
-            "club_members": len(member_rows), "club_authors": len(author_rows),
-            "club_books": len(book_rows), "club_book_authors": len(book_author_rows),
-            "club_book_pickers": len(book_picker_rows), "club_meetings": len(meeting_rows),
-            "club_meeting_books": len(meeting_book_rows), "club_meeting_hosts": len(meeting_host_rows),
+            "club_members": len(member_rows),
+            "club_authors": len(author_rows),
+            "club_books": len(book_rows),
+            "club_book_authors": len(book_author_rows),
+            "club_book_pickers": len(book_picker_rows),
+            "club_meetings": len(meeting_rows),
+            "club_meeting_books": len(meeting_book_rows),
+            "club_meeting_hosts": len(meeting_host_rows),
             "club_reviews": len(review_rows),
         },
         "warnings": warnings,
@@ -226,21 +270,48 @@ def run_import(*, write: bool = True) -> dict:
         return result
 
     with db.connect() as conn:
-        conn.execute("DELETE FROM member_identities WHERE surface IN ('email', 'website')")  # FK to club_members
+        conn.execute(
+            "DELETE FROM member_identities WHERE surface IN ('email', 'website')"
+        )  # FK to club_members
         for t in reversed(clubdb.CLUB_TABLES):
             conn.execute(f"DELETE FROM {t}")
-        conn.executemany("INSERT INTO club_members(id,slug,name,is_current) VALUES (?,?,?,?)", member_rows)
+        conn.executemany(
+            "INSERT INTO club_members(id,slug,name,is_current) VALUES (?,?,?,?)", member_rows
+        )
         conn.executemany(
             "INSERT OR REPLACE INTO member_identities(surface,identifier,member_id,is_primary,linked_by) "
-            "VALUES (?,?,?,?,?)", email_identity_rows + website_identity_rows)
+            "VALUES (?,?,?,?,?)",
+            email_identity_rows + website_identity_rows,
+        )
         conn.executemany("INSERT INTO club_authors(id,slug,name,bio) VALUES (?,?,?,?)", author_rows)
-        conn.executemany("INSERT INTO club_books(id,slug,title,subtitle,topic,fiction,publication_year,page_count,isbn13,ol_key,synopsis,subjects_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", book_rows)
-        conn.executemany("INSERT INTO club_book_authors(book_id,author_id,ordinal) VALUES (?,?,?)", book_author_rows)
-        conn.executemany("INSERT INTO club_book_pickers(book_id,member_id,ordinal) VALUES (?,?,?)", book_picker_rows)
-        conn.executemany("INSERT INTO club_meetings(id,date,start_time,type_json,location,notes) VALUES (?,?,?,?,?,?)", meeting_rows)
-        conn.executemany("INSERT INTO club_meeting_books(meeting_id,book_id,ordinal) VALUES (?,?,?)", meeting_book_rows)
-        conn.executemany("INSERT INTO club_meeting_hosts(meeting_id,member_id,ordinal) VALUES (?,?,?)", meeting_host_rows)
-        conn.executemany("INSERT INTO club_reviews(id,book_id,member_id,rating,dnf,discussion_quality,would_recommend,favorite_quote,body,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)", review_rows)
+        conn.executemany(
+            "INSERT INTO club_books(id,slug,title,subtitle,topic,fiction,publication_year,page_count,isbn13,ol_key,synopsis,subjects_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            book_rows,
+        )
+        conn.executemany(
+            "INSERT INTO club_book_authors(book_id,author_id,ordinal) VALUES (?,?,?)",
+            book_author_rows,
+        )
+        conn.executemany(
+            "INSERT INTO club_book_pickers(book_id,member_id,ordinal) VALUES (?,?,?)",
+            book_picker_rows,
+        )
+        conn.executemany(
+            "INSERT INTO club_meetings(id,date,start_time,type_json,location,notes) VALUES (?,?,?,?,?,?)",
+            meeting_rows,
+        )
+        conn.executemany(
+            "INSERT INTO club_meeting_books(meeting_id,book_id,ordinal) VALUES (?,?,?)",
+            meeting_book_rows,
+        )
+        conn.executemany(
+            "INSERT INTO club_meeting_hosts(meeting_id,member_id,ordinal) VALUES (?,?,?)",
+            meeting_host_rows,
+        )
+        conn.executemany(
+            "INSERT INTO club_reviews(id,book_id,member_id,rating,dnf,discussion_quality,would_recommend,favorite_quote,body,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            review_rows,
+        )
     return result
 
 

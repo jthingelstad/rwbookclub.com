@@ -41,8 +41,7 @@ def _render_markdown(text: str) -> str:
     hard <br>; standard markdown collapses it to a space instead. Paragraphs come from blank lines,
     and the signature carries its own HTML (see text_to_html), so no line-break extension is needed.
     """
-    return _markdown.markdown(
-        text or "", extensions=["sane_lists", _EscapeRawHtmlExtension()])
+    return _markdown.markdown(text or "", extensions=["sane_lists", _EscapeRawHtmlExtension()])
 
 
 # Email CSS. Delivered as a <style> block (well-supported in Apple Mail, Gmail, and
@@ -78,9 +77,9 @@ def text_to_html(text: str, *, signature_html: str | None = None) -> str:
     its formatting/links instead of depending on how the body is rendered."""
     body = _render_markdown(text) or "<p></p>"
     return (
-        "<!doctype html><html><head><meta charset=\"utf-8\">"
-        "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+        '<!doctype html><html><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width,initial-scale=1">'
         f"<style>{_EMAIL_CSS}</style></head>"
-        "<body><div class=\"oliver-email\">"
+        '<body><div class="oliver-email">'
         f"{body}{signature_html or ''}</div></body></html>"
     )

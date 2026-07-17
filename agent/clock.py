@@ -108,7 +108,7 @@ def _hh_mm(start_time: str | None) -> tuple[int, int]:
     if start_time:
         try:
             return int(str(start_time)[:2]), int(str(start_time)[3:5])
-        except (ValueError, IndexError):
+        except ValueError, IndexError:
             pass
     return DEFAULT_MEETING_HOUR, 0
 
@@ -118,7 +118,7 @@ def meeting_start(meeting_date: str | None, start_time: str | None = None) -> da
     default evening hour. None if the date can't be parsed."""
     try:
         d = date.fromisoformat(str(meeting_date)[:10])
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return None
     hour, minute = _hh_mm(start_time)
     return datetime(d.year, d.month, d.day, hour, minute, tzinfo=tz())
@@ -131,8 +131,9 @@ def meeting_end(meeting_date: str | None, start_time: str | None = None) -> date
     return start + MEETING_ROLL_BUFFER if start else None
 
 
-def is_upcoming(meeting_date: str | None, start_time: str | None = None, *,
-                now: datetime | None = None) -> bool:
+def is_upcoming(
+    meeting_date: str | None, start_time: str | None = None, *, now: datetime | None = None
+) -> bool:
     """True if the meeting has not yet passed — i.e. now is before start + buffer. This is the
     single definition of "upcoming vs past" for a meeting (there is no placeholder flag)."""
     end = meeting_end(meeting_date, start_time)

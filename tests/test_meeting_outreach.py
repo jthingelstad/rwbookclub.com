@@ -15,6 +15,7 @@ from agent.club import meeting_campaign, meeting_rules, outreach
 
 # ── oliver.decide_outreach ──────────────────────────────────────────────────
 
+
 def test_decide_outreach_reach(monkeypatch):
     monkeypatch.setattr(oliver, "complete", lambda *a, **k: "REACH")
     assert oliver.decide_outreach({"kind": "attendance", "member": "Tom"}) is True
@@ -28,6 +29,7 @@ def test_decide_outreach_wait(monkeypatch):
 def test_decide_outreach_fails_open_to_reach(monkeypatch):
     def boom(*a, **k):
         raise RuntimeError("api down")
+
     monkeypatch.setattr(oliver, "complete", boom)
     assert oliver.decide_outreach({"kind": "attendance", "member": "Tom"}) is True
 
@@ -39,6 +41,7 @@ def test_decide_outreach_ambiguous_defaults_to_reach(monkeypatch):
 
 # ── _run_meeting_outreach dispatch ──────────────────────────────────────────
 
+
 def _setup(fresh_db, monkeypatch, *, decide):
     """Seed two reachable members + a fixed plan; stub the LLM + the email send. Returns helpers."""
     db = fresh_db
@@ -48,21 +51,44 @@ def _setup(fresh_db, monkeypatch, *, decide):
     status = meeting_rules.meeting_status(meeting["meetingId"])
     jamie, tom = clubdb.lookup_member_id("jamie"), clubdb.lookup_member_id("tom")
     plan = [
-        {"memberSlug": "jamie", "memberId": jamie, "member": "Jamie", "kind": "attendance",
-         "mustReach": True, "attendance": "pending", "reading": "unknown",
-         "daysUntilMeeting": 8, "daysSinceLastAsk": None, "asksSoFar": 0, "readingProgress": None},
-        {"memberSlug": "tom", "memberId": tom, "member": "Tom", "kind": "reading",
-         "mustReach": False, "attendance": "yes", "reading": "behind",
-         "daysUntilMeeting": 8, "daysSinceLastAsk": 4, "asksSoFar": 1, "readingProgress": "halfway"},
+        {
+            "memberSlug": "jamie",
+            "memberId": jamie,
+            "member": "Jamie",
+            "kind": "attendance",
+            "mustReach": True,
+            "attendance": "pending",
+            "reading": "unknown",
+            "daysUntilMeeting": 8,
+            "daysSinceLastAsk": None,
+            "asksSoFar": 0,
+            "readingProgress": None,
+        },
+        {
+            "memberSlug": "tom",
+            "memberId": tom,
+            "member": "Tom",
+            "kind": "reading",
+            "mustReach": False,
+            "attendance": "yes",
+            "reading": "behind",
+            "daysUntilMeeting": 8,
+            "daysSinceLastAsk": 4,
+            "asksSoFar": 1,
+            "readingProgress": "halfway",
+        },
     ]
     consulted = []
     monkeypatch.setattr(meeting_campaign, "snapshot", lambda: {})
     monkeypatch.setattr(meeting_campaign, "outreach_plan", lambda data, *, today=None: plan)
-    monkeypatch.setattr(oliver, "decide_outreach", lambda c: consulted.append(c["memberSlug"]) or decide)
+    monkeypatch.setattr(
+        oliver, "decide_outreach", lambda c: consulted.append(c["memberSlug"]) or decide
+    )
     monkeypatch.setattr(oliver, "compose", lambda *a, **k: "Email body.")  # no real LLM
     sent = []
-    monkeypatch.setattr(outreach.outbound, "send",
-                        lambda **kw: sent.append(kw) or {"emailId": f"e{len(sent)}"})
+    monkeypatch.setattr(
+        outreach.outbound, "send", lambda **kw: sent.append(kw) or {"emailId": f"e{len(sent)}"}
+    )
     return db, meeting, status, jamie, tom, consulted, sent
 
 

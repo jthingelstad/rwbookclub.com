@@ -151,7 +151,7 @@ def _parsed_date(value: str | None) -> str | None:
         return None
     try:
         dt = email.utils.parsedate_to_datetime(value)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return None
     if dt is None:
         return None
@@ -208,13 +208,15 @@ def _body_parts(msg) -> tuple[str, str, list[dict]]:
                 size = len(payload)
             except Exception:
                 pass
-            attachments.append({
-                "contentType": content_type,
-                "filename": filename,
-                "contentId": _decode_header(part.get("Content-ID")) or None,
-                "disposition": disposition or None,
-                "sizeBytes": size,
-            })
+            attachments.append(
+                {
+                    "contentType": content_type,
+                    "filename": filename,
+                    "contentId": _decode_header(part.get("Content-ID")) or None,
+                    "disposition": disposition or None,
+                    "sizeBytes": size,
+                }
+            )
             continue
         if content_type == "text/plain":
             plain.append(_decode_part(part))
@@ -252,12 +254,14 @@ def _message_id_or_hash(msg, body_text: str) -> tuple[str, bool]:
     message_id = _decode_header(msg.get("Message-ID") or msg.get("Message-Id"))
     if message_id:
         return message_id, False
-    seed = "\n".join([
-        _decode_header(msg.get("Date")),
-        _decode_header(msg.get("From")),
-        _decode_header(msg.get("Subject")),
-        body_text,
-    ])
+    seed = "\n".join(
+        [
+            _decode_header(msg.get("Date")),
+            _decode_header(msg.get("From")),
+            _decode_header(msg.get("Subject")),
+            body_text,
+        ]
+    )
     return "sha256:" + hashlib.sha256(seed.encode("utf-8", "replace")).hexdigest(), True
 
 
@@ -284,9 +288,20 @@ def _list_id(msg, to_rows: list[dict], cc_rows: list[dict]) -> str | None:
 
 def _headers(msg) -> dict:
     keep = [
-        "Message-ID", "Message-Id", "Date", "From", "To", "Cc", "Reply-To",
-        "Subject", "X-GM-THRID", "X-GM-MSGID", "X-BeenThere", "References",
-        "In-Reply-To", "Content-Type",
+        "Message-ID",
+        "Message-Id",
+        "Date",
+        "From",
+        "To",
+        "Cc",
+        "Reply-To",
+        "Subject",
+        "X-GM-THRID",
+        "X-GM-MSGID",
+        "X-BeenThere",
+        "References",
+        "In-Reply-To",
+        "Content-Type",
     ]
     return {h: _decode_header(msg.get(h)) for h in keep if msg.get(h) is not None}
 
@@ -302,7 +317,11 @@ def normalized_from_mbox_message(msg, *, source_ref: str) -> tuple[dict, dict]:
     body_clean = clean_body(body_text)
     message_id, missing_message_id = _message_id_or_hash(msg, body_text)
     gmail_thread = _decode_header(msg.get("X-GM-THRID"))
-    thread_id = f"x-gm-thrid:{gmail_thread}" if gmail_thread else f"subject:{normalize_subject(msg.get('Subject'))}"
+    thread_id = (
+        f"x-gm-thrid:{gmail_thread}"
+        if gmail_thread
+        else f"subject:{normalize_subject(msg.get('Subject'))}"
+    )
     sent_at = _parsed_date(msg.get("Date"))
     member_slug = member_slug_for_sender(from_email, from_name)
     list_id = _list_id(msg, to_rows, cc_rows)
@@ -339,19 +358,26 @@ def normalized_from_mbox_message(msg, *, source_ref: str) -> tuple[dict, dict]:
     return normalized, stats
 
 
-def normalized_from_inbound_email(msg, *, is_mailing_list: bool,
-                                  member_slug: str | None = None) -> dict:
+def normalized_from_inbound_email(
+    msg, *, is_mailing_list: bool, member_slug: str | None = None
+) -> dict:
     to_rows = [{"name": None, "email": normalize_email(a)} for a in (msg.to or [])]
     cc_rows = [{"name": None, "email": normalize_email(a)} for a in (msg.cc or [])]
     reply_to_rows = [{"name": None, "email": normalize_email(a)} for a in (msg.reply_to or [])]
     message_id = msg.message_id or f"jmap:{msg.id}"
     list_id = config.BOOK_CLUB_MAILING_LIST_ADDRESS.lower() if is_mailing_list else None
     thread_id = (
-        f"jmap:{msg.thread_id}" if msg.thread_id
+        f"jmap:{msg.thread_id}"
+        if msg.thread_id
         else f"email:{list_id or normalize_email(msg.from_email)}:{normalize_subject(msg.subject)}"
     )
-    resolved_slug = member_slug if member_slug is not None else member_slug_for_sender(
-        msg.from_email, msg.from_name,
+    resolved_slug = (
+        member_slug
+        if member_slug is not None
+        else member_slug_for_sender(
+            msg.from_email,
+            msg.from_name,
+        )
     )
     return {
         "message_id": message_id,
@@ -384,16 +410,26 @@ def normalized_from_inbound_email(msg, *, is_mailing_list: bool,
 
 def archive_inbound_email(msg, *, is_mailing_list: bool, member_slug: str | None = None) -> bool:
     normalized = normalized_from_inbound_email(
-        msg, is_mailing_list=is_mailing_list, member_slug=member_slug,
+        msg,
+        is_mailing_list=is_mailing_list,
+        member_slug=member_slug,
     )
     inserted = db.upsert_mail_message(normalized)
     db.rebuild_mail_thread_stats()
     return inserted
 
 
-def normalized_from_outbound_email(in_reply_to, *, body: str, to_emails: list[str], subject: str,
-                                   member_slug: str | None, is_mailing_list: bool,
-                                   sent_email_id: str | None, sent_at: str) -> dict:
+def normalized_from_outbound_email(
+    in_reply_to,
+    *,
+    body: str,
+    to_emails: list[str],
+    subject: str,
+    member_slug: str | None,
+    is_mailing_list: bool,
+    sent_email_id: str | None,
+    sent_at: str,
+) -> dict:
     """Build a mail_messages row for one of Oliver's OWN sent replies, filed under the SAME
     thread_id as the inbound `in_reply_to` it answers — so `get_mail_thread` reads as a two-sided
     conversation and Oliver can recall what it sent. `member_slug` is the recipient's member for a
@@ -401,11 +437,14 @@ def normalized_from_outbound_email(in_reply_to, *, body: str, to_emails: list[st
     msg = in_reply_to
     list_id = config.BOOK_CLUB_MAILING_LIST_ADDRESS.lower() if is_mailing_list else None
     thread_id = (  # identical derivation to normalized_from_inbound_email → same thread
-        f"jmap:{msg.thread_id}" if msg.thread_id
+        f"jmap:{msg.thread_id}"
+        if msg.thread_id
         else f"email:{list_id or normalize_email(msg.from_email)}:{normalize_subject(msg.subject)}"
     )
     return {
-        "message_id": f"jmap-sent:{sent_email_id}" if sent_email_id else f"sent:{thread_id}:{sent_at}",
+        "message_id": f"jmap-sent:{sent_email_id}"
+        if sent_email_id
+        else f"sent:{thread_id}:{sent_at}",
         "thread_id": thread_id,
         "parent_message_id": msg.message_id,
         "source": "live_jmap_outbound",
@@ -430,16 +469,29 @@ def normalized_from_outbound_email(in_reply_to, *, body: str, to_emails: list[st
     }
 
 
-def archive_outbound_email(in_reply_to, *, body: str, to_emails: list[str], subject: str,
-                           member_slug: str | None, is_mailing_list: bool,
-                           sent_email_id: str | None) -> bool:
+def archive_outbound_email(
+    in_reply_to,
+    *,
+    body: str,
+    to_emails: list[str],
+    subject: str,
+    member_slug: str | None,
+    is_mailing_list: bool,
+    sent_email_id: str | None,
+) -> bool:
     """Archive one of Oliver's sent email replies so the thread record has both sides. Best-effort;
     the reply has already gone out. `sent_at` is a real send-time UTC instant (an audit timestamp,
     not a club-calendar date — so datetime.now is correct here, not agent.clock)."""
     sent_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     normalized = normalized_from_outbound_email(
-        in_reply_to, body=body, to_emails=to_emails, subject=subject, member_slug=member_slug,
-        is_mailing_list=is_mailing_list, sent_email_id=sent_email_id, sent_at=sent_at,
+        in_reply_to,
+        body=body,
+        to_emails=to_emails,
+        subject=subject,
+        member_slug=member_slug,
+        is_mailing_list=is_mailing_list,
+        sent_email_id=sent_email_id,
+        sent_at=sent_at,
     )
     inserted = db.upsert_mail_message(normalized)
     db.rebuild_mail_thread_stats()
@@ -454,7 +506,8 @@ def import_mbox(path: str | Path, *, write: bool = False) -> ImportReport:
     for idx, msg in enumerate(mailbox.mbox(path), start=1):
         report.total += 1
         normalized, stats = normalized_from_mbox_message(
-            msg, source_ref=f"{path}:{idx}",
+            msg,
+            source_ref=f"{path}:{idx}",
         )
         report.threads.add(normalized["thread_id"])
         sender = normalized.get("from_email") or "(missing)"
@@ -473,8 +526,12 @@ def import_mbox(path: str | Path, *, write: bool = False) -> ImportReport:
             report.attachments_by_type[attachment["contentType"] or "unknown"] += 1
         sent_at = normalized.get("sent_at")
         if sent_at:
-            report.first_sent_at = min(report.first_sent_at, sent_at) if report.first_sent_at else sent_at
-            report.last_sent_at = max(report.last_sent_at, sent_at) if report.last_sent_at else sent_at
+            report.first_sent_at = (
+                min(report.first_sent_at, sent_at) if report.first_sent_at else sent_at
+            )
+            report.last_sent_at = (
+                max(report.last_sent_at, sent_at) if report.last_sent_at else sent_at
+            )
         if write:
             inserted = db.upsert_mail_message(normalized)
             if inserted:
@@ -493,6 +550,7 @@ def import_mbox(path: str | Path, *, write: bool = False) -> ImportReport:
 
 def _main() -> None:
     from agent import database
+
     database.initialize()
     parser = argparse.ArgumentParser(description="Import Oliver mailing-list mbox archive.")
     parser.add_argument("mbox", help="Path to mbox file")

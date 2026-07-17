@@ -9,8 +9,15 @@ from sqlite3 import Connection
 Connect = Callable[[], AbstractContextManager[Connection]]
 
 
-def enqueue(connect: Connect, *, now: str, idempotency_key: str, kind: str,
-            payload_json: str, max_attempts: int = 5) -> dict:
+def enqueue(
+    connect: Connect,
+    *,
+    now: str,
+    idempotency_key: str,
+    kind: str,
+    payload_json: str,
+    max_attempts: int = 5,
+) -> dict:
     with connect() as conn:
         conn.execute(
             "INSERT OR IGNORE INTO outbox_messages "
@@ -45,17 +52,21 @@ def pending(connect: Connect, *, limit: int, now: str) -> list[dict]:
     return [dict(row) for row in rows]
 
 
-def claim(connect: Connect, idempotency_key: str, *, worker_id: str,
-          lease_expires_at: str, now: str) -> dict | None:
+def claim(
+    connect: Connect, idempotency_key: str, *, worker_id: str, lease_expires_at: str, now: str
+) -> dict | None:
     with connect() as conn:
         conn.execute("BEGIN IMMEDIATE")
         row = conn.execute(
             "SELECT * FROM outbox_messages WHERE idempotency_key = ?", (idempotency_key,)
         ).fetchone()
-        eligible = bool(row and (
-            (row["status"] in {"pending", "retry"} and row["available_at"] <= now)
-            or (row["status"] == "claimed" and (row["lease_expires_at"] or "") <= now)
-        ))
+        eligible = bool(
+            row
+            and (
+                (row["status"] in {"pending", "retry"} and row["available_at"] <= now)
+                or (row["status"] == "claimed" and (row["lease_expires_at"] or "") <= now)
+            )
+        )
         if not eligible:
             return None
         conn.execute(
@@ -79,8 +90,9 @@ def mark_delivering(connect: Connect, outbox_id: int, *, worker_id: str, now: st
     return cur.rowcount > 0
 
 
-def mark_delivered(connect: Connect, outbox_id: int, *, worker_id: str,
-                   provider_ref_json: str, now: str) -> bool:
+def mark_delivered(
+    connect: Connect, outbox_id: int, *, worker_id: str, provider_ref_json: str, now: str
+) -> bool:
     with connect() as conn:
         cur = conn.execute(
             "UPDATE outbox_messages SET status='delivered', provider_ref_json=?, delivered_at=?, "
@@ -91,8 +103,9 @@ def mark_delivered(connect: Connect, outbox_id: int, *, worker_id: str,
     return cur.rowcount > 0
 
 
-def mark_retry(connect: Connect, outbox_id: int, *, worker_id: str, error: str,
-               available_at: str, now: str) -> str | None:
+def mark_retry(
+    connect: Connect, outbox_id: int, *, worker_id: str, error: str, available_at: str, now: str
+) -> str | None:
     with connect() as conn:
         row = conn.execute(
             "SELECT attempts, max_attempts FROM outbox_messages "
@@ -110,8 +123,9 @@ def mark_retry(connect: Connect, outbox_id: int, *, worker_id: str, error: str,
     return status
 
 
-def mark_uncertain(connect: Connect, outbox_id: int, *, worker_id: str,
-                   error: str, now: str) -> bool:
+def mark_uncertain(
+    connect: Connect, outbox_id: int, *, worker_id: str, error: str, now: str
+) -> bool:
     with connect() as conn:
         cur = conn.execute(
             "UPDATE outbox_messages SET status='uncertain', last_error=?, updated_at=?, "

@@ -70,17 +70,24 @@ def run(*, force: bool = False) -> dict | None:
 
         # Retention: newest N by name (names embed the ISO date, so lexical == chronological).
         snapshots = sorted(target.glob("oliver-*.db.gz"), reverse=True)
-        for old in snapshots[config.OFFSITE_BACKUP_KEEP:]:
+        for old in snapshots[config.OFFSITE_BACKUP_KEEP :]:
             old.unlink(missing_ok=True)
 
         size = (target / name).stat().st_size
         db.set_job_state(JOB_KEY, {"date": today, "file": name, "bytes": size})
-        log.info("offsite backup written: %s (%.1f MB, keeping %d)",
-                 target / name, size / 1e6, min(len(snapshots), config.OFFSITE_BACKUP_KEEP))
+        log.info(
+            "offsite backup written: %s (%.1f MB, keeping %d)",
+            target / name,
+            size / 1e6,
+            min(len(snapshots), config.OFFSITE_BACKUP_KEEP),
+        )
         return {"file": name, "bytes": size}
     except OSError as e:
         # Loud failure: iCloud dir missing/unwritable must reach #oliver-log, not just the log file.
         log.exception("offsite backup failed")
-        db.add_activity("warning", "Offsite backup failed",
-                        f"Writing {name} to {target} raised {type(e).__name__}: {e}")
+        db.add_activity(
+            "warning",
+            "Offsite backup failed",
+            f"Writing {name} to {target} raised {type(e).__name__}: {e}",
+        )
         return None

@@ -1,13 +1,14 @@
 """Regression: meeting dates are now LOCAL 'YYYY-MM-DD' (naive). The scheduler computes
 days-until against an offset-AWARE `now`, so _parse must make a bare date tz-aware or the
 subtraction raises 'can't subtract offset-naive and offset-aware datetimes'."""
+
 from datetime import datetime, timezone
 
 from agent import scheduler
 
 
 def test_parse_makes_local_date_timezone_aware():
-    md = scheduler._parse("2026-06-30")           # local date, no time/zone
+    md = scheduler._parse("2026-06-30")  # local date, no time/zone
     assert md is not None and md.tzinfo is not None
     # arithmetic against an aware now must not raise
     days = (md - datetime.now(timezone.utc)).total_seconds() / 86400

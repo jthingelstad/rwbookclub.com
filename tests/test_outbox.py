@@ -39,7 +39,9 @@ def test_idempotency_key_rejects_a_different_payload(fresh_db):
 
 def test_retryable_failure_uses_backoff_then_delivers(fresh_db):
     row = outbox.enqueue(
-        kind="email", payload={"subject": "test"}, idempotency_key="email:retry",
+        kind="email",
+        payload={"subject": "test"},
+        idempotency_key="email:retry",
         max_attempts=3,
     )
     with pytest.raises(RetryableProviderError):
@@ -64,7 +66,9 @@ def test_retryable_failure_uses_backoff_then_delivers(fresh_db):
 
 def test_retry_exhaustion_becomes_terminal(fresh_db):
     row = outbox.enqueue(
-        kind="email", payload={"subject": "test"}, idempotency_key="email:dead",
+        kind="email",
+        payload={"subject": "test"},
+        idempotency_key="email:dead",
         max_attempts=1,
     )
     with pytest.raises(RetryableProviderError):
@@ -79,11 +83,14 @@ def test_retry_exhaustion_becomes_terminal(fresh_db):
 
 
 def test_expired_pre_send_claim_is_safe_to_retry(fresh_db):
-    row = outbox.enqueue(kind="discord", payload={"content": "x"},
-                         idempotency_key="discord:crash-before")
+    row = outbox.enqueue(
+        kind="discord", payload={"content": "x"}, idempotency_key="discord:crash-before"
+    )
     claimed = fresh_db.claim_outbox(
-        row["idempotency_key"], worker_id="dead-worker",
-        now=_time(1), lease_expires_at=_time(-5),
+        row["idempotency_key"],
+        worker_id="dead-worker",
+        now=_time(1),
+        lease_expires_at=_time(-5),
     )
     assert claimed and claimed["status"] == "claimed"
     assert fresh_db.recover_expired_outbox(now=_time())["retry"] == 1
@@ -94,11 +101,14 @@ def test_expired_pre_send_claim_is_safe_to_retry(fresh_db):
 
 
 def test_expired_in_provider_attempt_is_quarantined_not_resent(fresh_db):
-    row = outbox.enqueue(kind="email", payload={"subject": "x"},
-                         idempotency_key="email:crash-after")
+    row = outbox.enqueue(
+        kind="email", payload={"subject": "x"}, idempotency_key="email:crash-after"
+    )
     claimed = fresh_db.claim_outbox(
-        row["idempotency_key"], worker_id="dead-worker",
-        now=_time(1), lease_expires_at=_time(-5),
+        row["idempotency_key"],
+        worker_id="dead-worker",
+        now=_time(1),
+        lease_expires_at=_time(-5),
     )
     assert fresh_db.mark_outbox_delivering(claimed["id"], worker_id="dead-worker")
     assert fresh_db.recover_expired_outbox(now=_time())["uncertain"] == 1

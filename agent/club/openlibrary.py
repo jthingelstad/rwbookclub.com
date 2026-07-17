@@ -63,8 +63,11 @@ def _by_title(title: str) -> dict | None:
     try:
         r = requests.get(
             f"{OL}/search.json",
-            params={"title": title, "limit": 1,
-                    "fields": "key,title,author_name,first_publish_year,isbn,number_of_pages_median"},
+            params={
+                "title": title,
+                "limit": 1,
+                "fields": "key,title,author_name,first_publish_year,isbn,number_of_pages_median",
+            },
             timeout=20,
         )
         docs = (r.json().get("docs") or []) if r.ok else []

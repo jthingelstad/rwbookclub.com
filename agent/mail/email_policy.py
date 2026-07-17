@@ -65,8 +65,7 @@ def known_member_slug_for_display_name(name: str | None) -> str | None:
         return member.get("slug")
     first_name = cleaned.split(" ", 1)[0]
     matches = [
-        m for m in cr.members()
-        if (m.get("name") or "").strip().lower() == first_name.lower()
+        m for m in cr.members() if (m.get("name") or "").strip().lower() == first_name.lower()
     ]
     if len(matches) == 1:
         return matches[0].get("slug")
@@ -125,7 +124,9 @@ def inbound_decision(msg) -> InboundDecision:
     return InboundDecision(allowed=False, reason="sender_not_allowed")
 
 
-def validate_model_email_recipients(*, to: list[str] | str, cc: list[str] | str | None = None) -> str | None:
+def validate_model_email_recipients(
+    *, to: list[str] | str, cc: list[str] | str | None = None
+) -> str | None:
     recipients = parse_addresses(to) + parse_addresses(cc)
     if not recipients:
         return "at least one recipient email address is required"

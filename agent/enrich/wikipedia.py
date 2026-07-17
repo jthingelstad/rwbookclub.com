@@ -19,13 +19,13 @@ DISAMBIGUATORS = ["", "_(author)", "_(writer)", "_(novelist)", "_(historian)"]
 # Known bare-name mis-matches → forced correct title, or None to skip entirely.
 # Salvaged from the stranded enricher so re-runs don't re-pick the wrong person.
 OVERRIDES: dict[str, str | None] = {
-    "paul-graham":     "Paul_Graham_(programmer)",    # YC essayist, not the novelist
-    "daniel-suarez":   "Daniel_Suarez_(author)",      # tech thrillers, not the racing driver
-    "robert-wright":   "Robert_Wright_(journalist)",  # Moral Animal, not the composer
-    "steve-weber":     None,                          # poli-sci prof — no clean page
-    "thomas-campbell": None,                          # China Study coauthor — no clean page
-    "william-jordan":  None,                          # naturalist — no clean page
-    "bruce-white":     None,                          # MN historian — no clean page
+    "paul-graham": "Paul_Graham_(programmer)",  # YC essayist, not the novelist
+    "daniel-suarez": "Daniel_Suarez_(author)",  # tech thrillers, not the racing driver
+    "robert-wright": "Robert_Wright_(journalist)",  # Moral Animal, not the composer
+    "steve-weber": None,  # poli-sci prof — no clean page
+    "thomas-campbell": None,  # China Study coauthor — no clean page
+    "william-jordan": None,  # naturalist — no clean page
+    "bruce-white": None,  # MN historian — no clean page
 }
 
 
@@ -39,8 +39,9 @@ def _usable(page: dict | None) -> dict | None:
     extract = (page.get("extract") or "").strip()
     if not extract:
         return None
-    thumb = (page.get("thumbnail") or {}).get("source") or (
-        page.get("originalimage") or {}).get("source")
+    thumb = (page.get("thumbnail") or {}).get("source") or (page.get("originalimage") or {}).get(
+        "source"
+    )
     return {
         "extract": extract,
         "thumbnail_url": thumb,

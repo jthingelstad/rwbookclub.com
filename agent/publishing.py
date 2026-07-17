@@ -54,9 +54,7 @@ async def _drain() -> None:
 
 def _expected_next_book_slug() -> str | None:
     upcoming = [
-        book
-        for book in corpus_read.books()
-        if book.get("isUpcoming") and book.get("meetingDate")
+        book for book in corpus_read.books() if book.get("isUpcoming") and book.get("meetingDate")
     ]
     if not upcoming:
         return None

@@ -51,7 +51,9 @@ def test_set_list_book_upsert_and_remove():
             (lst["id"],),
         ).fetchall()
         assert [(r["book_id"], r["ordinal"], r["note"]) for r in rows] == [
-            (b1, 0, "updated"), (b2, 1, None)]
+            (b1, 0, "updated"),
+            (b2, 1, None),
+        ]
 
         assert clubdb.remove_list_book(conn, lst["id"], b1) is True
         assert clubdb.remove_list_book(conn, lst["id"], b1) is False  # already gone
@@ -60,10 +62,12 @@ def test_set_list_book_upsert_and_remove():
 def test_all_lists_projects_owner_and_entries():
     with db.connect() as conn:
         jamie = clubdb.member_id_for_slug(conn, "jamie")
-        lst = clubdb.create_list(conn, name="Owned", scope="member", owner_id=jamie,
-                                 description="mine")
-        clubdb.set_list_book(conn, lst["id"], clubdb.book_id_for_slug(conn, "heart-of-darkness"),
-                             "note")
+        lst = clubdb.create_list(
+            conn, name="Owned", scope="member", owner_id=jamie, description="mine"
+        )
+        clubdb.set_list_book(
+            conn, lst["id"], clubdb.book_id_for_slug(conn, "heart-of-darkness"), "note"
+        )
         all_lists = {x["slug"]: x for x in clubdb.all_lists(conn)}
     mine = all_lists["jamie-owned"]
     assert mine["owner_slug"] == "jamie"
@@ -76,18 +80,32 @@ def test_all_lists_projects_owner_and_entries():
 
 # ── _list_doc corpus shape ───────────────────────────────────────────────────
 def test_list_doc_shape():
-    member_doc = corpus_gen._list_doc({
-        "name": "Faves", "scope": "member", "owner_slug": "jamie", "description": "x",
-        "entries": [{"book_slug": "a", "note": "why"}, {"book_slug": "b", "note": None}],
-    })
+    member_doc = corpus_gen._list_doc(
+        {
+            "name": "Faves",
+            "scope": "member",
+            "owner_slug": "jamie",
+            "description": "x",
+            "entries": [{"book_slug": "a", "note": "why"}, {"book_slug": "b", "note": None}],
+        }
+    )
     assert member_doc == {
-        "name": "Faves", "scope": "member", "owner": "jamie", "description": "x",
+        "name": "Faves",
+        "scope": "member",
+        "owner": "jamie",
+        "description": "x",
         "books": [{"book": "a", "note": "why"}, {"book": "b"}],  # empty note omitted
     }
     # club list: owner is None, description omitted when empty
-    club_doc = corpus_gen._list_doc({
-        "name": "Club", "scope": "club", "owner_slug": None, "description": None, "entries": [],
-    })
+    club_doc = corpus_gen._list_doc(
+        {
+            "name": "Club",
+            "scope": "club",
+            "owner_slug": None,
+            "description": None,
+            "entries": [],
+        }
+    )
     assert club_doc == {"name": "Club", "scope": "club", "owner": None, "books": []}
     assert "description" not in club_doc
 
@@ -114,13 +132,15 @@ def test_writer_create_member_requires_linked_member():
 def test_writer_add_remove_book_with_note():
     lst = lw.create_list("Notable", "n", owner_slug="jamie", scope="member")
 
-    added = lw.add_book(lst["slug"], "Heart of Darkness", "a haunting one",
-                        actor_slug="jamie", is_admin=False)
+    added = lw.add_book(
+        lst["slug"], "Heart of Darkness", "a haunting one", actor_slug="jamie", is_admin=False
+    )
     assert added["added"] is True and added["book"] == "Heart of Darkness"
 
     # re-add → note update, not a new entry
-    again = lw.add_book(lst["slug"], "Heart of Darkness", "still haunting",
-                        actor_slug="jamie", is_admin=False)
+    again = lw.add_book(
+        lst["slug"], "Heart of Darkness", "still haunting", actor_slug="jamie", is_admin=False
+    )
     assert again["added"] is False
 
     doc = cr.find_list(lst["slug"])
@@ -234,7 +254,10 @@ def test_award_to_list_migration_round_trip(tmp_path):
 
     # idempotent: a second run is a no-op (no award tables left to migrate, no dup list)
     clubdb.migrate_legacy_club_schema(conn)
-    assert conn.execute(
-        "SELECT COUNT(*) AS c FROM club_lists WHERE slug = 'books-of-the-year'"
-    ).fetchone()["c"] == 1
+    assert (
+        conn.execute(
+            "SELECT COUNT(*) AS c FROM club_lists WHERE slug = 'books-of-the-year'"
+        ).fetchone()["c"]
+        == 1
+    )
     conn.close()

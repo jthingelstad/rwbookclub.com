@@ -21,9 +21,20 @@ COVERS = "https://covers.openlibrary.org"
 # Generic subject tags that don't discriminate a ~180-book corpus (we already have
 # a topic taxonomy + fiction flag). Salvaged from corpus/openlibrary_subjects.py.
 SKIP_TAGS = {
-    "fiction", "nonfiction", "non-fiction", "english language", "literature",
-    "general", "audiobook", "open library staff picks", "popular print",
-    "accessible book", "protected daisy", "in library", "books", "history",
+    "fiction",
+    "nonfiction",
+    "non-fiction",
+    "english language",
+    "literature",
+    "general",
+    "audiobook",
+    "open library staff picks",
+    "popular print",
+    "accessible book",
+    "protected daisy",
+    "in library",
+    "books",
+    "history",
 }
 MAX_SUBJECTS = 12
 MAX_TAG_LEN = 80
@@ -205,8 +216,7 @@ def resolve_author_key(work_rec: dict | None, name: str) -> str | None:
 
 
 # ── Compose book facts ───────────────────────────────────────────────────────
-def book_facts(title: str, authors: list[str], ol_key: str | None,
-               isbn13: str | None) -> dict:
+def book_facts(title: str, authors: list[str], ol_key: str | None, isbn13: str | None) -> dict:
     """Resolve a book's OL Work and return enrichment fields + identifiers.
 
     Returns a dict with: ol_key, ol_cover_id, edition_count, languages, subjects,

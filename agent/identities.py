@@ -29,9 +29,15 @@ def _member_id_for_slug(conn: sqlite3.Connection, slug: str | None) -> int | Non
     return r["id"] if r else None
 
 
-def _link_identity(surface: str, identifier: str, member_slug: str, *,
-                   is_primary: bool = False, linked_by: str | None = None,
-                   label: str | None = None) -> None:
+def _link_identity(
+    surface: str,
+    identifier: str,
+    member_slug: str,
+    *,
+    is_primary: bool = False,
+    linked_by: str | None = None,
+    label: str | None = None,
+) -> None:
     with db.connect() as conn:
         mid = _member_id_for_slug(conn, member_slug)
         if mid is None:
@@ -41,7 +47,15 @@ def _link_identity(surface: str, identifier: str, member_slug: str, *,
             "VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(surface, identifier) DO UPDATE SET "
             "member_id=excluded.member_id, is_primary=excluded.is_primary, linked_by=excluded.linked_by, "
             "label=COALESCE(excluded.label, member_identities.label), updated_at=excluded.updated_at",
-            (surface, identifier, mid, 1 if is_primary else 0, linked_by, (label or "").strip() or None, _now()),
+            (
+                surface,
+                identifier,
+                mid,
+                1 if is_primary else 0,
+                linked_by,
+                (label or "").strip() or None,
+                _now(),
+            ),
         )
 
 
@@ -54,8 +68,10 @@ def member_handles(member_slug: str, surface: str) -> list[dict]:
             "WHERE m.slug = ? AND mi.surface = ? ORDER BY mi.is_primary DESC, mi.identifier",
             (member_slug, surface),
         ).fetchall()
-    return [{"identifier": r["identifier"], "is_primary": bool(r["is_primary"]), "label": r["label"]}
-            for r in rows]
+    return [
+        {"identifier": r["identifier"], "is_primary": bool(r["is_primary"]), "label": r["label"]}
+        for r in rows
+    ]
 
 
 def set_primary_identity(member_slug: str, surface: str, identifier: str) -> bool:
@@ -67,17 +83,25 @@ def set_primary_identity(member_slug: str, surface: str, identifier: str) -> boo
             return False
         owned = conn.execute(
             "SELECT 1 FROM member_identities WHERE surface = ? AND identifier = ? AND member_id = ?",
-            (surface, identifier, mid)).fetchone()
+            (surface, identifier, mid),
+        ).fetchone()
         if not owned:
             return False
-        conn.execute("UPDATE member_identities SET is_primary = 0 WHERE surface = ? AND member_id = ?",
-                     (surface, mid))
-        conn.execute("UPDATE member_identities SET is_primary = 1, updated_at = ? "
-                     "WHERE surface = ? AND identifier = ?", (_now(), surface, identifier))
+        conn.execute(
+            "UPDATE member_identities SET is_primary = 0 WHERE surface = ? AND member_id = ?",
+            (surface, mid),
+        )
+        conn.execute(
+            "UPDATE member_identities SET is_primary = 1, updated_at = ? "
+            "WHERE surface = ? AND identifier = ?",
+            (_now(), surface, identifier),
+        )
     return True
 
 
-def link_member_identity(discord_user_id: str, member_slug: str, *, linked_by: str | None = None) -> None:
+def link_member_identity(
+    discord_user_id: str, member_slug: str, *, linked_by: str | None = None
+) -> None:
     _link_identity("discord", discord_user_id, member_slug, linked_by=linked_by)
 
 
@@ -109,8 +133,9 @@ def _normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
-def link_member_email(email: str, member_slug: str, *, linked_by: str | None = None,
-                      is_primary: bool = False) -> None:
+def link_member_email(
+    email: str, member_slug: str, *, linked_by: str | None = None, is_primary: bool = False
+) -> None:
     email = _normalize_email(email)
     if not email or "@" not in email:
         raise ValueError("email must look like an email address")
@@ -172,8 +197,9 @@ def _normalize_phone(number: str) -> str:
     return ("+" + digits) if number.startswith("+") else digits
 
 
-def link_member_sms(number: str, member_slug: str, *, linked_by: str | None = None,
-                    is_primary: bool = False) -> None:
+def link_member_sms(
+    number: str, member_slug: str, *, linked_by: str | None = None, is_primary: bool = False
+) -> None:
     normalized = _normalize_phone(number)
     if len(re.sub(r"\D", "", normalized)) < 7:
         raise ValueError("phone number must have at least 7 digits")
@@ -224,8 +250,14 @@ def _require_web_url(url: str) -> str:
     return url
 
 
-def link_member_website(url: str, member_slug: str, *, linked_by: str | None = None,
-                        is_primary: bool = False, label: str | None = None) -> None:
+def link_member_website(
+    url: str,
+    member_slug: str,
+    *,
+    linked_by: str | None = None,
+    is_primary: bool = False,
+    label: str | None = None,
+) -> None:
     url = _require_web_url(url)
     _link_identity(
         "website",
@@ -237,8 +269,9 @@ def link_member_website(url: str, member_slug: str, *, linked_by: str | None = N
     )
 
 
-def update_member_website(old_url: str, member_slug: str, *, url: str | None = None,
-                          label: str | None = None) -> bool:
+def update_member_website(
+    old_url: str, member_slug: str, *, url: str | None = None, label: str | None = None
+) -> bool:
     """Edit one of a member's existing websites in place: rename it (set/clear the display `label`)
     and/or change its URL. Unlike `link_member_website`'s upsert (which COALESCEs the label and can
     only add), this UPDATEs the row, so the name can be cleared and the URL changed without losing
@@ -255,7 +288,8 @@ def update_member_website(old_url: str, member_slug: str, *, url: str | None = N
             cur = conn.execute(
                 "UPDATE member_identities SET identifier = ?, label = ?, updated_at = ? "
                 "WHERE surface = 'website' AND member_id = ? AND identifier = ?",
-                (new, label, _now(), mid, old))
+                (new, label, _now(), mid, old),
+            )
         except sqlite3.IntegrityError:
             raise ValueError("you already have that website") from None
         return cur.rowcount > 0
@@ -310,5 +344,3 @@ def remove_member_website(url: str, member_slug: str) -> bool:
 
 def remove_member_sms(number: str, member_slug: str) -> bool:
     return unlink_member_identity("sms", _normalize_phone(number), member_slug)
-
-

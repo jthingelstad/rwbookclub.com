@@ -53,16 +53,27 @@ def _horizon_world(monkeypatch, *, upcoming_count=1, include_loren=True):
     ]
     if not include_loren:
         members = [member for member in members if member["slug"] != "loren"]
-    recency = {"loren": "2022-01-01", "nick": "2023-01-01", "erik": "2024-01-01",
-               "tom": "2025-01-01", "jamie": "2026-01-01"}
+    recency = {
+        "loren": "2022-01-01",
+        "nick": "2023-01-01",
+        "erik": "2024-01-01",
+        "tom": "2025-01-01",
+        "jamie": "2026-01-01",
+    }
     history = [
         {"slug": f"old-{slug}", "meetingDate": when, "pickerSlugs": [slug]}
-        for slug, when in recency.items() if any(m["slug"] == slug for m in members)
+        for slug, when in recency.items()
+        if any(m["slug"] == slug for m in members)
     ]
     scheduled_pickers = ["jamie", "loren", "nick", "erik", "tom"][:upcoming_count]
     upcoming = [
-        {"slug": f"future-{index}", "title": f"Future {index}", "authors": ["Author"],
-         "meetingDate": f"2026-{index + 6:02d}-30", "placeholder": index == 1}
+        {
+            "slug": f"future-{index}",
+            "title": f"Future {index}",
+            "authors": ["Author"],
+            "meetingDate": f"2026-{index + 6:02d}-30",
+            "placeholder": index == 1,
+        }
         for index in range(upcoming_count)
     ]
     future_books = {
@@ -70,11 +81,13 @@ def _horizon_world(monkeypatch, *, upcoming_count=1, include_loren=True):
         for index, row in enumerate(upcoming)
     }
     monkeypatch.setattr(meeting_rules, "_current_members", lambda: members)
-    monkeypatch.setattr(meeting_rules.corpus_read, "books",
-                        lambda: history + list(future_books.values()))
+    monkeypatch.setattr(
+        meeting_rules.corpus_read, "books", lambda: history + list(future_books.values())
+    )
     monkeypatch.setattr(meeting_rules.corpus_read, "upcoming_meetings", lambda: upcoming)
-    monkeypatch.setattr(meeting_rules.corpus_read, "find_book",
-                        lambda value: future_books.get(value))
+    monkeypatch.setattr(
+        meeting_rules.corpus_read, "find_book", lambda value: future_books.get(value)
+    )
     return meeting_rules
 
 
@@ -97,9 +110,7 @@ def test_horizon_empty_and_membership_change(monkeypatch):
     rules = _horizon_world(monkeypatch, upcoming_count=0, include_loren=False)
     result = rules.horizon(depth=4)
     assert result["scheduledCount"] == 0 and result["emptyCount"] == 4
-    assert [slot["picker"]["slug"] for slot in result["slots"]] == [
-        "nick", "erik", "tom", "jamie"
-    ]
+    assert [slot["picker"]["slug"] for slot in result["slots"]] == ["nick", "erik", "tom", "jamie"]
 
 
 def test_horizon_depth_clamps_and_cycles_current_members(monkeypatch):

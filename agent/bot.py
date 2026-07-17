@@ -92,7 +92,9 @@ def _strip_address(content: str, bot_id: int) -> str:
 class OliverClient(discord.Client):
     def __init__(self) -> None:
         intents = discord.Intents.default()
-        intents.message_content = True  # required to read message text; enable in the Dev Portal too
+        intents.message_content = (
+            True  # required to read message text; enable in the Dev Portal too
+        )
         super().__init__(intents=intents)
         self.tree = discord.app_commands.CommandTree(self)
 
@@ -118,11 +120,14 @@ def _git_commit_short() -> str:
     try:
         r = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
-            cwd=publish.REPO_ROOT, capture_output=True, text=True,
-            check=False, timeout=5,
+            cwd=publish.REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=5,
         )
         return r.stdout.strip() or "unknown"
-    except (subprocess.SubprocessError, OSError):
+    except subprocess.SubprocessError, OSError:
         return "unknown"
 
 
@@ -281,7 +286,7 @@ async def _is_reply_to_bot(message: discord.Message) -> bool:
     if ref.message_id:  # not cached — fetch it
         try:
             referenced = await message.channel.fetch_message(ref.message_id)
-        except (discord.NotFound, discord.HTTPException):
+        except discord.NotFound, discord.HTTPException:
             return False
         return referenced.author.id == client.user.id
     return False
@@ -309,8 +314,13 @@ async def on_message(message: discord.Message) -> None:
         if not _is_addressed(is_mention, has_name, is_reply):
             if content.strip():
                 member_slug = identities.member_slug_for_user(str(message.author.id))
-                db.log_message(str(cid), "user", content.strip(),
-                               speaker=message.author.display_name, member_slug=member_slug)
+                db.log_message(
+                    str(cid),
+                    "user",
+                    content.strip(),
+                    speaker=message.author.display_name,
+                    member_slug=member_slug,
+                )
             return
         name_only = has_name and not is_mention and not is_reply
         question = _strip_address(content, client.user.id)
@@ -330,16 +340,22 @@ async def on_message(message: discord.Message) -> None:
                 # manually per outcome below.
                 prompt = (oliver.PASSING_MENTION_NOTE + question) if name_only else question
                 reply = await asyncio.to_thread(
-                    oliver.answer, prompt, str(message.channel.id),
-                    message.author.display_name, str(message.author.id), str(message.id),
-                    medium="discord", persist=not name_only,
+                    oliver.answer,
+                    prompt,
+                    str(message.channel.id),
+                    message.author.display_name,
+                    str(message.author.id),
+                    str(message.id),
+                    medium="discord",
+                    persist=not name_only,
                 )
             except Exception as e:
                 log.exception("Oliver failed to answer")
                 # Surface to #oliver-log too — publish/email/archive failures already do, but an
                 # interactive answer failure was only hitting stderr, so an admin never saw it.
                 db.add_activity(
-                    "warning", "Oliver failed to answer a message",
+                    "warning",
+                    "Oliver failed to answer a message",
                     f"Channel: {message.channel.id}\nAsker: {message.author.display_name}\n"
                     f"Error: {type(e).__name__}: {e}",
                 )
@@ -350,23 +366,32 @@ async def on_message(message: discord.Message) -> None:
             # The member was talking about Oliver, not to it — stay silent; keep their message as
             # plain channel context (same as any unaddressed message).
             member_slug = identities.member_slug_for_user(str(message.author.id))
-            db.log_message(str(cid), "user", content.strip(),
-                           speaker=message.author.display_name, member_slug=member_slug)
+            db.log_message(
+                str(cid),
+                "user",
+                content.strip(),
+                speaker=message.author.display_name,
+                member_slug=member_slug,
+            )
             return
         # It was a genuine ask after all — persist the exchange (the gated call used
         # persist=False), logging the member's ORIGINAL message, not the gate-note prompt.
         member_slug = identities.member_slug_for_user(str(message.author.id))
-        db.log_message(str(cid), "user", question,
-                       speaker=message.author.display_name, member_slug=member_slug)
+        db.log_message(
+            str(cid), "user", question, speaker=message.author.display_name, member_slug=member_slug
+        )
         db.log_message(str(cid), "assistant", reply, member_slug=member_slug)
 
     # Persist the reply intent before crossing Discord's API boundary. message.reply can fail if
     # the original was deleted or permissions changed, so the provider attempt retains the
     # channel.send fallback. An ambiguous provider failure is quarantined by the outbox; replaying
     # this source message then returns the recorded message id instead of posting twice.
-    text = reply[:config.MAX_DISCORD_LEN]
-    payload = {"channel_id": str(message.channel.id), "content": text,
-               "reply_to_message_id": str(message.id)}
+    text = reply[: config.MAX_DISCORD_LEN]
+    payload = {
+        "channel_id": str(message.channel.id),
+        "content": text,
+        "reply_to_message_id": str(message.id),
+    }
     row = outbox.enqueue(
         kind="discord_reply",
         payload=payload,
@@ -394,8 +419,11 @@ async def on_message(message: discord.Message) -> None:
     # back to the question that triggered it.
     if delivery and delivery.get("messageId"):
         db.log_response(
-            message_id=delivery["messageId"], channel_id=str(message.channel.id),
-            speaker=message.author.display_name, question=question, reply=text,
+            message_id=delivery["messageId"],
+            channel_id=str(message.channel.id),
+            speaker=message.author.display_name,
+            question=question,
+            reply=text,
         )
 
 
@@ -424,8 +452,11 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent) -> None:
     name = payload.member.display_name if payload.member else str(payload.user_id)
     try:
         db.add_feedback(
-            message_id=msg_id, channel_id=str(payload.channel_id),
-            user_id=str(payload.user_id), user_name=name, reaction=direction,
+            message_id=msg_id,
+            channel_id=str(payload.channel_id),
+            user_id=str(payload.user_id),
+            user_name=name,
+            reaction=direction,
         )
     except Exception:
         log.exception("Failed to record feedback")
@@ -436,7 +467,9 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent) -> None:
     # Confirm receipt. Discord deduplicates ✅ per emoji+user, so re-adding on
     # subsequent feedback is a silent no-op (one checkmark sits on the message).
     try:
-        channel = client.get_channel(payload.channel_id) or await client.fetch_channel(payload.channel_id)
+        channel = client.get_channel(payload.channel_id) or await client.fetch_channel(
+            payload.channel_id
+        )
         msg = await channel.fetch_message(payload.message_id)
         await msg.add_reaction("✅")
     except discord.HTTPException:

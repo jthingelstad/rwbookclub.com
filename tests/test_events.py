@@ -14,6 +14,7 @@ import pytest
 
 def _ids():
     from agent import clubdb
+
     mid = clubdb.meeting_id_for_book_slug("a-world-appears")
     jamie = clubdb.lookup_member_id("jamie")
     tom = clubdb.lookup_member_id("tom")
@@ -33,8 +34,9 @@ class TestRecordEvent:
 
     def test_reading_report_projects_value_and_json_detail(self, fresh_db):
         mid, jamie, _ = _ids()
-        fresh_db.record_reading_report(mid, jamie, "on_track", progress="halfway",
-                                       page=120, percent=50, surface="email")
+        fresh_db.record_reading_report(
+            mid, jamie, "on_track", progress="halfway", page=120, percent=50, surface="email"
+        )
         row = fresh_db.meeting_member_status(mid, jamie)
         assert row["reading"] == "on_track"
         assert row["reading_page"] == 120
@@ -59,7 +61,10 @@ class TestRecordEvent:
         fresh_db.record_attendance_report(mid, jamie, "yes")
         assert fresh_db.meeting_member_status(mid, jamie)["attendance"] == "yes"
         # both reports are kept in the timeline, newest first.
-        assert [e["detail"] for e in fresh_db.meeting_events(mid, kind="attendance_reported")] == ["yes", "unsure"]
+        assert [e["detail"] for e in fresh_db.meeting_events(mid, kind="attendance_reported")] == [
+            "yes",
+            "unsure",
+        ]
 
     def test_projection_kinds_require_both_ids(self, fresh_db):
         with pytest.raises(ValueError):
@@ -93,8 +98,11 @@ class TestRollCallDerivation:
         mid, _, _ = _ids()
         assert fresh_db.current_roll_call(mid) is None
         assert not fresh_db.has_open_roll_call(mid)
-        fresh_db.record_group_event(mid, "roll_call_opened",
-                                    detail={"channel_id": "c1", "message_id": "m1", "opened_by": "scheduler"})
+        fresh_db.record_group_event(
+            mid,
+            "roll_call_opened",
+            detail={"channel_id": "c1", "message_id": "m1", "opened_by": "scheduler"},
+        )
         rc = fresh_db.current_roll_call(mid)
         assert rc["status"] == "open" and rc["channel_id"] == "c1" and rc["message_id"] == "m1"
         assert fresh_db.has_open_roll_call(mid)
@@ -113,16 +121,23 @@ class TestTimeline:
     def test_events_for_member_orders_by_occurred_at(self, fresh_db):
         mid, jamie, _ = _ids()
         fresh_db.record_attendance_report(mid, jamie, "yes")
-        fresh_db.record_event(actor="member", kind="email_reply", member_id=jamie,
-                              meeting_id=mid, detail="hello", surface="email")
+        fresh_db.record_event(
+            actor="member",
+            kind="email_reply",
+            member_id=jamie,
+            meeting_id=mid,
+            detail="hello",
+            surface="email",
+        )
         timeline = fresh_db.events_for_member(jamie)
         kinds = {e["kind"] for e in timeline}
         assert {"attendance_reported", "email_reply"} <= kinds
 
     def test_occurred_at_distinct_from_created_at(self, fresh_db):
         mid, _, _ = _ids()
-        fresh_db.record_meeting_scheduled(mid, occurred_at="2030-01-01",
-                                          detail={"date": "2030-01-01"})
+        fresh_db.record_meeting_scheduled(
+            mid, occurred_at="2030-01-01", detail={"date": "2030-01-01"}
+        )
         ev = fresh_db.meeting_events(mid, kind="meeting_scheduled")[0]
         assert str(ev["occurred_at"]).startswith("2030-01-01")
         assert not str(ev["created_at"]).startswith("2030-01-01")
@@ -134,26 +149,48 @@ class TestChronicle:
 
     def test_chronicle_kind_derives_its_category(self, fresh_db):
         from agent import clubdb
+
         jamie = clubdb.lookup_member_id("jamie")
-        fresh_db.record_event(actor="member", kind="member_away", member_id=jamie,
-                              detail="on vacation in July", occurred_at="2024-07-01")
+        fresh_db.record_event(
+            actor="member",
+            kind="member_away",
+            member_id=jamie,
+            detail="on vacation in July",
+            occurred_at="2024-07-01",
+        )
         ev = fresh_db.timeline(member_id=jamie)[0]
         assert ev["kind"] == "member_away" and ev["category"] == "member_life"
 
     def test_category_override_for_freeform_note(self, fresh_db):
         # kind='note' is 'other' in the map; the override pins it to the admin's chosen category.
-        eid = fresh_db.record_event(actor="admin", kind="note", category="club",
-                                    detail="website redesigned", occurred_at="2010-05-01")
+        eid = fresh_db.record_event(
+            actor="admin",
+            kind="note",
+            category="club",
+            detail="website redesigned",
+            occurred_at="2010-05-01",
+        )
         assert eid > 0
         assert fresh_db.timeline(category="club")[0]["detail"] == "website redesigned"
 
     def test_timeline_filters_and_orders_newest_first(self, fresh_db):
         from agent import clubdb
+
         jamie = clubdb.lookup_member_id("jamie")
-        fresh_db.record_event(actor="oliver", kind="dinner", category="social",
-                              detail="club dinner", occurred_at="2019-03-01")
-        fresh_db.record_event(actor="member", kind="member_milestone", member_id=jamie,
-                              detail="new job", occurred_at="2021-09-01")
+        fresh_db.record_event(
+            actor="oliver",
+            kind="dinner",
+            category="social",
+            detail="club dinner",
+            occurred_at="2019-03-01",
+        )
+        fresh_db.record_event(
+            actor="member",
+            kind="member_milestone",
+            member_id=jamie,
+            detail="new job",
+            occurred_at="2021-09-01",
+        )
         all_rows = fresh_db.timeline()
         assert all_rows[0]["occurred_at"][:10] == "2021-09-01"  # newest first
         assert {r["category"] for r in fresh_db.timeline(category="social")} == {"social"}
@@ -163,8 +200,14 @@ class TestChronicle:
 
     def test_event_source_exists(self, fresh_db):
         assert not fresh_db.event_source_exists("mail:t1#0")
-        fresh_db.record_event(actor="oliver", kind="book_picked", category="selection",
-                              detail="picked Sapiens", occurred_at="2018-04-01", source="mail:t1#0")
+        fresh_db.record_event(
+            actor="oliver",
+            kind="book_picked",
+            category="selection",
+            detail="picked Sapiens",
+            occurred_at="2018-04-01",
+            source="mail:t1#0",
+        )
         assert fresh_db.event_source_exists("mail:t1#0")
         assert not fresh_db.event_source_exists("mail:t1#1")
 
@@ -175,12 +218,15 @@ def _seed_mail_thread(db, thread_id, subject, messages):
         first, last = messages[0][1], messages[-1][1]
         conn.execute(
             "INSERT INTO mail_threads (thread_id, subject_normalized, first_sent_at, last_sent_at, "
-            "message_count) VALUES (?,?,?,?,?)", (thread_id, subject, first, last, len(messages)))
+            "message_count) VALUES (?,?,?,?,?)",
+            (thread_id, subject, first, last, len(messages)),
+        )
         for i, (who, when, body) in enumerate(messages):
             conn.execute(
                 "INSERT INTO mail_messages (message_id, thread_id, source, from_name, subject, "
                 "sent_at, body_clean) VALUES (?,?,?,?,?,?,?)",
-                (f"{thread_id}-{i}", thread_id, "test", who, subject, when, body))
+                (f"{thread_id}-{i}", thread_id, "test", who, subject, when, body),
+            )
 
 
 class TestMailThreadListing:
@@ -196,6 +242,7 @@ class TestMailThreadListing:
 class TestMigration:
     def test_migration_seeds_projection_and_backfills_events(self, fresh_db):
         from agent import clubdb
+
         db = fresh_db
         mid = clubdb.meeting_id_for_book_slug("a-world-appears")
         jamie = clubdb.lookup_member_id("jamie")
@@ -219,20 +266,42 @@ class TestMigration:
                     meeting_id INTEGER PRIMARY KEY, channel_id TEXT, message_id TEXT,
                     opened_by TEXT, opened_at TEXT, status TEXT, closed_at TEXT);
             """)
-            conn.execute("INSERT INTO meeting_attendance VALUES (?,?,?,?,?)",
-                         (mid, jamie, "yes", "2026-06-10 09:00:00", "email"))
+            conn.execute(
+                "INSERT INTO meeting_attendance VALUES (?,?,?,?,?)",
+                (mid, jamie, "yes", "2026-06-10 09:00:00", "email"),
+            )
             conn.execute(
                 "INSERT INTO reading_statuses VALUES (?,?,?,?,?,?,?,?)",
-                (mid, jamie, "on_track", "halfway", 120, 50, "2026-06-11 10:00:00", "email"))
+                (mid, jamie, "on_track", "halfway", 120, 50, "2026-06-11 10:00:00", "email"),
+            )
             # Two delivered roll-call asks to Tom (never answered) + one inbound reply.
-            conn.execute("INSERT INTO member_contacts (meeting_id, member_id, kind, surface, direction, status, subject, created_at) "
-                         "VALUES (?,?,'roll_call','email','outbound','sent','Roll call','2026-06-09 08:00:00')", (mid, tom))
-            conn.execute("INSERT INTO member_contacts (meeting_id, member_id, kind, surface, direction, status, subject, created_at) "
-                         "VALUES (?,?,'roll_call','email','outbound','sent','Roll call','2026-06-12 08:00:00')", (mid, tom))
-            conn.execute("INSERT INTO member_contacts (meeting_id, member_id, kind, surface, direction, status, subject, created_at) "
-                         "VALUES (?,?,'email_reply','email','inbound','received','Re: Roll call','2026-06-13 08:00:00')", (mid, jamie))
-            conn.execute("INSERT INTO roll_calls VALUES (?,?,?,?,?,?,?)",
-                         (mid, "ch1", "msg1", "scheduler", "2026-06-08 08:00:00", "closed", "2026-06-20 08:00:00"))
+            conn.execute(
+                "INSERT INTO member_contacts (meeting_id, member_id, kind, surface, direction, status, subject, created_at) "
+                "VALUES (?,?,'roll_call','email','outbound','sent','Roll call','2026-06-09 08:00:00')",
+                (mid, tom),
+            )
+            conn.execute(
+                "INSERT INTO member_contacts (meeting_id, member_id, kind, surface, direction, status, subject, created_at) "
+                "VALUES (?,?,'roll_call','email','outbound','sent','Roll call','2026-06-12 08:00:00')",
+                (mid, tom),
+            )
+            conn.execute(
+                "INSERT INTO member_contacts (meeting_id, member_id, kind, surface, direction, status, subject, created_at) "
+                "VALUES (?,?,'email_reply','email','inbound','received','Re: Roll call','2026-06-13 08:00:00')",
+                (mid, jamie),
+            )
+            conn.execute(
+                "INSERT INTO roll_calls VALUES (?,?,?,?,?,?,?)",
+                (
+                    mid,
+                    "ch1",
+                    "msg1",
+                    "scheduler",
+                    "2026-06-08 08:00:00",
+                    "closed",
+                    "2026-06-20 08:00:00",
+                ),
+            )
             conn.commit()
             db.migrate_meeting_events(conn)
 
@@ -245,8 +314,14 @@ class TestMigration:
 
         # Event history backfilled across all four sources.
         kinds = {e["kind"] for e in db.meeting_events(mid)}
-        assert {"attendance_reported", "reading_reported", "attendance_requested",
-                "email_reply", "roll_call_opened", "roll_call_closed"} <= kinds
+        assert {
+            "attendance_reported",
+            "reading_reported",
+            "attendance_requested",
+            "email_reply",
+            "roll_call_opened",
+            "roll_call_closed",
+        } <= kinds
         assert db.current_roll_call(mid)["status"] == "closed"
 
         # The four legacy tables are gone, FK check clean (FK check is asserted inside the migration).

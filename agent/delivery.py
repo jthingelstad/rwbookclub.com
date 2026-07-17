@@ -41,7 +41,7 @@ async def drain(client, *, limit: int = 20) -> int:
                 payload = json.loads(row["payload_json"])
                 try:
                     channel_id = int(payload["channel_id"])
-                except (KeyError, TypeError, ValueError):
+                except KeyError, TypeError, ValueError:
                     log.error("outbox %s has no valid Discord channel id", row["id"])
                     continue
                 channel = client.get_channel(channel_id)

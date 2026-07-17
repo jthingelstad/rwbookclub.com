@@ -23,10 +23,12 @@ def member_lenses(request: RequestContext) -> dict:
         lenses[slug] = {
             "name": member.get("name"),
             "memories": (
-                [row["note"] for row in model_readers.memories(
-                    actor=request.actor, subject=slug, limit=40
-                )]
-                if access.can_access_member(request.actor, slug) else []
+                [
+                    row["note"]
+                    for row in model_readers.memories(actor=request.actor, subject=slug, limit=40)
+                ]
+                if access.can_access_member(request.actor, slug)
+                else []
             ),
             "recentPicks": [
                 {"title": pick.get("title"), "year": pick.get("year")}
@@ -41,16 +43,24 @@ def pick_fit(tool_input: dict, request: RequestContext) -> dict:
 
     title = tool_input["title"].strip()
     author = (tool_input.get("author") or "").strip() or None
-    out: dict = {"candidate": {"title": title, "authors": [author] if author else [],
-                               "resolved": "unresolved"}}
+    out: dict = {
+        "candidate": {
+            "title": title,
+            "authors": [author] if author else [],
+            "resolved": "unresolved",
+        }
+    }
     subjects: list[str] = []
 
     corpus_hit = cr.find_book(title)
     if corpus_hit:
         subjects = corpus_hit.get("subjects") or []
         out["candidate"] = {
-            "title": corpus_hit.get("title"), "authors": corpus_hit.get("authors") or [],
-            "year": corpus_hit.get("year"), "subjects": subjects, "resolved": "corpus",
+            "title": corpus_hit.get("title"),
+            "authors": corpus_hit.get("authors") or [],
+            "year": corpus_hit.get("year"),
+            "subjects": subjects,
+            "resolved": "corpus",
         }
         if corpus_hit.get("isRead"):
             out["alreadyRead"] = {
@@ -85,9 +95,11 @@ def pick_fit(tool_input: dict, request: RequestContext) -> dict:
     candidate_authors = out["candidate"].get("authors") or []
     normalized_title = title.lower().strip()
     out["cloudHistory"] = next(
-        (row for row in model_readers.book_cloud_titles(
-            actor=request.actor, query=title, limit=5
-        ) if (row.get("title") or "").lower().strip() == normalized_title),
+        (
+            row
+            for row in model_readers.book_cloud_titles(actor=request.actor, query=title, limit=5)
+            if (row.get("title") or "").lower().strip() == normalized_title
+        ),
         None,
     )
     neighbors = cr.affinity_to_history(subjects, candidate_authors, title=title)
@@ -102,20 +114,27 @@ def pick_fit(tool_input: dict, request: RequestContext) -> dict:
     out["nearestInHistory"] = neighbors
     out["memberLenses"] = member_lenses(request)
     stats = cr.club_stats()
-    out["coverage"] = {"topics": stats.get("topics"), "fiction": stats.get("fiction"),
-                       "nonfiction": stats.get("nonfiction")}
-    out["clubLore"] = [row["note"] for row in model_readers.memories(
-        actor=request.actor, subject="club", limit=17
-    )]
-    out["note"] = ("Current reception/adaptation news is NOT included — web_search it. Never "
-                   "state a member reaction that isn't grounded in memberLenses.")
+    out["coverage"] = {
+        "topics": stats.get("topics"),
+        "fiction": stats.get("fiction"),
+        "nonfiction": stats.get("nonfiction"),
+    }
+    out["clubLore"] = [
+        row["note"] for row in model_readers.memories(actor=request.actor, subject="club", limit=17)
+    ]
+    out["note"] = (
+        "Current reception/adaptation news is NOT included — web_search it. Never "
+        "state a member reaction that isn't grounded in memberLenses."
+    )
     if "alreadyRead" not in out:
         db.add_book_cloud_entry(
             title=out["candidate"].get("title") or title,
             author=(candidate_authors or [None])[0],
             book_slug=(corpus_hit or {}).get("slug"),
-            reason=("evaluated as a pick candidate"
-                    + (f" for {request.member_slug}" if request.member_slug else "")),
+            reason=(
+                "evaluated as a pick candidate"
+                + (f" for {request.member_slug}" if request.member_slug else "")
+            ),
             reason_kind="pick_candidate",
             mentioned_by=request.member_slug,
             mentioned_by_name=request.speaker,
@@ -139,12 +158,17 @@ def pick_prospects(tool_input: dict, request: RequestContext) -> dict:
     if member:
         history = cr.member_history(member) or {}
         out["memberTaste"] = {
-            "memories": [row["note"] for row in model_readers.memories(
-                actor=request.actor, subject=member, limit=12
-            )],
+            "memories": [
+                row["note"]
+                for row in model_readers.memories(actor=request.actor, subject=member, limit=12)
+            ],
             "reviews": [
-                {"book": row.get("book"), "rating": row.get("rating"),
-                 "dnf": row.get("dnf"), "wouldRecommend": row.get("wouldRecommend")}
+                {
+                    "book": row.get("book"),
+                    "rating": row.get("rating"),
+                    "dnf": row.get("dnf"),
+                    "wouldRecommend": row.get("wouldRecommend"),
+                }
                 for row in (history.get("reviews") or [])[:12]
             ],
             "recentPicks": [
@@ -155,21 +179,25 @@ def pick_prospects(tool_input: dict, request: RequestContext) -> dict:
 
     read_slugs = {book["slug"] for book in cr.books() if book.get("isRead")}
     unread = [
-        row for row in model_readers.book_cloud_titles(actor=request.actor, limit=60)
+        row
+        for row in model_readers.book_cloud_titles(actor=request.actor, limit=60)
         if not (row.get("book_slug") and row["book_slug"] in read_slugs)
     ]
     out["cloudProspects"] = {
         "yours": [row for row in unread if member and member in (row.get("mentioners") or [])][:12],
-        "clubOrbit": [row for row in unread
-                      if not (member and member in (row.get("mentioners") or []))][:12],
+        "clubOrbit": [
+            row for row in unread if not (member and member in (row.get("mentioners") or []))
+        ][:12],
         "totalUnreadInCloud": len(unread),
     }
     out["lovedAuthorsUnread"] = cr.unread_notable_works(limit=8)
     stats = cr.club_stats()
     topics_sorted = sorted(stats.get("topics") or [], key=lambda topic: topic[1])
-    out["coverageGaps"] = {"leastReadTopics": topics_sorted[:5],
-                           "fiction": stats.get("fiction"),
-                           "nonfiction": stats.get("nonfiction")}
+    out["coverageGaps"] = {
+        "leastReadTopics": topics_sorted[:5],
+        "fiction": stats.get("fiction"),
+        "nonfiction": stats.get("nonfiction"),
+    }
     angles: list[str] = []
     if direction:
         angles += [
@@ -177,17 +205,19 @@ def pick_prospects(tool_input: dict, request: RequestContext) -> dict:
             f"award-winning {direction} books recent",
             f"{direction} book accessible deep exploration general readers",
         ]
-    angles += [f"notable acclaimed {topic} books 2024 2025 2026"
-               for topic, _count in topics_sorted[:2]]
-    angles += [f"new book by {row['author']} 2025 2026"
-               for row in (out["lovedAuthorsUnread"] or [])[:2]]
+    angles += [
+        f"notable acclaimed {topic} books 2024 2025 2026" for topic, _count in topics_sorted[:2]
+    ]
+    angles += [
+        f"new book by {row['author']} 2025 2026" for row in (out["lovedAuthorsUnread"] or [])[:2]
+    ]
     out["searchAngles"] = angles
     out["note"] = (
         "The direction drives: web_search the direction angles FIRST for fresh, never-mentioned "
         "candidates — cloudProspects and lovedAuthorsUnread are supporting color, only where "
         "they fit the direction. Then pick_fit the best 2-3."
-        if direction else
-        "These are leads, not results — fresh candidates via web_search are fully in scope and "
+        if direction
+        else "These are leads, not results — fresh candidates via web_search are fully in scope and "
         "often the best answer; web_search the angles, then pick_fit the best 2-3."
     )
     return out
@@ -212,12 +242,16 @@ def handle(name: str, tool_input: dict, request: RequestContext):
         limit = max(1, min(int(tool_input.get("limit", 20)), 50))
         if tool_input.get("titles"):
             return model_readers.book_cloud_titles(
-                actor=request.actor, query=tool_input.get("query"),
-                member=tool_input.get("member"), limit=limit
+                actor=request.actor,
+                query=tool_input.get("query"),
+                member=tool_input.get("member"),
+                limit=limit,
             )
         return model_readers.recent_book_cloud(
-            actor=request.actor, query=tool_input.get("query"),
-            member=tool_input.get("member"), limit=limit
+            actor=request.actor,
+            query=tool_input.get("query"),
+            member=tool_input.get("member"),
+            limit=limit,
         )
     if name == "pick_fit":
         return pick_fit(tool_input, request)

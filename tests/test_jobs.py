@@ -23,13 +23,16 @@ def test_active_owner_excludes_concurrent_run_and_expiry_allows_takeover(fresh_d
         now=_at(0),
     )
     assert first
-    assert fresh_db.begin_job_run(
-        "review_drive",
-        lease_owner="worker-two",
-        lease_expires_at=_at(40),
-        expected_interval_seconds=3600,
-        now=_at(10),
-    ) is None
+    assert (
+        fresh_db.begin_job_run(
+            "review_drive",
+            lease_owner="worker-two",
+            lease_expires_at=_at(40),
+            expected_interval_seconds=3600,
+            now=_at(10),
+        )
+        is None
+    )
 
     takeover = fresh_db.begin_job_run(
         "review_drive",

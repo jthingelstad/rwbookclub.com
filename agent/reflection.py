@@ -31,11 +31,11 @@ from agent import access, config, db, oliver
 log = logging.getLogger("oliver.reflection")
 
 JOB_KEY = "reflection"
-SOURCE = "reflection"          # provenance marker on memories this job owns
-MIN_TURNS = 3                  # skip a member with fewer new conversation turns (unless they mailed)
-MAX_TURNS_PER_MEMBER = 200     # cap material per member per run (weekly volume is far below this)
-MEMORY_CAP = 12                # soft target for active reflection memories per member
-CLUB_MEMORY_CAP = 15           # soft target for active club-lore notes
+SOURCE = "reflection"  # provenance marker on memories this job owns
+MIN_TURNS = 3  # skip a member with fewer new conversation turns (unless they mailed)
+MAX_TURNS_PER_MEMBER = 200  # cap material per member per run (weekly volume is far below this)
+MEMORY_CAP = 12  # soft target for active reflection memories per member
+CLUB_MEMORY_CAP = 15  # soft target for active club-lore notes
 _JSON_RE = re.compile(r"\{.*\}", re.S)
 
 SYSTEM = (
@@ -51,8 +51,8 @@ SYSTEM = (
     "habits, how they pick, running jokes, preferences about club logistics. NOTHING sensitive "
     "(health, politics, relationships, work troubles) unless it's book-relevant AND they "
     "volunteered it plainly.\n"
-    "- Phrase notes neutrally and durably (\"prefers translated fiction\", not \"said on Tuesday "
-    "that...\"). One fact per note, under 140 characters.\n"
+    '- Phrase notes neutrally and durably ("prefers translated fiction", not "said on Tuesday '
+    'that..."). One fact per note, under 140 characters.\n'
     "- Do NOT store facts the club record already holds — pick counts, join dates, what's "
     "scheduled, who picked what. Your corpus tools know those. Store only what the record can't: "
     "tastes, opinions, habits, preferences, running jokes.\n"
@@ -141,8 +141,13 @@ def _gather(state: dict) -> tuple[dict[str, list[str]], int, str, list[str]]:
     return per_member, max_conv, max_mail, club_lines
 
 
-def _prompt(label: str, lines: list[str], updatable: list[dict], readonly: list[dict],
-            era_note: str | None = None) -> str:
+def _prompt(
+    label: str,
+    lines: list[str],
+    updatable: list[dict],
+    readonly: list[dict],
+    era_note: str | None = None,
+) -> str:
     parts = [f"{label}\n"]
     if era_note:
         parts.append(f"NOTE ON ERA: {era_note}\n")
@@ -154,8 +159,11 @@ def _prompt(label: str, lines: list[str], updatable: list[dict], readonly: list[
         parts += [f"  - {m['note']}" for m in readonly]
     truncated = len(lines) > MAX_TURNS_PER_MEMBER
     shown = lines[-MAX_TURNS_PER_MEMBER:]
-    parts.append(f"\nMaterial ({len(shown)} entries"
-                 + (", truncated to the most recent" if truncated else "") + "):")
+    parts.append(
+        f"\nMaterial ({len(shown)} entries"
+        + (", truncated to the most recent" if truncated else "")
+        + "):"
+    )
     parts += [f"  {ln[:600]}" for ln in shown]
     return "\n".join(parts)
 
@@ -166,17 +174,26 @@ def _parse(raw: str) -> dict | None:
         return None
     try:
         out = json.loads(m.group(0))
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return None
     if not isinstance(out, dict):
         return None
-    return {"add": out.get("add") or [], "update": out.get("update") or [],
-            "retire": out.get("retire") or []}
+    return {
+        "add": out.get("add") or [],
+        "update": out.get("update") or [],
+        "retire": out.get("retire") or [],
+    }
 
 
-def consolidate(lines: list[str], *, scope: str, subject: str | None = None,
-                era_note: str | None = None, dry_run: bool = False,
-                usage_channel: str | None = "reflection") -> dict:
+def consolidate(
+    lines: list[str],
+    *,
+    scope: str,
+    subject: str | None = None,
+    era_note: str | None = None,
+    dry_run: bool = False,
+    usage_channel: str | None = "reflection",
+) -> dict:
     """One consolidation pass for a member (scope='member', subject=slug) or club lore
     (scope='club'). Returns counts {'add': n, 'update': n, 'retire': n} or {'skipped': reason}.
     Provenance is enforced HERE, not just in the prompt: update/retire only touch memories this
@@ -198,28 +215,47 @@ def consolidate(lines: list[str], *, scope: str, subject: str | None = None,
         # max_tokens=16000: Sonnet 5's always-on adaptive thinking counts toward max_tokens, and a
         # rich chunk can burn >4K thinking before the JSON — 15 mining calls truncated at the old
         # 4096 default, which was the real source of the "unparseable" outputs.
-        raw = oliver.complete(system, _prompt(label, lines, updatable, readonly, era_note),
-                              model=oliver.MODEL, thinking=False, effort=None, max_tokens=16000,
-                              usage_channel=None if dry_run else usage_channel)
+        raw = oliver.complete(
+            system,
+            _prompt(label, lines, updatable, readonly, era_note),
+            model=oliver.MODEL,
+            thinking=False,
+            effort=None,
+            max_tokens=16000,
+            usage_channel=None if dry_run else usage_channel,
+        )
         plan = _parse(raw)
         if plan is not None:
             break
-        log.warning("reflection: unparseable output for %s (attempt %d): %r",
-                    who, attempt, (raw or "")[:400])
+        log.warning(
+            "reflection: unparseable output for %s (attempt %d): %r",
+            who,
+            attempt,
+            (raw or "")[:400],
+        )
     if plan is None:
         if not dry_run:
-            db.add_activity("warning", "Reflection skipped a subject",
-                            f"Subject: {who}\nReason: unparseable model output (2 attempts)")
+            db.add_activity(
+                "warning",
+                "Reflection skipped a subject",
+                f"Subject: {who}\nReason: unparseable model output (2 attempts)",
+            )
         return {"skipped": "unparseable"}
 
     adds = [str(n).strip() for n in plan["add"] if str(n).strip()][:cap]
-    updates = [u for u in plan["update"]
-               if isinstance(u, dict) and u.get("id") in allowed_ids and str(u.get("note", "")).strip()]
+    updates = [
+        u
+        for u in plan["update"]
+        if isinstance(u, dict) and u.get("id") in allowed_ids and str(u.get("note", "")).strip()
+    ]
     retires = [i for i in plan["retire"] if i in allowed_ids]
     dropped = (len(plan["update"]) - len(updates)) + (len(plan["retire"]) - len(retires))
     if dropped:
-        log.warning("reflection: dropped %d update/retire ops targeting non-reflection memories "
-                    "for %s", dropped, who)
+        log.warning(
+            "reflection: dropped %d update/retire ops targeting non-reflection memories for %s",
+            dropped,
+            who,
+        )
 
     if dry_run:
         print(f"\n== {who}{f' ({era_note})' if era_note else ''} ==")
@@ -255,12 +291,17 @@ def run(*, dry_run: bool = False) -> dict:
         # and the backfill seeds the taste profiles.
         state["mail_sent_at"] = db.latest_mail_sent_at() or "9999"
     per_member, max_conv, max_mail, club_lines = _gather(state)
-    worth = {slug: lines for slug, lines in per_member.items()
-             if len(lines) >= MIN_TURNS or any(ln.startswith("[mailing list]") for ln in lines)}
+    worth = {
+        slug: lines
+        for slug, lines in per_member.items()
+        if len(lines) >= MIN_TURNS or any(ln.startswith("[mailing list]") for ln in lines)
+    }
     if not worth:
         if not dry_run:  # persist even when quiet — this also seeds the first-run mail cursor
-            db.set_job_state(JOB_KEY, {**state, "conv_id": max_conv, "mail_sent_at": max_mail,
-                                       "ran_at": db._now()})
+            db.set_job_state(
+                JOB_KEY,
+                {**state, "conv_id": max_conv, "mail_sent_at": max_mail, "ran_at": db._now()},
+            )
         return {"members": 0}
 
     results: dict[str, dict] = {}
@@ -283,22 +324,30 @@ def run(*, dry_run: bool = False) -> dict:
     ok = [s for s, r in results.items() if s != "club" and "skipped" not in r]
     if not dry_run:
         if ok:  # advance only if at least one member succeeded; failures retry next week
-            db.set_job_state(JOB_KEY, {**state, "conv_id": max_conv, "mail_sent_at": max_mail,
-                                       "ran_at": db._now()})
+            db.set_job_state(
+                JOB_KEY,
+                {**state, "conv_id": max_conv, "mail_sent_at": max_mail, "ran_at": db._now()},
+            )
         summary = "; ".join(
-            f"{s}: +{r['add']} ~{r['update']} −{r['retire']}" if "skipped" not in r
+            f"{s}: +{r['add']} ~{r['update']} −{r['retire']}"
+            if "skipped" not in r
             else f"{s}: skipped ({r['skipped']})"
-            for s, r in sorted(results.items()))
+            for s, r in sorted(results.items())
+        )
         db.add_activity("reflection", "Weekly reflection", summary)
     return {"members": len(results), "results": results}
 
 
 if __name__ == "__main__":
     from agent import database
+
     database.initialize()
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--dry-run", action="store_true",
-                    help="print proposed add/update/retire without writing anything")
+    ap.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="print proposed add/update/retire without writing anything",
+    )
     args = ap.parse_args()
     out = run(dry_run=args.dry_run)
     print(f"\n{out}")

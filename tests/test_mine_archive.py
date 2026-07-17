@@ -15,27 +15,47 @@ def _seed_thread(db, thread_id, subject, messages):
         conn.execute(
             "INSERT INTO mail_threads (thread_id, subject_normalized, first_sent_at, last_sent_at, "
             "message_count) VALUES (?,?,?,?,?)",
-            (thread_id, subject, messages[0][1], messages[-1][1], len(messages)))
+            (thread_id, subject, messages[0][1], messages[-1][1], len(messages)),
+        )
         for i, (who, when, body) in enumerate(messages):
             conn.execute(
                 "INSERT INTO mail_messages (message_id, thread_id, source, from_name, subject, "
                 "sent_at, body_clean) VALUES (?,?,?,?,?,?,?)",
-                (f"{thread_id}-{i}", thread_id, "test", who, subject, when, body))
+                (f"{thread_id}-{i}", thread_id, "test", who, subject, when, body),
+            )
 
 
-_REPLY = json.dumps([
-    {"category": "selection", "kind": "book_picked", "occurred_at": "2018-04-10",
-     "member_slugs": ["jamie"], "summary": "Jamie picked Sapiens for the April meeting."},
-    {"category": "social", "kind": "dinner", "occurred_at": "2018-04-25",
-     "member_slugs": [], "summary": "The club met for dinner before the meeting."},
-    {"category": "bogus", "kind": "not_a_real_kind", "occurred_at": "2018-04-10",
-     "member_slugs": ["jamie"], "summary": "should be dropped — unknown kind."},
-])
+_REPLY = json.dumps(
+    [
+        {
+            "category": "selection",
+            "kind": "book_picked",
+            "occurred_at": "2018-04-10",
+            "member_slugs": ["jamie"],
+            "summary": "Jamie picked Sapiens for the April meeting.",
+        },
+        {
+            "category": "social",
+            "kind": "dinner",
+            "occurred_at": "2018-04-25",
+            "member_slugs": [],
+            "summary": "The club met for dinner before the meeting.",
+        },
+        {
+            "category": "bogus",
+            "kind": "not_a_real_kind",
+            "occurred_at": "2018-04-10",
+            "member_slugs": ["jamie"],
+            "summary": "should be dropped — unknown kind.",
+        },
+    ]
+)
 
 
 def test_parse_events_strips_fences():
     from agent.script.archive import mine_archive_events as m
-    fenced = "```json\n[{\"kind\": \"dinner\"}]\n```"
+
+    fenced = '```json\n[{"kind": "dinner"}]\n```'
     assert m._parse_events(fenced) == [{"kind": "dinner"}]
     assert m._parse_events("no json here") == []
 
@@ -53,7 +73,7 @@ def test_mine_writes_candidates_and_skips_unknown_kinds(tmp_path, fresh_db, monk
 
     rows = [json.loads(line) for line in out.read_text().splitlines()]
     assert {r["kind"] for r in rows} == {"book_picked", "dinner"}
-    assert all(r["approve"] is False for r in rows)              # review gate: nothing pre-approved
+    assert all(r["approve"] is False for r in rows)  # review gate: nothing pre-approved
     assert rows[0]["source"] == "mail:t1#0" and rows[1]["source"] == "mail:t1#1"
     assert rows[0]["member_slugs"] == ["jamie"]
     # progress marker written so a re-run skips this thread
@@ -80,12 +100,26 @@ def test_load_only_inserts_approved_and_is_idempotent(tmp_path, fresh_db):
     jamie = clubdb.lookup_member_id("jamie")
     out = tmp_path / "mined.jsonl"
     lines = [
-        {"approve": True, "source": "mail:t1#0", "thread_id": "t1", "category": "selection",
-         "kind": "book_picked", "occurred_at": "2018-04-10", "member_slugs": ["jamie"],
-         "summary": "Jamie picked Sapiens."},
-        {"approve": False, "source": "mail:t1#1", "thread_id": "t1", "category": "social",
-         "kind": "dinner", "occurred_at": "2018-04-25", "member_slugs": [],
-         "summary": "Club dinner."},
+        {
+            "approve": True,
+            "source": "mail:t1#0",
+            "thread_id": "t1",
+            "category": "selection",
+            "kind": "book_picked",
+            "occurred_at": "2018-04-10",
+            "member_slugs": ["jamie"],
+            "summary": "Jamie picked Sapiens.",
+        },
+        {
+            "approve": False,
+            "source": "mail:t1#1",
+            "thread_id": "t1",
+            "category": "social",
+            "kind": "dinner",
+            "occurred_at": "2018-04-25",
+            "member_slugs": [],
+            "summary": "Club dinner.",
+        },
     ]
     out.write_text("\n".join(json.dumps(x) for x in lines))
 
@@ -110,12 +144,33 @@ def test_load_only_inserts_approved_and_is_idempotent(tmp_path, fresh_db):
 def _review_file(tmp_path):
     out = tmp_path / "mined.jsonl"
     rows = [
-        {"approve": False, "source": "mail:t1#0", "category": "selection", "kind": "book_picked",
-         "occurred_at": "2018-04-10", "member_slugs": ["jamie"], "summary": "Jamie picked X."},
-        {"approve": False, "source": "mail:t1#1", "category": "social", "kind": "dinner",
-         "occurred_at": "2018-04-25", "member_slugs": [], "summary": "Club dinner."},
-        {"approve": False, "source": "mail:t2#0", "category": "member_life", "kind": "member_away",
-         "occurred_at": "2019-07-01", "member_slugs": ["tom"], "summary": "Tom on vacation."},
+        {
+            "approve": False,
+            "source": "mail:t1#0",
+            "category": "selection",
+            "kind": "book_picked",
+            "occurred_at": "2018-04-10",
+            "member_slugs": ["jamie"],
+            "summary": "Jamie picked X.",
+        },
+        {
+            "approve": False,
+            "source": "mail:t1#1",
+            "category": "social",
+            "kind": "dinner",
+            "occurred_at": "2018-04-25",
+            "member_slugs": [],
+            "summary": "Club dinner.",
+        },
+        {
+            "approve": False,
+            "source": "mail:t2#0",
+            "category": "member_life",
+            "kind": "member_away",
+            "occurred_at": "2019-07-01",
+            "member_slugs": ["tom"],
+            "summary": "Tom on vacation.",
+        },
     ]
     out.write_text("\n".join(json.dumps(r) for r in rows))
     return out
@@ -123,18 +178,20 @@ def _review_file(tmp_path):
 
 def test_approve_bulk_sets_safe_categories_only(tmp_path, fresh_db):
     from agent.script.archive import mine_archive_events as m
+
     out = _review_file(tmp_path)
     # Ask to approve selection + member_life; member_life must be refused as privacy-sensitive.
     result = m.approve(out_path=out, categories={"selection", "member_life"})
     assert result["approved"] == 1
     rows = {r["source"]: r for r in (json.loads(x) for x in out.read_text().splitlines())}
-    assert rows["mail:t1#0"]["approve"] is True       # selection approved
-    assert rows["mail:t2#0"]["approve"] is False      # member_life left for hand review
-    assert rows["mail:t1#1"]["approve"] is False      # social not requested
+    assert rows["mail:t1#0"]["approve"] is True  # selection approved
+    assert rows["mail:t2#0"]["approve"] is False  # member_life left for hand review
+    assert rows["mail:t1#1"]["approve"] is False  # social not requested
 
 
 def test_approve_refuses_sensitive_outright(tmp_path, fresh_db):
     from agent.script.archive import mine_archive_events as m
+
     out = _review_file(tmp_path)
     assert m.approve(out_path=out, categories={"social"})["approved"] == 0
     assert all(not json.loads(x)["approve"] for x in out.read_text().splitlines())
@@ -142,6 +199,7 @@ def test_approve_refuses_sensitive_outright(tmp_path, fresh_db):
 
 def test_stats_summarizes_without_mutating(tmp_path, fresh_db):
     from agent.script.archive import mine_archive_events as m
+
     out = _review_file(tmp_path)
     before = out.read_text()
     s = m.stats(out_path=out)
@@ -151,11 +209,22 @@ def test_stats_summarizes_without_mutating(tmp_path, fresh_db):
 
 def test_load_multi_member_event_is_group_scoped(tmp_path, fresh_db):
     from agent.script.archive import mine_archive_events as m
+
     out = tmp_path / "mined.jsonl"
-    out.write_text(json.dumps({
-        "approve": True, "source": "mail:t2#0", "thread_id": "t2", "category": "social",
-        "kind": "dinner", "occurred_at": "2019-05-01", "member_slugs": ["jamie", "tom"],
-        "summary": "Jamie and Tom hosted dinner."}))
+    out.write_text(
+        json.dumps(
+            {
+                "approve": True,
+                "source": "mail:t2#0",
+                "thread_id": "t2",
+                "category": "social",
+                "kind": "dinner",
+                "occurred_at": "2019-05-01",
+                "member_slugs": ["jamie", "tom"],
+                "summary": "Jamie and Tom hosted dinner.",
+            }
+        )
+    )
     m.load(out_path=out)
     ev = fresh_db.timeline(category="social")[0]
     assert ev["member_id"] is None  # 2+ members → club/group-scoped row

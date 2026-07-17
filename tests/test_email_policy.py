@@ -130,9 +130,10 @@ class TestInboundEmailPolicy:
         assert decision.reason == "sender_not_allowed"
 
     def test_display_name_cleanup_for_google_groups(self):
-        assert email_policy.known_member_slug_for_display_name(
-            "'Jamie Thingelstad' via rwbookclub"
-        ) == "jamie"
+        assert (
+            email_policy.known_member_slug_for_display_name("'Jamie Thingelstad' via rwbookclub")
+            == "jamie"
+        )
 
     def test_mere_oliver_mention_on_mailing_list_is_model_candidate(self, fresh_db):
         identities.link_member_email("tom@tomeri.org", "tom")
@@ -184,7 +185,10 @@ class TestInboundEmailPolicy:
 class TestOutboundEmailPolicy:
     def test_model_send_allows_linked_member(self, fresh_db):
         identities.link_member_email("jamie@thingelstad.com", "jamie")
-        assert email_policy.validate_model_email_recipients(to=["Jamie <jamie@thingelstad.com>"]) is None
+        assert (
+            email_policy.validate_model_email_recipients(to=["Jamie <jamie@thingelstad.com>"])
+            is None
+        )
 
     def test_model_send_blocks_unknown_address(self, fresh_db):
         identities.link_member_email("jamie@thingelstad.com", "jamie")

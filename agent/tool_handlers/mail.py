@@ -64,8 +64,7 @@ def handle(name: str, tool_input: dict, request: RequestContext):
             body=tool_input["body"],
             cc=tool_input.get("cc"),
             idempotency_key=(
-                f"email:model:{request.source_message_id}"
-                if request.source_message_id else None
+                f"email:model:{request.source_message_id}" if request.source_message_id else None
             ),
             policy="model",
         )

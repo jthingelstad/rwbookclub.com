@@ -15,40 +15,44 @@ from agent import config, identities
 # These tools expose club-operational or private state, or create durable/outward effects.  Keeping
 # the list here makes ambient model authority reviewable in one place instead of scattered across
 # prompt prose and dispatch branches.
-MEMBER_ONLY_TOOLS = frozenset({
-    "pending_reviews",
-    "current_club_state",
-    "current_meeting_status",
-    "meeting_readiness",
-    "identity_status",
-    "recent_channel_context",
-    "record_availability",
-    "propose_action",
-    "remember",
-    "recall",
-    "set_reminder",
-    "send_email",
-    "email_status",
-    "record_reading_status",
-    "reading_status",
-    "request_reading_update",
-    "request_roll_call_update",
-    "search_discussion",
-    "search_mail_archive",
-    "get_mail_thread",
-    "club_timeline",
-    "record_timeline_event",
-    "book_cloud_add",
-    "book_cloud_recent",
-    "pick_fit",
-    "pick_prospects",
-})
+MEMBER_ONLY_TOOLS = frozenset(
+    {
+        "pending_reviews",
+        "current_club_state",
+        "current_meeting_status",
+        "meeting_readiness",
+        "identity_status",
+        "recent_channel_context",
+        "record_availability",
+        "propose_action",
+        "remember",
+        "recall",
+        "set_reminder",
+        "send_email",
+        "email_status",
+        "record_reading_status",
+        "reading_status",
+        "request_reading_update",
+        "request_roll_call_update",
+        "search_discussion",
+        "search_mail_archive",
+        "get_mail_thread",
+        "club_timeline",
+        "record_timeline_event",
+        "book_cloud_add",
+        "book_cloud_recent",
+        "pick_fit",
+        "pick_prospects",
+    }
+)
 
-ADMIN_ONLY_TOOLS = frozenset({
-    "recent_feedback",
-    "open_proposals",
-    "meeting_campaign",
-})
+ADMIN_ONLY_TOOLS = frozenset(
+    {
+        "recent_feedback",
+        "open_proposals",
+        "meeting_campaign",
+    }
+)
 
 
 @dataclass(frozen=True)

@@ -61,7 +61,7 @@ def _extract_subject(text: str) -> str:
         return " ".join(m.group(1).split()).strip()
     opened = re.search(r"<subject>", text, re.I)
     if opened:
-        rest = text[opened.end():].strip()
+        rest = text[opened.end() :].strip()
         first = rest.splitlines()[0] if rest else ""
         return re.sub(r"</?subject\s*>", "", first, flags=re.I).strip()
     return ""
@@ -69,8 +69,10 @@ def _extract_subject(text: str) -> str:
 
 def resolve_commit(ref: str) -> str | None:
     """The short hash for a commit-ish, or None if it doesn't resolve (used to validate `since:`)."""
-    return publish.git_output(
-        ["rev-parse", "--verify", "--short", f"{ref}^{{commit}}"]).strip() or None
+    return (
+        publish.git_output(["rev-parse", "--verify", "--short", f"{ref}^{{commit}}"]).strip()
+        or None
+    )
 
 
 def head_commit() -> str | None:
@@ -85,7 +87,8 @@ def recent_changes(*, days: int | None = None, since_commit: str | None = None) 
     if since_commit:
         rev = [f"{since_commit}..HEAD"]
         info = publish.git_output(
-            ["log", "-1", "--date=short", "--pretty=format:%h %ad %s", since_commit]).strip()
+            ["log", "-1", "--date=short", "--pretty=format:%h %ad %s", since_commit]
+        ).strip()
         window = f"since commit {info}" if info else f"since commit {since_commit}"
     else:
         days = days or 7
@@ -96,10 +99,18 @@ def recent_changes(*, days: int | None = None, since_commit: str | None = None) 
     count = len(total)
 
     merges = publish.git_output(["log", *rev, "--merges", "--pretty=format:- %h %s"]).strip()
-    commits = publish.git_output([
-        "log", *rev, "-n", str(_COMMIT_CAP), "--no-merges", "--stat", "--date=short",
-        "--pretty=format:%n### %h %ad %s%n%b",
-    ]).strip()
+    commits = publish.git_output(
+        [
+            "log",
+            *rev,
+            "-n",
+            str(_COMMIT_CAP),
+            "--no-merges",
+            "--stat",
+            "--date=short",
+            "--pretty=format:%n### %h %ad %s%n%b",
+        ]
+    ).strip()
 
     doc_lines = publish.git_output(
         ["log", *rev, "--name-only", "--pretty=format:", "--", "*.md"]
@@ -132,14 +143,17 @@ def coin_release_name(material: dict) -> str:
     try:
         shelf = sorted(b["title"] for b in cr.books() if b.get("isRead"))
         used = [r["name"] for r in db.release_history() if r["name"]]
-        used_block = ("\n".join(f"- {n}" for n in used)
-                      if used else "(none yet — this is the first named release)")
+        used_block = (
+            "\n".join(f"- {n}" for n in used)
+            if used
+            else "(none yet — this is the first named release)"
+        )
         user = (
             "Coin the name for this release of Oliver (the R/W Book Club's agent software). "
             "Rules:\n"
             "- Pick ONE title from the club's shelf below whose spirit fits this batch of changes.\n"
             "- The name is: one alliterative adjective + that title's distinctive word, title word "
-            "LAST — if the shelf held \"Middlemarch\" you might coin \"Merry Middlemarch\". The "
+            'LAST — if the shelf held "Middlemarch" you might coin "Merry Middlemarch". The '
             "adjective MUST start with the same letter/sound as the title word (that's the "
             "alliteration). Two or three words total; never append extra words after the title "
             "word.\n"
@@ -152,11 +166,19 @@ def coin_release_name(material: dict) -> str:
             "--- The club's shelf (pick your anchor title from these) ---\n"
             + "\n".join(f"- {t}" for t in shelf)
         )
-        name = oliver.complete(
-            "You name software releases for a book club's agent. You answer with the name only.",
-            user, model=oliver.MODEL, max_tokens=4000, effort="low",
-            usage_channel="release_notes:name",
-        ).strip().strip('"').strip("'")
+        name = (
+            oliver.complete(
+                "You name software releases for a book club's agent. You answer with the name only.",
+                user,
+                model=oliver.MODEL,
+                max_tokens=4000,
+                effort="low",
+                usage_channel="release_notes:name",
+            )
+            .strip()
+            .strip('"')
+            .strip("'")
+        )
         if not name or "\n" in name or len(name) > 60:
             return ""
         return name
@@ -169,23 +191,25 @@ def release_notes_prompt(material: dict) -> str:
     trunc = (
         f"\n(NOTE: {material['count']} commits landed in this window; only the {_COMMIT_CAP} "
         "most recent are shown in full below. Say so if it matters.)"
-        if material["truncated"] else ""
+        if material["truncated"]
+        else ""
     )
     docs = "\n".join(f"- {d}" for d in material["changed_docs"]) or "(no docs changed)"
     name = material.get("release_name") or ""
     naming = (
-        f"RELEASE NAME: this release has been christened \"{name}\" — every release of your "
+        f'RELEASE NAME: this release has been christened "{name}" — every release of your '
         "software is named with an alliteration on a title from the club's shelf. Your OPEN "
         "framing sentence must introduce the release by this name; a short clause on why that "
         "book fits this batch is welcome. The subject MAY carry the name too, if it lands "
         "naturally.\n\n"
-        if name else ""
+        if name
+        else ""
     )
     return (
         "Write a short email to the R/W Book Club announcing the new capabilities YOU — Oliver — "
         f"have gained. This batch covers {window}. This is you, in first person, telling the club "
         "what you can now do and what changed under the hood.\n\n"
-        "VOICE: first person throughout (\"I can now…\", \"I rebuilt…\", \"I learned…\"). "
+        'VOICE: first person throughout ("I can now…", "I rebuilt…", "I learned…"). '
         "Technically strong and specific — name the actual mechanism, don't be hand-wavey. Share "
         "it with genuine fun and a real desire to teach: this club is technical and several "
         "members are interested in how agents are built, so the internals are a feature, not "
@@ -243,9 +267,16 @@ def release_notes_email(*, days: int | None = None, since_commit: str | None = N
     material["release_name"] = coin_release_name(material)
     out = oliver.generate(release_notes_prompt(material))
     body = _extract_email(out)
-    subject = _extract_subject(out) or f"Under my hood: what changed — {_friendly_date(clock.club_today_iso())}"
-    return {"subject": subject, "body": body, "window": material["window"],
-            "release_name": material["release_name"]}
+    subject = (
+        _extract_subject(out)
+        or f"Under my hood: what changed — {_friendly_date(clock.club_today_iso())}"
+    )
+    return {
+        "subject": subject,
+        "body": body,
+        "window": material["window"],
+        "release_name": material["release_name"],
+    }
 
 
 log = logging.getLogger("oliver.release_notes")
@@ -267,32 +298,57 @@ def create_github_release(*, name: str, commit: str, body: str) -> str | None:
         git = publish._bin("git")
         gh = publish._bin("gh")
         if not publish.git_output(["tag", "-l", tag]).strip():
-            publish._run([git, "tag", "-a", tag, commit, "-m", f"{title} — Oliver release"], timeout=15)
+            publish._run(
+                [git, "tag", "-a", tag, commit, "-m", f"{title} — Oliver release"], timeout=15
+            )
             publish._run([git, "push", "origin", tag], timeout=60)
-        view = subprocess.run([gh, "release", "view", tag, "--json", "url", "-q", ".url"],
-                              cwd=publish.REPO_ROOT, capture_output=True, text=True,
-                              timeout=30, env=publish._ENV)
+        view = subprocess.run(
+            [gh, "release", "view", tag, "--json", "url", "-q", ".url"],
+            cwd=publish.REPO_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=publish._ENV,
+        )
         if view.returncode == 0 and view.stdout.strip():
             return view.stdout.strip()  # already published (e.g. cut by hand) — reuse
-        made = subprocess.run([gh, "release", "create", tag, "--title", title, "--notes-file", "-"],
-                              cwd=publish.REPO_ROOT, capture_output=True, text=True,
-                              timeout=60, env=publish._ENV, input=body)
+        made = subprocess.run(
+            [gh, "release", "create", tag, "--title", title, "--notes-file", "-"],
+            cwd=publish.REPO_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env=publish._ENV,
+            input=body,
+        )
         if made.returncode != 0:
             raise RuntimeError((made.stderr or made.stdout or "")[-500:])
         return made.stdout.strip() or None
     except Exception as e:
         log.exception("GitHub release for %r failed", tag)
-        db.add_activity("warning", "GitHub release failed",
-                        f"Tag: {tag}\nCommit: {commit}\n{type(e).__name__}: {e}")
+        db.add_activity(
+            "warning",
+            "GitHub release failed",
+            f"Tag: {tag}\nCommit: {commit}\n{type(e).__name__}: {e}",
+        )
         return None
 
 
 def _main() -> None:
     from agent import database
+
     database.initialize()
-    parser = argparse.ArgumentParser(description="Preview (and optionally send) Oliver's release-notes email.")
-    parser.add_argument("--days", type=int, default=None, help="look back this many days (default 7)")
-    parser.add_argument("--since", metavar="COMMIT", help="scope to changes since this commit-ish (overrides --days)")
+    parser = argparse.ArgumentParser(
+        description="Preview (and optionally send) Oliver's release-notes email."
+    )
+    parser.add_argument(
+        "--days", type=int, default=None, help="look back this many days (default 7)"
+    )
+    parser.add_argument(
+        "--since",
+        metavar="COMMIT",
+        help="scope to changes since this commit-ish (overrides --days)",
+    )
     parser.add_argument("--send", metavar="EMAIL", help="also deliver the draft to this address")
     args = parser.parse_args()
 

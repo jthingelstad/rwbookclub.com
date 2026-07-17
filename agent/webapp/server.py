@@ -38,8 +38,19 @@ def _is_ajax(request: web.Request) -> bool:
 
 # Chat clients fetch a shared URL to build a link preview. They must NOT spend the single-use
 # token — only the human's tap should. Match the common unfurlers' user agents.
-_PREVIEW_BOTS = ("discordbot", "facebookexternalhit", "slackbot", "telegrambot", "whatsapp",
-                 "applebot", "twitterbot", "linkedinbot", "embedly", "preview", "bot/")
+_PREVIEW_BOTS = (
+    "discordbot",
+    "facebookexternalhit",
+    "slackbot",
+    "telegrambot",
+    "whatsapp",
+    "applebot",
+    "twitterbot",
+    "linkedinbot",
+    "embedly",
+    "preview",
+    "bot/",
+)
 
 
 def _is_link_preview(request: web.Request) -> bool:
@@ -58,8 +69,8 @@ _SECURITY_HEADERS = {
     # No 'unsafe-inline' anywhere: all CSS/JS is served from /webapp/static/, so this CSP is a
     # real XSS control on the public Funnel endpoint, not a documented backstop.
     "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; "
-                               "style-src 'self'; script-src 'self'; "
-                               "frame-ancestors 'none'",
+    "style-src 'self'; script-src 'self'; "
+    "frame-ancestors 'none'",
 }
 
 
@@ -112,8 +123,14 @@ async def _mw(request: web.Request, handler):
     fresh = sessions.refresh_if_stale(session)
     if fresh:
         try:
-            resp.set_cookie(sessions.COOKIE_NAME, fresh, httponly=True, secure=True,
-                            samesite="Lax", max_age=int(sessions._SESSION_TTL.total_seconds()))
+            resp.set_cookie(
+                sessions.COOKIE_NAME,
+                fresh,
+                httponly=True,
+                secure=True,
+                samesite="Lax",
+                max_age=int(sessions._SESSION_TTL.total_seconds()),
+            )
         except AttributeError:
             pass  # streamed/exception responses without set_cookie — renew on the next request
     return resp
@@ -136,8 +153,12 @@ async def entry(request: web.Request) -> web.Response:
             return render("expired.html", request, status=401)
         resp = web.HTTPFound("/webapp")
         resp.set_cookie(
-            sessions.COOKIE_NAME, sessions.make_session(member),
-            httponly=True, secure=True, samesite="Lax", max_age=int(sessions._SESSION_TTL.total_seconds()),
+            sessions.COOKIE_NAME,
+            sessions.make_session(member),
+            httponly=True,
+            secure=True,
+            samesite="Lax",
+            max_age=int(sessions._SESSION_TTL.total_seconds()),
         )
         raise resp
     session = request.get("session") or {}
@@ -163,12 +184,15 @@ def _build_app() -> web.Application:
     # client_max_size caps request bodies (the app only takes small forms) so the shared bot process
     # can't be memory-pressured by a giant POST. Outer middleware runs first: headers wrap everything.
     app = web.Application(middlewares=[_security_headers, _mw], client_max_size=256 * 1024)
-    app.add_routes([
-        web.get("/healthz", healthz),
-        web.get("/webapp", entry),
-        web.post("/webapp/publish", publish_now),
-    ])
+    app.add_routes(
+        [
+            web.get("/healthz", healthz),
+            web.get("/webapp", entry),
+            web.post("/webapp/publish", publish_now),
+        ]
+    )
     from pathlib import Path
+
     app.router.add_static("/webapp/static/", Path(__file__).parent / "static")
     routes_member.add_routes(app)
     routes_admin.add_routes(app)
@@ -189,15 +213,20 @@ async def ensure_running() -> None:
         if not config.WEBAPP_SECRET or config.WEBAPP_SECRET == config.WEBAPP_DEV_SECRET:
             raise RuntimeError(
                 "Refusing to start the web app: set WEBAPP_SECRET to a dedicated real "
-                "secret — signing sessions with the dev default would allow forged admin cookies.")
+                "secret — signing sessions with the dev default would allow forged admin cookies."
+            )
         runner = web.AppRunner(_build_app())
         await runner.setup()
         site = web.TCPSite(runner, "127.0.0.1", config.WEBAPP_PORT)
         await site.start()
         _runner, _site = runner, site
         _idle_task = asyncio.create_task(_idle_watcher())
-        log.info("webapp started on 127.0.0.1:%d (public: %s); idle shutoff after %d min",
-                 config.WEBAPP_PORT, config.WEBAPP_BASE_URL, _IDLE_TIMEOUT.total_seconds() // 60)
+        log.info(
+            "webapp started on 127.0.0.1:%d (public: %s); idle shutoff after %d min",
+            config.WEBAPP_PORT,
+            config.WEBAPP_BASE_URL,
+            _IDLE_TIMEOUT.total_seconds() // 60,
+        )
 
 
 async def _idle_watcher() -> None:

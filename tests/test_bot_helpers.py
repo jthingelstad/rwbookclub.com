@@ -97,26 +97,38 @@ class TestIgnoredEmailLogging:
 
 
 class TestRollCallEmailParsing:
-    @pytest.mark.parametrize("body,status", [
-        ("yes, I can make it.\n\n--\nJamie", "yes"),
-        ("No.\n\nOn Jun 9 Oliver wrote:", "no"),
-        ("I can't make it this month.", "no"),
-        ("Unsure for now.", "unsure"),
-    ])
+    @pytest.mark.parametrize(
+        "body,status",
+        [
+            ("yes, I can make it.\n\n--\nJamie", "yes"),
+            ("No.\n\nOn Jun 9 Oliver wrote:", "no"),
+            ("I can't make it this month.", "no"),
+            ("Unsure for now.", "unsure"),
+        ],
+    )
     def test_explicit_roll_call_replies(self, body, status):
-        assert roll_call_status_from_email(
-            "Re: Roll call: A World Appears on 2026-06-30",
-            body,
-        ) == status
+        assert (
+            roll_call_status_from_email(
+                "Re: Roll call: A World Appears on 2026-06-30",
+                body,
+            )
+            == status
+        )
 
     def test_ignores_non_roll_call_subjects(self):
-        assert roll_call_status_from_email(
-            "Re: Reading check-in: A World Appears",
-            "Yes, I can make it.",
-        ) is None
+        assert (
+            roll_call_status_from_email(
+                "Re: Reading check-in: A World Appears",
+                "Yes, I can make it.",
+            )
+            is None
+        )
 
     def test_ignores_quoted_history_after_blank(self):
-        assert roll_call_status_from_email(
-            "Re: Roll call: A World Appears on 2026-06-30",
-            "\n\nOn Jun 9 Oliver wrote:\n> Can you make it?\n> Yes",
-        ) is None
+        assert (
+            roll_call_status_from_email(
+                "Re: Roll call: A World Appears on 2026-06-30",
+                "\n\nOn Jun 9 Oliver wrote:\n> Can you make it?\n> Yes",
+            )
+            is None
+        )

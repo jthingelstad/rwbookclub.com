@@ -38,7 +38,8 @@ def _build_registry() -> dict[str, ToolHandler]:
             raise RuntimeError(f"duplicate tool handler registration: {sorted(overlap)}")
         registry.update({name: capability.handle for name in capability.NAMES})
     expected = {
-        definition["name"] for definition in TOOLS
+        definition["name"]
+        for definition in TOOLS
         if definition.get("type") != "web_search_20250305"
     }
     if set(registry) != expected:
@@ -64,7 +65,9 @@ def dispatch(name: str, tool_input: dict, ctx: dict) -> str:
         if error := access.tool_access_error(name, actor):
             log.warning(
                 "tool access denied: tool=%s member=%s admin=%s",
-                name, actor.member_slug, actor.is_admin,
+                name,
+                actor.member_slug,
+                actor.is_admin,
             )
             return _dump({"error": error})
         handler = TOOL_HANDLERS.get(name)

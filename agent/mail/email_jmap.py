@@ -66,8 +66,9 @@ def enabled() -> bool:
 
 
 class JMAPClient:
-    def __init__(self, *, token: str | None = None, session_url: str | None = None,
-                 timeout: float = 30.0) -> None:
+    def __init__(
+        self, *, token: str | None = None, session_url: str | None = None, timeout: float = 30.0
+    ) -> None:
         self.token = token or config.FASTMAIL_JMAP_TOKEN
         self.session_url = session_url or config.FASTMAIL_JMAP_SESSION_URL
         self.timeout = timeout
@@ -106,7 +107,9 @@ class JMAPClient:
                 return account_id
         raise JMAPError(f"No account supports {capability}")
 
-    def call(self, method_calls: list[list[Any]], *, using: list[str] | None = None) -> list[list[Any]]:
+    def call(
+        self, method_calls: list[list[Any]], *, using: list[str] | None = None
+    ) -> list[list[Any]]:
         body = {"using": using or [CORE, MAIL, SUBMISSION], "methodCalls": method_calls}
         r = requests.post(
             self.api_url,
@@ -143,11 +146,17 @@ class JMAPClient:
         sent_parent = self._find_parent(rows, config.OLIVER_EMAIL_SENT_PARENT, "sent")
         drafts = self._find_parent(rows, "Drafts", "drafts")
         inbox_oliver = self._find_child(
-            rows, by_id, inbox_parent["id"], config.OLIVER_EMAIL_INBOX_FOLDER,
+            rows,
+            by_id,
+            inbox_parent["id"],
+            config.OLIVER_EMAIL_INBOX_FOLDER,
             f"{config.OLIVER_EMAIL_INBOX_PARENT}/{config.OLIVER_EMAIL_INBOX_FOLDER}",
         )
         sent_oliver = self._find_child(
-            rows, by_id, sent_parent["id"], config.OLIVER_EMAIL_SENT_FOLDER,
+            rows,
+            by_id,
+            sent_parent["id"],
+            config.OLIVER_EMAIL_SENT_FOLDER,
             f"{config.OLIVER_EMAIL_SENT_PARENT}/{config.OLIVER_EMAIL_SENT_FOLDER}",
         )
         return MailFolders(
@@ -157,13 +166,20 @@ class JMAPClient:
         )
 
     def _mailboxes(self) -> list[dict[str, Any]]:
-        responses = self.call([
-            ["Mailbox/get", {
-                "accountId": self.mail_account_id,
-                "ids": None,
-                "properties": ["id", "name", "parentId", "role"],
-            }, "mailboxes"],
-        ], using=[CORE, MAIL])
+        responses = self.call(
+            [
+                [
+                    "Mailbox/get",
+                    {
+                        "accountId": self.mail_account_id,
+                        "ids": None,
+                        "properties": ["id", "name", "parentId", "role"],
+                    },
+                    "mailboxes",
+                ],
+            ],
+            using=[CORE, MAIL],
+        )
         return responses[0][1]["list"]
 
     @staticmethod
@@ -171,15 +187,24 @@ class JMAPClient:
         role_match = next((m for m in rows if m.get("role") == role), None)
         if role_match:
             return role_match
-        name_match = next((m for m in rows if m.get("parentId") is None and m.get("name") == name), None)
+        name_match = next(
+            (m for m in rows if m.get("parentId") is None and m.get("name") == name), None
+        )
         if name_match:
             return name_match
         raise JMAPError(f"Could not find {name} mailbox")
 
     @staticmethod
-    def _find_child(rows: list[dict[str, Any]], by_id: dict[str, dict[str, Any]],
-                    parent_id: str, name: str, path: str) -> dict[str, Any]:
-        child = next((m for m in rows if m.get("parentId") == parent_id and m.get("name") == name), None)
+    def _find_child(
+        rows: list[dict[str, Any]],
+        by_id: dict[str, dict[str, Any]],
+        parent_id: str,
+        name: str,
+        path: str,
+    ) -> dict[str, Any]:
+        child = next(
+            (m for m in rows if m.get("parentId") == parent_id and m.get("name") == name), None
+        )
         if child:
             return child
         flat = next((m for m in rows if m.get("name") == path), None)
@@ -189,13 +214,20 @@ class JMAPClient:
 
     @cached_property
     def identity_id(self) -> str:
-        responses = self.call([
-            ["Identity/get", {
-                "accountId": self.submission_account_id,
-                "ids": None,
-                "properties": ["id", "name", "email"],
-            }, "identities"],
-        ], using=[CORE, SUBMISSION])
+        responses = self.call(
+            [
+                [
+                    "Identity/get",
+                    {
+                        "accountId": self.submission_account_id,
+                        "ids": None,
+                        "properties": ["id", "name", "email"],
+                    },
+                    "identities",
+                ],
+            ],
+            using=[CORE, SUBMISSION],
+        )
         identities = responses[0][1]["list"]
         wanted = config.OLIVER_EMAIL_ADDRESS.lower()
         match = next((i for i in identities if (i.get("email") or "").lower() == wanted), None)
@@ -208,27 +240,48 @@ class JMAPClient:
 
     def unread_oliver_email(self, *, limit: int | None = None) -> list[InboundEmail]:
         limit = limit or config.OLIVER_EMAIL_MAX_PER_POLL
-        responses = self.call([
-            ["Email/query", {
-                "accountId": self.mail_account_id,
-                "filter": {
-                    "inMailbox": self.folders.inbox_oliver,
-                    "notKeyword": "$seen",
-                },
-                "sort": [{"property": "receivedAt", "isAscending": True}],
-                "limit": max(1, min(limit, 20)),
-            }, "query"],
-            ["Email/get", {
-                "accountId": self.mail_account_id,
-                "#ids": {"resultOf": "query", "name": "Email/query", "path": "/ids"},
-                "properties": [
-                    "id", "threadId", "messageId", "from", "subject", "receivedAt",
-                    "to", "cc", "replyTo", "textBody", "bodyValues", "references",
+        responses = self.call(
+            [
+                [
+                    "Email/query",
+                    {
+                        "accountId": self.mail_account_id,
+                        "filter": {
+                            "inMailbox": self.folders.inbox_oliver,
+                            "notKeyword": "$seen",
+                        },
+                        "sort": [{"property": "receivedAt", "isAscending": True}],
+                        "limit": max(1, min(limit, 20)),
+                    },
+                    "query",
                 ],
-                "fetchTextBodyValues": True,
-                "maxBodyValueBytes": 20000,
-            }, "get"],
-        ], using=[CORE, MAIL])
+                [
+                    "Email/get",
+                    {
+                        "accountId": self.mail_account_id,
+                        "#ids": {"resultOf": "query", "name": "Email/query", "path": "/ids"},
+                        "properties": [
+                            "id",
+                            "threadId",
+                            "messageId",
+                            "from",
+                            "subject",
+                            "receivedAt",
+                            "to",
+                            "cc",
+                            "replyTo",
+                            "textBody",
+                            "bodyValues",
+                            "references",
+                        ],
+                        "fetchTextBodyValues": True,
+                        "maxBodyValueBytes": 20000,
+                    },
+                    "get",
+                ],
+            ],
+            using=[CORE, MAIL],
+        )
         emails = responses[1][1].get("list") or []
         return [self._inbound_from_jmap(e) for e in emails if self._sender_email(e)]
 
@@ -236,17 +289,32 @@ class JMAPClient:
         update = {"keywords/$seen": True}
         if answered:
             update["keywords/$answered"] = True
-        self.call([
-            ["Email/set", {
-                "accountId": self.mail_account_id,
-                "update": {email_id: update},
-            }, "mark"],
-        ], using=[CORE, MAIL])
+        self.call(
+            [
+                [
+                    "Email/set",
+                    {
+                        "accountId": self.mail_account_id,
+                        "update": {email_id: update},
+                    },
+                    "mark",
+                ],
+            ],
+            using=[CORE, MAIL],
+        )
 
-    def send_email(self, *, to: list[str] | str, subject: str, body: str,
-                   html_body: str | None = None,
-                   cc: list[str] | str | None = None, bcc: list[str] | str | None = None,
-                   in_reply_to: str | None = None, references: list[str] | None = None) -> dict[str, Any]:
+    def send_email(
+        self,
+        *,
+        to: list[str] | str,
+        subject: str,
+        body: str,
+        html_body: str | None = None,
+        cc: list[str] | str | None = None,
+        bcc: list[str] | str | None = None,
+        in_reply_to: str | None = None,
+        references: list[str] | None = None,
+    ) -> dict[str, Any]:
         recipients = _addresses(to)
         if not recipients:
             raise JMAPError("At least one recipient is required")
@@ -292,34 +360,50 @@ class JMAPClient:
         if refs:
             email_obj["references"] = refs[-20:]
 
-        rcpt_to = [{"email": r["email"], "parameters": None} for r in recipients + cc_recipients + bcc_recipients]
-        responses = self.call([
-            ["Email/set", {
-                "accountId": self.mail_account_id,
-                "create": {create_id: email_obj},
-            }, "create"],
-            ["EmailSubmission/set", {
-                "accountId": self.submission_account_id,
-                "create": {
-                    submit_id: {
-                        "identityId": self.identity_id,
-                        "emailId": f"#{create_id}",
-                        "envelope": {
-                            "mailFrom": {"email": config.OLIVER_EMAIL_ADDRESS, "parameters": None},
-                            "rcptTo": rcpt_to,
+        rcpt_to = [
+            {"email": r["email"], "parameters": None}
+            for r in recipients + cc_recipients + bcc_recipients
+        ]
+        responses = self.call(
+            [
+                [
+                    "Email/set",
+                    {
+                        "accountId": self.mail_account_id,
+                        "create": {create_id: email_obj},
+                    },
+                    "create",
+                ],
+                [
+                    "EmailSubmission/set",
+                    {
+                        "accountId": self.submission_account_id,
+                        "create": {
+                            submit_id: {
+                                "identityId": self.identity_id,
+                                "emailId": f"#{create_id}",
+                                "envelope": {
+                                    "mailFrom": {
+                                        "email": config.OLIVER_EMAIL_ADDRESS,
+                                        "parameters": None,
+                                    },
+                                    "rcptTo": rcpt_to,
+                                },
+                            },
+                        },
+                        "onSuccessUpdateEmail": {
+                            f"#{submit_id}": {
+                                f"mailboxIds/{self.folders.drafts}": None,
+                                f"mailboxIds/{self.folders.sent_oliver}": True,
+                                "keywords/$draft": None,
+                                "keywords/$seen": True,
+                            },
                         },
                     },
-                },
-                "onSuccessUpdateEmail": {
-                    f"#{submit_id}": {
-                        f"mailboxIds/{self.folders.drafts}": None,
-                        f"mailboxIds/{self.folders.sent_oliver}": True,
-                        "keywords/$draft": None,
-                        "keywords/$seen": True,
-                    },
-                },
-            }, "submit"],
-        ])
+                    "submit",
+                ],
+            ]
+        )
         create_payload = responses[0][1]
         submit_payload = responses[1][1]
         if create_payload.get("notCreated"):

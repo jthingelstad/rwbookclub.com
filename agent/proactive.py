@@ -59,15 +59,11 @@ def _chunk(text: str, limit: int) -> list[str]:
 async def _send_discord(channel, content: str, *, idempotency_key: str) -> dict:
     """Persist one proactive Discord post before crossing Discord's API boundary."""
     payload = {"channel_id": str(channel.id), "content": content}
-    row = outbox.enqueue(
-        kind="discord", payload=payload, idempotency_key=idempotency_key
-    )
+    row = outbox.enqueue(kind="discord", payload=payload, idempotency_key=idempotency_key)
     return await delivery.deliver_discord_row(row, channel)
 
 
-async def send_club_email(
-    subject: str, body: str, *, idempotency_key: str | None = None
-) -> None:
+async def send_club_email(subject: str, body: str, *, idempotency_key: str | None = None) -> None:
     """Send a club-wide cadence email to the mailing list and mirror it to Discord.
 
     This is the charter's "approved cadence path" — a direct send to the whole list,
@@ -89,9 +85,7 @@ async def send_club_email(
         idempotency_key=f"{base_key}:email",
         policy="cadence",
     )
-    main = (
-        _client.get_channel(config.MAIN_CHANNEL_ID) if config.MAIN_CHANNEL_ID else None
-    )
+    main = _client.get_channel(config.MAIN_CHANNEL_ID) if config.MAIN_CHANNEL_ID else None
     if main is not None:
         for index, chunk in enumerate(_chunk(final, config.MAX_DISCORD_LEN)):
             await _send_discord(
@@ -109,13 +103,9 @@ async def _maybe_send_postscript(now: datetime) -> int:
     if not recent or not recent.get("meetingDate"):
         return 0
     meeting_id = clubdb.meeting_id_for_book_slug(recent.get("slug"))
-    if meeting_id is None or db.has_group_event(
-        meeting_id, meeting_emails.POSTSCRIPT_KIND
-    ):
+    if meeting_id is None or db.has_group_event(meeting_id, meeting_emails.POSTSCRIPT_KIND):
         return 0
-    start = clock.meeting_start(
-        recent.get("meetingDate"), recent.get("meetingStartTime")
-    )
+    start = clock.meeting_start(recent.get("meetingDate"), recent.get("meetingStartTime"))
     if not (start + timedelta(days=7) <= now <= start + timedelta(days=10)):
         return 0
     email = await asyncio.to_thread(meeting_emails.postscript_email, recent)
@@ -162,13 +152,10 @@ async def _run_maintenance_jobs(now: datetime) -> int:
     async def enrichment_job() -> int:
         if (
             not config.ENRICH_SWEEP_ENABLED
-            or (db.get_job_state("enrichment_sweep") or {}).get("date")
-            == clock.club_today_iso()
+            or (db.get_job_state("enrichment_sweep") or {}).get("date") == clock.club_today_iso()
         ):
             return 0
-        summary = await asyncio.to_thread(
-            enrich_loop.run_pending, limit=config.ENRICH_SWEEP_LIMIT
-        )
+        summary = await asyncio.to_thread(enrich_loop.run_pending, limit=config.ENRICH_SWEEP_LIMIT)
         db.set_job_state(
             "enrichment_sweep",
             {
@@ -183,9 +170,7 @@ async def _run_maintenance_jobs(now: datetime) -> int:
         return summary["enriched"] + summary["retried"]
 
     await _scheduled_job("enrichment_sweep", enrichment_job)
-    await _scheduled_job(
-        "review_drive", lambda: asyncio.to_thread(review_drive.run, now)
-    )
+    await _scheduled_job("review_drive", lambda: asyncio.to_thread(review_drive.run, now))
     await _scheduled_job("health_digest", lambda: asyncio.to_thread(health.run, now))
 
     async def reflection_job() -> int:
@@ -206,20 +191,14 @@ async def _post_due_notifications(main, now: datetime) -> int:
     posted = 0
     due = await asyncio.to_thread(scheduler.due_notifications, now, db.sent_keys())
     for note in due:
-        msg = await asyncio.to_thread(
-            oliver.compose, note.kind, note.facts, fallback=note.fallback
-        )
-        await _send_discord(
-            main, msg, idempotency_key=f"discord:notification:{note.key}"
-        )
+        msg = await asyncio.to_thread(oliver.compose, note.kind, note.facts, fallback=note.fallback)
+        await _send_discord(main, msg, idempotency_key=f"discord:notification:{note.key}")
         db.mark_sent(note.key)
         posted += 1
     return posted
 
 
-async def _maybe_run_meeting_outreach(
-    meeting: dict, status: dict, now: datetime, days: int
-) -> int:
+async def _maybe_run_meeting_outreach(meeting: dict, status: dict, now: datetime, days: int) -> int:
     meeting_id = meeting["meetingId"]
     if (
         email_jmap.enabled()
@@ -231,9 +210,7 @@ async def _maybe_run_meeting_outreach(
     return 0
 
 
-async def _maybe_post_attendance_alert(
-    main, meeting: dict, now: datetime, days: int
-) -> int:
+async def _maybe_post_attendance_alert(main, meeting: dict, now: datetime, days: int) -> int:
     status = await asyncio.to_thread(meeting_rules.meeting_status)
     meeting_id = meeting["meetingId"]
     if (
@@ -259,15 +236,10 @@ async def _maybe_post_attendance_alert(
             ),
             "yes responses needed": counts["quorumRequired"],
         },
-        fallback="⚠️ Attendance may need attention.\n\n"
-        + meeting_rules.format_status(status),
+        fallback="⚠️ Attendance may need attention.\n\n" + meeting_rules.format_status(status),
     )
-    await _send_discord(
-        main, alert, idempotency_key=f"discord:attendance-alert:{meeting_id}"
-    )
-    db.record_group_event(
-        meeting_id, "attendance_alert_sent", actor="oliver", surface="discord"
-    )
+    await _send_discord(main, alert, idempotency_key=f"discord:attendance-alert:{meeting_id}")
+    db.record_group_event(meeting_id, "attendance_alert_sent", actor="oliver", surface="discord")
     db.add_activity(
         "attendance_alert",
         "Attendance alert posted",
@@ -297,9 +269,7 @@ async def _maybe_send_club_cadence(
             email["body"],
             idempotency_key=f"club-email:week-reminder:{meeting_id}",
         )
-        db.record_group_event(
-            meeting_id, "week_reminder_sent", actor="oliver", surface="email"
-        )
+        db.record_group_event(meeting_id, "week_reminder_sent", actor="oliver", surface="email")
         db.add_activity(
             "club_email_sent",
             "1-week reminder sent to the mailing list",
@@ -315,9 +285,7 @@ async def _maybe_send_club_cadence(
             email["body"],
             idempotency_key=f"club-email:briefing:{meeting_id}",
         )
-        db.record_group_event(
-            meeting_id, "briefing_sent", actor="oliver", surface="email"
-        )
+        db.record_group_event(meeting_id, "briefing_sent", actor="oliver", surface="email")
         db.add_activity(
             "club_email_sent",
             "2-day topic email sent to the mailing list",
@@ -352,24 +320,18 @@ async def _post_due_reminders() -> int:
     reminders = await asyncio.to_thread(db.due_reminders)
     for reminder in reminders:
         target_id = (
-            int(reminder["channel_id"])
-            if reminder.get("channel_id")
-            else config.MAIN_CHANNEL_ID
+            int(reminder["channel_id"]) if reminder.get("channel_id") else config.MAIN_CHANNEL_ID
         )
         target = _client.get_channel(target_id) if target_id else None
         if target is None:
-            log.warning(
-                "reminder %s: channel %s not found, skipping", reminder["id"], target_id
-            )
+            log.warning("reminder %s: channel %s not found, skipping", reminder["id"], target_id)
             db.mark_reminder_fired(reminder["id"])
             continue
         msg = f"⏰ Reminder: {reminder['text']}"
         if reminder.get("created_by"):
             msg += f"\n_(set by {reminder['created_by']})_"
         try:
-            await _send_discord(
-                target, msg, idempotency_key=f"discord:reminder:{reminder['id']}"
-            )
+            await _send_discord(target, msg, idempotency_key=f"discord:reminder:{reminder['id']}")
             db.mark_reminder_fired(reminder["id"])
             db.add_activity(
                 "reminder_sent",
@@ -378,10 +340,8 @@ async def _post_due_reminders() -> int:
                 f"Text: {reminder['text'][:500]}",
             )
             posted += 1
-        except (discord.HTTPException, outbox.OutboxError):
-            log.exception(
-                "Failed to post reminder %s; delivery was not confirmed", reminder["id"]
-            )
+        except discord.HTTPException, outbox.OutboxError:
+            log.exception("Failed to post reminder %s; delivery was not confirmed", reminder["id"])
     return posted
 
 
@@ -399,9 +359,7 @@ async def _run_unleased() -> int:
     posted = await _run_maintenance_jobs(now)
 
     # 1. Corpus-derived notifications → main channel.
-    main = (
-        _client.get_channel(config.MAIN_CHANNEL_ID) if config.MAIN_CHANNEL_ID else None
-    )
+    main = _client.get_channel(config.MAIN_CHANNEL_ID) if config.MAIN_CHANNEL_ID else None
     if config.MAIN_CHANNEL_ID and main is None:
         log.warning("DISCORD_MAIN_CHANNEL_ID %s not found", config.MAIN_CHANNEL_ID)
     if main is not None:

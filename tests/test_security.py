@@ -28,8 +28,11 @@ def _seed_insecure(paths: security.RuntimePaths) -> None:
     paths.env_file.write_text("SECRET=value")
     paths.env_file.chmod(0o644)
     paths.db_path.parent.mkdir()
-    for path in (paths.db_path, paths.db_path.with_name("oliver.db-wal"),
-                 paths.db_path.with_name("oliver.db-shm")):
+    for path in (
+        paths.db_path,
+        paths.db_path.with_name("oliver.db-wal"),
+        paths.db_path.with_name("oliver.db-shm"),
+    ):
         path.write_bytes(b"private")
         path.chmod(0o666)
     for directory in (paths.logs_dir, paths.backups_dir, paths.corpus_dir, paths.offsite_dir):
@@ -71,8 +74,9 @@ def test_audit_reports_mode_drift_without_mutating(tmp_path):
     report = security.enforce_runtime_permissions(paths=paths, repair=False)
     assert not report.ok
     assert report.changed == []
-    assert any(path == paths.env_file and "expected 0600" in reason
-               for path, reason in report.unresolved)
+    assert any(
+        path == paths.env_file and "expected 0600" in reason for path, reason in report.unresolved
+    )
     assert _mode(paths.env_file) == before
 
 
@@ -86,8 +90,9 @@ def test_private_tree_refuses_symlinks_without_touching_target(tmp_path):
 
     report = security.secure_directory_tree(private, repair=True)
     assert not report.ok
-    assert any(path.name == "linked" and "symbolic link" in reason
-               for path, reason in report.unresolved)
+    assert any(
+        path.name == "linked" and "symbolic link" in reason for path, reason in report.unresolved
+    )
     assert _mode(target) == 0o644
 
 

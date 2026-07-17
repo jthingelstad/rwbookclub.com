@@ -18,7 +18,7 @@ def get_state(connect: Connect, key: str) -> dict | None:
         return None
     try:
         return json.loads(row["value"])
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return None
 
 
@@ -31,14 +31,19 @@ def set_state(connect: Connect, key: str, value: dict, *, now: str) -> None:
         )
 
 
-def begin_run(connect: Connect, job_name: str, *, lease_owner: str,
-              lease_expires_at: str, expected_interval_seconds: int, now: str) -> dict | None:
+def begin_run(
+    connect: Connect,
+    job_name: str,
+    *,
+    lease_owner: str,
+    lease_expires_at: str,
+    expected_interval_seconds: int,
+    now: str,
+) -> dict | None:
     """Atomically acquire a job lease and open its run row."""
     with connect() as conn:
         conn.execute("BEGIN IMMEDIATE")
-        lease = conn.execute(
-            "SELECT * FROM job_leases WHERE job_name=?", (job_name,)
-        ).fetchone()
+        lease = conn.execute("SELECT * FROM job_leases WHERE job_name=?", (job_name,)).fetchone()
         if lease and lease["lease_owner"] and (lease["lease_expires_at"] or "") > now:
             return None
         if lease and lease["lease_owner"]:
@@ -56,19 +61,31 @@ def begin_run(connect: Connect, job_name: str, *, lease_owner: str,
             "lease_expires_at=excluded.lease_expires_at, acquired_at=excluded.acquired_at, "
             "updated_at=excluded.updated_at, "
             "expected_interval_seconds=excluded.expected_interval_seconds",
-            (job_name, lease_owner, lease_expires_at, now, now,
-             max(1, int(expected_interval_seconds))),
+            (
+                job_name,
+                lease_owner,
+                lease_expires_at,
+                now,
+                now,
+                max(1, int(expected_interval_seconds)),
+            ),
         )
         cur = conn.execute(
             "INSERT INTO job_runs (job_name, lease_owner, started_at) VALUES (?, ?, ?)",
             (job_name, lease_owner, now),
         )
-    return {"run_id": cur.lastrowid, "job_name": job_name, "lease_owner": lease_owner,
-            "started_at": now, "lease_expires_at": lease_expires_at}
+    return {
+        "run_id": cur.lastrowid,
+        "job_name": job_name,
+        "lease_owner": lease_owner,
+        "started_at": now,
+        "lease_expires_at": lease_expires_at,
+    }
 
 
-def renew_lease(connect: Connect, job_name: str, *, lease_owner: str,
-                lease_expires_at: str, now: str) -> bool:
+def renew_lease(
+    connect: Connect, job_name: str, *, lease_owner: str, lease_expires_at: str, now: str
+) -> bool:
     with connect() as conn:
         cur = conn.execute(
             "UPDATE job_leases SET lease_expires_at=?, updated_at=? "
@@ -78,17 +95,34 @@ def renew_lease(connect: Connect, job_name: str, *, lease_owner: str,
     return cur.rowcount > 0
 
 
-def finish_run(connect: Connect, run_id: int, *, job_name: str, lease_owner: str,
-               outcome: str, duration_ms: int, processed_count: int = 0,
-               error: str | None = None, now: str) -> bool:
+def finish_run(
+    connect: Connect,
+    run_id: int,
+    *,
+    job_name: str,
+    lease_owner: str,
+    outcome: str,
+    duration_ms: int,
+    processed_count: int = 0,
+    error: str | None = None,
+    now: str,
+) -> bool:
     if outcome not in {"succeeded", "failed"}:
         raise ValueError("job outcome must be succeeded or failed")
     with connect() as conn:
         cur = conn.execute(
             "UPDATE job_runs SET finished_at=?, outcome=?, duration_ms=?, processed_count=?, "
             "error=? WHERE id=? AND job_name=? AND lease_owner=? AND outcome='running'",
-            (now, outcome, max(0, int(duration_ms)), max(0, int(processed_count)),
-             (error or "")[:120] or None, run_id, job_name, lease_owner),
+            (
+                now,
+                outcome,
+                max(0, int(duration_ms)),
+                max(0, int(processed_count)),
+                (error or "")[:120] or None,
+                run_id,
+                job_name,
+                lease_owner,
+            ),
         )
         if cur.rowcount:
             conn.execute(
@@ -128,22 +162,22 @@ def statuses(connect: Connect, *, now: str) -> list[dict]:
             if last_success:
                 elapsed = (now_dt - datetime.fromisoformat(last_success)).total_seconds()
                 overdue = elapsed > int(lease["expected_interval_seconds"])
-            active = bool(
-                lease["lease_owner"] and (lease["lease_expires_at"] or "") > now
-            )
+            active = bool(lease["lease_owner"] and (lease["lease_expires_at"] or "") > now)
             if active:
                 overdue = False
-            out.append({
-                "job_name": lease["job_name"],
-                "last_success": last_success,
-                "last_duration_ms": success["duration_ms"] if success else None,
-                "last_processed_count": success["processed_count"] if success else None,
-                "last_failure": failure["finished_at"] if failure else None,
-                "last_failure_outcome": failure["outcome"] if failure else None,
-                "last_error": failure["error"] if failure else None,
-                "lease_owner": lease["lease_owner"] if active else None,
-                "lease_expires_at": lease["lease_expires_at"] if active else None,
-                "expected_interval_seconds": lease["expected_interval_seconds"],
-                "overdue": overdue,
-            })
+            out.append(
+                {
+                    "job_name": lease["job_name"],
+                    "last_success": last_success,
+                    "last_duration_ms": success["duration_ms"] if success else None,
+                    "last_processed_count": success["processed_count"] if success else None,
+                    "last_failure": failure["finished_at"] if failure else None,
+                    "last_failure_outcome": failure["outcome"] if failure else None,
+                    "last_error": failure["error"] if failure else None,
+                    "lease_owner": lease["lease_owner"] if active else None,
+                    "lease_expires_at": lease["lease_expires_at"] if active else None,
+                    "expected_interval_seconds": lease["expected_interval_seconds"],
+                    "overdue": overdue,
+                }
+            )
     return out

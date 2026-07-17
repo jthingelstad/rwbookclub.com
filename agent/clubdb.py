@@ -199,12 +199,20 @@ CREATE TABLE IF NOT EXISTS club_author_enrichment (
 
 # All club tables, for count/validation helpers and teardown in tests.
 CLUB_TABLES = [
-    "club_members", "club_authors", "club_books", "club_book_authors",
-    "club_meetings", "club_meeting_books", "club_meeting_hosts",
+    "club_members",
+    "club_authors",
+    "club_books",
+    "club_book_authors",
+    "club_meetings",
+    "club_meeting_books",
+    "club_meeting_hosts",
     # club_book_pickers is a VIEW derived from club_meeting_hosts — not a base table.
-    "club_reviews", "club_lists", "club_list_books",
+    "club_reviews",
+    "club_lists",
+    "club_list_books",
     # Enrichment sidecars last → reversed() deletes them before their parent tables.
-    "club_book_enrichment", "club_author_enrichment",
+    "club_book_enrichment",
+    "club_author_enrichment",
 ]
 
 
@@ -246,7 +254,8 @@ def migrate_legacy_club_schema(conn: sqlite3.Connection) -> None:
         "UPDATE club_members SET joined = ("
         "  SELECT MIN(m.date) FROM club_meeting_hosts h JOIN club_meetings m ON m.id = h.meeting_id"
         "  WHERE h.member_id = club_members.id)"
-        " WHERE joined IS NULL")
+        " WHERE joined IS NULL"
+    )
 
     # Enrichment retry accounting (2026-07): the daily sweep re-tries rows whose effective
     # fields are still incomplete, with a capped attempt count so a book Open Library simply
@@ -254,16 +263,16 @@ def migrate_legacy_club_schema(conn: sqlite3.Connection) -> None:
     for table in ("club_book_enrichment", "club_author_enrichment"):
         ecols = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}
         if "enrich_attempts" not in ecols:
-            conn.execute(f"ALTER TABLE {table} ADD COLUMN enrich_attempts INTEGER NOT NULL DEFAULT 0")
+            conn.execute(
+                f"ALTER TABLE {table} ADD COLUMN enrich_attempts INTEGER NOT NULL DEFAULT 0"
+            )
     # placeholder is retired: whether a meeting is upcoming or past is derived from its date+time
     # (see agent.clock), so the flag is dead weight. Drop it from existing DBs.
     if "placeholder" in cols:
         conn.execute("ALTER TABLE club_meetings DROP COLUMN placeholder")
 
     chi = ZoneInfo(MEETING_TZ)
-    rows = conn.execute(
-        "SELECT id, date FROM club_meetings WHERE date LIKE '%T%'"
-    ).fetchall()
+    rows = conn.execute("SELECT id, date FROM club_meetings WHERE date LIKE '%T%'").fetchall()
     for r in rows:
         local = datetime.datetime.fromisoformat(r["date"].replace("Z", "+00:00")).astimezone(chi)
         conn.execute(
@@ -294,9 +303,7 @@ def migrate_legacy_club_schema(conn: sqlite3.Connection) -> None:
     #     table — the host backfill (step 3) above has already made hosts complete. Idempotent:
     #     once it's a view, this is skipped. Ships with the code that stops writing pickers, so
     #     schema + code go live together at the deploy restart.
-    bp = conn.execute(
-        "SELECT type FROM sqlite_master WHERE name = 'club_book_pickers'"
-    ).fetchone()
+    bp = conn.execute("SELECT type FROM sqlite_master WHERE name = 'club_book_pickers'").fetchone()
     if bp and bp["type"] == "table":
         mismatch = conn.execute(
             "SELECT count(*) c FROM ("
@@ -307,9 +314,11 @@ def migrate_legacy_club_schema(conn: sqlite3.Connection) -> None:
         ).fetchone()["c"]
         if mismatch:
             import logging
+
             logging.getLogger("agent.clubdb").warning(
                 "picker->host collapse: %d stored picker(s) diverged from the meeting "
-                "host and will now follow host", mismatch,
+                "host and will now follow host",
+                mismatch,
             )
         conn.execute("DROP TABLE club_book_pickers")
         conn.execute(
@@ -330,15 +339,21 @@ def migrate_legacy_club_schema(conn: sqlite3.Connection) -> None:
             "SELECT a.year, ab.book_id FROM club_awards a "
             "JOIN club_award_books ab ON ab.award_id = a.id ORDER BY a.year, ab.book_id"
         ).fetchall()
-        if awards and not conn.execute(
-            "SELECT 1 FROM club_lists WHERE slug = 'books-of-the-year'"
-        ).fetchone():
+        if (
+            awards
+            and not conn.execute(
+                "SELECT 1 FROM club_lists WHERE slug = 'books-of-the-year'"
+            ).fetchone()
+        ):
             lid = _next_id(conn, "club_lists")
             conn.execute(
                 "INSERT INTO club_lists (id, slug, name, scope, owner_id, description, created_at) "
                 "VALUES (?, 'books-of-the-year', 'Books of the Year', 'club', NULL, ?, ?)",
-                (lid, "The club's Book of the Year picks.",
-                 datetime.datetime.now(datetime.timezone.utc).isoformat()),
+                (
+                    lid,
+                    "The club's Book of the Year picks.",
+                    datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                ),
             )
             for ordinal, a in enumerate(awards):
                 conn.execute(
@@ -359,7 +374,9 @@ def migrate_legacy_club_schema(conn: sqlite3.Connection) -> None:
             conn.execute("PRAGMA foreign_keys=ON")
         dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
         if dangling:
-            raise RuntimeError(f"awards->lists migration left dangling refs: {[tuple(r) for r in dangling]}")
+            raise RuntimeError(
+                f"awards->lists migration left dangling refs: {[tuple(r) for r in dangling]}"
+            )
 
 
 # ── Small read helpers (used by the generator and future corpus_read) ─────────
@@ -454,14 +471,17 @@ def create_member(conn: sqlite3.Connection, name: str) -> dict:
     mid = _next_id(conn, "club_members")
     conn.execute(
         "INSERT INTO club_members(id, slug, name, is_current, joined) VALUES (?, ?, ?, 1, ?)",
-        (mid, slug, name, clock.club_today_iso()))
+        (mid, slug, name, clock.club_today_iso()),
+    )
     return {"id": mid, "slug": slug}
 
 
 def set_member_current(conn: sqlite3.Connection, member_slug: str, *, is_current: bool) -> bool:
     """Mark a member current (active) or former. Returns True if a row changed."""
-    cur = conn.execute("UPDATE club_members SET is_current = ? WHERE slug = ?",
-                       (1 if is_current else 0, member_slug))
+    cur = conn.execute(
+        "UPDATE club_members SET is_current = ? WHERE slug = ?",
+        (1 if is_current else 0, member_slug),
+    )
     return cur.rowcount > 0
 
 
@@ -490,9 +510,7 @@ def all_authors(conn: sqlite3.Connection) -> list[dict]:
         "ORDER BY a.id",
     )
     for a in authors:
-        a["notable_works"] = (
-            json.loads(a["notable_works_json"]) if a["notable_works_json"] else []
-        )
+        a["notable_works"] = json.loads(a["notable_works_json"]) if a["notable_works_json"] else []
     return authors
 
 
@@ -519,7 +537,8 @@ def all_lists(conn: sqlite3.Connection) -> list[dict]:
         "JOIN club_books b ON b.id = lb.book_id ORDER BY lb.list_id, lb.ordinal, b.slug"
     ):
         entries_by_list.setdefault(r["list_id"], []).append(
-            {"book_slug": r["book_slug"], "note": r["note"]})
+            {"book_slug": r["book_slug"], "note": r["note"]}
+        )
     for lst in lists:
         lst["entries"] = entries_by_list.get(lst["id"], [])
     return lists
@@ -529,7 +548,8 @@ def list_by_slug(conn: sqlite3.Connection, slug: str) -> dict | None:
     """One list row with owner slug projected, or None — for authorization + single-file regen."""
     row = conn.execute(
         "SELECT l.*, m.slug AS owner_slug FROM club_lists l "
-        "LEFT JOIN club_members m ON m.id = l.owner_id WHERE l.slug = ?", (slug,),
+        "LEFT JOIN club_members m ON m.id = l.owner_id WHERE l.slug = ?",
+        (slug,),
     ).fetchone()
     return dict(row) if row else None
 
@@ -572,15 +592,26 @@ def upsert_book(conn: sqlite3.Connection, meta: dict) -> dict:
         "publication_year=excluded.publication_year, page_count=excluded.page_count, "
         "isbn13=excluded.isbn13, ol_key=excluded.ol_key, synopsis=excluded.synopsis, "
         "subjects_json=excluded.subjects_json",
-        (book_id, slug, title, meta.get("subtitle"), meta.get("topic"),
-         1 if meta.get("fiction") else 0, meta.get("publicationYear"), meta.get("pageCount"),
-         meta.get("isbn13"), meta.get("olKey"), meta.get("synopsis"), subjects_json),
+        (
+            book_id,
+            slug,
+            title,
+            meta.get("subtitle"),
+            meta.get("topic"),
+            1 if meta.get("fiction") else 0,
+            meta.get("publicationYear"),
+            meta.get("pageCount"),
+            meta.get("isbn13"),
+            meta.get("olKey"),
+            meta.get("synopsis"),
+            subjects_json,
+        ),
     )
     # Dedupe while preserving order: some Open Library records list the same author twice
     # (e.g. Blindsight → ["Peter Watts", "Peter Watts"]), and distinct spellings can resolve
     # to one author_id — either would trip the (book_id, author_id) UNIQUE constraint below.
     author_ids: list[int] = []
-    for a in (meta.get("authors") or []):
+    for a in meta.get("authors") or []:
         if not a:
             continue
         aid = _author_id(conn, a)
@@ -598,21 +629,51 @@ def upsert_book(conn: sqlite3.Connection, meta: dict) -> dict:
 # Whitelisted columns; the loop passes a dict of {column: value} and we upsert by
 # the 1:1 key. Core club_books/club_authors are never touched here.
 _BOOK_ENRICH_COLS = (
-    "ol_cover_id", "edition_count", "languages_json", "ratings_average",
-    "ratings_count", "wikidata_id", "wikipedia_url", "goodreads_id", "series",
-    "awards_json", "ol_key", "synopsis", "publication_year", "page_count",
-    "isbn13", "subjects_json", "enriched_at", "enrichment_json",
+    "ol_cover_id",
+    "edition_count",
+    "languages_json",
+    "ratings_average",
+    "ratings_count",
+    "wikidata_id",
+    "wikipedia_url",
+    "goodreads_id",
+    "series",
+    "awards_json",
+    "ol_key",
+    "synopsis",
+    "publication_year",
+    "page_count",
+    "isbn13",
+    "subjects_json",
+    "enriched_at",
+    "enrichment_json",
 )
 _AUTHOR_ENRICH_COLS = (
-    "bio", "birth_year", "death_year", "nationality", "ol_author_key",
-    "wikidata_id", "wikipedia_url", "website", "notable_works_json",
-    "photo_credit", "enriched_at", "enrichment_json", "validation_status",
+    "bio",
+    "birth_year",
+    "death_year",
+    "nationality",
+    "ol_author_key",
+    "wikidata_id",
+    "wikipedia_url",
+    "website",
+    "notable_works_json",
+    "photo_credit",
+    "enriched_at",
+    "enrichment_json",
+    "validation_status",
     "validation_warnings_json",
 )
 
 
-def _upsert_enrichment(conn: sqlite3.Connection, table: str, key_col: str,
-                       key_val: int, allowed: tuple[str, ...], fields: dict) -> None:
+def _upsert_enrichment(
+    conn: sqlite3.Connection,
+    table: str,
+    key_col: str,
+    key_val: int,
+    allowed: tuple[str, ...],
+    fields: dict,
+) -> None:
     cols = [c for c in allowed if c in fields]
     if not cols:
         return
@@ -628,14 +689,14 @@ def _upsert_enrichment(conn: sqlite3.Connection, table: str, key_col: str,
 
 def upsert_book_enrichment(conn: sqlite3.Connection, book_id: int, fields: dict) -> None:
     """Upsert external enrichment for a book into club_book_enrichment (sidecar only)."""
-    _upsert_enrichment(conn, "club_book_enrichment", "book_id", book_id,
-                       _BOOK_ENRICH_COLS, fields)
+    _upsert_enrichment(conn, "club_book_enrichment", "book_id", book_id, _BOOK_ENRICH_COLS, fields)
 
 
 def upsert_author_enrichment(conn: sqlite3.Connection, author_id: int, fields: dict) -> None:
     """Upsert external enrichment for an author into club_author_enrichment (sidecar only)."""
-    _upsert_enrichment(conn, "club_author_enrichment", "author_id", author_id,
-                       _AUTHOR_ENRICH_COLS, fields)
+    _upsert_enrichment(
+        conn, "club_author_enrichment", "author_id", author_id, _AUTHOR_ENRICH_COLS, fields
+    )
 
 
 def book_enrichment(conn: sqlite3.Connection, book_id: int) -> dict | None:
@@ -652,11 +713,19 @@ def author_enrichment(conn: sqlite3.Connection, author_id: int) -> dict | None:
     return dict(row) if row else None
 
 
-def upsert_review(conn: sqlite3.Connection, *, book_id: int, member_id: int,
-                  rating: int | None = None, dnf: bool = False,
-                  discussion_quality: int | None = None, would_recommend: bool = False,
-                  favorite_quote: str | None = None, body: str | None = None,
-                  created_at: str | None = None) -> dict:
+def upsert_review(
+    conn: sqlite3.Connection,
+    *,
+    book_id: int,
+    member_id: int,
+    rating: int | None = None,
+    dnf: bool = False,
+    discussion_quality: int | None = None,
+    would_recommend: bool = False,
+    favorite_quote: str | None = None,
+    body: str | None = None,
+    created_at: str | None = None,
+) -> dict:
     """Insert or update a review under FKs, keyed by (book_id, member_id). Preserves the existing
     row's id / created_at on update (mirrors the old markdown's id/createdAt preservation).
     Returns {id, created_at, existed}."""
@@ -678,23 +747,37 @@ def upsert_review(conn: sqlite3.Connection, *, book_id: int, member_id: int,
         "dnf=excluded.dnf, discussion_quality=excluded.discussion_quality, "
         "would_recommend=excluded.would_recommend, favorite_quote=excluded.favorite_quote, "
         "body=excluded.body",
-        (rid, book_id, member_id, rating, 1 if dnf else 0, discussion_quality,
-         1 if would_recommend else 0, favorite_quote, body, created_at),
+        (
+            rid,
+            book_id,
+            member_id,
+            rating,
+            1 if dnf else 0,
+            discussion_quality,
+            1 if would_recommend else 0,
+            favorite_quote,
+            body,
+            created_at,
+        ),
     )
     return {"id": rid, "created_at": created_at, "existed": bool(existing)}
 
 
-def set_rating(conn: sqlite3.Connection, book_id: int, member_id: int, *,
-               rating: int | None, dnf: bool = False) -> int:
+def set_rating(
+    conn: sqlite3.Connection, book_id: int, member_id: int, *, rating: int | None, dnf: bool = False
+) -> int:
     """Set just a member's rating/DNF for a book, PRESERVING any existing review body and other
     fields (the bulk ratings grid uses this; `upsert_review` would replace the whole row). Returns
     the review id."""
     existing = conn.execute(
-        "SELECT id FROM club_reviews WHERE book_id = ? AND member_id = ?", (book_id, member_id),
+        "SELECT id FROM club_reviews WHERE book_id = ? AND member_id = ?",
+        (book_id, member_id),
     ).fetchone()
     if existing:
-        conn.execute("UPDATE club_reviews SET rating = ?, dnf = ? WHERE id = ?",
-                     (rating, 1 if dnf else 0, existing["id"]))
+        conn.execute(
+            "UPDATE club_reviews SET rating = ?, dnf = ? WHERE id = ?",
+            (rating, 1 if dnf else 0, existing["id"]),
+        )
         return existing["id"]
     rid = _next_id(conn, "club_reviews")
     conn.execute(
@@ -714,8 +797,14 @@ def _unique_list_slug(conn: sqlite3.Connection, base: str) -> str:
     return slug
 
 
-def create_list(conn: sqlite3.Connection, *, name: str, scope: str,
-                owner_id: int | None, description: str | None = None) -> dict:
+def create_list(
+    conn: sqlite3.Connection,
+    *,
+    name: str,
+    scope: str,
+    owner_id: int | None,
+    description: str | None = None,
+) -> dict:
     """Create a list. Member-list slugs are owner-prefixed to avoid cross-member collisions; club
     lists slug from the name. Returns {id, slug}."""
     base = name
@@ -732,8 +821,13 @@ def create_list(conn: sqlite3.Connection, *, name: str, scope: str,
     return {"id": lid, "slug": slug}
 
 
-def update_list(conn: sqlite3.Connection, list_id: int, *, name: str | None = None,
-                description: str | None = None) -> None:
+def update_list(
+    conn: sqlite3.Connection,
+    list_id: int,
+    *,
+    name: str | None = None,
+    description: str | None = None,
+) -> None:
     """Update a list's name/description. The slug (URL/filename identity) is intentionally stable."""
     if name is not None:
         conn.execute("UPDATE club_lists SET name = ? WHERE id = ?", (name, list_id))
@@ -742,28 +836,38 @@ def update_list(conn: sqlite3.Connection, list_id: int, *, name: str | None = No
 
 
 def delete_list(conn: sqlite3.Connection, list_id: int) -> None:
-    conn.execute("DELETE FROM club_lists WHERE id = ?", (list_id,))  # CASCADE clears club_list_books
+    conn.execute(
+        "DELETE FROM club_lists WHERE id = ?", (list_id,)
+    )  # CASCADE clears club_list_books
 
 
-def set_list_book(conn: sqlite3.Connection, list_id: int, book_id: int,
-                  note: str | None = None) -> bool:
+def set_list_book(
+    conn: sqlite3.Connection, list_id: int, book_id: int, note: str | None = None
+) -> bool:
     """Add a book to a list (appended at the end) or update its note if already present.
     Returns True if newly added, False if it was an in-place note update."""
-    if conn.execute("SELECT 1 FROM club_list_books WHERE list_id = ? AND book_id = ?",
-                    (list_id, book_id)).fetchone():
-        conn.execute("UPDATE club_list_books SET note = ? WHERE list_id = ? AND book_id = ?",
-                     (note, list_id, book_id))
+    if conn.execute(
+        "SELECT 1 FROM club_list_books WHERE list_id = ? AND book_id = ?", (list_id, book_id)
+    ).fetchone():
+        conn.execute(
+            "UPDATE club_list_books SET note = ? WHERE list_id = ? AND book_id = ?",
+            (note, list_id, book_id),
+        )
         return False
-    n = conn.execute("SELECT COUNT(*) AS c FROM club_list_books WHERE list_id = ?",
-                     (list_id,)).fetchone()["c"]
-    conn.execute("INSERT INTO club_list_books (list_id, book_id, ordinal, note) VALUES (?,?,?,?)",
-                 (list_id, book_id, n, note))
+    n = conn.execute(
+        "SELECT COUNT(*) AS c FROM club_list_books WHERE list_id = ?", (list_id,)
+    ).fetchone()["c"]
+    conn.execute(
+        "INSERT INTO club_list_books (list_id, book_id, ordinal, note) VALUES (?,?,?,?)",
+        (list_id, book_id, n, note),
+    )
     return True
 
 
 def remove_list_book(conn: sqlite3.Connection, list_id: int, book_id: int) -> bool:
-    cur = conn.execute("DELETE FROM club_list_books WHERE list_id = ? AND book_id = ?",
-                       (list_id, book_id))
+    cur = conn.execute(
+        "DELETE FROM club_list_books WHERE list_id = ? AND book_id = ?", (list_id, book_id)
+    )
     return cur.rowcount > 0
 
 
@@ -771,7 +875,8 @@ def move_list_book(conn: sqlite3.Connection, list_id: int, book_id: int, *, up: 
     """Swap a book one step up/down in a list's order (preserving notes). Returns True if it moved."""
     rows = conn.execute(
         "SELECT book_id, ordinal FROM club_list_books WHERE list_id = ? ORDER BY ordinal",
-        (list_id,)).fetchall()
+        (list_id,),
+    ).fetchall()
     idx = next((i for i, r in enumerate(rows) if r["book_id"] == book_id), None)
     if idx is None:
         return False
@@ -779,31 +884,40 @@ def move_list_book(conn: sqlite3.Connection, list_id: int, book_id: int, *, up: 
     if swap < 0 or swap >= len(rows):
         return False
     a, b = rows[idx], rows[swap]
-    conn.execute("UPDATE club_list_books SET ordinal = ? WHERE list_id = ? AND book_id = ?",
-                 (b["ordinal"], list_id, a["book_id"]))
-    conn.execute("UPDATE club_list_books SET ordinal = ? WHERE list_id = ? AND book_id = ?",
-                 (a["ordinal"], list_id, b["book_id"]))
+    conn.execute(
+        "UPDATE club_list_books SET ordinal = ? WHERE list_id = ? AND book_id = ?",
+        (b["ordinal"], list_id, a["book_id"]),
+    )
+    conn.execute(
+        "UPDATE club_list_books SET ordinal = ? WHERE list_id = ? AND book_id = ?",
+        (a["ordinal"], list_id, b["book_id"]),
+    )
     return True
 
 
-def reorder_list_books(conn: sqlite3.Connection, list_id: int,
-                       ordered_book_ids: list[int]) -> bool:
+def reorder_list_books(conn: sqlite3.Connection, list_id: int, ordered_book_ids: list[int]) -> bool:
     """Set list ordinals to match `ordered_book_ids` (0..n). Book ids not in the list are
     ignored; any list books absent from the order keep their prior relative order at the end
     — so a partial/stale order from the client can't drop rows. Returns True."""
-    existing = [r["book_id"] for r in conn.execute(
-        "SELECT book_id FROM club_list_books WHERE list_id = ? ORDER BY ordinal", (list_id,))]
+    existing = [
+        r["book_id"]
+        for r in conn.execute(
+            "SELECT book_id FROM club_list_books WHERE list_id = ? ORDER BY ordinal", (list_id,)
+        )
+    ]
     existing_set = set(existing)
     seq: list[int] = []
     for bid in ordered_book_ids:
         if bid in existing_set and bid not in seq:
             seq.append(bid)
-    for bid in existing:                 # append any the client didn't mention
+    for bid in existing:  # append any the client didn't mention
         if bid not in seq:
             seq.append(bid)
     for ordinal, bid in enumerate(seq):
-        conn.execute("UPDATE club_list_books SET ordinal = ? WHERE list_id = ? AND book_id = ?",
-                     (ordinal, list_id, bid))
+        conn.execute(
+            "UPDATE club_list_books SET ordinal = ? WHERE list_id = ? AND book_id = ?",
+            (ordinal, list_id, bid),
+        )
     return True
 
 
@@ -813,9 +927,14 @@ def reorder_list_books(conn: sqlite3.Connection, list_id: int,
 
 
 def book_picker_slugs(conn: sqlite3.Connection, book_id: int) -> list[str]:
-    return [r["slug"] for r in conn.execute(
-        "SELECT m.slug FROM club_book_pickers bp JOIN club_members m ON m.id = bp.member_id "
-        "WHERE bp.book_id = ? ORDER BY bp.ordinal", (book_id,))]
+    return [
+        r["slug"]
+        for r in conn.execute(
+            "SELECT m.slug FROM club_book_pickers bp JOIN club_members m ON m.id = bp.member_id "
+            "WHERE bp.book_id = ? ORDER BY bp.ordinal",
+            (book_id,),
+        )
+    ]
 
 
 def set_meeting_hosts(conn: sqlite3.Connection, meeting_id: int, member_ids: list[int]) -> None:
@@ -828,14 +947,25 @@ def set_meeting_hosts(conn: sqlite3.Connection, meeting_id: int, member_ids: lis
     )
 
 
-def update_meeting(conn: sqlite3.Connection, meeting_id: int, *, date: str | None = None,
-                   start_time: str | None = None, location: str | None = None,
-                   notes: str | None = None, types: list[str] | None = None) -> None:
+def update_meeting(
+    conn: sqlite3.Connection,
+    meeting_id: int,
+    *,
+    date: str | None = None,
+    start_time: str | None = None,
+    location: str | None = None,
+    notes: str | None = None,
+    types: list[str] | None = None,
+) -> None:
     """Edit an existing meeting's scalar fields. Only provided (non-None) fields are changed.
     Whether a meeting is upcoming or past is derived from its date+time, not stored."""
     sets, vals = [], []
-    for key, val in (("date", date), ("start_time", start_time), ("location", location),
-                     ("notes", notes)):
+    for key, val in (
+        ("date", date),
+        ("start_time", start_time),
+        ("location", location),
+        ("notes", notes),
+    ):
         if val is not None:
             sets.append(f"{key} = ?")
             vals.append(val)
@@ -853,15 +983,27 @@ MEETING_TYPES = ["Book", "Social", "Picking", "Planning", "Holiday"]
 
 # The 11 single-select Topic choices (see CLAUDE.md). The admin book editor validates against these.
 TOPICS = [
-    "Brain & Psychology", "Current Events & People", "Essays & Literature",
-    "Health & Medicine", "History & Economics", "Philosophy & Religion",
-    "Politics & Social Sciences", "Science and Math", "Science Fiction & Fiction",
-    "Technology", "Travel & Memoir",
+    "Brain & Psychology",
+    "Current Events & People",
+    "Essays & Literature",
+    "Health & Medicine",
+    "History & Economics",
+    "Philosophy & Religion",
+    "Politics & Social Sciences",
+    "Science and Math",
+    "Science Fiction & Fiction",
+    "Technology",
+    "Travel & Memoir",
 ]
 
 
-def create_meeting(conn: sqlite3.Connection, *, date_iso: str, book_id: int | None = None,
-                   types: list[str] | None = None) -> int:
+def create_meeting(
+    conn: sqlite3.Connection,
+    *,
+    date_iso: str,
+    book_id: int | None = None,
+    types: list[str] | None = None,
+) -> int:
     """Create a meeting. `book_id` is optional — a bookless social/picking meeting has none; use
     set_meeting_books for two or more."""
     mid = _next_id(conn, "club_meetings")
@@ -925,7 +1067,8 @@ def start_time_for_meeting(meeting_id: int | None) -> str | None:
         return None
     with db.connect() as conn:
         row = conn.execute(
-            "SELECT start_time FROM club_meetings WHERE id = ?", (meeting_id,)).fetchone()
+            "SELECT start_time FROM club_meetings WHERE id = ?", (meeting_id,)
+        ).fetchone()
     return row["start_time"] if row else None
 
 
@@ -935,7 +1078,8 @@ def location_for_meeting(meeting_id: int | None) -> str | None:
         return None
     with db.connect() as conn:
         row = conn.execute(
-            "SELECT location FROM club_meetings WHERE id = ?", (meeting_id,)).fetchone()
+            "SELECT location FROM club_meetings WHERE id = ?", (meeting_id,)
+        ).fetchone()
     return row["location"] if row else None
 
 
@@ -977,5 +1121,6 @@ def hosts_for_meeting(meeting_id: int | None) -> list[dict]:
 
 if __name__ == "__main__":
     from agent import database
+
     database.initialize()
     print(json.dumps(counts(), indent=2))

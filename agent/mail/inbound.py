@@ -14,9 +14,7 @@ from agent.mail import email_jmap, email_policy, mail_archive, outbound
 log = logging.getLogger("oliver")
 
 ROLL_CALL_SUBJECT_RE = re.compile(r"\broll[- ]?call\b", re.IGNORECASE)
-EMAIL_QUOTE_RE = re.compile(
-    r"^(>|on .+wrote:|from:|sent:|to:|subject:|--\s*$)", re.IGNORECASE
-)
+EMAIL_QUOTE_RE = re.compile(r"^(>|on .+wrote:|from:|sent:|to:|subject:|--\s*$)", re.IGNORECASE)
 YES_RE = re.compile(
     r"\b(yes|yep|yeah|sure|attending|i'?ll be there|i can make it|can make it)\b",
     re.IGNORECASE,
@@ -81,9 +79,7 @@ async def _ignore(
         subject=msg.subject,
         received_at=msg.received_at,
     )
-    db.mark_email_processed(
-        msg.id, status="ignored", error=reason if persist_reason else None
-    )
+    db.mark_email_processed(msg.id, status="ignored", error=reason if persist_reason else None)
     record_ignored_email(msg, reason)
 
 
@@ -189,9 +185,7 @@ async def _mailing_list_result(msg: email_jmap.InboundEmail, decision, member_sl
     if not decision.is_mailing_list:
         return True, None
     channel_id = f"email:list:{msg.thread_id or config.BOOK_CLUB_MAILING_LIST_ADDRESS.lower()}"
-    speaker_user_id = (
-        f"member:{member_slug}" if member_slug else f"email:{msg.from_email.lower()}"
-    )
+    speaker_user_id = f"member:{member_slug}" if member_slug else f"email:{msg.from_email.lower()}"
     try:
         result = await asyncio.to_thread(
             oliver.answer_mailing_list_email,
@@ -271,9 +265,7 @@ async def _deliver_reply(msg: email_jmap.InboundEmail, decision, reply: str) -> 
             policy="reply",
         )
     except Exception as exc:
-        db.mark_email_processed(
-            msg.id, status="failed", error=f"send:{type(exc).__name__}: {exc}"
-        )
+        db.mark_email_processed(msg.id, status="failed", error=f"send:{type(exc).__name__}: {exc}")
         log.exception("Failed to send reply to inbound email %s", msg.id)
         return
 

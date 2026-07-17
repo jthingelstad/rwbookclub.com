@@ -36,15 +36,19 @@ def _fun_facts(stats: dict, books: list[dict], today: date) -> list[str]:
     # "N years ago this month we read X" — a past read in the same calendar month.
     mm = f"-{today.month:02d}-"
     prior = [
-        b for b in books
-        if b.get("isRead") and mm in (b.get("meetingDate") or "")
+        b
+        for b in books
+        if b.get("isRead")
+        and mm in (b.get("meetingDate") or "")
         and (b.get("meetingDate") or "")[:4].isdigit()
         and int(b["meetingDate"][:4]) < today.year
     ]
     if prior:
         b = max(prior, key=lambda x: x["meetingDate"])  # most recent prior-year match
         ago = today.year - int(b["meetingDate"][:4])
-        facts.append(f"{ago} year{'s' if ago != 1 else ''} ago this month we read {b.get('title')}.")
+        facts.append(
+            f"{ago} year{'s' if ago != 1 else ''} ago this month we read {b.get('title')}."
+        )
     return facts
 
 
@@ -55,8 +59,7 @@ def _sig_snapshot(*, today: date | None = None, rng: random.Random | None = None
     rng = rng or random
     upcoming = cr.upcoming_meetings()
     facts = _fun_facts(cr.club_stats(), cr.books(), today)
-    return {"next": upcoming[0] if upcoming else None,
-            "fact": rng.choice(facts) if facts else None}
+    return {"next": upcoming[0] if upcoming else None, "fact": rng.choice(facts) if facts else None}
 
 
 def _next_up_text(nxt: dict) -> str:
@@ -101,8 +104,9 @@ def email_signature(*, today: date | None = None, rng: random.Random | None = No
     return _text_from_snapshot(_sig_snapshot(today=today, rng=rng))
 
 
-def email_signatures(*, today: date | None = None,
-                     rng: random.Random | None = None) -> tuple[str, str]:
+def email_signatures(
+    *, today: date | None = None, rng: random.Random | None = None
+) -> tuple[str, str]:
     """(plain_text, html) sign-offs from ONE snapshot — the send path uses this so both MIME parts
     show the same next book and fun fact."""
     snap = _sig_snapshot(today=today, rng=rng)

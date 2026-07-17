@@ -77,9 +77,10 @@ def test_runner_applies_each_migration_once_in_order(monkeypatch, fresh_db):
     database._run_migrations(conn)
 
     assert calls == [1, 2]
-    assert [tuple(row) for row in conn.execute(
-        "SELECT version, name FROM schema_migrations ORDER BY version"
-    )] == [(1, "first"), (2, "second")]
+    assert [
+        tuple(row)
+        for row in conn.execute("SELECT version, name FROM schema_migrations ORDER BY version")
+    ] == [(1, "first"), (2, "second")]
     conn.close()
 
 

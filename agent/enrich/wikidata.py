@@ -28,14 +28,16 @@ COMMONS_FILEPATH = "https://commons.wikimedia.org/wiki/Special:FilePath"
 HUMAN = "Q5"
 # Written-work types (for book verification).
 WRITTEN_WORK = {
-    "Q571",      # book
+    "Q571",  # book
     "Q7725634",  # literary work
-    "Q47461344", # written work
-    "Q8261",     # novel
-    "Q49084",    # short story
+    "Q47461344",  # written work
+    "Q8261",  # novel
+    "Q49084",  # short story
     "Q1279564",  # short-story collection
-    "Q23927052", # essay
+    "Q23927052",  # essay
 }
+
+
 @dataclass(frozen=True)
 class AuthorResolution:
     """A selected entity plus the evidence that made the identity safe to use."""
@@ -61,10 +63,17 @@ def search(name: str, limit: int = 8) -> list[str]:
     """Candidate Q-ids for a name, relevance-ranked."""
     if not name:
         return []
-    data = http.get_json(API, params={
-        "action": "wbsearchentities", "search": name, "language": "en",
-        "format": "json", "type": "item", "limit": limit,
-    })
+    data = http.get_json(
+        API,
+        params={
+            "action": "wbsearchentities",
+            "search": name,
+            "language": "en",
+            "format": "json",
+            "type": "item",
+            "limit": limit,
+        },
+    )
     return [r["id"] for r in (data or {}).get("search") or [] if r.get("id")]
 
 
@@ -83,14 +92,20 @@ def labels(qids: list[str]) -> dict[str, str]:
         return {}
     out: dict[str, str] = {}
     for i in range(0, len(ids), 50):  # API caps at 50 ids
-        chunk = ids[i:i + 50]
-        data = http.get_json(API, params={
-            "action": "wbgetentities", "ids": "|".join(chunk),
-            "props": "labels", "languages": "en", "format": "json",
-            # Some items store the English label as 'mul' (multilingual); fallback
-            # surfaces it under en. Without this they come back with empty labels.
-            "languagefallback": "1",
-        })
+        chunk = ids[i : i + 50]
+        data = http.get_json(
+            API,
+            params={
+                "action": "wbgetentities",
+                "ids": "|".join(chunk),
+                "props": "labels",
+                "languages": "en",
+                "format": "json",
+                # Some items store the English label as 'mul' (multilingual); fallback
+                # surfaces it under en. Without this they come back with empty labels.
+                "languagefallback": "1",
+            },
+        )
         for qid, ent in ((data or {}).get("entities") or {}).items():
             label = ((ent.get("labels") or {}).get("en") or {}).get("value")
             if label:
@@ -208,11 +223,7 @@ def resolve_author(
         if qid in expected_author_ids:
             evidence.append("known_work_author")
         birth = _year_from_time(ent, "P569")
-        if (
-            birth_year_hint is not None
-            and birth is not None
-            and abs(birth - birth_year_hint) <= 1
-        ):
+        if birth_year_hint is not None and birth is not None and abs(birth - birth_year_hint) <= 1:
             evidence.append("birth_year")
         if source == "openlibrary":
             evidence.append("openlibrary_link")
@@ -235,9 +246,7 @@ def resolve_author(
 
     if eligible:
         _, ent, source, evidence = max(eligible, key=lambda item: item[0])
-        return AuthorResolution(
-            ent, source, evidence, considered_candidates=len(candidate_sources)
-        )
+        return AuthorResolution(ent, source, evidence, considered_candidates=len(candidate_sources))
     warnings = ("wikidata_identity_not_corroborated",) if plausible_but_uncorroborated else ()
     return AuthorResolution(
         None,
@@ -263,7 +272,9 @@ def resolve_book(title: str, authors: list[str]) -> dict | None:
         author_labels = labels(author_ids)
         # Whole-word match on the author labels' tokens (not substring) so a short/common
         # last name like "Ford" can't match "Crawford"/"Stafford" on a same-titled work.
-        author_tokens = {t.strip(".,") for lbl in author_labels.values() for t in lbl.lower().split()}
+        author_tokens = {
+            t.strip(".,") for lbl in author_labels.values() for t in lbl.lower().split()
+        }
         if any(ln in author_tokens for ln in last_names):
             return ent
     return None

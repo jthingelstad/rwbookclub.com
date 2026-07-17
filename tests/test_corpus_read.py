@@ -7,6 +7,7 @@ from __future__ import annotations
 class TestParseFrontmatter:
     def test_yaml_frontmatter(self):
         from agent.corpus_read import parse_frontmatter
+
         text = "---\nname: Erik\nrating: 5\n---\nBody text here."
         fm, body = parse_frontmatter(text)
         assert fm == {"name": "Erik", "rating": 5}
@@ -14,12 +15,14 @@ class TestParseFrontmatter:
 
     def test_no_frontmatter(self):
         from agent.corpus_read import parse_frontmatter
+
         fm, body = parse_frontmatter("Just body, no frontmatter.")
         assert fm == {}
         assert body == "Just body, no frontmatter."
 
     def test_empty_body(self):
         from agent.corpus_read import parse_frontmatter
+
         fm, body = parse_frontmatter("---\nkey: value\n---\n")
         assert fm == {"key": "value"}
         assert body == ""
@@ -80,6 +83,7 @@ class TestBookRelationships:
 class TestBooksCache:
     def test_cache_hit_returns_same_object(self, reset_books_cache):
         from agent import corpus_read as cr
+
         first = cr.books()
         second = cr.books()
         # Cache hit returns the SAME list object, not a fresh build.
@@ -109,12 +113,14 @@ class TestBooksCache:
 class TestFindBooks:
     def test_empty_query_returns_empty(self):
         from agent.corpus_read import find_books
+
         assert find_books("") == []
         assert find_books("   ") == []
 
     def test_known_author_exact_match(self):
         """Exact author match should rank a book first."""
         from agent.corpus_read import find_books
+
         results = find_books("Michael Pollan")
         assert results, "expected Pollan books in the corpus"
         # Every top hit should be a Pollan book.
@@ -123,6 +129,7 @@ class TestFindBooks:
     def test_topic_substring(self):
         """Word matching a topic should surface books in that topic."""
         from agent.corpus_read import find_books
+
         results = find_books("technology")
         # Should find at least some Technology-topic books.
         assert any(b.get("topic") == "Technology" for b in results)
@@ -131,6 +138,7 @@ class TestFindBooks:
         """T2.12 verification — multi-word query that misses titles should still
         surface books via the OL subject-tag token fallback."""
         from agent.corpus_read import find_books
+
         results = find_books("urban planning")
         # Triumph of the City has subject 'Urban economics' — the 'urban' token
         # should match through the subjects fallback.
@@ -142,16 +150,20 @@ class TestFindBooks:
 class TestNorm:
     def test_lowercases(self):
         from agent.corpus_read import _norm
+
         assert _norm("HELLO") == "hello"
 
     def test_strips(self):
         from agent.corpus_read import _norm
+
         assert _norm("  hi  ") == "hi"
 
     def test_none(self):
         from agent.corpus_read import _norm
+
         assert _norm(None) == ""
 
     def test_empty(self):
         from agent.corpus_read import _norm
+
         assert _norm("") == ""

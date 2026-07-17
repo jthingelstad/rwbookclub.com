@@ -127,8 +127,9 @@ def secure_database_files(db_path: Path, *, repair: bool = True) -> PermissionRe
     return report
 
 
-def enforce_runtime_permissions(*, paths: RuntimePaths | None = None,
-                                repair: bool = True) -> PermissionReport:
+def enforce_runtime_permissions(
+    *, paths: RuntimePaths | None = None, repair: bool = True
+) -> PermissionReport:
     """Audit or repair every known private runtime path without reading its contents."""
     set_private_umask()
     paths = paths or RuntimePaths.defaults()

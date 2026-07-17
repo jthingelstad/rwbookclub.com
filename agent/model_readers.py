@@ -14,8 +14,9 @@ def recent_channel(*, actor: access.Actor, channel_id: str, limit: int) -> list[
     return db.recent_messages(channel_id, limit=limit)
 
 
-def search_discussion(*, actor: access.Actor, query: str, member_slug: str | None,
-                      limit: int) -> list[dict]:
+def search_discussion(
+    *, actor: access.Actor, query: str, member_slug: str | None, limit: int
+) -> list[dict]:
     return db.search_conversations_visible(
         query,
         limit=limit,
@@ -25,8 +26,15 @@ def search_discussion(*, actor: access.Actor, query: str, member_slug: str | Non
     )
 
 
-def search_mail(*, actor: access.Actor, query: str, member_slug: str | None,
-                year_from: int | None, year_to: int | None, limit: int) -> list[dict]:
+def search_mail(
+    *,
+    actor: access.Actor,
+    query: str,
+    member_slug: str | None,
+    year_from: int | None,
+    year_to: int | None,
+    limit: int,
+) -> list[dict]:
     return db.search_mail_archive_visible(
         query,
         viewer_member_slug=actor.member_slug,
@@ -47,8 +55,9 @@ def mail_thread(*, actor: access.Actor, thread_id: str, limit: int) -> dict | No
     )
 
 
-def memories(*, actor: access.Actor, subject: str | None,
-             query: str | None = None, limit: int = 20) -> list[dict]:
+def memories(
+    *, actor: access.Actor, subject: str | None, query: str | None = None, limit: int = 20
+) -> list[dict]:
     return db.visible_memories(
         viewer_member_slug=actor.member_slug,
         is_admin=actor.is_admin,
@@ -58,8 +67,9 @@ def memories(*, actor: access.Actor, subject: str | None,
     )
 
 
-def book_cloud_titles(*, actor: access.Actor, query: str | None = None,
-                      member: str | None = None, limit: int = 20) -> list[dict]:
+def book_cloud_titles(
+    *, actor: access.Actor, query: str | None = None, member: str | None = None, limit: int = 20
+) -> list[dict]:
     return db.book_cloud_titles_visible(
         viewer_member_slug=actor.member_slug,
         is_admin=actor.is_admin,
@@ -69,8 +79,9 @@ def book_cloud_titles(*, actor: access.Actor, query: str | None = None,
     )
 
 
-def recent_book_cloud(*, actor: access.Actor, query: str | None = None,
-                      member: str | None = None, limit: int = 20) -> list[dict]:
+def recent_book_cloud(
+    *, actor: access.Actor, query: str | None = None, member: str | None = None, limit: int = 20
+) -> list[dict]:
     return db.recent_book_cloud_visible(
         viewer_member_slug=actor.member_slug,
         is_admin=actor.is_admin,

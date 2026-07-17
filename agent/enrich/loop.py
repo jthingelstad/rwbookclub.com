@@ -99,8 +99,9 @@ def enrich_book(conn, book: dict, *, force: bool = False, fetch_images: bool = T
 
     fields["enriched_at"] = _now()
     fields["enrichment_json"] = json.dumps(
-        {"openlibrary": {k: v for k, v in olf.items() if k != "author_keys"},
-         "wikidata": wdf}, ensure_ascii=False)
+        {"openlibrary": {k: v for k, v in olf.items() if k != "author_keys"}, "wikidata": wdf},
+        ensure_ascii=False,
+    )
     clubdb.upsert_book_enrichment(conn, book["id"], fields)
 
     cover_id = olf.get("ol_cover_id")
@@ -118,7 +119,8 @@ def _discover_ol_author_key(conn, author_id: int, name: str) -> str | None:
         "SELECT b.title, COALESCE(b.ol_key, e.ol_key) AS ol_key "
         "FROM club_book_authors ba JOIN club_books b ON b.id = ba.book_id "
         "LEFT JOIN club_book_enrichment e ON e.book_id = b.id "
-        "WHERE ba.author_id = ? ORDER BY (b.ol_key IS NULL)", (author_id,),
+        "WHERE ba.author_id = ? ORDER BY (b.ol_key IS NULL)",
+        (author_id,),
     ).fetchall()
     for r in rows:
         ol_key = r["ol_key"]
@@ -146,8 +148,7 @@ def _known_work_qids(conn, author_id: int) -> list[str]:
 
 def enrich_author(conn, author: dict, *, force: bool = False, fetch_images: bool = True) -> dict:
     name, slug = author["name"], author["slug"]
-    ol_author_key = author.get("ol_author_key") or _discover_ol_author_key(
-        conn, author["id"], name)
+    ol_author_key = author.get("ol_author_key") or _discover_ol_author_key(conn, author["id"], name)
     olf = ol.author_facts(ol.author(ol_author_key))
 
     resolution = wd.resolve_author(
@@ -173,14 +174,10 @@ def enrich_author(conn, author: dict, *, force: bool = False, fetch_images: bool
     fields["wikipedia_url"] = wdf.get("wikipedia_url") or wpf.get("wikipedia_url")
     fields["website"] = olf.get("website") or wdf.get("website")
     fields["notable_works_json"] = (
-        json.dumps(wdf["notable_works"], ensure_ascii=False)
-        if wdf.get("notable_works")
-        else None
+        json.dumps(wdf["notable_works"], ensure_ascii=False) if wdf.get("notable_works") else None
     )
     fields["validation_status"] = validated.status
-    fields["validation_warnings_json"] = json.dumps(
-        validated.warnings, ensure_ascii=False
-    )
+    fields["validation_warnings_json"] = json.dumps(validated.warnings, ensure_ascii=False)
 
     # Portrait: OL author photo → Wikidata Commons image → Wikipedia thumbnail.
     photo_url = credit = None
@@ -214,12 +211,21 @@ def enrich_author(conn, author: dict, *, force: bool = False, fetch_images: bool
 
 # ── Runner ───────────────────────────────────────────────────────────────────
 def _already_enriched(conn, table: str, key_col: str) -> set[int]:
-    return {r[key_col] for r in conn.execute(
-        f"SELECT {key_col} FROM {table} WHERE enriched_at IS NOT NULL")}
+    return {
+        r[key_col]
+        for r in conn.execute(f"SELECT {key_col} FROM {table} WHERE enriched_at IS NOT NULL")
+    }
 
 
-def _select(entities: list[dict], done: set[int], *, id_key: str,
-            force: bool, slug: str | None, limit: int | None) -> list[dict]:
+def _select(
+    entities: list[dict],
+    done: set[int],
+    *,
+    id_key: str,
+    force: bool,
+    slug: str | None,
+    limit: int | None,
+) -> list[dict]:
     todo = entities if force else [e for e in entities if e[id_key] not in done]
     if slug:
         todo = [e for e in todo if e["slug"] == slug]
@@ -248,11 +254,15 @@ def _author_gaps(a: dict) -> list[str]:
 
 def _retry_eligible(conn, table: str, key_col: str) -> dict[int, int]:
     """id -> attempts for enriched rows still under the retry cap and past the cool-down."""
-    return {r[key_col]: r["enrich_attempts"] for r in conn.execute(
-        f"SELECT {key_col}, enrich_attempts FROM {table} "
-        f"WHERE enriched_at IS NOT NULL AND enrich_attempts < ? "
-        f"AND enriched_at < datetime('now', ?)",
-        (MAX_RETRY_ATTEMPTS, f"-{RETRY_AFTER_DAYS} days"))}
+    return {
+        r[key_col]: r["enrich_attempts"]
+        for r in conn.execute(
+            f"SELECT {key_col}, enrich_attempts FROM {table} "
+            f"WHERE enriched_at IS NOT NULL AND enrich_attempts < ? "
+            f"AND enriched_at < datetime('now', ?)",
+            (MAX_RETRY_ATTEMPTS, f"-{RETRY_AFTER_DAYS} days"),
+        )
+    }
 
 
 def run_pending(*, limit: int = 8, fetch_images: bool = True) -> dict:
@@ -264,15 +274,25 @@ def run_pending(*, limit: int = 8, fetch_images: bool = True) -> dict:
     with db.connect() as conn:
         for kind, table, key, fetch_all, enrich_fn, gaps_fn in (
             ("book", "club_book_enrichment", "book_id", clubdb.all_books, enrich_book, _book_gaps),
-            ("author", "club_author_enrichment", "author_id", clubdb.all_authors, enrich_author, _author_gaps),
+            (
+                "author",
+                "club_author_enrichment",
+                "author_id",
+                clubdb.all_authors,
+                enrich_author,
+                _author_gaps,
+            ),
         ):
             if budget <= 0:
                 break
             entities = {e["id"]: e for e in fetch_all(conn)}
             done = _already_enriched(conn, table, key)
             fresh = [e for eid, e in entities.items() if eid not in done]
-            retry = [(entities[eid], att) for eid, att in _retry_eligible(conn, table, key).items()
-                     if eid in entities and gaps_fn(entities[eid])]
+            retry = [
+                (entities[eid], att)
+                for eid, att in _retry_eligible(conn, table, key).items()
+                if eid in entities and gaps_fn(entities[eid])
+            ]
             for entity, attempts in [(e, None) for e in fresh] + retry:
                 if budget <= 0:
                     break
@@ -280,8 +300,9 @@ def run_pending(*, limit: int = 8, fetch_images: bool = True) -> dict:
                     enrich_fn(conn, entity, fetch_images=fetch_images)
                     conn.commit()
                 except Exception:
-                    log.exception("enrichment sweep aborted on %s %r (source down?)",
-                                  kind, entity["slug"])
+                    log.exception(
+                        "enrichment sweep aborted on %s %r (source down?)", kind, entity["slug"]
+                    )
                     return summary
                 budget -= 1
                 summary["enriched" if attempts is None else "retried"] += 1
@@ -291,44 +312,60 @@ def run_pending(*, limit: int = 8, fetch_images: bool = True) -> dict:
                 current = {e["id"]: e for e in fetch_all(conn)}[entity["id"]]
                 remaining = gaps_fn(current)
                 if remaining:
-                    conn.execute(f"UPDATE {table} SET enrich_attempts = ? WHERE {key} = ?",
-                                 (attempts + 1, entity["id"]))
+                    conn.execute(
+                        f"UPDATE {table} SET enrich_attempts = ? WHERE {key} = ?",
+                        (attempts + 1, entity["id"]),
+                    )
                     conn.commit()
                     if attempts + 1 >= MAX_RETRY_ATTEMPTS:
                         summary["exhausted"].append(entity["slug"])
                         db.add_activity(
-                            "warning", f"Enrichment exhausted: {entity['slug']}",
+                            "warning",
+                            f"Enrichment exhausted: {entity['slug']}",
                             f"Still missing {', '.join(remaining)} after {MAX_RETRY_ATTEMPTS} "
                             "retries — parked (edit by hand in the web app, or clear "
-                            f"enrich_attempts in {table} to retry).")
+                            f"enrich_attempts in {table} to retry).",
+                        )
     return summary
 
 
-def run(*, do_books: bool, do_authors: bool, force: bool = False,
-        limit: int | None = None, slug: str | None = None,
-        fetch_images: bool = True) -> dict:
+def run(
+    *,
+    do_books: bool,
+    do_authors: bool,
+    force: bool = False,
+    limit: int | None = None,
+    slug: str | None = None,
+    fetch_images: bool = True,
+) -> dict:
     counts = {"books": 0, "authors": 0}
     with db.connect() as conn:
         if do_books:
             done = _already_enriched(conn, "club_book_enrichment", "book_id")
-            todo = _select(clubdb.all_books(conn), done, id_key="id",
-                           force=force, slug=slug, limit=limit)
+            todo = _select(
+                clubdb.all_books(conn), done, id_key="id", force=force, slug=slug, limit=limit
+            )
             print(f"books: enriching {len(todo)} (skipping {len(done)} already done)")
             for b in todo:
                 f = enrich_book(conn, b, force=force, fetch_images=fetch_images)
                 conn.commit()
                 counts["books"] += 1
-                print(f"  ✓ {b['slug']}  "
-                      f"[{', '.join(k for k in f if k not in ('enriched_at', 'enrichment_json'))}]")
+                print(
+                    f"  ✓ {b['slug']}  "
+                    f"[{', '.join(k for k in f if k not in ('enriched_at', 'enrichment_json'))}]"
+                )
         if do_authors:
             done = _already_enriched(conn, "club_author_enrichment", "author_id")
-            todo = _select(clubdb.all_authors(conn), done, id_key="id",
-                           force=force, slug=slug, limit=limit)
+            todo = _select(
+                clubdb.all_authors(conn), done, id_key="id", force=force, slug=slug, limit=limit
+            )
             print(f"authors: enriching {len(todo)} (skipping {len(done)} already done)")
             for a in todo:
                 f = enrich_author(conn, a, force=force, fetch_images=fetch_images)
                 conn.commit()
                 counts["authors"] += 1
-                print(f"  ✓ {a['slug']}  "
-                      f"[{', '.join(k for k in f if k not in ('enriched_at', 'enrichment_json'))}]")
+                print(
+                    f"  ✓ {a['slug']}  "
+                    f"[{', '.join(k for k in f if k not in ('enriched_at', 'enrichment_json'))}]"
+                )
     return counts

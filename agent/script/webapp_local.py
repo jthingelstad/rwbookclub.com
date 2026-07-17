@@ -25,12 +25,21 @@ from agent.webapp import server, sessions
 
 async def _main() -> None:
     database.initialize()
-    parser = argparse.ArgumentParser(description="Serve the web app locally with a fresh session link.")
-    parser.add_argument("--member", default=config.OLIVER_MEMBER_SLUG,
-                        help=f"member slug to log in as (default: {config.OLIVER_MEMBER_SLUG})")
+    parser = argparse.ArgumentParser(
+        description="Serve the web app locally with a fresh session link."
+    )
+    parser.add_argument(
+        "--member",
+        default=config.OLIVER_MEMBER_SLUG,
+        help=f"member slug to log in as (default: {config.OLIVER_MEMBER_SLUG})",
+    )
     parser.add_argument("--admin", action="store_true", help="mint an admin session")
-    parser.add_argument("--port", type=int, default=8791,
-                        help="local port (default 8791; avoid the bot's WEBAPP_PORT)")
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8791,
+        help="local port (default 8791; avoid the bot's WEBAPP_PORT)",
+    )
     args = parser.parse_args()
 
     # Same fail-closed rule as the bot's instance: never sign sessions with the dev literal.
@@ -47,8 +56,10 @@ async def _main() -> None:
     await site.start()
 
     token = sessions.mint_token(member_id, is_admin=args.admin)
-    print(f"Serving the web app on 127.0.0.1:{args.port} as {args.member!r}"
-          f"{' (admin)' if args.admin else ''} — Ctrl-C to stop.")
+    print(
+        f"Serving the web app on 127.0.0.1:{args.port} as {args.member!r}"
+        f"{' (admin)' if args.admin else ''} — Ctrl-C to stop."
+    )
     print(f"\n  http://127.0.0.1:{args.port}/webapp?t={token}\n")
     try:
         while True:

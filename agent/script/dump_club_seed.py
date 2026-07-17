@@ -41,7 +41,9 @@ def main() -> None:
         for table in clubdb.CLUB_TABLES:
             rows = conn.execute(f"SELECT * FROM {table}").fetchall()
             if not rows:
-                out.write(f"\n-- {table} (0 rows)\n")  # visible so an empty table isn't silently dropped
+                out.write(
+                    f"\n-- {table} (0 rows)\n"
+                )  # visible so an empty table isn't silently dropped
                 continue
             cols = rows[0].keys()
             collist = ", ".join(cols)

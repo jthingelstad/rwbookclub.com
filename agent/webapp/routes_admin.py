@@ -23,8 +23,6 @@ from corpus.paths import DATA_DIR
 log = logging.getLogger("oliver.webapp")
 
 
-
-
 # ── Book data ────────────────────────────────────────────────────────────────
 async def books_page(request: web.Request) -> web.Response:
     return await _render_books(request)
@@ -40,9 +38,14 @@ def _load_book_core(slug: str) -> dict | None:
         row = conn.execute("SELECT * FROM club_books WHERE slug = ?", (slug,)).fetchone()
         if row is None:
             return None
-        authors = [r["name"] for r in conn.execute(
-            "SELECT a.name FROM club_book_authors ba JOIN club_authors a ON a.id = ba.author_id "
-            "WHERE ba.book_id = ? ORDER BY ba.ordinal", (row["id"],))]
+        authors = [
+            r["name"]
+            for r in conn.execute(
+                "SELECT a.name FROM club_book_authors ba JOIN club_authors a ON a.id = ba.author_id "
+                "WHERE ba.book_id = ? ORDER BY ba.ordinal",
+                (row["id"],),
+            )
+        ]
         pickers = clubdb.book_picker_slugs(conn, row["id"])
     d = dict(row)
     d["authors"] = authors
@@ -83,7 +86,7 @@ def _save_book(slug: str, form) -> str | None:
         "isbn13": (form.get("isbn13") or "").strip() or None,
         "olKey": (form.get("ol_key") or "").strip() or None,
         "synopsis": (form.get("synopsis") or "").strip() or None,
-        "subjects": core["subjects"],          # preserve — not edited here
+        "subjects": core["subjects"],  # preserve — not edited here
         "authors": authors or core["authors"],  # preserve if the field was cleared
     }
     with db.connect() as conn:
@@ -100,17 +103,31 @@ async def book_save(request: web.Request) -> web.Response:
     err = await asyncio.to_thread(_save_book, slug, form)
     if err:
         book = await asyncio.to_thread(_load_book_core, slug)
-        return render("admin_book.html", request, status=400, book=book or {"slug": slug},
-                      topics=clubdb.TOPICS, error=err)
+        return render(
+            "admin_book.html",
+            request,
+            status=400,
+            book=book or {"slug": slug},
+            topics=clubdb.TOPICS,
+            error=err,
+        )
     state.mark_dirty()
     raise web.HTTPFound("/webapp/admin/books")
 
 
 async def _render_books(request: web.Request, *, status: int = 200, error: str | None = None):
-    with_conn = await asyncio.to_thread(lambda: [
-        {"slug": b["slug"], "title": b["title"], "topic": b.get("topic")} for b in _all_books()])
-    return render("admin_books.html", request, status=status, error=error,
-                  books=sorted(with_conn, key=lambda b: b["title"].lower()))
+    with_conn = await asyncio.to_thread(
+        lambda: [
+            {"slug": b["slug"], "title": b["title"], "topic": b.get("topic")} for b in _all_books()
+        ]
+    )
+    return render(
+        "admin_books.html",
+        request,
+        status=status,
+        error=error,
+        books=sorted(with_conn, key=lambda b: b["title"].lower()),
+    )
 
 
 def _add_book(title: str, isbn: str | None) -> dict | None:
@@ -133,12 +150,14 @@ async def book_add(request: web.Request) -> web.Response:
     except Exception as e:
         log.exception("add-book failed for title=%r isbn=%r", title, isbn)
         return await _render_books(
-            request, status=500,
-            error=f"Couldn't add “{title}”: {type(e).__name__}: {e}")
+            request, status=500, error=f"Couldn't add “{title}”: {type(e).__name__}: {e}"
+        )
     if res is None:
         return await _render_books(
-            request, status=404,
-            error=f"Couldn't find “{title}” on Open Library — try an ISBN, or check the title.")
+            request,
+            status=404,
+            error=f"Couldn't find “{title}” on Open Library — try an ISBN, or check the title.",
+        )
     state.mark_dirty()
     # Land on the edit page so the admin can refine the fetched metadata.
     raise web.HTTPFound(f"/webapp/admin/books/{res['slug']}")
@@ -150,15 +169,28 @@ def _all_meetings() -> list[dict]:
         return clubdb.all_meetings(conn)
 
 
-async def _render_meetings(request: web.Request, *, status: int = 200,
-                           error: str | None = None) -> web.Response:
+async def _render_meetings(
+    request: web.Request, *, status: int = 200, error: str | None = None
+) -> web.Response:
     meetings = await asyncio.to_thread(_all_meetings)
-    books = await asyncio.to_thread(lambda: sorted(
-        ({"slug": b["slug"], "title": b["title"]} for b in _all_books()), key=lambda b: b["title"].lower()))
+    books = await asyncio.to_thread(
+        lambda: sorted(
+            ({"slug": b["slug"], "title": b["title"]} for b in _all_books()),
+            key=lambda b: b["title"].lower(),
+        )
+    )
     members = await asyncio.to_thread(_members)
-    meetings = sorted(meetings, key=lambda m: (m.get("date") or ""), reverse=True)
-    return render("admin_meetings.html", request, status=status, error=error, meetings=meetings,
-                  books=books, members=members, meeting_types=clubdb.MEETING_TYPES)
+    meetings = sorted(meetings, key=lambda m: m.get("date") or "", reverse=True)
+    return render(
+        "admin_meetings.html",
+        request,
+        status=status,
+        error=error,
+        meetings=meetings,
+        books=books,
+        members=members,
+        meeting_types=clubdb.MEETING_TYPES,
+    )
 
 
 async def meetings_page(request: web.Request) -> web.Response:
@@ -170,12 +202,11 @@ def _meeting_id_or_404(request: web.Request) -> int:
     non-numeric id would otherwise raise ValueError → a raw 500."""
     try:
         return int(request.match_info["id"])
-    except (KeyError, ValueError):
+    except KeyError, ValueError:
         raise web.HTTPNotFound(text="No such meeting.") from None
 
 
-def _add_meeting(date: str, book_slugs: list[str],
-                 host_slugs: list[str], types: list[str]) -> bool:
+def _add_meeting(date: str, book_slugs: list[str], host_slugs: list[str], types: list[str]) -> bool:
     day = (date or "").strip()[:10]
     if len(day) != 10:
         return False
@@ -202,15 +233,16 @@ async def meeting_add(request: web.Request) -> web.Response:
     hosts = form.getall("hosts", []) if hasattr(form, "getall") else []
     types = form.getall("types", []) if hasattr(form, "getall") else []
     try:
-        created = await asyncio.to_thread(_add_meeting, form.get("date", ""), books,
-                                          hosts, types)
+        created = await asyncio.to_thread(_add_meeting, form.get("date", ""), books, hosts, types)
     except Exception as e:
         log.exception("add-meeting failed")
-        return await _render_meetings(request, status=400,
-                                      error=f"Couldn't add the meeting: {type(e).__name__}: {e}")
+        return await _render_meetings(
+            request, status=400, error=f"Couldn't add the meeting: {type(e).__name__}: {e}"
+        )
     if not created:
-        return await _render_meetings(request, status=400,
-                                      error="A meeting needs a date (YYYY-MM-DD).")
+        return await _render_meetings(
+            request, status=400, error="A meeting needs a date (YYYY-MM-DD)."
+        )
     state.mark_dirty()
     raise web.HTTPFound("/webapp/admin/meetings")
 
@@ -221,8 +253,10 @@ def _meeting_by_id(meeting_id: int) -> dict | None:
 
 
 def _sorted_books() -> list[dict]:
-    return sorted(({"slug": b["slug"], "title": b["title"]} for b in _all_books()),
-                  key=lambda b: b["title"].lower())
+    return sorted(
+        ({"slug": b["slug"], "title": b["title"]} for b in _all_books()),
+        key=lambda b: b["title"].lower(),
+    )
 
 
 def _meeting_book_pickers(book_slugs: list[str]) -> dict[str, list[str]]:
@@ -234,8 +268,9 @@ def _meeting_book_pickers(book_slugs: list[str]) -> dict[str, list[str]]:
     return out
 
 
-async def _render_meeting_edit(request: web.Request, mid: int, *, status: int = 200,
-                               error: str | None = None) -> web.Response:
+async def _render_meeting_edit(
+    request: web.Request, mid: int, *, status: int = 200, error: str | None = None
+) -> web.Response:
     meeting = await asyncio.to_thread(_meeting_by_id, mid)
     if meeting is None:
         return web.Response(status=404, text="No such meeting.")
@@ -243,21 +278,32 @@ async def _render_meeting_edit(request: web.Request, mid: int, *, status: int = 
     books = await asyncio.to_thread(_sorted_books)
     pickers = await asyncio.to_thread(_meeting_book_pickers, meeting["book_slugs"])
     titles = {b["slug"]: b["title"] for b in books}
-    return render("admin_meeting.html", request, status=status, error=error, meeting=meeting,
-                  members=members, books=books, titles=titles, book_pickers=pickers,
-                  meeting_types=clubdb.MEETING_TYPES)
+    return render(
+        "admin_meeting.html",
+        request,
+        status=status,
+        error=error,
+        meeting=meeting,
+        members=members,
+        books=books,
+        titles=titles,
+        book_pickers=pickers,
+        meeting_types=clubdb.MEETING_TYPES,
+    )
 
 
 async def meeting_edit(request: web.Request) -> web.Response:
     return await _render_meeting_edit(request, _meeting_id_or_404(request))
 
 
-def _save_meeting(meeting_id: int, form, host_slugs: list[str], book_slugs: list[str],
-                  types: list[str]) -> None:
+def _save_meeting(
+    meeting_id: int, form, host_slugs: list[str], book_slugs: list[str], types: list[str]
+) -> None:
     types = [t for t in types if t in clubdb.MEETING_TYPES]
     with db.connect() as conn:
         clubdb.update_meeting(
-            conn, meeting_id,
+            conn,
+            meeting_id,
             date=(form.get("date") or "").strip() or None,
             start_time=(form.get("start_time") or "").strip() or None,
             location=(form.get("location") or "").strip() or None,
@@ -285,8 +331,9 @@ async def meeting_save(request: web.Request) -> web.Response:
         await asyncio.to_thread(_save_meeting, mid, form, host_slugs, book_slugs, types)
     except Exception as e:
         log.exception("save-meeting failed for id=%s", mid)
-        return await _render_meeting_edit(request, mid, status=400,
-                                          error=f"Couldn't save the meeting: {type(e).__name__}: {e}")
+        return await _render_meeting_edit(
+            request, mid, status=400, error=f"Couldn't save the meeting: {type(e).__name__}: {e}"
+        )
     state.mark_dirty()
     raise web.HTTPFound("/webapp/admin/meetings")
 
@@ -296,16 +343,19 @@ def _identity_coverage() -> dict[str, dict]:
     """slug → which identity types are linked (the audit the retired `/oliver contact list`
     command used to give: spot the current member you can't reach before a campaign)."""
     coverage: dict[str, dict] = {}
-    for key, rows in (("discord", identities.list_member_identities()),
-                      ("email", identities.list_member_emails()),
-                      ("sms", identities.list_member_sms())):
+    for key, rows in (
+        ("discord", identities.list_member_identities()),
+        ("email", identities.list_member_emails()),
+        ("sms", identities.list_member_sms()),
+    ):
         for r in rows:
             coverage.setdefault(r["member_slug"], {})[key] = True
     return coverage
 
 
-async def _render_members(request: web.Request, *, status: int = 200,
-                          error: str | None = None) -> web.Response:
+async def _render_members(
+    request: web.Request, *, status: int = 200, error: str | None = None
+) -> web.Response:
     members = await asyncio.to_thread(_members)
     coverage = await asyncio.to_thread(_identity_coverage)
     for m in members:
@@ -333,12 +383,14 @@ def _member_action(op: str, name: str, slug: str) -> bool:
 async def member_action(request: web.Request) -> web.Response:
     form = _form(request)
     try:
-        changed = await asyncio.to_thread(_member_action, form.get("op", ""),
-                                          form.get("name", ""), form.get("slug", ""))
+        changed = await asyncio.to_thread(
+            _member_action, form.get("op", ""), form.get("name", ""), form.get("slug", "")
+        )
     except Exception as e:
         log.exception("member action failed")
-        return await _render_members(request, status=400,
-                                     error=f"Couldn't complete that: {type(e).__name__}: {e}")
+        return await _render_members(
+            request, status=400, error=f"Couldn't complete that: {type(e).__name__}: {e}"
+        )
     if changed:
         state.mark_dirty()  # member currency drives whole swaths of the site
     raise web.HTTPFound("/webapp/admin/members")
@@ -346,10 +398,19 @@ async def member_action(request: web.Request) -> web.Response:
 
 def _member_by_slug(slug: str) -> dict | None:
     with db.connect() as conn:
-        row = conn.execute("SELECT slug, name, is_current, joined FROM club_members WHERE slug = ?",
-                           (slug,)).fetchone()
-    return {"slug": row["slug"], "name": row["name"], "current": bool(row["is_current"]),
-            "joined": row["joined"]} if row else None
+        row = conn.execute(
+            "SELECT slug, name, is_current, joined FROM club_members WHERE slug = ?", (slug,)
+        ).fetchone()
+    return (
+        {
+            "slug": row["slug"],
+            "name": row["name"],
+            "current": bool(row["is_current"]),
+            "joined": row["joined"],
+        }
+        if row
+        else None
+    )
 
 
 def _member_identities(slug: str) -> dict:
@@ -387,6 +448,7 @@ def _member_save(slug: str, op: str, form) -> bool:
         raw = (form.get("value") or "").strip() or None
         if raw:  # a date input supplies ISO; reject anything else rather than store garbage
             import datetime
+
             datetime.date.fromisoformat(raw)
         with db.connect() as conn:
             conn.execute("UPDATE club_members SET joined = ? WHERE slug = ?", (raw, slug))
@@ -424,7 +486,9 @@ async def lists_page(request: web.Request) -> web.Response:
 async def list_detail(request: web.Request) -> web.Response:
     list_slug = request.match_info["slug"]
     all_lists = await asyncio.to_thread(cr.lists)
-    lst = next((x for x in all_lists if x.get("slug") == list_slug and x.get("scope") == "club"), None)
+    lst = next(
+        (x for x in all_lists if x.get("slug") == list_slug and x.get("scope") == "club"), None
+    )
     if lst is None:
         return web.Response(status=404, text="No such club list.")
     books = await asyncio.to_thread(_sorted_books)
@@ -433,19 +497,21 @@ async def list_detail(request: web.Request) -> web.Response:
 
 
 def add_routes(app: web.Application) -> None:
-    app.add_routes([
-        web.get("/webapp/admin/books", books_page),
-        web.post("/webapp/admin/books/add", book_add),
-        web.get("/webapp/admin/books/{slug}", book_edit),
-        web.post("/webapp/admin/books/{slug}", book_save),
-        web.get("/webapp/admin/meetings", meetings_page),
-        web.post("/webapp/admin/meetings/add", meeting_add),
-        web.get("/webapp/admin/meetings/{id}", meeting_edit),
-        web.post("/webapp/admin/meetings/{id}", meeting_save),
-        web.get("/webapp/admin/members", members_page),
-        web.post("/webapp/admin/members", member_action),
-        web.get("/webapp/admin/members/{slug}", member_edit),
-        web.post("/webapp/admin/members/{slug}", member_save),
-        web.get("/webapp/admin/lists", lists_page),
-        web.get("/webapp/admin/lists/{slug}", list_detail),
-    ])
+    app.add_routes(
+        [
+            web.get("/webapp/admin/books", books_page),
+            web.post("/webapp/admin/books/add", book_add),
+            web.get("/webapp/admin/books/{slug}", book_edit),
+            web.post("/webapp/admin/books/{slug}", book_save),
+            web.get("/webapp/admin/meetings", meetings_page),
+            web.post("/webapp/admin/meetings/add", meeting_add),
+            web.get("/webapp/admin/meetings/{id}", meeting_edit),
+            web.post("/webapp/admin/meetings/{id}", meeting_save),
+            web.get("/webapp/admin/members", members_page),
+            web.post("/webapp/admin/members", member_action),
+            web.get("/webapp/admin/members/{slug}", member_edit),
+            web.post("/webapp/admin/members/{slug}", member_save),
+            web.get("/webapp/admin/lists", lists_page),
+            web.get("/webapp/admin/lists/{slug}", list_detail),
+        ]
+    )

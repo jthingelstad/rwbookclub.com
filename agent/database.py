@@ -14,9 +14,7 @@ from agent import clubdb, db, security
 
 
 def _add_author_enrichment_validation(conn: sqlite3.Connection) -> None:
-    columns = {
-        row["name"] for row in conn.execute("PRAGMA table_info(club_author_enrichment)")
-    }
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(club_author_enrichment)")}
     if "validation_status" not in columns:
         conn.execute(
             "ALTER TABLE club_author_enrichment ADD COLUMN validation_status TEXT "
@@ -38,9 +36,7 @@ MIGRATIONS = (
 
 
 def _run_migrations(conn: sqlite3.Connection) -> None:
-    rows = conn.execute(
-        "SELECT version, name FROM schema_migrations ORDER BY version"
-    ).fetchall()
+    rows = conn.execute("SELECT version, name FROM schema_migrations ORDER BY version").fetchall()
     applied = {int(row["version"]): row["name"] for row in rows}
     known_versions = {version for version, _, _ in MIGRATIONS}
     unknown = sorted(set(applied) - known_versions)

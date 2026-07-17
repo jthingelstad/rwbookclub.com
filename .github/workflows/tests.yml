@@ -3,7 +3,7 @@ name: tests
 on:
   push:
     branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,6 +11,7 @@ permissions:
 jobs:
   python:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
@@ -19,6 +20,8 @@ jobs:
       - run: uv sync --locked
       - name: Lint (ruff)
         run: uv run --locked ruff check .
+      - name: Format (ruff)
+        run: uv run --locked ruff format --check .
       - name: Static types (incremental scope)
         run: uv run --locked mypy
       - name: Audit locked Python environment
@@ -28,6 +31,7 @@ jobs:
 
   website:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7

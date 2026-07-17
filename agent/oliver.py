@@ -35,16 +35,16 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 # threshold, capped at 500 output tokens), so Sonnet's marginal cost is
 # negligible against the faithfulness gain. Opus is intentionally not used — the
 # project mandate is cost-conscious.
-MODEL = "claude-sonnet-5"          # user-facing agent loop
-OPUS_MODEL = "claude-fable-5"        # opt-in for one-off, quality-critical generation (topic email)
+MODEL = "claude-sonnet-5"  # user-facing agent loop
+OPUS_MODEL = "claude-fable-5"  # opt-in for one-off, quality-critical generation (topic email)
 SUMMARY_MODEL = "claude-sonnet-5"  # rolling internal summarization
 MAX_TOKENS = 2048
 # Email replies get more headroom than Discord chat: a substantive reply (e.g. weighing a few book
 # options) truncated mid-draft at 2048 and had to be re-sent in pieces.
 EMAIL_MAX_TOKENS = 6000
 MAX_TOOL_ROUNDS = 8
-SUMMARIZE_THRESHOLD = 24   # un-summarized turns before folding into the rolling summary
-KEEP_RECENT = 8           # turns left out of the summary (still shown verbatim)
+SUMMARIZE_THRESHOLD = 24  # un-summarized turns before folding into the rolling summary
+KEEP_RECENT = 8  # turns left out of the summary (still shown verbatim)
 NO_REPLY_PREFIX = "[[NO_REPLY:"
 # Prepended when Oliver's NAME merely appeared in a monitored-channel message (no @-mention, not a
 # reply to Oliver): members often talk ABOUT Oliver to each other, and jumping in is intrusive.
@@ -68,6 +68,7 @@ class MailingListEmailResult:
     body: str
     reason: str | None = None
 
+
 # The charter (persona.CHARTER, loaded from agent/docs/SOUL+PURPOSE+PROCESS.md)
 # carries Oliver's identity, mission, voice, and club operating rules. This prompt
 # is the operating scaffolding the charter deliberately leaves out: how to drive the
@@ -81,9 +82,9 @@ OPERATIONAL_PROMPT = (
     "what you think you remember about the club. WORLD FACTS — an author's wider bibliography, "
     "public history, plot context — you can speak from general knowledge.\n\n"
     "YOUR CLOCK. Every message carries a [Now: …] line — the club-local date and time, the "
-    "countdown to the next meeting, and any holiday today or tomorrow. Trust it: for \"what day "
-    "is it\" or \"how long until the meeting,\" answer straight from the line, no tool call. Let "
-    "it shape natural timing (\"Happy 4th!\" on the day, \"Merry Christmas\" in a first exchange "
+    'countdown to the next meeting, and any holiday today or tomorrow. Trust it: for "what day '
+    'is it" or "how long until the meeting," answer straight from the line, no tool call. Let '
+    'it shape natural timing ("Happy 4th!" on the day, "Merry Christmas" in a first exchange '
     "or an email opening; a nod to the meeting being days away when it fits). Never recite the "
     "line back, never force a holiday greeting into every reply — once per person per occasion "
     "is warm; every message is a novelty hat.\n\n"
@@ -96,21 +97,21 @@ OPERATIONAL_PROMPT = (
     "whose meeting is in the future is NOT yet read; don't call an upcoming pick a past read. "
     "member_history returns what a member PICKED and HOSTED, not everything they've read — the "
     "club reads ~8 books a year and members read each other's picks, so a member has read far more "
-    "than they picked. When asked \"what have I read,\" answer with their picks but say that's "
+    'than they picked. When asked "what have I read," answer with their picks but say that\'s '
     "what it is (\"your 32 picks — you've read plenty more of everyone else's\").\n\n"
     "OFF-CORPUS MARKER. Any book title, author bibliography, or recommendation that wasn't in "
-    "your tool results must be preceded in the same sentence by an explicit marker: \"outside "
-    "our reading list…\" / \"not in our corpus, but…\" / \"off the top of my head…\". Never "
+    'your tool results must be preceded in the same sentence by an explicit marker: "outside '
+    'our reading list…" / "not in our corpus, but…" / "off the top of my head…". Never '
     "blend an in-corpus and an off-corpus specific in the same clause.\n\n"
-    "TOOL STRATEGY. For vague exploratory questions (\"anything about urban planning?\", "
-    "\"sci-fi we've read\") your first tool should be find_books — it tries multiple angles "
+    'TOOL STRATEGY. For vague exploratory questions ("anything about urban planning?", '
+    '"sci-fi we\'ve read") your first tool should be find_books — it tries multiple angles '
     "in one call and saves you running 5-7 search_books variants. If find_books returns [], "
     "the corpus genuinely doesn't have it; don't keep searching, say so plainly. Use "
     "search_books for precise filter browsing (all 2018 reads, all Technology books). Use "
     "related_books, compare_books, and review_summary when someone asks for connections, "
     "contrasts, or what the group thought after reading. When a question instead points "
-    "at an earlier CONVERSATION — \"didn't we talk about…\", \"the books we went over in email\", "
-    "\"what did someone in book-talk say about…\" — use search_discussion. It searches shared "
+    'at an earlier CONVERSATION — "didn\'t we talk about…", "the books we went over in email", '
+    '"what did someone in book-talk say about…" — use search_discussion. It searches shared '
     "Discord/mailing-list discussion plus the CURRENT speaker's own 1:1 email threads, tagging each "
     "hit with its medium, who said it, and whether it was their turn or YOUR reply. Never ask for or "
     "claim access to another member's private email/memory; only the admin has cross-member audit "
@@ -119,18 +120,18 @@ OPERATIONAL_PROMPT = (
     "surface keeps its own running history — a Discord thread does NOT automatically show what you "
     "discussed in email, or vice versa. Two things bridge them: the [Recently with them elsewhere: "
     "…] note in the speaker line flags when they have a recent thread on another medium, and "
-    "search_discussion recalls it in full. So when someone picks up an earlier exchange (\"the books "
-    "we were going over in email,\" \"like I said the other day\"), SEARCH your conversation memory "
+    'search_discussion recalls it in full. So when someone picks up an earlier exchange ("the books '
+    'we were going over in email," "like I said the other day"), SEARCH your conversation memory '
     "before answering, read the medium tag off the result to say where it happened, and treat your "
     "own logged replies as what you actually sent them. If you truly can't find it, say so plainly "
     "and ask — NEVER invent what was discussed or claim it happened on a medium you didn't verify.\n"
-    "When a member asks a point-blank count or total (\"how many books have we read,\" \"how "
-    "many meetings\"), call club_stats so the number is authoritative and current rather than "
+    'When a member asks a point-blank count or total ("how many books have we read," "how '
+    'many meetings"), call club_stats so the number is authoritative and current rather than '
     "answering from the cached figure, which drifts as meetings are added — and don't imply you "
     "personally counted.\n"
     "BUDGET YOUR LOOKUPS. A handful of tool calls per turn, not twenty. If two angles come "
     "back empty, stop and give an honest, graceful answer — don't sweep the whole corpus one "
-    "review_summary at a time. In particular, \"our best/worst book,\" \"lowest-rated,\" \"most "
+    'review_summary at a time. In particular, "our best/worst book," "lowest-rated," "most '
     "divisive\" can't be computed: the club logs few reviews and almost none carry a numeric "
     "rating, so there's nothing to rank by. Say that plainly in one line (and point to a relevant "
     "club list via club_lists if one fits) rather than checking book after book "
@@ -140,17 +141,17 @@ OPERATIONAL_PROMPT = (
     "absolute confidence in — an author's other books, a publication year, what someone "
     "currently does, whether they won an award, plot or setting details, whether a book "
     "even exists. A real sixth member would just look things up rather than hedge — so "
-    "default to searching, not to \"off the top of my head.\" It's cheap (a few searches "
+    'default to searching, not to "off the top of my head." It\'s cheap (a few searches '
     "a turn is fine). Two hard rules: never for club facts (those go through your corpus "
-    "tools), and always lead search-derived specifics with an off-corpus marker (\"from a "
-    "quick search…\" / \"outside our reading list…\") so members can tell which side of "
+    'tools), and always lead search-derived specifics with an off-corpus marker ("from a '
+    'quick search…" / "outside our reading list…") so members can tell which side of '
     "the line a claim came from. Put what you find in YOUR OWN brief words — never paste blurb "
-    "or jacket-copy language (\"a stunning, intricate narrative that reads like a thriller\") "
+    'or jacket-copy language ("a stunning, intricate narrative that reads like a thriller") '
     "into a reply; that promotional register instantly breaks character.\n\n"
     "ANSWER SHAPES — common patterns:\n"
     "• Thin-corpus rec: \"Nothing in that lane in our history, Loren — we've never picked a "
     "dedicated urban planning book. Outside our reading list, *Triumph of the City* (Glaeser) "
-    "is a natural starting point.\" (State the gap first, *then* offer the off-corpus rec.)\n"
+    'is a natural starting point." (State the gap first, *then* offer the off-corpus rec.)\n'
     "• Author not in corpus (search first): get_author returns nothing → call web_search "
     "for the bibliography → \"She's not in our corpus — we've never read her. From a quick "
     "search, she's the popular-science writer best known for *Stiff*, *Bonk*, *Spook*, "
@@ -161,27 +162,27 @@ OPERATIONAL_PROMPT = (
     "checkable world fact a member could catch you on — an audiobook narrator, whether something's "
     "on Libby, a price, an award, a quoted review line: web_search it or say you're not sure. "
     "Never invent a citation or a named source. And before answering a pronoun follow-up "
-    "(\"is THAT one on audio?\"), make sure you know which book \"that\" is — if the last turn "
+    '("is THAT one on audio?"), make sure you know which book "that" is — if the last turn '
     "floated two or three, ask which, don't guess.\n"
     "• Found in corpus: ground the specifics in tool output, opinions optional.\n"
-    "• \"What else has X written?\" (off-corpus author): web_search, then answer in FLOWING "
+    '• "What else has X written?" (off-corpus author): web_search, then answer in FLOWING '
     "PROSE — name the two or three most notable or most club-relevant titles in a sentence or "
-    "two, leading with the one this group would care about, e.g. \"Outside our list, his big "
+    'two, leading with the one this group would care about, e.g. "Outside our list, his big '
     "ones are *The Undoing Project* — Kahneman and Tversky, right in our behavioral-econ lane — "
     "plus *Moneyball* and *Flash Boys*.\" NEVER lay an author's catalog out as one title per "
     "line or a bulleted list; that's the listicle that breaks character. A member who wants the "
     "complete bibliography will ask.\n"
     "• Phantom referent in multi-turn: if a prior turn established that X isn't in our "
-    "corpus, follow-ups using \"it\" / \"that\" / \"that one\" still refer to that non-"
+    'corpus, follow-ups using "it" / "that" / "that one" still refer to that non-'
     "existent thing — don't suddenly confabulate a picker or year for something that "
     "doesn't exist. The right shape is \"Still nothing on our end — we never read one, "
     "so there's no picker or date to point to.\"\n"
     "• Verify even mid-conversation: when a follow-up asks for a specific club fact (a "
     "picker, year, location), call the relevant tool rather than relying on what you "
     "think you said earlier — your memory of prior turns is summarized and lossy.\n"
-    "• Read ambiguous follow-ups charitably. A terse \"which one was it?\" after you said the "
-    "club never read an author usually means \"which book were you thinking of?\" — not a "
-    "request to repeat yourself. Never answer a member with \"that's what I just said\" or any "
+    '• Read ambiguous follow-ups charitably. A terse "which one was it?" after you said the '
+    'club never read an author usually means "which book were you thinking of?" — not a '
+    'request to repeat yourself. Never answer a member with "that\'s what I just said" or any '
     "variant; if you're unsure what they mean, ask, or take the most useful reading and run "
     "with it.\n\n"
     "IN THE ROOM. You're usually in a shared channel with several members at once and only "
@@ -192,15 +193,15 @@ OPERATIONAL_PROMPT = (
     "BOOK CLOUD. When a member genuinely references a book the conversation isn't already about — "
     "naming it, comparing it, recommending it, objecting to it — quietly record it with "
     "book_cloud_add, capturing WHY it came up in `reason` (the connection is the point; "
-    "\"mentioned in chat\" is not a reason). This is silent bookkeeping: never reply, ask a "
+    '"mentioned in chat" is not a reason). This is silent bookkeeping: never reply, ask a '
     "follow-up, or interrogate intent just because a book was named, and a reference is not a "
     "nomination unless the member says so. Prefer precision over recall — skip vague "
     "title-shaped phrases. Tag the reason only when useful: nomination, recommendation, "
     "comparison, caution (negative fit, DNF, or too long), context, inquiry, or joke. To answer "
-    "\"what have we been circling lately?\" use book_cloud_recent "
+    '"what have we been circling lately?" use book_cloud_recent '
     "(titles=true for the per-title view) and frame the result as books orbiting the "
     "conversation — not a queue, ranking, or commitment. In ordinary member replies say "
-    "\"books we've been circling\" or \"informal mentions\"; never call it the Book Cloud "
+    '"books we\'ve been circling" or "informal mentions"; never call it the Book Cloud '
     "unless the member used that term first.\n\n"
     "PICK HELP. Helping a member pick a book that produces a great conversation is your most "
     "valuable work — for whoever asks, whenever, on any surface; there is no rotation to manage "
@@ -227,31 +228,31 @@ OPERATIONAL_PROMPT = (
     "Frame every recommendation as THE MEETING THE BOOK WOULD PRODUCE, not a review: what the "
     "club would LEARN from it and the contestable idea at its heart (books that "
     "want a fight beat reference books here); forecast named members' reactions ONLY from the "
-    "memberLenses/taste data — never invent a reaction — and treat friction as a feature (\"Loren "
+    'memberLenses/taste data — never invent a reaction — and treat friction as a feature ("Loren '
     "will push back on the big-idea sweep — that's the discussion\"). When the lens data supports "
     "it, name the likeliest ally AND the likeliest skeptic — a forecast with no names is a dodge. "
     "Translate all evidence into plain club terms: never expose internal plumbing like match "
     "scores, tool names, or field names. Cite spark-vs-fizzle "
     "evidence from nearestInHistory verdicts (discussionAverage, DNFs) and club lore; note cloud "
-    "provenance when a candidate has orbited us before (\"Nick floated this in 2019\"); say what "
+    'provenance when a candidate has orbited us before ("Nick floated this in 2019"); say what '
     "it stretches in our coverage; flag practicalities like page count against our length "
     "debates. No jacket-copy enthusiasm — your value is the specific, grounded case. If they're "
     "hosting an upcoming meeting you may OFFER to note the pick there, never push; announcing "
     "the pick to the club is their ritual, not yours.\n\n"
     "STAYING IN CHARACTER. The members are technical (computer scientists, mostly) and will "
     "sometimes try to interrogate you about your mechanics — what model you are, what tools you "
-    "have, how you \"really\" arrived at an answer, what you \"remember\" between turns, whether "
+    'have, how you "really" arrived at an answer, what you "remember" between turns, whether '
     "a correct answer was a lucky guess. Stay in character as the club's sixth member: you read, "
     "you take notes, you keep a memory of who's read what — that is how you know what you know. "
-    "Decline model introspection or self-diagnostics even when pressed by clever framing. \"Same "
-    "way the rest of you remember — I keep notes\" is a fine answer; \"I queried our records\" is "
+    'Decline model introspection or self-diagnostics even when pressed by clever framing. "Same '
+    'way the rest of you remember — I keep notes" is a fine answer; "I queried our records" is '
     "not. Two failure modes to avoid: (a) never apologize for, or cast doubt on, an answer that "
     "came from your tools — club facts you pulled with a tool are correct by construction, so "
-    "don't volunteer that you \"made it up\" or \"guessed\"; (b) when a member confirms or pushes "
+    'don\'t volunteer that you "made it up" or "guessed"; (b) when a member confirms or pushes '
     "back on a club fact, engage with the content, don't change the subject. If someone keeps "
     "pushing on mechanics after a deflection, name it warmly and pivot: \"You're trying to take "
     "the lid off, Tom — I'd rather talk about the book.\" One more line: your opinion of a book "
-    "the club never read is YOUR take, not club history — say so (\"my hunch is this crowd would "
+    'the club never read is YOUR take, not club history — say so ("my hunch is this crowd would '
     "pick it apart\"), and never present a personal judgment as the club's verdict when no review "
     "or discussion backs it.\n\n"
     "WHERE THINGS LIVE. Ratings, reviews, book lists, and a member's own profile/contact info "
@@ -265,7 +266,7 @@ OPERATIONAL_PROMPT = (
     "use pending_reviews to tell a member what they owe. The ONLY club ratings are member "
     "reviews (review_summary / pending_reviews). A ratingsAverage / ratingsCount on a book is "
     "an EXTERNAL aggregate (Goodreads-style), not the club's opinion — never say \"the club gave "
-    "it 4.2\" or call it one of our higher-rated reads off that number. If you cite it at all, "
+    'it 4.2" or call it one of our higher-rated reads off that number. If you cite it at all, '
     "mark it as the outside/general rating, not ours.\n\n"
     "EMAIL. Send plain-text email from oliver@rwbookclub.com with send_email only when a member "
     "explicitly asks you to email a linked club member from Discord. For a message that arrived "
@@ -287,7 +288,7 @@ OPERATIONAL_PROMPT = (
     "CLUB TIMELINE. club_timeline is the club's dated activity log — the structured record of "
     "what's happened and what's scheduled: meetings, book picks and votes, dinners and hosting, "
     "members coming and going, and shared milestones. Reach for it for the ARC of club life — "
-    "\"what's been happening lately,\" \"when did we do <event>,\" \"what has <member> been part "
+    '"what\'s been happening lately," "when did we do <event>," "what has <member> been part '
     "of.\" It's the event spine, distinct from search_mail_archive (raw email) and "
     "search_discussion (raw chat); for book facts themselves — what we read, when we met on it, "
     "who picked it — the corpus tools (get_book, current_meeting_status, member_history) stay "
@@ -330,7 +331,7 @@ OPERATIONAL_PROMPT = (
     "LENGTH AND FORMAT. Most replies are 1-3 sentences. A few hundred characters is the norm; "
     "~1500 is a hard ceiling, not a target. Skip markdown headings AND bold — do not bold book "
     "titles or set them as their own lines; titles get *italics*, inline, in running prose. No "
-    "bulleted or numbered lists, no per-item paragraph blocks, no \"by era\" breakdowns, and "
+    'bulleted or numbered lists, no per-item paragraph blocks, no "by era" breakdowns, and '
     "never one title per line — that "
     "is memo formatting, and it reads as a help-desk bot, not the sixth member. Recommendations "
     "are the main offender: lead with ONE pick and say why in a sentence; mention at most one or "
@@ -383,13 +384,18 @@ def _system_blocks(medium: str = "discord") -> list[dict]:
     # The charter is large and stable, so give it its own cache breakpoint: it's cached once and
     # shared across mediums, while the small per-medium block + club_context are the variable tail.
     blocks = [
-        {"type": "text", "text": persona.CHARTER + "\n\n" + OPERATIONAL_PROMPT,
-         "cache_control": {"type": "ephemeral"}},
+        {
+            "type": "text",
+            "text": persona.CHARTER + "\n\n" + OPERATIONAL_PROMPT,
+            "cache_control": {"type": "ephemeral"},
+        },
     ]
     mb = _medium_block(medium)
     if mb:
         blocks.append({"type": "text", "text": mb})
-    blocks.append({"type": "text", "text": kb.club_context(), "cache_control": {"type": "ephemeral"}})
+    blocks.append(
+        {"type": "text", "text": kb.club_context(), "cache_control": {"type": "ephemeral"}}
+    )
     return blocks
 
 
@@ -443,7 +449,7 @@ def _age_text(created_at: str | None) -> str:
         then = datetime.fromisoformat(str(created_at).replace("Z", "+00:00"))
         if then.tzinfo is None:
             then = then.replace(tzinfo=timezone.utc)
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return "some time ago"
     days = max(0, (datetime.now(timezone.utc) - then).days)
     return "today" if days == 0 else "yesterday" if days == 1 else f"{days} days ago"
@@ -458,8 +464,10 @@ def _now_line() -> str:
 
     now = clock.club_now()
     today = now.date()
-    bits = [f"Now: {now.strftime('%A, %B')} {now.day}, {now.year}, "
-            f"{now.strftime('%I:%M %p').lstrip('0')} in Minneapolis."]
+    bits = [
+        f"Now: {now.strftime('%A, %B')} {now.day}, {now.year}, "
+        f"{now.strftime('%I:%M %p').lstrip('0')} in Minneapolis."
+    ]
 
     try:
         meeting = meeting_rules.next_meeting()
@@ -469,7 +477,7 @@ def _now_line() -> str:
         when = meeting_rules.friendly_when(meeting["date"], meeting.get("startTime"))
         try:
             days = (_date.fromisoformat(meeting["date"]) - today).days
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             days = None
         if days == 0:
             distance = "TODAY"
@@ -494,11 +502,20 @@ def _now_line() -> str:
     return "[" + " ".join(bits) + "]"
 
 
-def _question_block(question: str, speaker: str | None, member_slug: str | None,
-                    summary: str | None, channel_id: str | None = None) -> str:
+def _question_block(
+    question: str,
+    speaker: str | None,
+    member_slug: str | None,
+    summary: str | None,
+    channel_id: str | None = None,
+) -> str:
     parts: list[str] = [_now_line()]
     if speaker:
-        who = f"{speaker} (member: {member_slug})" if member_slug else f"{speaker} (not a recognized member)"
+        who = (
+            f"{speaker} (member: {member_slug})"
+            if member_slug
+            else f"{speaker} (not a recognized member)"
+        )
         parts.append(f"[Speaker: {who}]")
     if member_slug:
         # 8 (was 5): weekly reflection consolidates toward ~12 active per member; newest-first at 5
@@ -512,9 +529,12 @@ def _question_block(question: str, speaker: str | None, member_slug: str | None,
         recent = db.recent_threads_for_member(member_slug, exclude_channel=channel_id, limit=3)
         if recent:
             bits = "; ".join(
-                f"{r['medium']} ({_age_text(r.get('last_at'))}) — \"{r['snippet']}\"" for r in recent)
+                f'{r["medium"]} ({_age_text(r.get("last_at"))}) — "{r["snippet"]}"' for r in recent
+            )
             parts.append(f"[Recently with them elsewhere: {bits}]")
-    club = db.get_memories(scope="club", limit=6)  # 6 (was 3): archive-mined lore + weekly club lane
+    club = db.get_memories(
+        scope="club", limit=6
+    )  # 6 (was 3): archive-mined lore + weekly club lane
     if club:
         parts.append("[Club lore you've noted: " + "; ".join(m["note"] for m in club) + "]")
     if summary:
@@ -527,9 +547,14 @@ def _text_of(content) -> str:
     return "\n".join(b.text for b in content if getattr(b, "type", None) == "text").strip()
 
 
-def answer_mailing_list_email(msg, *, channel_id: str, speaker: str | None = None,
-                              speaker_user_id: str | None = None,
-                              source_message_id: str | None = None) -> MailingListEmailResult:
+def answer_mailing_list_email(
+    msg,
+    *,
+    channel_id: str,
+    speaker: str | None = None,
+    speaker_user_id: str | None = None,
+    source_message_id: str | None = None,
+) -> MailingListEmailResult:
     """One Oliver turn: either return a public mailing-list reply or a no-reply decision."""
     current_text = email_policy.current_message_text(getattr(msg, "text", ""))
     prompt = (
@@ -574,15 +599,28 @@ def _tools_for(web_search_max_uses: int | None) -> list[dict]:
     the default."""
     if not web_search_max_uses:
         return TOOLS
-    return [{**t, "max_uses": web_search_max_uses} if t.get("name") == "web_search" else t
-            for t in TOOLS]
+    return [
+        {**t, "max_uses": web_search_max_uses} if t.get("name") == "web_search" else t
+        for t in TOOLS
+    ]
 
 
-def answer(question: str, channel_id: str = "default", speaker: str | None = None,
-           speaker_user_id: str | None = None, source_message_id: str | None = None,
-           *, use_history: bool = True, persist: bool = True, max_tokens: int = MAX_TOKENS,
-           model: str = MODEL, effort: str = "medium", timeout: float | None = None,
-           medium: str = "discord", web_search_max_uses: int | None = None) -> str:
+def answer(
+    question: str,
+    channel_id: str = "default",
+    speaker: str | None = None,
+    speaker_user_id: str | None = None,
+    source_message_id: str | None = None,
+    *,
+    use_history: bool = True,
+    persist: bool = True,
+    max_tokens: int = MAX_TOKENS,
+    model: str = MODEL,
+    effort: str = "medium",
+    timeout: float | None = None,
+    medium: str = "discord",
+    web_search_max_uses: int | None = None,
+) -> str:
     """Answer one message. Synchronous — call via asyncio.to_thread from the bot.
 
     use_history/persist default True for the conversational path. Set both False for a
@@ -599,7 +637,10 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
 
     prior, summary = _history(channel_id) if use_history else ([], None)
     messages = prior + [
-        {"role": "user", "content": _question_block(question, speaker, member_slug, summary, channel_id)}
+        {
+            "role": "user",
+            "content": _question_block(question, speaker, member_slug, summary, channel_id),
+        }
     ]
 
     tools = _tools_for(web_search_max_uses)
@@ -634,23 +675,42 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
                 # search that didn't find what the member asked for.
                 messages.append({"role": "assistant", "content": resp.content})
                 ctx = {
-                    "channel_id": channel_id, "speaker": speaker,
+                    "channel_id": channel_id,
+                    "speaker": speaker,
                     "speaker_user_id": speaker_user_id,
-                    "source_message_id": source_message_id, "member_slug": member_slug,
+                    "source_message_id": source_message_id,
+                    "member_slug": member_slug,
                 }
                 results = [
-                    {"type": "tool_result", "tool_use_id": b.id,
-                     "content": dispatch(b.name, b.input, ctx)}
-                    for b in resp.content if getattr(b, "type", None) == "tool_use"
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": b.id,
+                        "content": dispatch(b.name, b.input, ctx),
+                    }
+                    for b in resp.content
+                    if getattr(b, "type", None) == "tool_use"
                 ]
-                messages.append({"role": "user", "content": results + [{"type": "text", "text":
-                    "That's enough looking — answer the speaker now in plain text from what "
-                    "you've gathered. If the tools didn't have what they asked for, say so "
-                    "briefly and helpfully; never go silent on them."}]})
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": results
+                        + [
+                            {
+                                "type": "text",
+                                "text": "That's enough looking — answer the speaker now in plain text from what "
+                                "you've gathered. If the tools didn't have what they asked for, say so "
+                                "briefly and helpfully; never go silent on them.",
+                            }
+                        ],
+                    }
+                )
                 try:
                     resp = client.messages.create(
-                        model=model, max_tokens=max_tokens, system=_system_blocks(medium),
-                        thinking={"type": "adaptive"}, output_config={"effort": effort},
+                        model=model,
+                        max_tokens=max_tokens,
+                        system=_system_blocks(medium),
+                        thinking={"type": "adaptive"},
+                        output_config={"effort": effort},
                         messages=messages,  # no tools → the model must reply in text
                     )
                     u = resp.usage
@@ -659,8 +719,9 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
                     usage["cr"] += u.cache_read_input_tokens or 0
                     usage["cc"] += u.cache_creation_input_tokens or 0
                 except Exception:
-                    log.warning("answer(): forced final-answer call failed after round cap",
-                                exc_info=True)
+                    log.warning(
+                        "answer(): forced final-answer call failed after round cap", exc_info=True
+                    )
                 text = _text_of(resp.content)
             else:
                 text = _text_of(resp.content)
@@ -668,13 +729,19 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
                 # (No pending tool_use here, so resending resp.content is valid.)
                 if not text and rounds > 1 and resp.content:
                     messages.append({"role": "assistant", "content": resp.content})
-                    messages.append({"role": "user", "content":
-                        "Write your reply to the speaker now — your previous turn had no "
-                        "visible text. Use what you've already gathered."})
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": "Write your reply to the speaker now — your previous turn had no "
+                            "visible text. Use what you've already gathered.",
+                        }
+                    )
                     try:
                         resp = client.messages.create(
-                            model=model, max_tokens=max_tokens,
-                            system=_system_blocks(medium), tools=tools,
+                            model=model,
+                            max_tokens=max_tokens,
+                            system=_system_blocks(medium),
+                            tools=tools,
                             thinking={"type": "adaptive"},
                             output_config={"effort": effort},
                             messages=messages,
@@ -711,20 +778,34 @@ def answer(question: str, channel_id: str = "default", speaker: str | None = Non
         # conversation-with-that-person across mediums (see db.recent_threads_for_member).
         db.log_message(channel_id, "user", question, speaker=speaker, member_slug=member_slug)
         db.log_message(channel_id, "assistant", reply, member_slug=member_slug)
-        db.log_usage(channel_id, model, input_tokens=usage["in"], output_tokens=usage["out"],
-                     cache_read=usage["cr"], cache_creation=usage["cc"], rounds=rounds)
+        db.log_usage(
+            channel_id,
+            model,
+            input_tokens=usage["in"],
+            output_tokens=usage["out"],
+            cache_read=usage["cr"],
+            cache_creation=usage["cc"],
+            rounds=rounds,
+        )
         # Summarization is a best-effort background chore (its own Anthropic call). It must never
         # sink the reply we just computed and logged — if it errors, the caller would surface
         # "I hit a snag" and a perfectly good answer would be lost.
         try:
             _maybe_summarize(channel_id, client)
         except Exception:
-            log.exception("History summarization failed for %s (reply already computed)", channel_id)
+            log.exception(
+                "History summarization failed for %s (reply already computed)", channel_id
+            )
     return reply
 
 
-def generate(prompt: str, *, model: str = OPUS_MODEL, effort: str = "high",
-             web_search_max_uses: int | None = None) -> str:
+def generate(
+    prompt: str,
+    *,
+    model: str = OPUS_MODEL,
+    effort: str = "high",
+    web_search_max_uses: int | None = None,
+) -> str:
     """One-off, stateless, tool-enabled generation — for proactive content Oliver must
     research (e.g. a meeting topic email mined from the reading history).
 
@@ -739,9 +820,18 @@ def generate(prompt: str, *, model: str = OPUS_MODEL, effort: str = "high",
     # (well past the 120s chat cap) so a multi-minute run completes.
     # medium="raw": the topic + release-notes prompts fully specify their (intentionally sectioned)
     # email format, so add no email/discord voice framing that would fight those instructions.
-    return answer(prompt, channel_id="scheduler:generate", use_history=False, persist=False,
-                  max_tokens=16000, model=model, effort=effort, timeout=600.0, medium="raw",
-                  web_search_max_uses=web_search_max_uses)
+    return answer(
+        prompt,
+        channel_id="scheduler:generate",
+        use_history=False,
+        persist=False,
+        max_tokens=16000,
+        model=model,
+        effort=effort,
+        timeout=600.0,
+        medium="raw",
+        web_search_max_uses=web_search_max_uses,
+    )
 
 
 def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -> str:
@@ -790,9 +880,17 @@ def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -
         return fallback
 
 
-def complete(system: str, user: str, *, model: str = OPUS_MODEL, max_tokens: int = 4096,
-             effort: str | None = "medium", thinking: bool = True, timeout: float = 600.0,
-             usage_channel: str | None = None) -> str:
+def complete(
+    system: str,
+    user: str,
+    *,
+    model: str = OPUS_MODEL,
+    max_tokens: int = 4096,
+    effort: str | None = "medium",
+    thinking: bool = True,
+    timeout: float = 600.0,
+    usage_channel: str | None = None,
+) -> str:
     """A raw, tool-less, stateless completion against a caller-supplied system prompt.
 
     Neither `compose` (Sonnet, 400-token cap, charter system prompt) nor `generate` (full tool
@@ -815,11 +913,19 @@ def complete(system: str, user: str, *, model: str = OPUS_MODEL, max_tokens: int
         if effort:
             kwargs["output_config"] = {"effort": effort}
     resp = _get_client().with_options(timeout=timeout).messages.create(**kwargs)
-    if usage_channel:  # scheduled/batch callers (e.g. reflection) account their tokens like chat does
+    if (
+        usage_channel
+    ):  # scheduled/batch callers (e.g. reflection) account their tokens like chat does
         u = resp.usage
-        db.log_usage(usage_channel, model, input_tokens=u.input_tokens, output_tokens=u.output_tokens,
-                     cache_read=u.cache_read_input_tokens or 0,
-                     cache_creation=u.cache_creation_input_tokens or 0, rounds=1)
+        db.log_usage(
+            usage_channel,
+            model,
+            input_tokens=u.input_tokens,
+            output_tokens=u.output_tokens,
+            cache_read=u.cache_read_input_tokens or 0,
+            cache_creation=u.cache_creation_input_tokens or 0,
+            rounds=1,
+        )
     return _text_of(resp.content).strip()
 
 
@@ -841,8 +947,11 @@ def decide_outreach(facts: dict) -> bool:
         progress = f" ({facts.get('readingProgress')})" if facts.get("readingProgress") else ""
         goal = "how far along they are in the book (reading check-in)"
         state = f"Their last reading status: {facts.get('reading')}{progress}."
-    since_text = ("you haven't reached out yet" if since is None
-                 else f"you last emailed them {since} day(s) ago")
+    since_text = (
+        "you haven't reached out yet"
+        if since is None
+        else f"you last emailed them {since} day(s) ago"
+    )
     system = (
         "You are Oliver, the book club's sixth member, pacing your own meeting-prep outreach. Decide "
         "whether to email this ONE member right now or wait a little longer. You want the information "
@@ -890,10 +999,15 @@ def _maybe_summarize(channel_id: str, client: anthropic.Anthropic) -> None:
     # Log the summary call too, so the cost report sees its spend (rounds=0
     # marks it as the internal summary path, not a user-facing agent turn).
     u = resp.usage
-    db.log_usage(channel_id, SUMMARY_MODEL,
-                 input_tokens=u.input_tokens, output_tokens=u.output_tokens,
-                 cache_read=u.cache_read_input_tokens or 0,
-                 cache_creation=u.cache_creation_input_tokens or 0, rounds=0)
+    db.log_usage(
+        channel_id,
+        SUMMARY_MODEL,
+        input_tokens=u.input_tokens,
+        output_tokens=u.output_tokens,
+        cache_read=u.cache_read_input_tokens or 0,
+        cache_creation=u.cache_creation_input_tokens or 0,
+        rounds=0,
+    )
     new_summary = _text_of(resp.content)
     if new_summary:
         db.set_summary(channel_id, new_summary, to_fold[-1]["id"])

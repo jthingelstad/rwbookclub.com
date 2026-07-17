@@ -51,9 +51,13 @@ def _count(value: Any) -> int:
     return 0
 
 
-async def run(job_name: str, work: Callable[[], Awaitable[Any]], *,
-              lease_seconds: int = DEFAULT_LEASE_SECONDS,
-              expected_interval_seconds: int = DEFAULT_EXPECTED_INTERVAL_SECONDS) -> Result:
+async def run(
+    job_name: str,
+    work: Callable[[], Awaitable[Any]],
+    *,
+    lease_seconds: int = DEFAULT_LEASE_SECONDS,
+    expected_interval_seconds: int = DEFAULT_EXPECTED_INTERVAL_SECONDS,
+) -> Result:
     """Run one async job under a renewable lease and write a terminal run record."""
     lease_seconds = max(3, int(lease_seconds))
     owner = _owner()
@@ -137,14 +141,13 @@ def format_status(rows: list[dict] | None = None) -> str:
         last_ok = row["last_success"] or "never"
         last_fail = row["last_failure"] or "never"
         error = f" ({row['last_error']})" if row["last_error"] else ""
-        lines.append(
-            f"{row['job_name']}: {state}; success={last_ok}; failure={last_fail}{error}"
-        )
+        lines.append(f"{row['job_name']}: {state}; success={last_ok}; failure={last_fail}{error}")
     return "\n".join(lines)
 
 
 if __name__ == "__main__":
     from agent import database
+
     database.initialize()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", nargs="?", choices=["status"], default="status")

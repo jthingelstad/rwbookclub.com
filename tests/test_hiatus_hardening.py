@@ -29,30 +29,56 @@ def test_sweep_enriches_new_then_retries_incomplete(fresh_db, monkeypatch):
         # The fixture seeds enrichment for every real book — clear our two ids so the world is
         # ours: book 1 never enriched (new); book 2 enriched long ago, still missing synopsis.
         conn.execute("DELETE FROM club_book_enrichment WHERE book_id IN (1, 2)")
-        conn.execute("INSERT INTO club_book_enrichment (book_id, enriched_at, enrich_attempts) "
-                     "VALUES (2, datetime('now','-60 days'), 0)")
+        conn.execute(
+            "INSERT INTO club_book_enrichment (book_id, enriched_at, enrich_attempts) "
+            "VALUES (2, datetime('now','-60 days'), 0)"
+        )
     books = [
-        {"id": 1, "slug": "new-book", "title": "New", "synopsis": "has one",
-         "publication_year": 2020, "page_count": 300},
-        {"id": 2, "slug": "gappy-book", "title": "Gappy", "synopsis": None,
-         "publication_year": 2001, "page_count": 200},
+        {
+            "id": 1,
+            "slug": "new-book",
+            "title": "New",
+            "synopsis": "has one",
+            "publication_year": 2020,
+            "page_count": 300,
+        },
+        {
+            "id": 2,
+            "slug": "gappy-book",
+            "title": "Gappy",
+            "synopsis": None,
+            "publication_year": 2001,
+            "page_count": 200,
+        },
     ]
     calls = _mini_world(monkeypatch, books=books)
     summary = enrich_loop.run_pending(limit=8, fetch_images=False)
-    assert calls == ["new-book", "gappy-book"]   # new first, then the retry
+    assert calls == ["new-book", "gappy-book"]  # new first, then the retry
     assert summary["enriched"] == 1 and summary["retried"] == 1
     with db.connect() as conn:
         # the retry left the gap → attempt burned
-        att = conn.execute("SELECT enrich_attempts FROM club_book_enrichment WHERE book_id=2").fetchone()[0]
+        att = conn.execute(
+            "SELECT enrich_attempts FROM club_book_enrichment WHERE book_id=2"
+        ).fetchone()[0]
     assert att == 1
 
 
 def test_sweep_flags_exhausted_and_parks(fresh_db, monkeypatch):
     with db.connect() as conn:
-        conn.execute("INSERT OR REPLACE INTO club_book_enrichment (book_id, enriched_at, enrich_attempts) "
-                     "VALUES (2, datetime('now','-60 days'), 2)")  # one retry left
-    books = [{"id": 2, "slug": "hopeless-book", "title": "Hopeless", "synopsis": None,
-              "publication_year": None, "page_count": None}]
+        conn.execute(
+            "INSERT OR REPLACE INTO club_book_enrichment (book_id, enriched_at, enrich_attempts) "
+            "VALUES (2, datetime('now','-60 days'), 2)"
+        )  # one retry left
+    books = [
+        {
+            "id": 2,
+            "slug": "hopeless-book",
+            "title": "Hopeless",
+            "synopsis": None,
+            "publication_year": None,
+            "page_count": None,
+        }
+    ]
     _mini_world(monkeypatch, books=books)
     summary = enrich_loop.run_pending(limit=8, fetch_images=False)
     assert summary["exhausted"] == ["hopeless-book"]
@@ -66,15 +92,27 @@ def test_sweep_flags_exhausted_and_parks(fresh_db, monkeypatch):
 
 def test_sweep_network_failure_aborts_without_burning_attempts(fresh_db, monkeypatch):
     with db.connect() as conn:
-        conn.execute("INSERT OR REPLACE INTO club_book_enrichment (book_id, enriched_at, enrich_attempts) "
-                     "VALUES (2, datetime('now','-60 days'), 1)")
-    books = [{"id": 2, "slug": "gappy", "title": "G", "synopsis": None,
-              "publication_year": None, "page_count": None}]
+        conn.execute(
+            "INSERT OR REPLACE INTO club_book_enrichment (book_id, enriched_at, enrich_attempts) "
+            "VALUES (2, datetime('now','-60 days'), 1)"
+        )
+    books = [
+        {
+            "id": 2,
+            "slug": "gappy",
+            "title": "G",
+            "synopsis": None,
+            "publication_year": None,
+            "page_count": None,
+        }
+    ]
     _mini_world(monkeypatch, books=books, enrich_result="raise")
     summary = enrich_loop.run_pending(limit=8, fetch_images=False)
     assert summary == {"enriched": 0, "retried": 0, "exhausted": []}
     with db.connect() as conn:
-        att = conn.execute("SELECT enrich_attempts FROM club_book_enrichment WHERE book_id=2").fetchone()[0]
+        att = conn.execute(
+            "SELECT enrich_attempts FROM club_book_enrichment WHERE book_id=2"
+        ).fetchone()[0]
     assert att == 1  # unchanged — a down source is not the book's fault
 
 
@@ -85,23 +123,24 @@ def _monday_8am():
 
 def test_digest_sends_once_per_week_at_the_gate(fresh_db, monkeypatch):
     sent = []
-    monkeypatch.setattr(health.outbound, "send",
-                        lambda **kw: sent.append(kw) or {"emailId": "x"})
+    monkeypatch.setattr(health.outbound, "send", lambda **kw: sent.append(kw) or {"emailId": "x"})
     monkeypatch.setattr(health.identities, "member_slug_for_user", lambda uid: "jamie")
-    monkeypatch.setattr(health.identities, "email_for_member",
-                        lambda slug: {"email": "jamie@example.test"})
-    monkeypatch.setattr(health.oliver, "compose",
-                        lambda kind, facts, fallback="": fallback)
+    monkeypatch.setattr(
+        health.identities, "email_for_member", lambda slug: {"email": "jamie@example.test"}
+    )
+    monkeypatch.setattr(health.oliver, "compose", lambda kind, facts, fallback="": fallback)
     from agent import clock
-    fresh_db.set_job_state("offsite_backup",
-                           {"date": clock.club_today_iso(), "file": "oliver-today.db.gz"})
+
+    fresh_db.set_job_state(
+        "offsite_backup", {"date": clock.club_today_iso(), "file": "oliver-today.db.gz"}
+    )
 
     assert health.run(_monday_8am()) is True
     assert sent[0]["to"] == ["jamie@example.test"]
     assert "Backup" in sent[0]["body"] and "absence is the alarm" in sent[0]["body"]
     # A same-day backup must read as healthy (regression: `0 or 99` once flagged 0d as stale).
     assert "(0d old) ✓" in sent[0]["body"]
-    assert health.run(_monday_8am()) is False        # same week → no repeat
+    assert health.run(_monday_8am()) is False  # same week → no repeat
     assert health.run(_monday_8am().replace(hour=14)) is False  # outside the gate hour
 
 

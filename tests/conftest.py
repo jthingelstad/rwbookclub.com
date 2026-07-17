@@ -40,8 +40,10 @@ _FIXTURE_SQL = (pathlib.Path(__file__).parent / "fixtures" / "club_seed.sql").re
 # Tables that FK into club_members / club_meetings — cleared before club_* so deleting club
 # rows can't trip a foreign-key constraint from a prior test's leftover rows.
 _FK_DEPENDENTS = (
-    "events", "meeting_member_status",
-    "mail_message_fts", "mail_messages",
+    "events",
+    "meeting_member_status",
+    "mail_message_fts",
+    "mail_messages",
     "member_identities",
 )
 
@@ -49,6 +51,7 @@ _FK_DEPENDENTS = (
 def _reseed_club(conn) -> None:
     """Clear FK-dependents + club_* and replay the public-safe fixture (parents-first)."""
     from agent import clubdb
+
     for t in _FK_DEPENDENTS:
         conn.execute(f"DELETE FROM {t}")
     for t in reversed(clubdb.CLUB_TABLES):
@@ -74,6 +77,7 @@ def _corpus_on_disk():
     OLIVER_CORPUS_DIR, so tests that read corpus/data directly work without the live corpus."""
     global _PRISTINE_CORPUS_SIG
     from agent import corpus_gen, corpus_read, database, db
+
     database.initialize()
     with db.connect() as conn:
         _reseed_club(conn)
@@ -95,6 +99,7 @@ def _frozen_club_clock(monkeypatch):
 
     from agent import clock
     from agent import corpus_read as _cr
+
     frozen = _dt.datetime(2026, 6, 29, 12, 0, tzinfo=ZoneInfo("America/Chicago"))
     monkeypatch.setattr(clock, "club_now", lambda: frozen)
     _cr.invalidate_books()
@@ -105,7 +110,10 @@ def _frozen_club_clock(monkeypatch):
 def _no_publish(monkeypatch):
     """Never shell out to npm/gh-pages during tests."""
     from agent import publish
+
     monkeypatch.setattr(publish, "publish_site", lambda *a, **k: {"deployed": False})
+
+
 # Keep email tests and dispatch tests offline even when the host .env has a live token.
 os.environ["FASTMAIL_JMAP_TOKEN"] = ""
 
@@ -120,6 +128,7 @@ def fresh_db(_corpus_on_disk):
     global _PRISTINE_CORPUS_SIG
     from agent import corpus_gen, corpus_read
     from agent import db as _db
+
     _restore_pristine_database()
     yield _db
     _restore_pristine_database()
@@ -135,6 +144,7 @@ def fresh_db(_corpus_on_disk):
 def reset_books_cache():
     """Clear the books() module-level cache before and after a test."""
     from agent import corpus_read as cr
+
     cr.invalidate_books()
     yield
     cr.invalidate_books()

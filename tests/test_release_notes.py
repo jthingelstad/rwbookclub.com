@@ -1,5 +1,6 @@
 """release_notes builds the source material from git + docs, prompts Oliver for a
 first-person announcement, and pulls the Oliver-written subject + body out of tags."""
+
 from agent import publish
 from agent.club import release_notes as rn
 
@@ -43,7 +44,9 @@ def test_prompt_embeds_material_and_contract():
 
 
 def test_prompt_uses_since_window():
-    p = rn.release_notes_prompt({**MATERIAL, "window": "since commit deadbee 2026-06-27 Did a thing"})
+    p = rn.release_notes_prompt(
+        {**MATERIAL, "window": "since commit deadbee 2026-06-27 Did a thing"}
+    )
     assert "since commit deadbee" in p
 
 
@@ -55,8 +58,13 @@ def test_prompt_notes_truncation():
 def test_release_notes_email_extracts_oliver_subject_and_body(monkeypatch):
     monkeypatch.setattr(rn, "recent_changes", lambda **kw: dict(MATERIAL))
     monkeypatch.setattr(rn, "coin_release_name", lambda material: "")
-    monkeypatch.setattr(rn.oliver, "generate",
-                        lambda prompt: "<subject>Three new tricks</subject><email>Here's what I can do now.</email>")
+    monkeypatch.setattr(
+        rn.oliver,
+        "generate",
+        lambda prompt: (
+            "<subject>Three new tricks</subject><email>Here's what I can do now.</email>"
+        ),
+    )
     email = rn.release_notes_email(days=5)
     assert email["subject"] == "Three new tricks"
     assert email["body"] == "Here's what I can do now."
@@ -67,7 +75,9 @@ def test_release_notes_email_extracts_oliver_subject_and_body(monkeypatch):
 def test_release_notes_email_subject_falls_back_when_missing(monkeypatch):
     monkeypatch.setattr(rn, "recent_changes", lambda **kw: dict(MATERIAL))
     monkeypatch.setattr(rn, "coin_release_name", lambda material: "")
-    monkeypatch.setattr(rn.oliver, "generate", lambda prompt: "<email>Body only, no subject tag.</email>")
+    monkeypatch.setattr(
+        rn.oliver, "generate", lambda prompt: "<email>Body only, no subject tag.</email>"
+    )
     email = rn.release_notes_email(days=5)
     assert email["body"] == "Body only, no subject tag."
     assert email["subject"].startswith("Under my hood:")
@@ -77,8 +87,11 @@ def test_release_notes_email_carries_name_into_prompt_and_result(monkeypatch):
     prompts = []
     monkeypatch.setattr(rn, "recent_changes", lambda **kw: dict(MATERIAL))
     monkeypatch.setattr(rn, "coin_release_name", lambda material: "Blistering Blindsight")
-    monkeypatch.setattr(rn.oliver, "generate",
-                        lambda prompt: prompts.append(prompt) or "<subject>S</subject><email>B</email>")
+    monkeypatch.setattr(
+        rn.oliver,
+        "generate",
+        lambda prompt: prompts.append(prompt) or "<subject>S</subject><email>B</email>",
+    )
     email = rn.release_notes_email(days=5)
     assert email["release_name"] == "Blistering Blindsight"
     assert 'christened "Blistering Blindsight"' in prompts[0]
@@ -103,14 +116,16 @@ def test_recent_changes_windows():
 
 
 def test_resolve_commit_valid_and_invalid():
-    assert rn.resolve_commit("HEAD")                       # real repo HEAD resolves to a short hash
+    assert rn.resolve_commit("HEAD")  # real repo HEAD resolves to a short hash
     assert rn.resolve_commit("definitely-not-a-commit") is None
 
 
 def test_extract_subject_variants():
     assert rn._extract_subject("<subject>Hello there</subject>rest") == "Hello there"
     # Tolerates a missing close tag: takes only the first line, not the email that follows.
-    assert rn._extract_subject("<subject>Just this line\n<email>not this</email>") == "Just this line"
+    assert (
+        rn._extract_subject("<subject>Just this line\n<email>not this</email>") == "Just this line"
+    )
     assert rn._extract_subject("no tags at all") == ""
 
 
@@ -118,15 +133,28 @@ def test_extract_subject_variants():
 
 
 def _patch_naming_world(monkeypatch, *, complete):
-    monkeypatch.setattr(rn.cr, "books", lambda: [
-        {"title": "Blindsight", "isRead": True},
-        {"title": "Quicksilver", "isRead": True},
-        {"title": "Not Yet Read", "isRead": False},
-    ])
-    monkeypatch.setattr(rn.db, "release_history", lambda: [
-        {"name": "Quixotic Quicksilver", "commit": "aaa111", "subject": "s", "occurred_at": "t"},
-        {"name": None, "commit": "bbb222", "subject": "s", "occurred_at": "t"},
-    ])
+    monkeypatch.setattr(
+        rn.cr,
+        "books",
+        lambda: [
+            {"title": "Blindsight", "isRead": True},
+            {"title": "Quicksilver", "isRead": True},
+            {"title": "Not Yet Read", "isRead": False},
+        ],
+    )
+    monkeypatch.setattr(
+        rn.db,
+        "release_history",
+        lambda: [
+            {
+                "name": "Quixotic Quicksilver",
+                "commit": "aaa111",
+                "subject": "s",
+                "occurred_at": "t",
+            },
+            {"name": None, "commit": "bbb222", "subject": "s", "occurred_at": "t"},
+        ],
+    )
     monkeypatch.setattr(rn.oliver, "complete", complete)
 
 
@@ -141,10 +169,10 @@ def test_coin_release_name_prompt_and_cleanup(monkeypatch):
     assert rn.coin_release_name(MATERIAL) == "Blistering Blindsight"
     _, user, kwargs = calls[0]
     assert "- Blindsight" in user and "- Quicksilver" in user
-    assert "Not Yet Read" not in user            # unread shelf entries aren't anchors
-    assert "Quixotic Quicksilver" in user        # used names embedded so they're never reused
-    assert "a shiny thing" in user               # the batch gist (merge lines) is in the prompt
-    assert kwargs["model"] == rn.oliver.MODEL    # Sonnet, not the Opus-tier default
+    assert "Not Yet Read" not in user  # unread shelf entries aren't anchors
+    assert "Quixotic Quicksilver" in user  # used names embedded so they're never reused
+    assert "a shiny thing" in user  # the batch gist (merge lines) is in the prompt
+    assert kwargs["model"] == rn.oliver.MODEL  # Sonnet, not the Opus-tier default
     assert kwargs["usage_channel"] == "release_notes:name"
 
 
@@ -171,11 +199,16 @@ def test_prompt_release_name_paragraph_toggle():
 
 def test_release_history_and_current_release_round_trip(fresh_db):
     assert fresh_db.current_release() is None
-    fresh_db.record_release_notes_sent("aaa111", scope="s1", subject="old",
-                                       occurred_at="2026-06-01T00:00:00+00:00")  # pre-naming
-    fresh_db.record_release_notes_sent("bbb222", scope="s2", subject="new",
-                                       release_name="Blistering Blindsight",
-                                       occurred_at="2026-07-04T01:00:00+00:00")
+    fresh_db.record_release_notes_sent(
+        "aaa111", scope="s1", subject="old", occurred_at="2026-06-01T00:00:00+00:00"
+    )  # pre-naming
+    fresh_db.record_release_notes_sent(
+        "bbb222",
+        scope="s2",
+        subject="new",
+        release_name="Blistering Blindsight",
+        occurred_at="2026-07-04T01:00:00+00:00",
+    )
     history = fresh_db.release_history()
     assert [r["commit"] for r in history] == ["bbb222", "aaa111"]  # newest first
     assert history[1]["name"] is None
@@ -185,11 +218,16 @@ def test_release_history_and_current_release_round_trip(fresh_db):
 
 def test_current_release_skips_newer_unnamed_send(fresh_db):
     # A nameless send after a named one must not blank the current release.
-    fresh_db.record_release_notes_sent("aaa111", scope="s", subject="named",
-                                       release_name="Quixotic Quicksilver",
-                                       occurred_at="2026-07-01T00:00:00+00:00")
-    fresh_db.record_release_notes_sent("bbb222", scope="s", subject="nameless",
-                                       occurred_at="2026-07-02T00:00:00+00:00")
+    fresh_db.record_release_notes_sent(
+        "aaa111",
+        scope="s",
+        subject="named",
+        release_name="Quixotic Quicksilver",
+        occurred_at="2026-07-01T00:00:00+00:00",
+    )
+    fresh_db.record_release_notes_sent(
+        "bbb222", scope="s", subject="nameless", occurred_at="2026-07-02T00:00:00+00:00"
+    )
     assert fresh_db.current_release()["name"] == "Quixotic Quicksilver"
 
 
@@ -198,9 +236,13 @@ def test_club_context_carries_current_release(fresh_db):
 
     assert "release named" not in context.club_context()  # no named release → no line
     # 01:00 UTC on Jul 4 is the evening of Jul 3 in club time — the line must say the club day.
-    fresh_db.record_release_notes_sent("bbb222", scope="s", subject="new",
-                                       release_name="Blistering Blindsight",
-                                       occurred_at="2026-07-04T01:00:00+00:00")
+    fresh_db.record_release_notes_sent(
+        "bbb222",
+        scope="s",
+        subject="new",
+        release_name="Blistering Blindsight",
+        occurred_at="2026-07-04T01:00:00+00:00",
+    )
     ctx = context.club_context()
     assert 'running the release named "Blistering Blindsight"' in ctx
     assert "Friday, July 3" in ctx
@@ -217,7 +259,9 @@ def test_tag_slug():
 def _gh_world(monkeypatch, *, tag_exists, view_rc, create_rc=0):
     calls = []
     monkeypatch.setattr(rn.publish, "_bin", lambda name: name)
-    monkeypatch.setattr(rn.publish, "git_output", lambda args, **kw: "tagname" if tag_exists else "")
+    monkeypatch.setattr(
+        rn.publish, "git_output", lambda args, **kw: "tagname" if tag_exists else ""
+    )
 
     def fake_prun(cmd, timeout, cwd=None):
         calls.append(("run", cmd))
@@ -226,8 +270,10 @@ def _gh_world(monkeypatch, *, tag_exists, view_rc, create_rc=0):
 
     def fake_sub(cmd, **kw):
         calls.append(("sub", cmd))
+
         class R:
             pass
+
         r = R()
         if "view" in cmd:
             r.returncode = view_rc

@@ -52,13 +52,13 @@ def test_question_block_leads_with_now():
 def test_us_holiday_calendar():
     assert clock.us_holiday(date(2026, 7, 4)) == "Independence Day"
     assert clock.us_holiday(date(2026, 12, 25)) == "Christmas Day"
-    assert clock.us_holiday(date(2026, 11, 26)) == "Thanksgiving"     # 4th Thursday
-    assert clock.us_holiday(date(2026, 5, 25)) == "Memorial Day"      # last Monday
-    assert clock.us_holiday(date(2026, 9, 7)) == "Labor Day"          # 1st Monday
-    assert clock.us_holiday(date(2026, 4, 5)) == "Easter"             # computus
+    assert clock.us_holiday(date(2026, 11, 26)) == "Thanksgiving"  # 4th Thursday
+    assert clock.us_holiday(date(2026, 5, 25)) == "Memorial Day"  # last Monday
+    assert clock.us_holiday(date(2026, 9, 7)) == "Labor Day"  # 1st Monday
+    assert clock.us_holiday(date(2026, 4, 5)) == "Easter"  # computus
     assert clock.us_holiday(date(2025, 4, 20)) == "Easter"
     assert clock.us_holiday(date(2026, 7, 3)) is None
-    assert clock.us_holiday(date(2026, 11, 19)) is None               # a plain Thursday
+    assert clock.us_holiday(date(2026, 11, 19)) is None  # a plain Thursday
 
 
 def test_doctrine_mentions_the_clock():

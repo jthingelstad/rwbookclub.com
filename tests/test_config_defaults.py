@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def _load_without_dotenv() -> dict:
     """Import config in a clean interpreter without allowing the live root .env to participate."""
-    script = r'''
+    script = r"""
 import json
 import os
 import sys
@@ -42,7 +42,7 @@ print(json.dumps({
     "club_email_cadence": config.CLUB_EMAIL_CADENCE_ENABLED,
     "club_postscript": config.CLUB_POSTSCRIPT_ENABLED,
 }))
-'''
+"""
     env = os.environ.copy()
     for key in (
         "WEBAPP_SECRET",

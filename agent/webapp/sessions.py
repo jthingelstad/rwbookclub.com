@@ -74,7 +74,7 @@ def _valid(row) -> bool:
         return False
     try:
         return datetime.fromisoformat(row["expires_at"]) >= _now()
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return False
 
 
@@ -100,7 +100,8 @@ def consume_token(token: str | None) -> dict | None:
         # not the SELECT — is the authority. rowcount 0 means another request already consumed it.
         cur = conn.execute(
             "UPDATE webapp_tokens SET used_at = ? WHERE token = ? AND used_at IS NULL",
-            (_now().isoformat(), token))
+            (_now().isoformat(), token),
+        )
         if cur.rowcount == 0:
             return None
         return _row_to_member(row)
@@ -130,7 +131,7 @@ def refresh_if_stale(session: dict) -> str | None:
     payload (identity, admin flag, CSRF secret) is unchanged — only `exp` moves."""
     try:
         exp = datetime.fromisoformat(session["exp"])
-    except (KeyError, ValueError, TypeError):
+    except KeyError, ValueError, TypeError:
         return None
     if exp - _now() > _SESSION_TTL / 2:
         return None
@@ -151,7 +152,7 @@ def read_session(cookie: str | None) -> dict | None:
     try:
         payload = json.loads(_b64d(raw))
         exp = datetime.fromisoformat(payload["exp"])
-    except (ValueError, TypeError, KeyError):
+    except ValueError, TypeError, KeyError:
         return None
     return None if exp < _now() else payload
 

@@ -129,12 +129,14 @@ def _corpus_signature() -> tuple:
             continue
         files = list(directory.glob(pattern))
         stats = [path.stat() for path in files]
-        parts.append((
-            sub,
-            len(files),
-            sum(stat.st_mtime_ns for stat in stats),
-            sum(stat.st_size for stat in stats),
-        ))
+        parts.append(
+            (
+                sub,
+                len(files),
+                sum(stat.st_mtime_ns for stat in stats),
+                sum(stat.st_size for stat in stats),
+            )
+        )
     return tuple(parts)
 
 
@@ -173,8 +175,9 @@ def human_current_members() -> list[dict]:
     (the sixth member: public profile, webapp login), but human-only mechanics — roll calls,
     reading check-ins, outreach, contact audits, taste lenses — enumerate members through here so
     they never target the agent itself."""
-    return [m for m in members()
-            if m.get("isCurrent") and m.get("slug") != config.OLIVER_MEMBER_SLUG]
+    return [
+        m for m in members() if m.get("isCurrent") and m.get("slug") != config.OLIVER_MEMBER_SLUG
+    ]
 
 
 def meetings() -> list[dict]:
@@ -234,23 +237,25 @@ def books() -> list[dict]:
         host_slugs = (mt.get("host") if mt else None) or []
         host_names = [member_by_slug[h]["name"] for h in host_slugs if h in member_by_slug]
         eb = dict(b)
-        eb.update({
-            "meetingDate": md,
-            "meetingStartTime": (mt.get("startTime") if mt else None),
-            "year": int(md[:4]) if md else None,
-            "isUpcoming": is_upcoming,
-            "isRead": is_read,
-            "meetingNotes": (mt.get("notes") if mt else None),
-            "meetingLocation": (mt.get("location") if mt else None),
-            # Picker = who chose the book (book-level). Host = who ran the meeting where it
-            # was discussed (meeting-level); usually the same person, but can differ.
-            "pickerName": pnames[0] if pnames else None,
-            "pickerSlug": pslugs[0] if pslugs else None,
-            "pickerNames": pnames or None,
-            "pickerSlugs": pslugs or None,
-            "meetingHostNames": host_names or None,
-            "meetingHostSlugs": host_slugs or None,
-        })
+        eb.update(
+            {
+                "meetingDate": md,
+                "meetingStartTime": (mt.get("startTime") if mt else None),
+                "year": int(md[:4]) if md else None,
+                "isUpcoming": is_upcoming,
+                "isRead": is_read,
+                "meetingNotes": (mt.get("notes") if mt else None),
+                "meetingLocation": (mt.get("location") if mt else None),
+                # Picker = who chose the book (book-level). Host = who ran the meeting where it
+                # was discussed (meeting-level); usually the same person, but can differ.
+                "pickerName": pnames[0] if pnames else None,
+                "pickerSlug": pslugs[0] if pslugs else None,
+                "pickerNames": pnames or None,
+                "pickerSlugs": pslugs or None,
+                "meetingHostNames": host_names or None,
+                "meetingHostSlugs": host_slugs or None,
+            }
+        )
         out.append(eb)
     _books_cache = out
     _books_cache_sig = sig
@@ -281,9 +286,14 @@ def _book_brief(b: dict) -> dict:
     }
 
 
-def search_books(query: str | None = None, topic: str | None = None,
-                 fiction: bool | None = None, year: int | None = None,
-                 author: str | None = None, limit: int = 25) -> list[dict]:
+def search_books(
+    query: str | None = None,
+    topic: str | None = None,
+    fiction: bool | None = None,
+    year: int | None = None,
+    author: str | None = None,
+    limit: int = 25,
+) -> list[dict]:
     q, a = _norm(query), _norm(author)
     out = []
     for b in books():
@@ -296,14 +306,19 @@ def search_books(query: str | None = None, topic: str | None = None,
         if a and not any(a in _norm(x) for x in (b.get("authors") or [])):
             continue
         if q:
-            hay = " ".join([
-                b.get("title") or "", b.get("subtitle") or "", b.get("synopsis") or "",
-                " ".join(b.get("authors") or []), b.get("topic") or "",
-            ]).lower()
+            hay = " ".join(
+                [
+                    b.get("title") or "",
+                    b.get("subtitle") or "",
+                    b.get("synopsis") or "",
+                    " ".join(b.get("authors") or []),
+                    b.get("topic") or "",
+                ]
+            ).lower()
             if q not in hay:
                 continue
         out.append(_book_brief(b))
-    out.sort(key=lambda x: (x["yearRead"] or 0), reverse=True)
+    out.sort(key=lambda x: x["yearRead"] or 0, reverse=True)
     return out[:limit]
 
 
@@ -327,12 +342,12 @@ def find_books(query: str, limit: int = 15) -> list[dict]:
         if any(q == a for a in authors_norm):
             score += 100  # exact author match
         elif any(q in a for a in authors_norm):
-            score += 50   # author substring
+            score += 50  # author substring
         topic_n = _norm(b.get("topic"))
         if q == topic_n:
-            score += 80   # exact topic
+            score += 80  # exact topic
         elif topic_n and q in topic_n:
-            score += 25   # topic substring
+            score += 25  # topic substring
         if q in _norm(b.get("title")):
             score += 40
         if q in _norm(b.get("subtitle")):
@@ -348,10 +363,7 @@ def find_books(query: str, limit: int = 15) -> list[dict]:
             # surface books tagged "Urban economics" via the shared "urban" token.
             q_tokens = [t for t in q.split() if len(t) > 2]
             if q_tokens and subjects_norm:
-                hits = sum(
-                    1 for st in subjects_norm
-                    if any(tok in st for tok in q_tokens)
-                )
+                hits = sum(1 for st in subjects_norm if any(tok in st for tok in q_tokens))
                 if hits:
                     score += min(hits * 8, 24)
         if q in _norm(b.get("synopsis")):
@@ -392,10 +404,7 @@ def find_list(name_or_slug: str, *, owner_slug: str | None = None) -> dict | Non
     """A list by slug or (case-insensitive) name. If `owner_slug` is given, only that member's
     lists are considered (so a member resolves their own list by name)."""
     key = _norm(name_or_slug)
-    candidates = [
-        x for x in lists()
-        if owner_slug is None or x.get("owner") == owner_slug
-    ]
+    candidates = [x for x in lists() if owner_slug is None or x.get("owner") == owner_slug]
     for x in candidates:
         if _norm(x.get("slug")) == key or _norm(x.get("name")) == key:
             return x
@@ -423,15 +432,16 @@ def get_author(name_or_slug: str) -> dict | None:
         return None
     name = a.get("name")
     read = [
-        {"slug": b["slug"], "title": b.get("title"), "year": b.get("year"),
-         "topic": b.get("topic")}
+        {"slug": b["slug"], "title": b.get("title"), "year": b.get("year"), "topic": b.get("topic")}
         for b in books()
         if name and name in (b.get("authors") or [])
     ]
     read.sort(key=lambda x: x.get("year") or 0, reverse=True)
     lifespan = None
     if a.get("birthYear"):
-        lifespan = f"{a['birthYear']}–{a['deathYear']}" if a.get("deathYear") else f"b. {a['birthYear']}"
+        lifespan = (
+            f"{a['birthYear']}–{a['deathYear']}" if a.get("deathYear") else f"b. {a['birthYear']}"
+        )
     return {
         "name": name,
         "slug": a.get("slug"),
@@ -466,16 +476,18 @@ def _reviews_for(*, book_slug: str | None = None, member_slug: str | None = None
             continue
         if member_slug and r.get("member") != member_slug:
             continue
-        out.append({
-            "book": titles.get(r.get("book")),
-            "by": names.get(r.get("member")),
-            "rating": r.get("rating"),
-            "dnf": bool(r.get("dnf")),
-            "wouldRecommend": bool(r.get("wouldRecommend")),
-            "discussionQuality": r.get("discussionQuality"),
-            "favoriteQuote": r.get("favoriteQuote"),
-            "review": r.get("review"),
-        })
+        out.append(
+            {
+                "book": titles.get(r.get("book")),
+                "by": names.get(r.get("member")),
+                "rating": r.get("rating"),
+                "dnf": bool(r.get("dnf")),
+                "wouldRecommend": bool(r.get("wouldRecommend")),
+                "discussionQuality": r.get("discussionQuality"),
+                "favoriteQuote": r.get("favoriteQuote"),
+                "review": r.get("review"),
+            }
+        )
     return out
 
 
@@ -510,21 +522,20 @@ def review_summary(slug_or_title: str) -> dict | None:
         return None
     rs = _reviews_for(book_slug=b["slug"])
     ratings = [r["rating"] for r in rs if r.get("rating") is not None and not r.get("dnf")]
-    discussions = [
-        r["discussionQuality"] for r in rs
-        if r.get("discussionQuality") is not None
-    ]
+    discussions = [r["discussionQuality"] for r in rs if r.get("discussionQuality") is not None]
     recommends = [r for r in rs if r.get("wouldRecommend")]
     excerpts = []
     for r in rs:
         body = (r.get("review") or "").strip()
         if body:
-            excerpts.append({
-                "by": r.get("by"),
-                "rating": r.get("rating"),
-                "dnf": r.get("dnf"),
-                "excerpt": body[:320],
-            })
+            excerpts.append(
+                {
+                    "by": r.get("by"),
+                    "rating": r.get("rating"),
+                    "dnf": r.get("dnf"),
+                    "excerpt": body[:320],
+                }
+            )
     return {
         "book": _book_brief(b),
         "reviewCount": len(rs),
@@ -543,7 +554,8 @@ def related_books(slug_or_title: str, limit: int = 8) -> dict | None:
     base_subjects = set(b.get("subjects") or [])
     base_authors = set(b.get("authors") or [])
     base_tokens = {
-        t for t in _norm(" ".join([b.get("title") or "", b.get("synopsis") or ""])).split()
+        t
+        for t in _norm(" ".join([b.get("title") or "", b.get("synopsis") or ""])).split()
         if len(t) > 4
     }
     scored = []
@@ -566,7 +578,10 @@ def related_books(slug_or_title: str, limit: int = 8) -> dict | None:
         if bool(b.get("fiction")) == bool(other.get("fiction")):
             score += 5
         other_tokens = {
-            t for t in _norm(" ".join([other.get("title") or "", other.get("synopsis") or ""])).split()
+            t
+            for t in _norm(
+                " ".join([other.get("title") or "", other.get("synopsis") or ""])
+            ).split()
             if len(t) > 4
         }
         overlap = sorted(base_tokens & other_tokens)
@@ -585,9 +600,15 @@ def related_books(slug_or_title: str, limit: int = 8) -> dict | None:
     }
 
 
-def affinity_to_history(subjects: list[str], authors: list[str], *, title: str = "",
-                        synopsis: str = "", fiction: bool | None = None,
-                        limit: int = 5) -> list[dict]:
+def affinity_to_history(
+    subjects: list[str],
+    authors: list[str],
+    *,
+    title: str = "",
+    synopsis: str = "",
+    fiction: bool | None = None,
+    limit: int = 5,
+) -> list[dict]:
     """Score an ARBITRARY candidate (usually a book the club has NOT read) against every READ
     book, using related_books' exact weights — shared author +60, shared subjects min(n*12,48),
     fiction match +5, title/synopsis token overlap min(n*3,18) (no topic weight: external
@@ -615,7 +636,10 @@ def affinity_to_history(subjects: list[str], authors: list[str], *, title: str =
         if fiction is not None and bool(other.get("fiction")) == fiction:
             score += 5
         other_tokens = {
-            t for t in _norm(" ".join([other.get("title") or "", other.get("synopsis") or ""])).split()
+            t
+            for t in _norm(
+                " ".join([other.get("title") or "", other.get("synopsis") or ""])
+            ).split()
             if len(t) > 4
         }
         overlap = sorted(base_tokens & other_tokens)
@@ -626,9 +650,15 @@ def affinity_to_history(subjects: list[str], authors: list[str], *, title: str =
             scored.append((score, other, reasons))
     scored.sort(key=lambda x: (-x[0], -(x[1].get("year") or 0)))
     return [
-        {"slug": o["slug"], "title": o.get("title"), "authors": o.get("authors") or [],
-         "yearRead": (o.get("meetingDate") or "")[:4] or None, "picker": o.get("pickerName"),
-         "score": score, "reasons": reasons[:3]}
+        {
+            "slug": o["slug"],
+            "title": o.get("title"),
+            "authors": o.get("authors") or [],
+            "yearRead": (o.get("meetingDate") or "")[:4] or None,
+            "picker": o.get("pickerName"),
+            "score": score,
+            "reasons": reasons[:3],
+        }
         for score, o, reasons in scored[:limit]
     ]
 
@@ -644,8 +674,9 @@ def unread_notable_works(limit: int = 10) -> list[dict]:
         if not works:
             continue
         name = a.get("name")
-        read_by_author = [b for b in books()
-                          if b.get("isRead") and name in (b.get("authors") or [])]
+        read_by_author = [
+            b for b in books() if b.get("isRead") and name in (b.get("authors") or [])
+        ]
         if not read_by_author:
             continue
         unread = [w for w in works if _norm(w) not in read_titles][:4]
@@ -654,11 +685,22 @@ def unread_notable_works(limit: int = 10) -> list[dict]:
         verdicts = []
         for b in read_by_author:
             rs = review_summary(b["slug"]) or {}
-            verdicts.append({"title": b.get("title"), "yearRead": (b.get("meetingDate") or "")[:4],
-                             "ratingAverage": rs.get("ratingAverage"),
-                             "discussionAverage": rs.get("discussionAverage")})
-        out.append({"author": name, "readCount": len(read_by_author), "clubVerdicts": verdicts,
-                    "unreadNotableWorks": unread})
+            verdicts.append(
+                {
+                    "title": b.get("title"),
+                    "yearRead": (b.get("meetingDate") or "")[:4],
+                    "ratingAverage": rs.get("ratingAverage"),
+                    "discussionAverage": rs.get("discussionAverage"),
+                }
+            )
+        out.append(
+            {
+                "author": name,
+                "readCount": len(read_by_author),
+                "clubVerdicts": verdicts,
+                "unreadNotableWorks": unread,
+            }
+        )
     # Most-read (best-known) authors first — those leads carry the most club evidence.
     out.sort(key=lambda x: (-x["readCount"], x["author"] or ""))
     return out[:limit]
@@ -679,10 +721,7 @@ def compare_books(book_refs: list[str]) -> dict:
             }
             for b in books_found
         ],
-        "missing": [
-            ref for ref, book in zip(book_refs[:5], found, strict=True)
-            if book is None
-        ],
+        "missing": [ref for ref, book in zip(book_refs[:5], found, strict=True) if book is None],
         "sharedSubjects": shared_subjects[:10],
     }
 
@@ -696,10 +735,13 @@ def _hosted_meetings_for(member_slug: str) -> list[dict]:
     Hosting is meeting-level (a host can run a 2-book meeting), so derive from meetings()."""
     titles = _book_titles_by_slug()
     out = [
-        {"date": mt.get("date"),
-         "year": int(mt["date"][:4]) if mt.get("date") else None,
-         "books": [titles.get(s, s) for s in (mt.get("books") or [])]}
-        for mt in meetings() if member_slug in (mt.get("host") or [])
+        {
+            "date": mt.get("date"),
+            "year": int(mt["date"][:4]) if mt.get("date") else None,
+            "books": [titles.get(s, s) for s in (mt.get("books") or [])],
+        }
+        for mt in meetings()
+        if member_slug in (mt.get("host") or [])
     ]
     out.sort(key=lambda h: h.get("date") or "", reverse=True)
     return out
@@ -712,11 +754,17 @@ def lists_for_member(member_slug: str) -> list[dict]:
     for x in lists():
         if x.get("owner") != member_slug:
             continue
-        out.append({
-            "name": x.get("name"), "slug": x.get("slug"), "description": x.get("description"),
-            "books": [{"title": titles.get(e.get("book"), e.get("book")), "note": e.get("note")}
-                      for e in (x.get("books") or [])],
-        })
+        out.append(
+            {
+                "name": x.get("name"),
+                "slug": x.get("slug"),
+                "description": x.get("description"),
+                "books": [
+                    {"title": titles.get(e.get("book"), e.get("book")), "note": e.get("note")}
+                    for e in (x.get("books") or [])
+                ],
+            }
+        )
     return out
 
 
@@ -726,9 +774,15 @@ def lists_for_book(book_slug: str) -> list[dict]:
     for x in lists():
         for e in x.get("books") or []:
             if e.get("book") == book_slug:
-                out.append({"name": x.get("name"), "slug": x.get("slug"),
-                            "scope": x.get("scope"), "owner": x.get("owner"),
-                            "note": e.get("note")})
+                out.append(
+                    {
+                        "name": x.get("name"),
+                        "slug": x.get("slug"),
+                        "scope": x.get("scope"),
+                        "owner": x.get("owner"),
+                        "note": e.get("note"),
+                    }
+                )
                 break
     return out
 
@@ -760,16 +814,19 @@ def upcoming_meetings() -> list[dict]:
     """Meetings that haven't happened yet, earliest first. "Upcoming" is derived from the
     meeting's local date+time (see agent.clock): a meeting drops off once its start + buffer has
     passed. The predictive last-Tuesday schedule sets the dates; there is no placeholder flag."""
-    future = [
-        b for b in books()
-        if b.get("isUpcoming")
-    ]
+    future = [b for b in books() if b.get("isUpcoming")]
     future.sort(key=lambda b: b.get("meetingDate") or "")
     return [
-        {"slug": b.get("slug"), "title": b.get("title"), "authors": b.get("authors") or [],
-         "meetingDate": b.get("meetingDate"), "startTime": b.get("meetingStartTime"),
-         "location": b.get("meetingLocation"), "pickedBy": b.get("pickerName"),
-         "topic": b.get("topic")}
+        {
+            "slug": b.get("slug"),
+            "title": b.get("title"),
+            "authors": b.get("authors") or [],
+            "meetingDate": b.get("meetingDate"),
+            "startTime": b.get("meetingStartTime"),
+            "location": b.get("meetingLocation"),
+            "pickedBy": b.get("pickerName"),
+            "topic": b.get("topic"),
+        }
         for b in future
     ]
 
@@ -783,7 +840,7 @@ def club_stats() -> dict:
     name_by_slug = {mm["slug"]: mm.get("name") for mm in members()}
     hosts = Counter()
     for mt in meetings():
-        for s in (mt.get("host") or []):
+        for s in mt.get("host") or []:
             if name_by_slug.get(s):
                 hosts[name_by_slug[s]] += 1
     pages = [b.get("pageCount") for b in read if b.get("pageCount")]
@@ -824,7 +881,7 @@ def pending_reviews(name_or_slug: str) -> dict | None:
 def book_choices(prefix: str, limit: int = 25) -> list[tuple[str, str]]:
     p = _norm(prefix)
     out: list[tuple[str, str]] = []
-    for b in sorted(books(), key=lambda x: (x.get("year") or 0), reverse=True):
+    for b in sorted(books(), key=lambda x: x.get("year") or 0, reverse=True):
         title = b.get("title") or ""
         if not p or p in title.lower():
             out.append((title, b.get("slug")))

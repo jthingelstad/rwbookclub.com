@@ -95,9 +95,7 @@ async def send_reading_checkin_email(
             ),
             "extra note": note,
         },
-        fallback=meeting_rules.reading_checkin_email_body(
-            member["name"], meeting, note=note
-        ),
+        fallback=meeting_rules.reading_checkin_email_body(member["name"], meeting, note=note),
         medium="email",
     )
     meeting_id = meeting["meetingId"]
@@ -149,9 +147,7 @@ async def run(meeting: dict, status: dict) -> int:
         member = corpus_read.find_member(slug)
         if not member or not identities.email_for_member(slug):
             continue
-        reach = cand["mustReach"] or await asyncio.to_thread(
-            oliver.decide_outreach, cand
-        )
+        reach = cand["mustReach"] or await asyncio.to_thread(oliver.decide_outreach, cand)
         if not reach:
             continue
         try:

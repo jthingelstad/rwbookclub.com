@@ -6,6 +6,7 @@ so the loop must satisfy them and then force a tools-omitted final call — neve
 fall through to the generic "I'm not sure how to answer that one." fallback
 (the regression fixed in the eval-tuning pass).
 """
+
 from agent import oliver
 
 FALLBACK = "I'm not sure how to answer that one."
@@ -69,12 +70,16 @@ def _isolate(monkeypatch, client, dispatched):
     the DB/corpus-touching prompt builders."""
     monkeypatch.setattr(oliver, "_get_client", lambda: client)
     # Echo the medium so tests can assert it's threaded through to every create() call.
-    monkeypatch.setattr(oliver, "_system_blocks",
-                        lambda medium="discord": [{"type": "text", "text": f"SYS:{medium}"}])
+    monkeypatch.setattr(
+        oliver,
+        "_system_blocks",
+        lambda medium="discord": [{"type": "text", "text": f"SYS:{medium}"}],
+    )
     monkeypatch.setattr(oliver, "_question_block", lambda *a, **k: "Q")
     monkeypatch.setattr(oliver, "_resolve_member", lambda *a, **k: None)
-    monkeypatch.setattr(oliver, "dispatch",
-                        lambda name, tool_input, ctx: dispatched.append(name) or '{"ok": true}')
+    monkeypatch.setattr(
+        oliver, "dispatch", lambda name, tool_input, ctx: dispatched.append(name) or '{"ok": true}'
+    )
 
 
 def test_round_cap_forces_a_final_text_answer(monkeypatch):
@@ -104,7 +109,7 @@ def test_round_cap_forces_a_final_text_answer(monkeypatch):
 def test_natural_stop_with_no_text_is_nudged(monkeypatch):
     """Model stops (end_turn) with no text after a tool round → nudge yields a reply."""
     script = [
-        _Resp("tool_use", [_ToolUse()]),          # round 1: dispatch, continue
+        _Resp("tool_use", [_ToolUse()]),  # round 1: dispatch, continue
         _Resp("end_turn", [_Other("thinking")]),  # round 2: stops, but no text block
         _Resp("end_turn", [_Text("Right — here's the answer.")]),  # nudge reply
     ]
@@ -144,7 +149,9 @@ def test_medium_threads_to_every_create_call(monkeypatch):
     oliver.answer("q", use_history=False, persist=False, medium="email")
 
     systems = [c["system"][0]["text"] for c in client.calls]
-    assert systems and all(s == "SYS:email" for s in systems)  # email on every call, incl. forced final
+    assert systems and all(
+        s == "SYS:email" for s in systems
+    )  # email on every call, incl. forced final
 
 
 def test_medium_defaults_to_discord(monkeypatch):

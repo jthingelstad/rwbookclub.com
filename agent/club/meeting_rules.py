@@ -37,7 +37,7 @@ def friendly_time(hhmm: str | None) -> str:
     """Local 'HH:MM' → '6:30 PM'; '' when the time is unset/unparseable."""
     try:
         h, m = int(str(hhmm)[:2]), int(str(hhmm)[3:5])
-    except (ValueError, IndexError, TypeError):
+    except ValueError, IndexError, TypeError:
         return ""
     return f"{h % 12 or 12}:{m:02d} {'AM' if h < 12 else 'PM'}"
 
@@ -90,7 +90,8 @@ def horizon(depth: int = 5) -> dict:
             continue
         for slug in book.get("pickerSlugs") or []:
             if slug in last_scheduled and (
-                    last_scheduled[slug] is None or meeting_date > last_scheduled[slug]):
+                last_scheduled[slug] is None or meeting_date > last_scheduled[slug]
+            ):
                 last_scheduled[slug] = meeting_date
 
     ordered = sorted(
@@ -102,8 +103,11 @@ def horizon(depth: int = 5) -> dict:
         ),
     )
     rotation = [
-        {"slug": member["slug"], "name": member.get("name"),
-         "lastScheduledPick": last_scheduled.get(member["slug"])}
+        {
+            "slug": member["slug"],
+            "name": member.get("name"),
+            "lastScheduledPick": last_scheduled.get(member["slug"]),
+        }
         for member in ordered
     ]
 
@@ -118,17 +122,22 @@ def horizon(depth: int = 5) -> dict:
             for slug in picker_slugs
         ]
         placeholder = bool(upcoming.get("placeholder"))
-        slots.append({
-            "position": len(slots) + 1,
-            "status": "scheduled",
-            "book": {"slug": upcoming.get("slug"), "title": upcoming.get("title"),
-                     "authors": upcoming.get("authors") or []},
-            "meetingDate": upcoming.get("meetingDate"),
-            "placeholder": placeholder,
-            "dateStatus": "soft" if placeholder else "scheduled",
-            "picker": pickers[0] if pickers else None,
-            "pickers": pickers,
-        })
+        slots.append(
+            {
+                "position": len(slots) + 1,
+                "status": "scheduled",
+                "book": {
+                    "slug": upcoming.get("slug"),
+                    "title": upcoming.get("title"),
+                    "authors": upcoming.get("authors") or [],
+                },
+                "meetingDate": upcoming.get("meetingDate"),
+                "placeholder": placeholder,
+                "dateStatus": "soft" if placeholder else "scheduled",
+                "picker": pickers[0] if pickers else None,
+                "pickers": pickers,
+            }
+        )
 
     first_pass = [member for member in ordered if member["slug"] not in scheduled_pickers]
     picker_cycle = first_pass + ordered
@@ -141,16 +150,18 @@ def horizon(depth: int = 5) -> dict:
         member = picker_cycle[cycle_index]
         cycle_index += 1
         picker = {"slug": member["slug"], "name": member.get("name")}
-        slots.append({
-            "position": len(slots) + 1,
-            "status": "empty",
-            "book": None,
-            "meetingDate": None,
-            "placeholder": False,
-            "dateStatus": "open",
-            "picker": picker,
-            "pickers": [picker],
-        })
+        slots.append(
+            {
+                "position": len(slots) + 1,
+                "status": "empty",
+                "book": None,
+                "meetingDate": None,
+                "placeholder": False,
+                "dateStatus": "open",
+                "picker": picker,
+                "pickers": [picker],
+            }
+        )
 
     empty_slots = [slot for slot in slots if slot["status"] == "empty"]
     return {
@@ -186,14 +197,16 @@ def next_meeting() -> dict:
         "date": meeting_date[:10],
         "startTime": clubdb.start_time_for_meeting(meeting_id),
         "location": clubdb.location_for_meeting(meeting_id),
-        "expectedRuleDate": last_tuesday(
-            int(meeting_date[:4]), int(meeting_date[5:7])
-        ).isoformat() if meeting_date else inferred_date,
+        "expectedRuleDate": last_tuesday(int(meeting_date[:4]), int(meeting_date[5:7])).isoformat()
+        if meeting_date
+        else inferred_date,
         "book": {
             "slug": (book or {}).get("slug"),
             "title": (book or {}).get("title"),
             "authors": (book or {}).get("authors") or [],
-        } if book else None,
+        }
+        if book
+        else None,
         "pickerSlugs": picker_slugs,
         "pickerNames": picker_names,
     }
@@ -207,8 +220,9 @@ def meeting_status(meeting_id: int | None = None) -> dict:
         r["member_id"]: r
         for r in (db.meeting_member_status_for_meeting(mid) if mid is not None else [])
     }
-    members = [m for m in clubdb.current_members()
-               if m["slug"] != config.OLIVER_MEMBER_SLUG]  # attendance is human-only
+    members = [
+        m for m in clubdb.current_members() if m["slug"] != config.OLIVER_MEMBER_SLUG
+    ]  # attendance is human-only
     picker_ids = set(meeting.get("pickerIds") or [])
 
     rows = []
@@ -223,14 +237,16 @@ def meeting_status(meeting_id: int | None = None) -> dict:
             no += 1
         elif status == "unsure":
             unsure += 1
-        rows.append({
-            "member": member.get("name"),
-            "memberId": member["id"],
-            "memberSlug": member["slug"],
-            "status": status,
-            "isPicker": member["id"] in picker_ids,
-            "updatedAt": row.get("attendance_answered_at") if row else None,
-        })
+        rows.append(
+            {
+                "member": member.get("name"),
+                "memberId": member["id"],
+                "memberSlug": member["slug"],
+                "status": status,
+                "isPicker": member["id"] in picker_ids,
+                "updatedAt": row.get("attendance_answered_at") if row else None,
+            }
+        )
 
     pending = len([r for r in rows if r["status"] == "pending"])
     possible_yes = yes + unsure + pending
@@ -288,8 +304,9 @@ def format_status(status: dict) -> str:
     meeting = status["meeting"]
     title = (meeting.get("book") or {}).get("title") or "the next meeting"
     counts = status["counts"]
-    when = with_location(friendly_when(meeting["date"], meeting.get("startTime")),
-                         meeting.get("location"))
+    when = with_location(
+        friendly_when(meeting["date"], meeting.get("startTime")), meeting.get("location")
+    )
     lines = [
         f"Roll call for **{title}** on {when}: "
         f"{counts['yes']} yes, {counts['no']} no, {counts['unsure']} unsure, "
@@ -298,13 +315,17 @@ def format_status(status: dict) -> str:
     if status["hasQuorum"]:
         lines.append("Quorum is confirmed.")
     else:
-        lines.append(f"Quorum is not confirmed yet; we need {counts['quorumRequired']} yes responses.")
+        lines.append(
+            f"Quorum is not confirmed yet; we need {counts['quorumRequired']} yes responses."
+        )
     if meeting.get("pickerNames"):
         picker = ", ".join(meeting["pickerNames"])
         if status["pickerAvailable"]:
             lines.append(f"The picker ({picker}) is confirmed attending.")
         elif "picker_unavailable" in status["risks"]:
-            lines.append(f"The picker ({picker}) cannot attend, so reading order may need attention.")
+            lines.append(
+                f"The picker ({picker}) cannot attend, so reading order may need attention."
+            )
         else:
             lines.append(f"The picker ({picker}) is not confirmed yet.")
     if "not_last_tuesday" in status["risks"]:
@@ -346,6 +367,7 @@ def summarize_club_state() -> dict:
 # the two copies. Pure text; lives here (not in club/meeting_emails, which imports oliver)
 # to stay free of the oliver→tools import cycle.
 
+
 def days_until_text(meeting_date: str) -> str:
     """Human phrasing for how far off a meeting date is ("today", "in 3 days", …)."""
     try:
@@ -382,7 +404,11 @@ def roll_call_email_body(member_name: str, status: dict, *, note: str | None = N
     if meeting.get("location"):
         meeting_when += f", at {meeting['location']}"
     picker = ", ".join(meeting.get("pickerNames") or [])
-    picker_line = f"\n\n{picker} picked this one, and the picker needs to be able to attend." if picker else ""
+    picker_line = (
+        f"\n\n{picker} picked this one, and the picker needs to be able to attend."
+        if picker
+        else ""
+    )
     extra = f"\n\n{note.strip()}" if note else ""
     counts = status["counts"]
     return (
@@ -414,7 +440,7 @@ def reading_checkin_email_body(member_name: str, meeting: dict, *, note: str | N
         f"Hi {member_name},\n\n"
         f"Quick reading check-in for {title}. The meeting is {meeting_when}. "
         "Where are you in the book, and do you feel on track?\n\n"
-        "Reply with something short like \"halfway and on track\", "
-        "\"page 120, behind\", or \"finished\" and I'll update the tracker."
+        'Reply with something short like "halfway and on track", '
+        '"page 120, behind", or "finished" and I\'ll update the tracker.'
         f"{extra}"
     )

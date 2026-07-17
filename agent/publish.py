@@ -57,8 +57,7 @@ def _bin(name: str) -> str:
         candidate = Path(d) / name
         if candidate.exists():
             return str(candidate)
-    raise PublishError(
-        f"`{name}` not found on PATH — Oliver's launchd PATH must include node/npm")
+    raise PublishError(f"`{name}` not found on PATH — Oliver's launchd PATH must include node/npm")
 
 
 def ensure_corpus() -> dict:
@@ -83,9 +82,15 @@ def git_output(args: list[str], *, timeout: int = 15) -> str:
     do not pass mutating subcommands here.
     """
     try:
-        r = subprocess.run([_bin("git"), *args], cwd=REPO_ROOT, capture_output=True,
-                           text=True, timeout=timeout, env=_ENV)
-    except (subprocess.SubprocessError, OSError, PublishError):
+        r = subprocess.run(
+            [_bin("git"), *args],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=_ENV,
+        )
+    except subprocess.SubprocessError, OSError, PublishError:
         return ""
     return r.stdout if r.returncode == 0 else ""
 
@@ -97,9 +102,15 @@ def _deploy_gh_pages(message: str) -> None:
     site (plus `.nojekyll`) — nothing from `main`. This is deterministic and dependency-free
     (the `gh-pages` npm package leaks repo-root files from its cache clone)."""
     git = _bin("git")
-    origin = subprocess.run([git, "remote", "get-url", "origin"], cwd=REPO_ROOT,
-                            capture_output=True, text=True, check=True, env=_ENV,
-                            timeout=DEPLOY_TIMEOUT).stdout.strip()
+    origin = subprocess.run(
+        [git, "remote", "get-url", "origin"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+        env=_ENV,
+        timeout=DEPLOY_TIMEOUT,
+    ).stdout.strip()
     (SITE_DIR / ".nojekyll").touch()  # tell GitHub Pages to serve the tree as-is (no Jekyll)
 
     def g(*args: str) -> None:
@@ -109,8 +120,16 @@ def _deploy_gh_pages(message: str) -> None:
     try:
         g("init", "-q", "-b", GH_PAGES_BRANCH)
         g("add", "-A")
-        g("-c", f"user.name={AUTHOR_NAME}", "-c", f"user.email={AUTHOR_EMAIL}",
-          "commit", "-q", "-m", message)
+        g(
+            "-c",
+            f"user.name={AUTHOR_NAME}",
+            "-c",
+            f"user.email={AUTHOR_EMAIL}",
+            "commit",
+            "-q",
+            "-m",
+            message,
+        )
         g("push", "-q", "-f", origin, f"HEAD:{GH_PAGES_BRANCH}")
     finally:
         shutil.rmtree(SITE_DIR / ".git", ignore_errors=True)
@@ -142,12 +161,15 @@ def publish_site() -> dict:
         if not (SITE_DIR / "index.html").exists():
             raise PublishError("build produced no _site/index.html — refusing to deploy")
         if not (SITE_DIR / "CNAME").exists():
-            raise PublishError("_site/CNAME missing — refusing to deploy (would drop the custom domain)")
+            raise PublishError(
+                "_site/CNAME missing — refusing to deploy (would drop the custom domain)"
+            )
         book_pages = len(list((SITE_DIR / "books").glob("*/index.html")))
         if book_pages < MIN_BOOK_PAGES:
             raise PublishError(
                 f"build produced only {book_pages} book pages (< {MIN_BOOK_PAGES}) — "
-                "refusing to deploy a partial/empty site")
+                "refusing to deploy a partial/empty site"
+            )
         _deploy_gh_pages("Deploy site")
         log.info("published site to gh-pages (%d book pages): %s", book_pages, written)
         return {"corpus": written, "deployed": True}
@@ -158,6 +180,7 @@ def publish_site() -> dict:
 
 def main() -> None:
     from agent import database
+
     database.initialize()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     print(publish_site())

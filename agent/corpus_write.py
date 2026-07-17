@@ -48,6 +48,7 @@ def _enrich_new_book(book_id: int, author_ids: list[int], out_dir) -> None:
         return
     try:
         from agent.enrich.loop import enrich_author, enrich_book
+
         with db.connect() as conn:
             book = next(b for b in clubdb.all_books(conn) if b["id"] == book_id)
             enrich_book(conn, book, fetch_images=True)  # owns the cover fetch
@@ -68,7 +69,7 @@ def write_book(meta: dict) -> dict:
     title = (meta.get("title") or "").strip()
     if not title:
         raise WriteError("A book needs a title.")
-    with db.connect() as conn:                          # transaction = commit point
+    with db.connect() as conn:  # transaction = commit point
         res = clubdb.upsert_book(conn, meta)
         corpus_gen.write_book_file(conn, res["id"], DATA_DIR)
         for aid in res["author_ids"]:
@@ -78,14 +79,22 @@ def write_book(meta: dict) -> dict:
     _enrich_new_book(res["id"], res["author_ids"], DATA_DIR)
     _validate_or_raise()
     from corpus.images import has_cover
-    return {"slug": res["slug"], "title": title, "authors": meta.get("authors") or [],
-            "hasCover": has_cover(res["slug"]), "updated": res["existed"]}
+
+    return {
+        "slug": res["slug"],
+        "title": title,
+        "authors": meta.get("authors") or [],
+        "hasCover": has_cover(res["slug"]),
+        "updated": res["existed"],
+    }
 
 
 def schedule_meeting(book_query: str, date_iso: str, picker_query: str) -> dict:
     book = cr.find_book(book_query)
     if not book:
-        raise WriteError(f"No book matching {book_query!r} — add it first in the web app (Books → Add).")
+        raise WriteError(
+            f"No book matching {book_query!r} — add it first in the web app (Books → Add)."
+        )
     member = cr.find_member(picker_query)
     if not member:
         raise WriteError(f"No club member matching {picker_query!r}.")

@@ -72,7 +72,7 @@ def _book_doc(b: dict) -> dict:
         "synopsis": b["synopsis"],
         "picker": b["picker_slugs"],
     }
-    if b["subjects_json"] is not None:   # omit the key entirely when absent (corpus quirk)
+    if b["subjects_json"] is not None:  # omit the key entirely when absent (corpus quirk)
         doc["subjects"] = b["subjects"]
     # External enrichment (club_book_enrichment) — omitted when empty.
     _add(doc, "editionCount", b.get("edition_count"))
@@ -80,7 +80,7 @@ def _book_doc(b: dict) -> dict:
     _add(doc, "ratingsAverage", b.get("ratings_average"))
     _add(doc, "ratingsCount", b.get("ratings_count"))
     _add(doc, "series", b.get("series"))
-    _add(doc, "awards", b.get("awards"))          # literary awards (≠ club_award_*)
+    _add(doc, "awards", b.get("awards"))  # literary awards (≠ club_award_*)
     _add(doc, "wikidataId", b.get("wikidata_id"))
     _add(doc, "wikipediaUrl", b.get("wikipedia_url"))
     _add(doc, "goodreadsId", b.get("goodreads_id"))
@@ -90,10 +90,10 @@ def _book_doc(b: dict) -> dict:
 def _meeting_doc(m: dict) -> dict:
     return {
         "meetingId": m["id"],
-        "date": m["date"],                 # LOCAL date 'YYYY-MM-DD' (America/Chicago)
-        "startTime": m["start_time"],      # LOCAL 'HH:MM' or null
+        "date": m["date"],  # LOCAL date 'YYYY-MM-DD' (America/Chicago)
+        "startTime": m["start_time"],  # LOCAL 'HH:MM' or null
         "books": m["book_slugs"],
-        "host": m["host_slugs"],           # who hosted (meeting-level; ≠ a book's picker)
+        "host": m["host_slugs"],  # who hosted (meeting-level; ≠ a book's picker)
         "type": m["type"],
         "location": m["location"],
         "notes": m["notes"],
@@ -104,13 +104,17 @@ def _member_doc(m: dict) -> dict:
     # `websites` are sourced from member_identities (surface='website') and attached to `m` by the
     # generate() loop — multiple per member, public, rendered on the profile page. Emails/phones are
     # private and never enter the corpus.
-    return {"name": m["name"], "isCurrent": bool(m["is_current"]),
-            "joined": m.get("joined"), "websites": m.get("websites") or []}
+    return {
+        "name": m["name"],
+        "isCurrent": bool(m["is_current"]),
+        "joined": m.get("joined"),
+        "websites": m.get("websites") or [],
+    }
 
 
 def _author_doc(a: dict) -> dict:
     doc = {"name": a["name"]}
-    if a["bio"]:                          # bio omitted (not null) when empty
+    if a["bio"]:  # bio omitted (not null) when empty
         doc["bio"] = a["bio"]
     # External enrichment (club_author_enrichment) — omitted when empty. The portrait
     # itself stays a filesystem asset (assets/images/authors/); photoCredit carries
@@ -171,6 +175,7 @@ def _prune(directory: Path, keep: set[str]) -> int:
 def _invalidate_read_cache() -> None:
     # Local import keeps generation independent from the read layer at module import time.
     from agent import corpus_read
+
     corpus_read.invalidate()
 
 
@@ -199,7 +204,8 @@ def generate(out_root: Path = DEFAULT_OUT) -> dict:
             "ORDER BY is_primary DESC, created_at, identifier"
         ):
             websites_by_id.setdefault(r["member_id"], []).append(
-                {"url": r["identifier"], "label": r["label"]})
+                {"url": r["identifier"], "label": r["label"]}
+            )
         for m in clubdb.all_members(conn):
             doc_src = dict(m)
             doc_src["websites"] = websites_by_id.get(m["id"], [])
@@ -275,6 +281,7 @@ def remove_list_file(slug: str, out_root: Path = DEFAULT_OUT) -> None:
 
 def main() -> None:
     from agent import database
+
     database.initialize()
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(DEFAULT_OUT), help="output corpus root")

@@ -37,6 +37,7 @@ from agent.mail import email_jmap, mail_archive, outbound
 
 log = logging.getLogger("oliver.commands")
 
+
 # ── Admin gate ───────────────────────────────────────────────────────────────
 def _is_admin(interaction: discord.Interaction) -> bool:
     return interaction.user.id == config.ADMIN_USER_ID
@@ -50,13 +51,14 @@ def admin_only(func):
     Apply BELOW the @oliver_cmds.command decorator (so the check runs inside
     the registered handler).
     """
+
     @functools.wraps(func)
     async def wrapper(interaction: discord.Interaction, *args, **kwargs):
         if interaction.user.id != config.ADMIN_USER_ID:
-            await interaction.response.send_message(
-                "That's an admin command.", ephemeral=True)
+            await interaction.response.send_message("That's an admin command.", ephemeral=True)
             return
         return await func(interaction, *args, **kwargs)
+
     return wrapper
 
 
@@ -72,16 +74,23 @@ oliver_cmds = discord.app_commands.Group(
 # self-service and admin data edits live in the web app (/oliver my-club) now; memory grooming
 # has its own admin webapp page; link-member (needs Discord's user picker) moved under `admin`.
 reading_cmds = discord.app_commands.Group(
-    name="reading", description="Your reading progress for the next book.", parent=oliver_cmds)
+    name="reading", description="Your reading progress for the next book.", parent=oliver_cmds
+)
 meeting_cmds = discord.app_commands.Group(
-    name="meeting", description="Run the next meeting — roll call, reading check-ins, readiness.",
-    parent=oliver_cmds)
+    name="meeting",
+    description="Run the next meeting — roll call, reading check-ins, readiness.",
+    parent=oliver_cmds,
+)
 timeline_cmds = discord.app_commands.Group(
-    name="timeline", description="The club's event timeline — view it or record an event.",
-    parent=oliver_cmds)
+    name="timeline",
+    description="The club's event timeline — view it or record an event.",
+    parent=oliver_cmds,
+)
 admin_cmds = discord.app_commands.Group(
-    name="admin", description="Operate Oliver — status, feedback, proposals, scheduler (admin).",
-    parent=oliver_cmds)
+    name="admin",
+    description="Operate Oliver — status, feedback, proposals, scheduler (admin).",
+    parent=oliver_cmds,
+)
 
 
 # ── Autocompletes ────────────────────────────────────────────────────────────
@@ -172,8 +181,10 @@ async def _roll_call_announcement(status: dict) -> str:
         "how to respond": "members tap the attendance buttons directly below your message",
     }
     return await asyncio.to_thread(
-        oliver.compose, "roll-call announcement for the club channel",
-        facts, fallback=_roll_call_message(status),
+        oliver.compose,
+        "roll-call announcement for the club channel",
+        facts,
+        fallback=_roll_call_message(status),
     )
 
 
@@ -184,7 +195,7 @@ async def _roll_call_reminder(status: dict) -> str:
     counts = status["counts"]
     facts = {
         "what": "a reminder nudging members who haven't answered to confirm attendance; "
-                "you are re-posting the roll call",
+        "you are re-posting the roll call",
         "book": title,
         "meeting date": meeting["date"],
         "responses so far": (
@@ -195,8 +206,10 @@ async def _roll_call_reminder(status: dict) -> str:
         "how to respond": "members tap the attendance buttons directly below your message",
     }
     return await asyncio.to_thread(
-        oliver.compose, "roll-call reminder for the club channel",
-        facts, fallback="🔔 Roll call reminder.\n\n" + meeting_rules.format_status(status),
+        oliver.compose,
+        "roll-call reminder for the club channel",
+        facts,
+        fallback="🔔 Roll call reminder.\n\n" + meeting_rules.format_status(status),
     )
 
 
@@ -235,7 +248,11 @@ async def _email_roll_call(interaction: discord.Interaction) -> None:
         except Exception:
             log.exception("roll-call email failed for %s", member["slug"])
             missing.append(f"{member['name']} (send failed)")
-    if sent and meeting["meetingId"] is not None and not db.has_open_roll_call(meeting["meetingId"]):
+    if (
+        sent
+        and meeting["meetingId"] is not None
+        and not db.has_open_roll_call(meeting["meetingId"])
+    ):
         db.record_group_event(
             meeting["meetingId"],
             "roll_call_opened",
@@ -259,18 +276,21 @@ class AttendanceView(discord.ui.View):
     def __init__(self) -> None:
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="I'll be there", style=discord.ButtonStyle.success,
-                       custom_id="oliver:attendance:yes")
+    @discord.ui.button(
+        label="I'll be there", style=discord.ButtonStyle.success, custom_id="oliver:attendance:yes"
+    )
     async def yes(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         await record_attendance_response(interaction, "yes")
 
-    @discord.ui.button(label="I can't make it", style=discord.ButtonStyle.danger,
-                       custom_id="oliver:attendance:no")
+    @discord.ui.button(
+        label="I can't make it", style=discord.ButtonStyle.danger, custom_id="oliver:attendance:no"
+    )
     async def no(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         await record_attendance_response(interaction, "no")
 
-    @discord.ui.button(label="Unsure", style=discord.ButtonStyle.secondary,
-                       custom_id="oliver:attendance:unsure")
+    @discord.ui.button(
+        label="Unsure", style=discord.ButtonStyle.secondary, custom_id="oliver:attendance:unsure"
+    )
     async def unsure(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         await record_attendance_response(interaction, "unsure")
 
@@ -279,15 +299,16 @@ async def record_attendance_response(interaction: discord.Interaction, status: s
     member = _linked_member_for_user(interaction.user.id)
     if not member:
         await interaction.response.send_message(
-            "I don't have your Discord account linked to a current club member yet.",
-            ephemeral=True)
+            "I don't have your Discord account linked to a current club member yet.", ephemeral=True
+        )
         return
     meeting = meeting_rules.next_meeting()
     meeting_id = meeting["meetingId"]
     member_id = clubdb.lookup_member_id(member["slug"])
     if meeting_id is None or member_id is None:
         await interaction.response.send_message(
-            "There's no scheduled meeting to record against yet.", ephemeral=True)
+            "There's no scheduled meeting to record against yet.", ephemeral=True
+        )
         return
     roll_call = db.current_roll_call(meeting_id)
     if roll_call and roll_call.get("status") == "closed":
@@ -309,7 +330,8 @@ async def record_attendance_response(interaction: discord.Interaction, status: s
     summary = meeting_rules.meeting_status(meeting["meetingId"])
     await interaction.response.send_message(
         f"Recorded you as {status_words[status]}.\n\n{meeting_rules.format_status(summary)}",
-        ephemeral=True)
+        ephemeral=True,
+    )
 
 
 PRIVATE_FEEDBACK_CONFIRMATION = (
@@ -318,8 +340,9 @@ PRIVATE_FEEDBACK_CONFIRMATION = (
 )
 
 
-def _save_private_book_feedback(*, user_id: int | str, book_value: str, note: str,
-                                source_message_id: str | None = None) -> dict:
+def _save_private_book_feedback(
+    *, user_id: int | str, book_value: str, note: str, source_message_id: str | None = None
+) -> dict:
     """Private member-memory write only; deliberately has no review/corpus/publish path."""
     member = _linked_member_for_user(int(user_id))
     if not member:
@@ -340,8 +363,12 @@ def _save_private_book_feedback(*, user_id: int | str, book_value: str, note: st
         source_user_id=str(user_id),
         source_message_id=source_message_id,
     )
-    return {"id": memory_id, "member_slug": member["slug"],
-            "book_slug": book_slug, "book_title": book_title}
+    return {
+        "id": memory_id,
+        "member_slug": member["slug"],
+        "book_slug": book_slug,
+        "book_title": book_title,
+    }
 
 
 class PrivateBookFeedbackModal(discord.ui.Modal):
@@ -381,8 +408,10 @@ async def oliver_ping(interaction: discord.Interaction) -> None:
     await interaction.response.send_message("🟢 Oliver is awake.", ephemeral=True)
 
 
-@oliver_cmds.command(name="my-club",
-                     description="Get your private link to manage your club stuff — ratings, reviews, lists, profile.")
+@oliver_cmds.command(
+    name="my-club",
+    description="Get your private link to manage your club stuff — ratings, reviews, lists, profile.",
+)
 async def oliver_webapp(interaction: discord.Interaction) -> None:
     member = _linked_member_for_user(interaction.user.id)
     if not member:
@@ -391,18 +420,21 @@ async def oliver_webapp(interaction: discord.Interaction) -> None:
     member_id = clubdb.lookup_member_id(member["slug"])
     if member_id is None:
         await interaction.response.send_message(
-            "I couldn't resolve your member record — ask an admin to check your link.", ephemeral=True)
+            "I couldn't resolve your member record — ask an admin to check your link.",
+            ephemeral=True,
+        )
         return
     await webapp.ensure_running()  # spin the server up on demand (it idles off when unused)
-    token = await asyncio.to_thread(
-        webapp.mint_token, member_id, is_admin=_is_admin(interaction))
+    token = await asyncio.to_thread(webapp.mint_token, member_id, is_admin=_is_admin(interaction))
     url = f"{config.WEBAPP_BASE_URL}/webapp?t={token}"
     # Angle brackets suppress Discord's link unfurl, so its preview bot won't pre-fetch (and burn)
     # the single-use token before you tap it. The server also ignores preview bots as a backstop.
     await interaction.response.send_message(
         f"🔧 Your private link (good for ~15 minutes, just for you):\n<{url}>\n"
         "_Blank page? The editor sleeps after ~15 min idle (or a restart) — just run "
-        "`/oliver my-club` again to wake it._", ephemeral=True)
+        "`/oliver my-club` again to wake it._",
+        ephemeral=True,
+    )
 
 
 @oliver_cmds.command(
@@ -429,13 +461,18 @@ async def private_feedback_cmd(interaction: discord.Interaction, book: str) -> N
     await interaction.response.send_modal(PrivateBookFeedbackModal(book=resolved))
 
 
-@admin_cmds.command(name="status", description="Oliver at a glance — release, models, data, memory (admin).")
+@admin_cmds.command(
+    name="status", description="Oliver at a glance — release, models, data, memory (admin)."
+)
 @admin_only
 async def oliver_status(interaction: discord.Interaction) -> None:
     release = db.current_release()
-    release_line = (f"**Release:** {release['name']} (`{release['commit']}`, "
-                    f"{(release.get('occurred_at') or '')[:10]})" if release
-                    else "**Release:** unnamed (no christened release yet)")
+    release_line = (
+        f"**Release:** {release['name']} (`{release['commit']}`, "
+        f"{(release.get('occurred_at') or '')[:10]})"
+        if release
+        else "**Release:** unnamed (no christened release yet)"
+    )
     memories = await asyncio.to_thread(db.count_memories)
     reflected = db.get_job_state("reflection") or {}  # 'ran_at' stamped by each reflection pass
     proposals = await asyncio.to_thread(db.list_proposals, 10)
@@ -451,63 +488,85 @@ async def oliver_status(interaction: discord.Interaction) -> None:
         *jobs.format_status(job_rows).splitlines(),
     ]
     await interaction.response.send_message(
-        "\n".join(lines)[:config.MAX_DISCORD_LEN], ephemeral=True
+        "\n".join(lines)[: config.MAX_DISCORD_LEN], ephemeral=True
     )
 
 
-@admin_cmds.command(name="release-notes",
-                     description="Draft & send release notes from recent changes (admin).")
+@admin_cmds.command(
+    name="release-notes", description="Draft & send release notes from recent changes (admin)."
+)
 @discord.app_commands.describe(
     days="Look back this many days (1-90). Ignored if 'since' is set.",
     since="Or scope to changes since this git commit (hash or ref).",
-    to="Where to send — yourself (default) or the club mailing list")
+    to="Where to send — yourself (default) or the club mailing list",
+)
 # Default scope (no days, no since): everything since the last release notes — or the last
 # 7 days if none has ever been sent. A list send records HEAD as the next baseline.
-@discord.app_commands.choices(to=[
-    discord.app_commands.Choice(name="me", value="me"),
-    discord.app_commands.Choice(name="list", value="list"),
-])
+@discord.app_commands.choices(
+    to=[
+        discord.app_commands.Choice(name="me", value="me"),
+        discord.app_commands.Choice(name="list", value="list"),
+    ]
+)
 @admin_only
-async def release_notes_cmd(interaction: discord.Interaction, days: int | None = None,
-                            since: str | None = None,
-                            to: discord.app_commands.Choice[str] | None = None) -> None:
+async def release_notes_cmd(
+    interaction: discord.Interaction,
+    days: int | None = None,
+    since: str | None = None,
+    to: discord.app_commands.Choice[str] | None = None,
+) -> None:
     if since:
         resolved = release_notes.resolve_commit(since)
         if not resolved:
             await interaction.response.send_message(
-                f"I couldn't find a commit matching `{since}`.", ephemeral=True)
+                f"I couldn't find a commit matching `{since}`.", ephemeral=True
+            )
             return
         days_arg, since_arg, scope = None, resolved, f"since `{resolved}`"
-    elif days is None and (baseline := db.last_release_notes_commit()) \
-            and release_notes.resolve_commit(baseline):
+    elif (
+        days is None
+        and (baseline := db.last_release_notes_commit())
+        and release_notes.resolve_commit(baseline)
+    ):
         # No explicit scope → pick up where the last release notes left off, so every change
         # since then is covered exactly once.
         days_arg, since_arg, scope = None, baseline, f"since the last release notes (`{baseline}`)"
     else:
         d = days if days is not None else 7
         if not 1 <= d <= 90:
-            await interaction.response.send_message("Pick a window between 1 and 90 days.", ephemeral=True)
+            await interaction.response.send_message(
+                "Pick a window between 1 and 90 days.", ephemeral=True
+            )
             return
         days_arg, since_arg, scope = d, None, f"the last {d} days"
     if not email_jmap.enabled():
         await interaction.response.send_message(
             "Email isn't configured (no FASTMAIL_JMAP_TOKEN), so I can't send release notes.",
-            ephemeral=True)
+            ephemeral=True,
+        )
         return
 
     target = to.value if to else "me"
     await interaction.response.defer(ephemeral=True)
     try:
         email = await asyncio.to_thread(
-            release_notes.release_notes_email, days=days_arg, since_commit=since_arg)
+            release_notes.release_notes_email, days=days_arg, since_commit=since_arg
+        )
     except Exception:
         log.exception("release-notes generation failed")
-        db.add_activity("warning", "Release notes failed",
-                        f"Scope: {scope}\nGenerating the release-notes email raised an exception.")
-        await interaction.followup.send("Something went wrong drafting the release notes.", ephemeral=True)
+        db.add_activity(
+            "warning",
+            "Release notes failed",
+            f"Scope: {scope}\nGenerating the release-notes email raised an exception.",
+        )
+        await interaction.followup.send(
+            "Something went wrong drafting the release notes.", ephemeral=True
+        )
         return
     if email is None:
-        await interaction.followup.send(f"No changes {scope} — nothing to announce.", ephemeral=True)
+        await interaction.followup.send(
+            f"No changes {scope} — nothing to announce.", ephemeral=True
+        )
         return
 
     try:
@@ -519,33 +578,48 @@ async def release_notes_cmd(interaction: discord.Interaction, days: int | None =
                 email["body"],
                 idempotency_key=f"club-email:release-notes:{interaction.id}",
             )
-            db.add_activity("release_notes_sent", "Release notes sent",
-                            f"Scope: {scope}\nTo: club mailing list\nSubject: {email['subject']}"
-                            + (f"\nRelease name: {name}" if name else ""))
+            db.add_activity(
+                "release_notes_sent",
+                "Release notes sent",
+                f"Scope: {scope}\nTo: club mailing list\nSubject: {email['subject']}"
+                + (f"\nRelease name: {name}" if name else ""),
+            )
             # Mark this release in the club timeline and store HEAD as the baseline the next
             # release-notes scopes from (so it auto-covers everything shipped since). A named
             # list send is what christens the release — the name becomes current_release().
             head = release_notes.head_commit()
             gh_url = None
             if head:
-                db.record_release_notes_sent(head, scope=scope, subject=email["subject"],
-                                             window=email.get("window"), release_name=name)
+                db.record_release_notes_sent(
+                    head,
+                    scope=scope,
+                    subject=email["subject"],
+                    window=email.get("window"),
+                    release_name=name,
+                )
                 # The permanent code reference: tag + GitHub release named after the christening.
                 # Best-effort (the email already went); failures land in #oliver-log.
                 gh_url = await asyncio.to_thread(
                     release_notes.create_github_release,
-                    name=name or "", commit=head, body=email["body"])
+                    name=name or "",
+                    commit=head,
+                    body=email["body"],
+                )
             gh_line = f"\nGitHub release: {gh_url}" if gh_url else ""
             await interaction.followup.send(
                 f"📣 Sent release notes ({scope}) to the club list and mirrored to the main "
-                f"channel.\nSubject: *{email['subject']}*{christened}{gh_line}", ephemeral=True)
+                f"channel.\nSubject: *{email['subject']}*{christened}{gh_line}",
+                ephemeral=True,
+            )
         else:
             slug = identities.member_slug_for_user(str(interaction.user.id))
             rec = identities.email_for_member(slug) if slug else None
             if not rec:
                 await interaction.followup.send(
                     "You don't have a linked email address, so I can only send this to the list "
-                    "(`to:list`) — or link an email first.", ephemeral=True)
+                    "(`to:list`) — or link an email first.",
+                    ephemeral=True,
+                )
                 return
             sent = await asyncio.to_thread(
                 outbound.send,
@@ -555,29 +629,46 @@ async def release_notes_cmd(interaction: discord.Interaction, days: int | None =
                 idempotency_key=f"email:release-notes-draft:{interaction.id}",
                 policy="linked_member",
             )
-            db.add_activity("release_notes_sent", "Release notes sent",
-                            f"Scope: {scope}\nTo: {rec['email']} (admin)\nSubject: {email['subject']}\n"
-                            f"Email ID: {sent.get('emailId')}")
+            db.add_activity(
+                "release_notes_sent",
+                "Release notes sent",
+                f"Scope: {scope}\nTo: {rec['email']} (admin)\nSubject: {email['subject']}\n"
+                f"Email ID: {sent.get('emailId')}",
+            )
             await interaction.followup.send(
                 f"📝 Emailed the release-notes draft ({scope}) to `{rec['email']}` "
                 f"(`{sent.get('emailId')}`).\nSubject: *{email['subject']}*"
-                + (f"\nDraft release name: *{name}* (christened only on a list send)" if name else "")
-                + "\nReview it, then re-run with `to:list` to send it to the club.", ephemeral=True)
+                + (
+                    f"\nDraft release name: *{name}* (christened only on a list send)"
+                    if name
+                    else ""
+                )
+                + "\nReview it, then re-run with `to:list` to send it to the club.",
+                ephemeral=True,
+            )
     except Exception:
         log.exception("release-notes send failed")
-        db.add_activity("warning", "Release notes send failed",
-                        f"Days: {days}\nTo: {target}\nThe draft was generated but sending failed.")
-        await interaction.followup.send("I drafted the notes but couldn't send the email.", ephemeral=True)
+        db.add_activity(
+            "warning",
+            "Release notes send failed",
+            f"Days: {days}\nTo: {target}\nThe draft was generated but sending failed.",
+        )
+        await interaction.followup.send(
+            "I drafted the notes but couldn't send the email.", ephemeral=True
+        )
 
 
-@admin_cmds.command(name="postscript",
-                    description="Draft the after-meeting 'Postscript' digest and email it to you (admin test).")
+@admin_cmds.command(
+    name="postscript",
+    description="Draft the after-meeting 'Postscript' digest and email it to you (admin test).",
+)
 @admin_only
 async def postscript_cmd(interaction: discord.Interaction) -> None:
     if not email_jmap.enabled():
         await interaction.response.send_message(
             "Email isn't configured (no FASTMAIL_JMAP_TOKEN), so I can't draft Postscript.",
-            ephemeral=True)
+            ephemeral=True,
+        )
         return
     slug = identities.member_slug_for_user(str(interaction.user.id))
     rec = identities.email_for_member(slug) if slug else None
@@ -585,15 +676,19 @@ async def postscript_cmd(interaction: discord.Interaction) -> None:
         await interaction.response.send_message(
             "You don't have a linked email address — link one in the web app first "
             "(`/oliver my-club` → Profile).",
-            ephemeral=True)
+            ephemeral=True,
+        )
         return
     await interaction.response.defer(ephemeral=True)
     try:
         email = await asyncio.to_thread(meeting_emails.postscript_email)
     except Exception:
         log.exception("postscript generation failed")
-        db.add_activity("warning", "Postscript draft failed",
-                        "Generating the Postscript digest raised an exception.")
+        db.add_activity(
+            "warning",
+            "Postscript draft failed",
+            "Generating the Postscript digest raised an exception.",
+        )
         await interaction.followup.send("Something went wrong drafting Postscript.", ephemeral=True)
         return
     try:
@@ -609,49 +704,64 @@ async def postscript_cmd(interaction: discord.Interaction) -> None:
         )
     except Exception:
         log.exception("postscript send failed")
-        await interaction.followup.send("I drafted Postscript but couldn't send the email.", ephemeral=True)
+        await interaction.followup.send(
+            "I drafted Postscript but couldn't send the email.", ephemeral=True
+        )
         return
-    db.add_activity("club_email_sent", "Postscript test draft sent",
-                    f"To: {rec['email']} (admin test)\nItems offered: {len(email['offered'])}\n"
-                    f"Email ID: {sent.get('emailId')}")
+    db.add_activity(
+        "club_email_sent",
+        "Postscript test draft sent",
+        f"To: {rec['email']} (admin test)\nItems offered: {len(email['offered'])}\n"
+        f"Email ID: {sent.get('emailId')}",
+    )
     await interaction.followup.send(
         f"📝 Emailed a Postscript draft to `{rec['email']}` (`{sent.get('emailId')}`) — test only, "
         "not the club. Check the items are real, then set `CLUB_POSTSCRIPT_ENABLED=1` for the real "
-        "~1-week-after-meeting send.", ephemeral=True)
+        "~1-week-after-meeting send.",
+        ephemeral=True,
+    )
 
 
 @admin_cmds.command(name="link-member", description="Link a Discord user to a club member (admin).")
 @discord.app_commands.describe(member="Club member", user="Discord user")
 @discord.app_commands.autocomplete(member=member_autocomplete)
 @admin_only
-async def link_member_cmd(interaction: discord.Interaction, member: str, user: discord.User) -> None:
+async def link_member_cmd(
+    interaction: discord.Interaction, member: str, user: discord.User
+) -> None:
     m = corpus_read.find_member(member)
     if not m:
         await interaction.response.send_message("I couldn't find that member.", ephemeral=True)
         return
     identities.link_member_identity(str(user.id), m["slug"], linked_by=str(interaction.user.id))
     await interaction.response.send_message(
-        f"Linked {user.mention} to {m['name']} (`{m['slug']}`).", ephemeral=True)
+        f"Linked {user.mention} to {m['name']} (`{m['slug']}`).", ephemeral=True
+    )
 
 
 # Everyone manages contact handles, lists, and ratings/reviews in the web app now
 # (/oliver my-club — email/SMS linking re-attributes archived mail there too). Only link-member
 # stays a slash command: it needs Discord's user picker. _LINK_FIRST is used by /oliver my-club
 # for unlinked callers.
-_LINK_FIRST = ("I can only do that for linked club members — ask an admin to run "
-               "`/oliver admin link-member` to connect your Discord account first.")
+_LINK_FIRST = (
+    "I can only do that for linked club members — ask an admin to run "
+    "`/oliver admin link-member` to connect your Discord account first."
+)
 
 
-@admin_cmds.command(name="reattribute-mail",
-                     description="Re-resolve archived mail senders to members (admin).")
+@admin_cmds.command(
+    name="reattribute-mail", description="Re-resolve archived mail senders to members (admin)."
+)
 @admin_only
 async def reattribute_mail_cmd(interaction: discord.Interaction) -> None:
     await interaction.response.defer(ephemeral=True)
     changed = await asyncio.to_thread(mail_archive.reattribute_archive)
     await interaction.followup.send(
         f"Re-attributed {changed} archived message(s) to their current member links."
-        if changed else "Archive attribution already up to date — nothing changed.",
-        ephemeral=True)
+        if changed
+        else "Archive attribution already up to date — nothing changed.",
+        ephemeral=True,
+    )
 
 
 @oliver_cmds.command(name="whoami", description="Check which club member Oliver has linked you to.")
@@ -659,30 +769,38 @@ async def whoami_cmd(interaction: discord.Interaction) -> None:
     member = _linked_member_for_user(interaction.user.id)
     if member:
         await interaction.response.send_message(
-            f"I have you linked as {member['name']}.", ephemeral=True)
+            f"I have you linked as {member['name']}.", ephemeral=True
+        )
         return
     await interaction.response.send_message(
-        "I don't have your Discord account linked to a club member yet.", ephemeral=True)
+        "I don't have your Discord account linked to a club member yet.", ephemeral=True
+    )
 
 
-@reading_cmds.command(name="status",
-                      description="Show everyone's progress on the next book, or update yours.")
+@reading_cmds.command(
+    name="status", description="Show everyone's progress on the next book, or update yours."
+)
 @discord.app_commands.describe(
     status="Optional status: not_started, started, on_track, behind, finished, paused",
     progress="Optional short note, e.g. 'chapter 6' or 'halfway'",
     page="Optional page number",
     percent="Optional percent complete",
 )
-async def reading_status_cmd(interaction: discord.Interaction, status: str | None = None,
-                             progress: str | None = None, page: int | None = None,
-                             percent: int | None = None) -> None:
+async def reading_status_cmd(
+    interaction: discord.Interaction,
+    status: str | None = None,
+    progress: str | None = None,
+    page: int | None = None,
+    percent: int | None = None,
+) -> None:
     if not any(v is not None for v in (status, progress, page, percent)):
         await interaction.response.send_message(_reading_status_text(), ephemeral=True)
         return
     member = _linked_member_for_user(interaction.user.id)
     if not member:
         await interaction.response.send_message(
-            "I can only update reading status from linked club members.", ephemeral=True)
+            "I can only update reading status from linked club members.", ephemeral=True
+        )
         return
     normalized = (status or "started").strip().lower().replace("-", "_").replace(" ", "_")
     try:
@@ -691,7 +809,8 @@ async def reading_status_cmd(interaction: discord.Interaction, status: str | Non
         member_id = clubdb.lookup_member_id(member["slug"])
         if meeting_id is None or member_id is None:
             await interaction.response.send_message(
-                "There's no scheduled meeting to record reading status against yet.", ephemeral=True)
+                "There's no scheduled meeting to record reading status against yet.", ephemeral=True
+            )
             return
         db.record_reading_report(
             meeting_id,
@@ -714,12 +833,15 @@ async def reading_status_cmd(interaction: discord.Interaction, status: str | Non
     await interaction.response.send_message(_reading_status_text(), ephemeral=True)
 
 
-@meeting_cmds.command(name="check-in", description="Email a reading-status check-in to a member (admin).")
+@meeting_cmds.command(
+    name="check-in", description="Email a reading-status check-in to a member (admin)."
+)
 @discord.app_commands.describe(member="Club member", note="Optional extra sentence")
 @discord.app_commands.autocomplete(member=member_autocomplete)
 @admin_only
-async def reading_checkin_cmd(interaction: discord.Interaction, member: str,
-                              note: str | None = None) -> None:
+async def reading_checkin_cmd(
+    interaction: discord.Interaction, member: str, note: str | None = None
+) -> None:
     m = corpus_read.find_member(member)
     if not m:
         await interaction.response.send_message("I couldn't find that member.", ephemeral=True)
@@ -727,7 +849,8 @@ async def reading_checkin_cmd(interaction: discord.Interaction, member: str,
     email = identities.email_for_member(m["slug"])
     if not email:
         await interaction.response.send_message(
-            f"{m['name']} does not have a linked email address.", ephemeral=True)
+            f"{m['name']} does not have a linked email address.", ephemeral=True
+        )
         return
     if not email_jmap.enabled():
         await interaction.response.send_message("Email is not configured.", ephemeral=True)
@@ -737,8 +860,11 @@ async def reading_checkin_cmd(interaction: discord.Interaction, member: str,
     title = book.get("title") or "the current book"
     meeting_id = meeting["meetingId"]
     member_id = clubdb.lookup_member_id(m["slug"])
-    existing = (db.meeting_member_status(meeting_id, member_id)
-                if (meeting_id is not None and member_id is not None) else None)
+    existing = (
+        db.meeting_member_status(meeting_id, member_id)
+        if (meeting_id is not None and member_id is not None)
+        else None
+    )
     if existing and existing["reading"] == "finished":
         db.add_activity(
             "reading_checkin_skipped",
@@ -747,7 +873,8 @@ async def reading_checkin_cmd(interaction: discord.Interaction, member: str,
         )
         await interaction.response.send_message(
             f"{m['name']} is already marked finished for {title}; not sending a check-in.",
-            ephemeral=True)
+            ephemeral=True,
+        )
         return
     await interaction.response.defer(ephemeral=True)
     try:
@@ -763,30 +890,41 @@ async def reading_checkin_cmd(interaction: discord.Interaction, member: str,
         return
     await interaction.followup.send(
         f"Sent reading check-in to {m['name']} at `{email['email']}` (`{sent.get('emailId')}`).",
-        ephemeral=True)
+        ephemeral=True,
+    )
 
 
 @timeline_cmds.command(name="log", description="Record a club timeline event (admin).")
 @discord.app_commands.describe(
     category="Event category",
     kind="Event kind, e.g. dinner, book_picked, member_away, member_milestone, meeting_held",
-    date="When it happened (YYYY-MM-DD)", summary="One factual sentence",
-    member="Optional member the event is about (omit for club-wide)")
-@discord.app_commands.choices(category=[
-    discord.app_commands.Choice(name=c, value=c)
-    for c in ("meeting", "selection", "social", "member_life", "club", "reading")
-])
+    date="When it happened (YYYY-MM-DD)",
+    summary="One factual sentence",
+    member="Optional member the event is about (omit for club-wide)",
+)
+@discord.app_commands.choices(
+    category=[
+        discord.app_commands.Choice(name=c, value=c)
+        for c in ("meeting", "selection", "social", "member_life", "club", "reading")
+    ]
+)
 @discord.app_commands.autocomplete(member=member_autocomplete)
 @admin_only
-async def oliver_log_event(interaction: discord.Interaction,
-                           category: discord.app_commands.Choice[str], kind: str,
-                           date: str, summary: str, member: str | None = None) -> None:
+async def oliver_log_event(
+    interaction: discord.Interaction,
+    category: discord.app_commands.Choice[str],
+    kind: str,
+    date: str,
+    summary: str,
+    member: str | None = None,
+) -> None:
     cat = category.value
     allowed = db.CHRONICLE_KINDS.get(cat) or ()
     if kind not in allowed:
         await interaction.response.send_message(
             f"`{kind}` isn't a valid kind for **{cat}**. Allowed: {', '.join(allowed)}.",
-            ephemeral=True)
+            ephemeral=True,
+        )
         return
     member_slug = None
     member_id = None
@@ -798,25 +936,35 @@ async def oliver_log_event(interaction: discord.Interaction,
         member_slug = m["slug"]
         member_id = clubdb.lookup_member_id(member_slug)
     eid = await asyncio.to_thread(
-        db.record_event, actor="admin", surface="discord", kind=kind, category=cat,
+        db.record_event,
+        actor="admin",
+        surface="discord",
+        kind=kind,
+        category=cat,
         member_id=member_id,
         detail={"summary": summary, "members": [member_slug] if member_slug else []},
         occurred_at=(date or "")[:10] or None,
     )
     who = f" for {member_slug}" if member_slug else " (club-wide)"
     await interaction.response.send_message(
-        f"🗓️ Logged **{cat}/{kind}** on {date}{who} (#{eid}).", ephemeral=True)
+        f"🗓️ Logged **{cat}/{kind}** on {date}{who} (#{eid}).", ephemeral=True
+    )
 
 
 @timeline_cmds.command(name="show", description="Show recent club timeline events.")
 @discord.app_commands.describe(member="Optional member to scope to", category="Optional category")
 @discord.app_commands.autocomplete(member=member_autocomplete)
-@discord.app_commands.choices(category=[
-    discord.app_commands.Choice(name=c, value=c)
-    for c in ("meeting", "selection", "social", "member_life", "club", "reading", "meeting_ops")
-])
-async def oliver_timeline(interaction: discord.Interaction, member: str | None = None,
-                          category: discord.app_commands.Choice[str] | None = None) -> None:
+@discord.app_commands.choices(
+    category=[
+        discord.app_commands.Choice(name=c, value=c)
+        for c in ("meeting", "selection", "social", "member_life", "club", "reading", "meeting_ops")
+    ]
+)
+async def oliver_timeline(
+    interaction: discord.Interaction,
+    member: str | None = None,
+    category: discord.app_commands.Choice[str] | None = None,
+) -> None:
     member_id = None
     if member:
         m = corpus_read.find_member(member)
@@ -825,7 +973,8 @@ async def oliver_timeline(interaction: discord.Interaction, member: str | None =
             return
         member_id = clubdb.lookup_member_id(m["slug"])
     rows = await asyncio.to_thread(
-        db.timeline, category=(category.value if category else None), member_id=member_id, limit=20)
+        db.timeline, category=(category.value if category else None), member_id=member_id, limit=20
+    )
     if not rows:
         await interaction.response.send_message("No timeline events recorded yet.", ephemeral=True)
         return
@@ -834,47 +983,58 @@ async def oliver_timeline(interaction: discord.Interaction, member: str | None =
         detail = r.get("detail") or ""
         try:
             summary = json.loads(detail).get("summary") if detail.startswith("{") else detail
-        except (json.JSONDecodeError, AttributeError):
+        except json.JSONDecodeError, AttributeError:
             summary = detail
         who = f" [{r['member_slug']}]" if r.get("member_slug") else ""
         lines.append(f"• {(r.get('occurred_at') or '')[:10]} ({r['kind']}){who}: {summary}")
-    await interaction.response.send_message("\n".join(lines)[:config.MAX_DISCORD_LEN], ephemeral=True)
+    await interaction.response.send_message(
+        "\n".join(lines)[: config.MAX_DISCORD_LEN], ephemeral=True
+    )
 
 
-@admin_cmds.command(name="feedback", description="Recent 👍/👎 feedback on Oliver's replies (admin).")
+@admin_cmds.command(
+    name="feedback", description="Recent 👍/👎 feedback on Oliver's replies (admin)."
+)
 @admin_only
 async def oliver_feedback(interaction: discord.Interaction) -> None:
     stats = await asyncio.to_thread(db.feedback_stats)
     if not stats["total"]:
         await interaction.response.send_message(
-            "No feedback yet — members can 👍/👎 any of my replies and I'll log it.",
-            ephemeral=True)
+            "No feedback yet — members can 👍/👎 any of my replies and I'll log it.", ephemeral=True
+        )
         return
-    lines = [f"📊 **Feedback to date:** {stats['up']} 👍 · {stats['down']} 👎  ({stats['total']} total)"]
+    lines = [
+        f"📊 **Feedback to date:** {stats['up']} 👍 · {stats['down']} 👎  ({stats['total']} total)"
+    ]
     if stats["recent_down"]:
         lines.append("\n**Recent 👎:**")
         for r in stats["recent_down"]:
             q = (r.get("question") or "(no question recorded)")[:100]
-            lines.append(f"• {r['user_name']}: \"{q}\"")
+            lines.append(f'• {r["user_name"]}: "{q}"')
     if stats["recent_up"]:
         lines.append("\n**Recent 👍:**")
         for r in stats["recent_up"]:
             q = (r.get("question") or "(no question recorded)")[:100]
-            lines.append(f"• {r['user_name']}: \"{q}\"")
+            lines.append(f'• {r["user_name"]}: "{q}"')
     await interaction.response.send_message("\n".join(lines), ephemeral=True)
 
 
-@meeting_cmds.command(name="roll-call", description="Start, check, remind, or close meeting roll call.")
+@meeting_cmds.command(
+    name="roll-call", description="Start, check, remind, or close meeting roll call."
+)
 @discord.app_commands.describe(action="What to do with the current meeting roll call")
-@discord.app_commands.choices(action=[
-    discord.app_commands.Choice(name="status", value="status"),
-    discord.app_commands.Choice(name="start", value="start"),
-    discord.app_commands.Choice(name="remind", value="remind"),
-    discord.app_commands.Choice(name="email", value="email"),
-    discord.app_commands.Choice(name="close", value="close"),
-])
-async def roll_call_cmd(interaction: discord.Interaction,
-                        action: discord.app_commands.Choice[str]) -> None:
+@discord.app_commands.choices(
+    action=[
+        discord.app_commands.Choice(name="status", value="status"),
+        discord.app_commands.Choice(name="start", value="start"),
+        discord.app_commands.Choice(name="remind", value="remind"),
+        discord.app_commands.Choice(name="email", value="email"),
+        discord.app_commands.Choice(name="close", value="close"),
+    ]
+)
+async def roll_call_cmd(
+    interaction: discord.Interaction, action: discord.app_commands.Choice[str]
+) -> None:
     act = action.value
     if act in {"start", "remind", "email", "close"}:
         msg = _admin_check_message(interaction)
@@ -886,7 +1046,8 @@ async def roll_call_cmd(interaction: discord.Interaction,
     if act == "status":
         await interaction.response.send_message(
             meeting_rules.format_status(meeting_rules.meeting_status(meeting["meetingId"])),
-            ephemeral=True)
+            ephemeral=True,
+        )
         return
 
     if act == "close":
@@ -894,7 +1055,8 @@ async def roll_call_cmd(interaction: discord.Interaction,
             db.record_group_event(meeting["meetingId"], "roll_call_closed", actor="admin")
         await interaction.response.send_message(
             meeting_rules.format_status(meeting_rules.meeting_status(meeting["meetingId"])),
-            ephemeral=True)
+            ephemeral=True,
+        )
         return
 
     if act == "email":
@@ -905,8 +1067,9 @@ async def roll_call_cmd(interaction: discord.Interaction,
     # voice — defer past the 3s ack window before composing.
     status = meeting_rules.meeting_status(meeting["meetingId"])
     await interaction.response.defer()
-    text = await (_roll_call_announcement(status) if act == "start"
-                  else _roll_call_reminder(status))
+    text = await (
+        _roll_call_announcement(status) if act == "start" else _roll_call_reminder(status)
+    )
     sent = await interaction.followup.send(text, view=AttendanceView())
     try:
         if meeting["meetingId"] is not None:
@@ -924,11 +1087,13 @@ async def roll_call_cmd(interaction: discord.Interaction,
         log.exception("Failed to record roll-call message")
 
 
-@meeting_cmds.command(name="dashboard", description="Show the next meeting readiness dashboard (admin).")
+@meeting_cmds.command(
+    name="dashboard", description="Show the next meeting readiness dashboard (admin)."
+)
 @admin_only
 async def meeting_dashboard_cmd(interaction: discord.Interaction) -> None:
     text = await asyncio.to_thread(meeting_campaign.format_dashboard)
-    await interaction.response.send_message(text[:config.MAX_DISCORD_LEN], ephemeral=True)
+    await interaction.response.send_message(text[: config.MAX_DISCORD_LEN], ephemeral=True)
 
 
 @admin_cmds.command(name="proposals", description="Show Oliver's pending action proposals (admin).")
@@ -941,25 +1106,32 @@ async def proposals_cmd(interaction: discord.Interaction) -> None:
     lines = ["**Pending proposals:**"]
     for r in rows:
         lines.append(f"• `{r['id']}` [{r['kind']}] **{r['title']}** — {r['body'][:180]}")
-    await interaction.response.send_message("\n".join(lines)[:config.MAX_DISCORD_LEN], ephemeral=True)
+    await interaction.response.send_message(
+        "\n".join(lines)[: config.MAX_DISCORD_LEN], ephemeral=True
+    )
 
 
 @admin_cmds.command(name="resolve", description="Accept or dismiss an Oliver proposal (admin).")
-@discord.app_commands.describe(proposal_id="Proposal id from /oliver proposals",
-                               decision="Accept or dismiss")
-@discord.app_commands.choices(decision=[
-    discord.app_commands.Choice(name="accept", value="accepted"),
-    discord.app_commands.Choice(name="dismiss", value="dismissed"),
-])
+@discord.app_commands.describe(
+    proposal_id="Proposal id from /oliver proposals", decision="Accept or dismiss"
+)
+@discord.app_commands.choices(
+    decision=[
+        discord.app_commands.Choice(name="accept", value="accepted"),
+        discord.app_commands.Choice(name="dismiss", value="dismissed"),
+    ]
+)
 @admin_only
-async def resolve_proposal_cmd(interaction: discord.Interaction, proposal_id: int,
-                               decision: discord.app_commands.Choice[str]) -> None:
+async def resolve_proposal_cmd(
+    interaction: discord.Interaction, proposal_id: int, decision: discord.app_commands.Choice[str]
+) -> None:
     ok = await asyncio.to_thread(
         db.resolve_proposal, proposal_id, decision.value, resolved_by=str(interaction.user.id)
     )
     await interaction.response.send_message(
         f"Proposal {decision.name}ed." if ok else "No pending proposal with that id.",
-        ephemeral=True)
+        ephemeral=True,
+    )
 
 
 @admin_cmds.command(name="tick", description="Run the proactive scheduler now (admin).")
@@ -968,7 +1140,8 @@ async def oliver_tick(interaction: discord.Interaction) -> None:
     await interaction.response.defer(ephemeral=True)
     n = await proactive.run()
     await interaction.followup.send(
-        f"Posted {n} notification(s)." if n else "Nothing due right now.", ephemeral=True)
+        f"Posted {n} notification(s)." if n else "Nothing due right now.", ephemeral=True
+    )
 
 
 # ── Wiring ───────────────────────────────────────────────────────────────────

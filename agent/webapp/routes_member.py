@@ -35,8 +35,9 @@ def _safe_return(form, default: str) -> str:
     return ret
 
 
-def apply_identity_op(slug: str, op: str, val: str, label: str | None = None,
-                      new_value: str | None = None) -> bool:
+def apply_identity_op(
+    slug: str, op: str, val: str, label: str | None = None, new_value: str | None = None
+) -> bool:
     """Apply one profile identity mutation for `slug`. Shared by the member profile page
     and the admin member editor. Returns True when the change is public (websites).
 
@@ -77,10 +78,14 @@ def home_context(member_slug: str) -> dict:
     star rows reuse the ratings endpoint), and their review debt (cr.pending_reviews — the same
     logic Oliver's pending_reviews tool answers with)."""
     from agent.club import meeting_rules
+
     meeting = meeting_rules.next_meeting()
     mine = _member_ratings(member_slug)
-    recent_read = sorted((b for b in cr.books() if b.get("isRead")),
-                         key=lambda b: b.get("meetingDate") or "", reverse=True)
+    recent_read = sorted(
+        (b for b in cr.books() if b.get("isRead")),
+        key=lambda b: b.get("meetingDate") or "",
+        reverse=True,
+    )
     joined = (cr.find_member(member_slug) or {}).get("joined")
     unrated = [
         {"slug": b["slug"], "title": b["title"], "year": (b.get("meetingDate") or "")[:4]}
@@ -96,25 +101,31 @@ def home_context(member_slug: str) -> dict:
 def _load_books() -> list[dict]:
     with db.connect() as conn:
         books = clubdb.all_books(conn)
-    return sorted(({"slug": b["slug"], "title": b["title"]} for b in books),
-                  key=lambda b: b["title"].lower())
+    return sorted(
+        ({"slug": b["slug"], "title": b["title"]} for b in books), key=lambda b: b["title"].lower()
+    )
 
 
 def _member_ratings(member_slug: str) -> dict[str, dict]:
     with db.connect() as conn:
-        return {r["book_slug"]: r for r in clubdb.all_reviews(conn)
-                if r["member_slug"] == member_slug}
+        return {
+            r["book_slug"]: r for r in clubdb.all_reviews(conn) if r["member_slug"] == member_slug
+        }
 
 
 def _book_dates() -> dict[str, str]:
     """Map book slug → the date it was most recently discussed (its meeting date).
     Drives reverse-chronological ordering and the year filter on Ratings/Reviews."""
     with db.connect() as conn:
-        return {r["slug"]: r["date"] for r in conn.execute(
-            "SELECT b.slug AS slug, MAX(m.date) AS date FROM club_meeting_books mb "
-            "JOIN club_books b ON b.id = mb.book_id "
-            "JOIN club_meetings m ON m.id = mb.meeting_id "
-            "WHERE m.date IS NOT NULL GROUP BY b.id")}
+        return {
+            r["slug"]: r["date"]
+            for r in conn.execute(
+                "SELECT b.slug AS slug, MAX(m.date) AS date FROM club_meeting_books mb "
+                "JOIN club_books b ON b.id = mb.book_id "
+                "JOIN club_meetings m ON m.id = mb.meeting_id "
+                "WHERE m.date IS NOT NULL GROUP BY b.id"
+            )
+        }
 
 
 def _within_tenure(member_slug: str, book_slug: str) -> bool:
@@ -143,7 +154,7 @@ def _by_discussed_desc(books: list[dict], dates: dict[str, str]) -> list[dict]:
     for b in books:
         d = dates.get(b["slug"])
         rows.append({**b, "date": d, "year": (d or "")[:4] or None})
-    rows.sort(key=lambda r: (r["date"] or ""), reverse=True)
+    rows.sort(key=lambda r: r["date"] or "", reverse=True)
     return rows
 
 
@@ -153,11 +164,15 @@ async def ratings_page(request: web.Request) -> web.Response:
     books = await asyncio.to_thread(_load_books)
     mine = await asyncio.to_thread(_member_ratings, slug)
     dates = await asyncio.to_thread(_book_dates)
-    rows = [{
-        "slug": b["slug"], "title": b["title"],
-        "rating": (mine.get(b["slug"]) or {}).get("rating"),
-        "dnf": bool((mine.get(b["slug"]) or {}).get("dnf")),
-    } for b in books]
+    rows = [
+        {
+            "slug": b["slug"],
+            "title": b["title"],
+            "rating": (mine.get(b["slug"]) or {}).get("rating"),
+            "dnf": bool((mine.get(b["slug"]) or {}).get("dnf")),
+        }
+        for b in books
+    ]
     rows = _tenure(slug, _by_discussed_desc(rows, dates))  # tenure-only, newest first
     years = sorted({r["year"] for r in rows if r["year"]}, reverse=True)
     return render("ratings.html", request, books=rows, years=years)
@@ -216,7 +231,8 @@ async def review_compose(request: web.Request) -> web.Response:
     if not await asyncio.to_thread(_within_tenure, slug, book["slug"]):
         return web.Response(status=403, text="That book predates your time in the club.")
     existing = await asyncio.to_thread(
-        lambda: next((r for r in cr._reviews_for(book_slug=book["slug"], member_slug=slug)), None))
+        lambda: next((r for r in cr._reviews_for(book_slug=book["slug"], member_slug=slug)), None)
+    )
     return render("review.html", request, book=book, existing=existing or {})
 
 
@@ -228,15 +244,25 @@ async def review_submit(request: web.Request) -> web.Response:
         return web.Response(status=403, text="That book predates your time in the club.")
     try:
         await asyncio.to_thread(
-            reviews_writer.write_review, book_slug, slug,
-            rating=form.get("rating"), review=form.get("body"),
-            recommend=form.get("recommend"), discussion=form.get("discussion"),
+            reviews_writer.write_review,
+            book_slug,
+            slug,
+            rating=form.get("rating"),
+            review=form.get("body"),
+            recommend=form.get("recommend"),
+            discussion=form.get("discussion"),
             quote=form.get("quote"),
         )
     except reviews_writer.ReviewError as e:
         book = await asyncio.to_thread(cr.find_book, book_slug)
-        return render("review.html", request, status=400, book=book or {"slug": book_slug, "title": book_slug},
-                      existing=dict(form), error=str(e))
+        return render(
+            "review.html",
+            request,
+            status=400,
+            book=book or {"slug": book_slug, "title": book_slug},
+            existing=dict(form),
+            error=str(e),
+        )
     state.mark_dirty()
     raise web.HTTPFound("/webapp/reviews")
 
@@ -255,7 +281,9 @@ async def list_detail(request: web.Request) -> web.Response:
     slug = request["session"]["slug"]
     list_slug = request.match_info["slug"]
     all_lists = await asyncio.to_thread(cr.lists)
-    lst = next((x for x in all_lists if x.get("slug") == list_slug and x.get("owner") == slug), None)
+    lst = next(
+        (x for x in all_lists if x.get("slug") == list_slug and x.get("owner") == slug), None
+    )
     if lst is None:
         return web.Response(status=404, text="No such list.")
     books = await asyncio.to_thread(_load_books)
@@ -269,8 +297,12 @@ async def lists_create(request: web.Request) -> web.Response:
     scope = "club" if (form.get("scope") == "club" and session.get("a")) else "member"
     try:
         await asyncio.to_thread(
-            lists_writer.create_list, form.get("name", ""), form.get("description"),
-            owner_slug=None if scope == "club" else session["slug"], scope=scope)
+            lists_writer.create_list,
+            form.get("name", ""),
+            form.get("description"),
+            owner_slug=None if scope == "club" else session["slug"],
+            scope=scope,
+        )
     except lists_writer.ListError:
         pass  # fall through to re-render; the page shows current state
     state.mark_dirty()
@@ -288,31 +320,66 @@ async def lists_action(request: web.Request) -> web.Response:
     err = None
     try:
         if op == "add-book":
-            await asyncio.to_thread(lists_writer.add_book, ref, form.get("book", ""),
-                                    form.get("note"), actor_slug=actor, is_admin=is_admin)
+            await asyncio.to_thread(
+                lists_writer.add_book,
+                ref,
+                form.get("book", ""),
+                form.get("note"),
+                actor_slug=actor,
+                is_admin=is_admin,
+            )
         elif op == "remove-book":
-            await asyncio.to_thread(lists_writer.remove_book, ref, form.get("book", ""),
-                                    actor_slug=actor, is_admin=is_admin)
+            await asyncio.to_thread(
+                lists_writer.remove_book,
+                ref,
+                form.get("book", ""),
+                actor_slug=actor,
+                is_admin=is_admin,
+            )
         elif op == "edit":
-            await asyncio.to_thread(lists_writer.edit_list, ref, name=form.get("name") or None,
-                                    description=form.get("description"), actor_slug=actor, is_admin=is_admin)
+            await asyncio.to_thread(
+                lists_writer.edit_list,
+                ref,
+                name=form.get("name") or None,
+                description=form.get("description"),
+                actor_slug=actor,
+                is_admin=is_admin,
+            )
         elif op == "delete":
-            await asyncio.to_thread(lists_writer.delete_list, ref, actor_slug=actor, is_admin=is_admin)
+            await asyncio.to_thread(
+                lists_writer.delete_list, ref, actor_slug=actor, is_admin=is_admin
+            )
         elif op in ("move-up", "move-down"):
-            await asyncio.to_thread(lists_writer.move_book, ref, form.get("book", ""),
-                                    up=(op == "move-up"), actor_slug=actor, is_admin=is_admin)
+            await asyncio.to_thread(
+                lists_writer.move_book,
+                ref,
+                form.get("book", ""),
+                up=(op == "move-up"),
+                actor_slug=actor,
+                is_admin=is_admin,
+            )
         elif op == "set-note":
-            await asyncio.to_thread(lists_writer.set_note, ref, form.get("book", ""),
-                                    form.get("note"), actor_slug=actor, is_admin=is_admin)
+            await asyncio.to_thread(
+                lists_writer.set_note,
+                ref,
+                form.get("book", ""),
+                form.get("note"),
+                actor_slug=actor,
+                is_admin=is_admin,
+            )
         elif op == "reorder":
             slugs = [s for s in (form.get("order") or "").split(",") if s]
-            await asyncio.to_thread(lists_writer.reorder, ref, slugs, actor_slug=actor, is_admin=is_admin)
+            await asyncio.to_thread(
+                lists_writer.reorder, ref, slugs, actor_slug=actor, is_admin=is_admin
+            )
     except lists_writer.ListError as e:
         err = str(e)
     if err is None:
         state.mark_dirty()
     if request.headers.get("X-Requested-With") == "fetch":
-        return web.json_response({"ok": err is None, "error": err}, status=200 if err is None else 400)
+        return web.json_response(
+            {"ok": err is None, "error": err}, status=200 if err is None else 400
+        )
     raise web.HTTPFound(_safe_return(form, "/webapp/lists"))
 
 
@@ -342,16 +409,18 @@ async def profile_action(request: web.Request) -> web.Response:
 
 
 def add_routes(app: web.Application) -> None:
-    app.add_routes([
-        web.get("/webapp/ratings", ratings_page),
-        web.post("/webapp/ratings/set", ratings_set),
-        web.get("/webapp/reviews", reviews_page),
-        web.get("/webapp/reviews/{book}", review_compose),
-        web.post("/webapp/reviews", review_submit),
-        web.get("/webapp/lists", lists_page),
-        web.post("/webapp/lists/create", lists_create),
-        web.post("/webapp/lists/act", lists_action),
-        web.get("/webapp/lists/{slug}", list_detail),
-        web.get("/webapp/profile", profile_page),
-        web.post("/webapp/profile/act", profile_action),
-    ])
+    app.add_routes(
+        [
+            web.get("/webapp/ratings", ratings_page),
+            web.post("/webapp/ratings/set", ratings_set),
+            web.get("/webapp/reviews", reviews_page),
+            web.get("/webapp/reviews/{book}", review_compose),
+            web.post("/webapp/reviews", review_submit),
+            web.get("/webapp/lists", lists_page),
+            web.post("/webapp/lists/create", lists_create),
+            web.post("/webapp/lists/act", lists_action),
+            web.get("/webapp/lists/{slug}", list_detail),
+            web.get("/webapp/profile", profile_page),
+            web.post("/webapp/profile/act", profile_action),
+        ]
+    )

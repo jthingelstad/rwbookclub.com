@@ -47,8 +47,13 @@ def _authorize(row: dict, *, actor_slug: str | None, is_admin: bool) -> None:
         raise ListError("That's not your list — you can only change your own.")
 
 
-def create_list(name: str, description: str | None = None, *,
-                owner_slug: str | None = None, scope: str = "member") -> dict:
+def create_list(
+    name: str,
+    description: str | None = None,
+    *,
+    owner_slug: str | None = None,
+    scope: str = "member",
+) -> dict:
     """Create a member list (owner = the caller) or, for admins, a club list (owner_slug=None,
     scope='club'). Returns {slug, name, scope}."""
     name = (name or "").strip()
@@ -60,15 +65,26 @@ def create_list(name: str, description: str | None = None, *,
             owner_id = clubdb.member_id_for_slug(conn, owner_slug)
             if owner_id is None:
                 raise ListError("You need to be a linked club member to make a list.")
-        res = clubdb.create_list(conn, name=name, scope=scope, owner_id=owner_id,
-                                 description=(description or "").strip() or None)
+        res = clubdb.create_list(
+            conn,
+            name=name,
+            scope=scope,
+            owner_id=owner_id,
+            description=(description or "").strip() or None,
+        )
         corpus_gen.write_list_file(conn, res["id"], DATA_DIR)
     _validate_or_raise()
     return {"slug": res["slug"], "name": name, "scope": scope}
 
 
-def add_book(list_ref: str, book_query: str, note: str | None = None, *,
-             actor_slug: str | None, is_admin: bool) -> dict:
+def add_book(
+    list_ref: str,
+    book_query: str,
+    note: str | None = None,
+    *,
+    actor_slug: str | None,
+    is_admin: bool,
+) -> dict:
     book = cr.find_book(book_query)
     if not book:
         raise ListError(f"No book matching {book_query!r} in our corpus.")
@@ -82,8 +98,9 @@ def add_book(list_ref: str, book_query: str, note: str | None = None, *,
     return {"slug": row["slug"], "name": row["name"], "book": book["title"], "added": added}
 
 
-def move_book(list_ref: str, book_query: str, *, up: bool, actor_slug: str | None,
-              is_admin: bool) -> dict:
+def move_book(
+    list_ref: str, book_query: str, *, up: bool, actor_slug: str | None, is_admin: bool
+) -> dict:
     """Move a book one step up/down within a list (preserving its note)."""
     book = cr.find_book(book_query)
     if not book:
@@ -98,21 +115,25 @@ def move_book(list_ref: str, book_query: str, *, up: bool, actor_slug: str | Non
     return {"slug": row["slug"], "name": row["name"], "book": book["title"], "moved": moved}
 
 
-def reorder(list_ref: str, book_slugs: list[str], *, actor_slug: str | None,
-            is_admin: bool) -> dict:
+def reorder(
+    list_ref: str, book_slugs: list[str], *, actor_slug: str | None, is_admin: bool
+) -> dict:
     """Set a list's order to the given sequence of book slugs (drag-and-drop)."""
     with db.connect() as conn:
         row = _resolve_list(conn, list_ref, actor_slug=actor_slug, is_admin=is_admin)
         _authorize(row, actor_slug=actor_slug, is_admin=is_admin)
-        book_ids = [bid for bid in (clubdb.book_id_for_slug(conn, s) for s in book_slugs if s) if bid]
+        book_ids = [
+            bid for bid in (clubdb.book_id_for_slug(conn, s) for s in book_slugs if s) if bid
+        ]
         clubdb.reorder_list_books(conn, row["id"], book_ids)
         corpus_gen.write_list_file(conn, row["id"], DATA_DIR)
     _validate_or_raise()
     return {"slug": row["slug"], "name": row["name"]}
 
 
-def set_note(list_ref: str, book_query: str, note: str | None, *,
-             actor_slug: str | None, is_admin: bool) -> dict:
+def set_note(
+    list_ref: str, book_query: str, note: str | None, *, actor_slug: str | None, is_admin: bool
+) -> dict:
     """Set (or clear) the note on a book already in the list. Errors if the book isn't present."""
     book = cr.find_book(book_query)
     if not book:
@@ -121,8 +142,9 @@ def set_note(list_ref: str, book_query: str, note: str | None, *,
         row = _resolve_list(conn, list_ref, actor_slug=actor_slug, is_admin=is_admin)
         _authorize(row, actor_slug=actor_slug, is_admin=is_admin)
         book_id = clubdb.book_id_for_slug(conn, book["slug"])
-        if not conn.execute("SELECT 1 FROM club_list_books WHERE list_id = ? AND book_id = ?",
-                            (row["id"], book_id)).fetchone():
+        if not conn.execute(
+            "SELECT 1 FROM club_list_books WHERE list_id = ? AND book_id = ?", (row["id"], book_id)
+        ).fetchone():
             raise ListError(f"{book['title']!r} isn't in this list.")
         clubdb.set_list_book(conn, row["id"], book_id, (note or "").strip() or None)
         corpus_gen.write_list_file(conn, row["id"], DATA_DIR)
@@ -144,16 +166,25 @@ def remove_book(list_ref: str, book_query: str, *, actor_slug: str | None, is_ad
     return {"slug": row["slug"], "name": row["name"], "book": book["title"], "removed": removed}
 
 
-def edit_list(list_ref: str, *, name: str | None = None, description: str | None = None,
-              actor_slug: str | None, is_admin: bool) -> dict:
+def edit_list(
+    list_ref: str,
+    *,
+    name: str | None = None,
+    description: str | None = None,
+    actor_slug: str | None,
+    is_admin: bool,
+) -> dict:
     if name is not None and not name.strip():
         raise ListError("A list name can't be empty.")
     with db.connect() as conn:
         row = _resolve_list(conn, list_ref, actor_slug=actor_slug, is_admin=is_admin)
         _authorize(row, actor_slug=actor_slug, is_admin=is_admin)
-        clubdb.update_list(conn, row["id"],
-                           name=name.strip() if name else None,
-                           description=description.strip() if description is not None else None)
+        clubdb.update_list(
+            conn,
+            row["id"],
+            name=name.strip() if name else None,
+            description=description.strip() if description is not None else None,
+        )
         corpus_gen.write_list_file(conn, row["id"], DATA_DIR)
     _validate_or_raise()
     return {"slug": row["slug"], "name": (name.strip() if name else row["name"])}

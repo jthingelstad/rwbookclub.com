@@ -1,4 +1,5 @@
 """The 2-day topic email and 1-week reminder builders."""
+
 from agent.club import meeting_emails
 
 MEETING = {
@@ -12,7 +13,7 @@ MEETING = {
 def test_topic_email_prompt_includes_facts():
     prompt = meeting_emails.topic_email_prompt(MEETING)
     assert "A World Appears" in prompt
-    assert "June 30" in prompt          # friendly date, not the ISO form
+    assert "June 30" in prompt  # friendly date, not the ISO form
     assert "2026-06-30" not in prompt
     assert "Jamie" in prompt
     assert "two days before" in prompt
@@ -38,8 +39,10 @@ def test_extract_email_handles_unclosed_tag():
 
 
 def test_extract_email_strips_preamble_and_trailing_notes():
-    raw = ("Good — I have what I need. Let me write this.\n\n"
-           "<email>Hello all,\n\n## Connections\nstuff</email>\n\nnotes after")
+    raw = (
+        "Good — I have what I need. Let me write this.\n\n"
+        "<email>Hello all,\n\n## Connections\nstuff</email>\n\nnotes after"
+    )
     out = meeting_emails._extract_email(raw)
     assert out.startswith("Hello all,")
     assert "Good — I have" not in out
@@ -72,7 +75,7 @@ def test_week_reminder_separates_yes_no_and_pending(monkeypatch):
         "attendance": [
             {"member": "Erik", "status": "yes"},
             {"member": "Loren", "status": "yes"},
-            {"member": "Tom", "status": "no"},       # clearly declined
+            {"member": "Tom", "status": "no"},  # clearly declined
             {"member": "Nick", "status": "pending"},
         ],
         "counts": {},
@@ -81,5 +84,5 @@ def test_week_reminder_separates_yes_no_and_pending(monkeypatch):
     assert out["body"] == "WEEK BODY"
     assert "A World Appears" in out["subject"]
     assert captured["confirmed coming"] == "Erik, Loren"
-    assert captured["not able to make it"] == "Tom"            # Tom is a 'no', not pending
-    assert captured["still waiting to hear from"] == "Nick"    # only Nick gets nudged
+    assert captured["not able to make it"] == "Tom"  # Tom is a 'no', not pending
+    assert captured["still waiting to hear from"] == "Nick"  # only Nick gets nudged

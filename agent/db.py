@@ -449,15 +449,20 @@ def _migrate(conn: sqlite3.Connection) -> None:
 
 
 def _table_exists(conn: sqlite3.Connection, name: str) -> bool:
-    return conn.execute(
-        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (name,)
-    ).fetchone() is not None
+    return (
+        conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (name,)
+        ).fetchone()
+        is not None
+    )
 
 
 # meeting_key (a book slug) → its meeting id; member_slug → member id. Correlated
 # subqueries over the old row alias `o`, used by the one-time ops FK rebuild below.
-_MK = ("(SELECT MAX(mb.meeting_id) FROM club_books b "
-       "JOIN club_meeting_books mb ON mb.book_id = b.id WHERE b.slug = o.meeting_key)")
+_MK = (
+    "(SELECT MAX(mb.meeting_id) FROM club_books b "
+    "JOIN club_meeting_books mb ON mb.book_id = b.id WHERE b.slug = o.meeting_key)"
+)
 _MID = "(SELECT id FROM club_members WHERE slug = o.member_slug)"
 
 
@@ -482,7 +487,7 @@ def migrate_ops_to_fk(conn: sqlite3.Connection) -> None:
     _require_mappable("member_contacts", member=True)
     # email_tracking ids are nullable — map what resolves, leave the rest NULL.
 
-    conn.commit()                                  # close any implicit tx so the PRAGMA takes effect
+    conn.commit()  # close any implicit tx so the PRAGMA takes effect
     conn.execute("PRAGMA foreign_keys=OFF")
     try:
         conn.executescript(f"""
@@ -546,7 +551,9 @@ def migrate_ops_to_fk(conn: sqlite3.Connection) -> None:
         conn.execute("PRAGMA foreign_keys=ON")
     dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
     if dangling:
-        raise RuntimeError(f"ops FK migration left dangling references: {[tuple(r) for r in dangling]}")
+        raise RuntimeError(
+            f"ops FK migration left dangling references: {[tuple(r) for r in dangling]}"
+        )
 
 
 def migrate_identity_to_fk(conn: sqlite3.Connection) -> None:
@@ -567,9 +574,7 @@ def migrate_identity_to_fk(conn: sqlite3.Connection) -> None:
         return
     sid = "(SELECT id FROM club_members WHERE slug = o.member_slug)"
     for tbl in ("member_identities", "member_emails"):
-        bad = conn.execute(
-            f"SELECT COUNT(*) c FROM {tbl} o WHERE {sid} IS NULL"
-        ).fetchone()["c"]
+        bad = conn.execute(f"SELECT COUNT(*) c FROM {tbl} o WHERE {sid} IS NULL").fetchone()["c"]
         if bad:
             raise RuntimeError(f"identity migration: {bad} {tbl} rows do not map to a club member")
 
@@ -630,7 +635,9 @@ def migrate_identity_to_fk(conn: sqlite3.Connection) -> None:
         conn.execute("PRAGMA foreign_keys=ON")
     dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
     if dangling:
-        raise RuntimeError(f"identity migration left dangling references: {[tuple(r) for r in dangling]}")
+        raise RuntimeError(
+            f"identity migration left dangling references: {[tuple(r) for r in dangling]}"
+        )
 
 
 def migrate_drop_legacy_identity(conn: sqlite3.Connection) -> None:
@@ -703,7 +710,9 @@ def migrate_drop_legacy_identity(conn: sqlite3.Connection) -> None:
         conn.execute("PRAGMA foreign_keys=ON")
     dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
     if dangling:
-        raise RuntimeError(f"legacy-identity drop left dangling references: {[tuple(r) for r in dangling]}")
+        raise RuntimeError(
+            f"legacy-identity drop left dangling references: {[tuple(r) for r in dangling]}"
+        )
 
 
 def migrate_drop_email_tracking(conn: sqlite3.Connection) -> None:
@@ -729,7 +738,9 @@ def migrate_drop_email_tracking(conn: sqlite3.Connection) -> None:
         conn.execute("PRAGMA foreign_keys=ON")
     dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
     if dangling:
-        raise RuntimeError(f"email-tracking drop left dangling references: {[tuple(r) for r in dangling]}")
+        raise RuntimeError(
+            f"email-tracking drop left dangling references: {[tuple(r) for r in dangling]}"
+        )
 
 
 def migrate_website_to_identities(conn: sqlite3.Connection) -> None:
@@ -755,7 +766,9 @@ def migrate_website_to_identities(conn: sqlite3.Connection) -> None:
         conn.execute("PRAGMA foreign_keys=ON")
     dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
     if dangling:
-        raise RuntimeError(f"website migration left dangling references: {[tuple(r) for r in dangling]}")
+        raise RuntimeError(
+            f"website migration left dangling references: {[tuple(r) for r in dangling]}"
+        )
 
 
 def migrate_drop_review_airtable_id(conn: sqlite3.Connection) -> None:
@@ -776,7 +789,9 @@ def migrate_drop_review_airtable_id(conn: sqlite3.Connection) -> None:
         conn.execute("PRAGMA foreign_keys=ON")
     dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
     if dangling:
-        raise RuntimeError(f"review airtable_id drop left dangling references: {[tuple(r) for r in dangling]}")
+        raise RuntimeError(
+            f"review airtable_id drop left dangling references: {[tuple(r) for r in dangling]}"
+        )
 
 
 def migrate_meeting_events(conn: sqlite3.Connection) -> None:
@@ -847,14 +862,18 @@ def migrate_meeting_events(conn: sqlite3.Connection) -> None:
         conn.execute("PRAGMA foreign_keys=ON")
     dangling = conn.execute("PRAGMA foreign_key_check").fetchall()
     if dangling:
-        raise RuntimeError(f"meeting-events migration left dangling references: {[tuple(r) for r in dangling]}")
+        raise RuntimeError(
+            f"meeting-events migration left dangling references: {[tuple(r) for r in dangling]}"
+        )
 
 
 def ensure_member_indexes(conn: sqlite3.Connection) -> None:
     """Indexes on member_id columns that only exist once the table is in its new shape
     (fresh DB via RUNTIME_SCHEMA, or existing DB via migrate_identity_to_fk). Safe + idempotent."""
     if "member_id" in _columns(conn, "member_identities"):
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_member_identities_member ON member_identities(member_id, surface)")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_member_identities_member ON member_identities(member_id, surface)"
+        )
 
 
 RUNTIME_MIGRATIONS = (
@@ -874,9 +893,16 @@ def _now() -> str:
 
 
 # ── Memories ─────────────────────────────────────────────────────────────────
-def add_memory(note: str, *, scope: str = "general", subject: str | None = None,
-               source: str | None = None, source_user_id: str | None = None,
-               source_message_id: str | None = None, confidence: float = 1.0) -> int:
+def add_memory(
+    note: str,
+    *,
+    scope: str = "general",
+    subject: str | None = None,
+    source: str | None = None,
+    source_user_id: str | None = None,
+    source_message_id: str | None = None,
+    confidence: float = 1.0,
+) -> int:
     with connect() as conn:
         cur = conn.execute(
             "INSERT INTO memories "
@@ -887,30 +913,45 @@ def add_memory(note: str, *, scope: str = "general", subject: str | None = None,
         return cur.lastrowid
 
 
-def get_memories(*, subject: str | None = None, scope: str | None = None,
-                 query: str | None = None, source: str | None = None,
-                 limit: int = 50) -> list[dict]:
+def get_memories(
+    *,
+    subject: str | None = None,
+    scope: str | None = None,
+    query: str | None = None,
+    source: str | None = None,
+    limit: int = 50,
+) -> list[dict]:
     sql = (
         "SELECT id, scope, subject, note, source, source_user_id, source_message_id, "
         "confidence, created_at FROM memories WHERE status = 'active'"
     )
     args: list = []
     if subject:
-        sql += " AND subject = ?"; args.append(subject)
+        sql += " AND subject = ?"
+        args.append(subject)
     if scope:
-        sql += " AND scope = ?"; args.append(scope)
+        sql += " AND scope = ?"
+        args.append(scope)
     if query:
-        sql += " AND note LIKE ?"; args.append(f"%{query}%")
+        sql += " AND note LIKE ?"
+        args.append(f"%{query}%")
     if source:
-        sql += " AND source = ?"; args.append(source)
-    sql += " ORDER BY id DESC LIMIT ?"; args.append(limit)
+        sql += " AND source = ?"
+        args.append(source)
+    sql += " ORDER BY id DESC LIMIT ?"
+    args.append(limit)
     with connect() as conn:
         return [dict(r) for r in conn.execute(sql, args)]
 
 
-def visible_memories(*, viewer_member_slug: str | None, is_admin: bool,
-                     subject: str | None = None, query: str | None = None,
-                     limit: int = 50) -> list[dict]:
+def visible_memories(
+    *,
+    viewer_member_slug: str | None,
+    is_admin: bool,
+    subject: str | None = None,
+    query: str | None = None,
+    limit: int = 50,
+) -> list[dict]:
     """Memories a conversational actor may see.
 
     Admin repair/audit calls retain the unrestricted reader above.  A linked member sees club
@@ -974,11 +1015,20 @@ def delete_memory(memory_id: int) -> bool:
 
 
 # ── Book Cloud ────────────────────────────────────────────────────────────────
-def add_book_cloud_entry(*, title: str, reason: str, surface: str,
-                         author: str | None = None, book_slug: str | None = None,
-                         mentioned_by: str | None = None, mentioned_by_name: str | None = None,
-                         channel_id: str | None = None, source_message_id: str | None = None,
-                         reason_kind: str | None = None, created_at: str | None = None) -> int:
+def add_book_cloud_entry(
+    *,
+    title: str,
+    reason: str,
+    surface: str,
+    author: str | None = None,
+    book_slug: str | None = None,
+    mentioned_by: str | None = None,
+    mentioned_by_name: str | None = None,
+    channel_id: str | None = None,
+    source_message_id: str | None = None,
+    reason_kind: str | None = None,
+    created_at: str | None = None,
+) -> int:
     """Unconditional INSERT (no dedupe — the reason is the unit of value). `created_at` may be
     supplied so the archive seeding can BACKDATE mentions to their real sent date, keeping
     first/last-mention aggregation historically true."""
@@ -989,18 +1039,32 @@ def add_book_cloud_entry(*, title: str, reason: str, surface: str,
             "INSERT INTO book_cloud (title, author, book_slug, mentioned_by, mentioned_by_name, "
             "surface, channel_id, source_message_id, reason, reason_kind, created_at) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))",
-            (title.strip(), author, book_slug, mentioned_by, mentioned_by_name, surface,
-             channel_id, source_message_id, reason.strip(), reason_kind, created_at),
+            (
+                title.strip(),
+                author,
+                book_slug,
+                mentioned_by,
+                mentioned_by_name,
+                surface,
+                channel_id,
+                source_message_id,
+                reason.strip(),
+                reason_kind,
+                created_at,
+            ),
         )
         return cur.lastrowid
 
 
-def recent_book_cloud(*, limit: int = 20, query: str | None = None,
-                      member: str | None = None, kind: str | None = None) -> list[dict]:
+def recent_book_cloud(
+    *, limit: int = 20, query: str | None = None, member: str | None = None, kind: str | None = None
+) -> list[dict]:
     """Raw cloud rows, newest first; `query` is a LIKE over title/author/reason; `member`/`kind`
     filter by mentioner slug and reason_kind (the admin webapp view uses all three)."""
-    sql = ("SELECT id, title, author, book_slug, mentioned_by, mentioned_by_name, surface, "
-           "reason, reason_kind, created_at FROM book_cloud")
+    sql = (
+        "SELECT id, title, author, book_slug, mentioned_by, mentioned_by_name, surface, "
+        "reason, reason_kind, created_at FROM book_cloud"
+    )
     where: list[str] = []
     args: list = []
     if query:
@@ -1020,14 +1084,17 @@ def recent_book_cloud(*, limit: int = 20, query: str | None = None,
         return [dict(r) for r in conn.execute(sql, args)]
 
 
-def book_cloud_titles(*, query: str | None = None, member: str | None = None,
-                      limit: int = 50) -> list[dict]:
+def book_cloud_titles(
+    *, query: str | None = None, member: str | None = None, limit: int = 50
+) -> list[dict]:
     """The AGGREGATED cloud — one row per (normalized) title: first/last mention, count, who,
     recent reasons. This is the 'books orbiting the club' view (raw rows stay un-deduped)."""
-    sql = ("SELECT lower(trim(title)) AS k, MAX(title) AS title, MAX(author) AS author, "
-           "MAX(book_slug) AS book_slug, MIN(created_at) AS first_mentioned, "
-           "MAX(created_at) AS last_mentioned, COUNT(*) AS mention_count "
-           "FROM book_cloud")
+    sql = (
+        "SELECT lower(trim(title)) AS k, MAX(title) AS title, MAX(author) AS author, "
+        "MAX(book_slug) AS book_slug, MIN(created_at) AS first_mentioned, "
+        "MAX(created_at) AS last_mentioned, COUNT(*) AS mention_count "
+        "FROM book_cloud"
+    )
     args: list = []
     where = []
     if query:
@@ -1045,15 +1112,23 @@ def book_cloud_titles(*, query: str | None = None, member: str | None = None,
         for r in rows:
             detail = conn.execute(
                 "SELECT mentioned_by, reason FROM book_cloud WHERE lower(trim(title)) = ? "
-                "ORDER BY id DESC LIMIT 6", (r.pop("k"),)).fetchall()
+                "ORDER BY id DESC LIMIT 6",
+                (r.pop("k"),),
+            ).fetchall()
             r["mentioners"] = sorted({d["mentioned_by"] for d in detail if d["mentioned_by"]})
             r["recentReasons"] = [d["reason"] for d in detail[:3]]
     return rows
 
 
-def recent_book_cloud_visible(*, viewer_member_slug: str | None, is_admin: bool,
-                              limit: int = 20, query: str | None = None,
-                              member: str | None = None, kind: str | None = None) -> list[dict]:
+def recent_book_cloud_visible(
+    *,
+    viewer_member_slug: str | None,
+    is_admin: bool,
+    limit: int = 20,
+    query: str | None = None,
+    member: str | None = None,
+    kind: str | None = None,
+) -> list[dict]:
     """Book-cloud rows visible to a conversational actor.
 
     Discord/mailing-list mentions are club-shared.  A mention captured in 1:1 email
@@ -1063,9 +1138,11 @@ def recent_book_cloud_visible(*, viewer_member_slug: str | None, is_admin: bool,
         return recent_book_cloud(limit=limit, query=query, member=member, kind=kind)
     if not viewer_member_slug:
         return []
-    sql = ("SELECT id, title, author, book_slug, mentioned_by, mentioned_by_name, surface, "
-           "reason, reason_kind, created_at FROM book_cloud WHERE "
-           "(COALESCE(surface, '') != 'email' OR mentioned_by = ?)")
+    sql = (
+        "SELECT id, title, author, book_slug, mentioned_by, mentioned_by_name, surface, "
+        "reason, reason_kind, created_at FROM book_cloud WHERE "
+        "(COALESCE(surface, '') != 'email' OR mentioned_by = ?)"
+    )
     args: list = [viewer_member_slug]
     if query:
         sql += " AND (title LIKE ? OR author LIKE ? OR reason LIKE ?)"
@@ -1082,9 +1159,14 @@ def recent_book_cloud_visible(*, viewer_member_slug: str | None, is_admin: bool,
         return [dict(r) for r in conn.execute(sql, args)]
 
 
-def book_cloud_titles_visible(*, viewer_member_slug: str | None, is_admin: bool,
-                              query: str | None = None, member: str | None = None,
-                              limit: int = 50) -> list[dict]:
+def book_cloud_titles_visible(
+    *,
+    viewer_member_slug: str | None,
+    is_admin: bool,
+    query: str | None = None,
+    member: str | None = None,
+    limit: int = 50,
+) -> list[dict]:
     """Aggregated actor-scoped Book Cloud; see ``recent_book_cloud_visible``."""
     if is_admin:
         return book_cloud_titles(query=query, member=member, limit=limit)
@@ -1153,10 +1235,13 @@ def upsert_mail_message(message: dict) -> bool:
     member_slug = message.get("member_slug")
     with connect() as conn:
         member_id = _archive_member_id(conn, member_slug)
-        existed = conn.execute(
-            "SELECT 1 FROM mail_messages WHERE message_id = ?",
-            (message_id,),
-        ).fetchone() is not None
+        existed = (
+            conn.execute(
+                "SELECT 1 FROM mail_messages WHERE message_id = ?",
+                (message_id,),
+            ).fetchone()
+            is not None
+        )
         conn.execute(
             "INSERT INTO mail_threads "
             "(thread_id, list_id, subject_normalized, first_sent_at, last_sent_at, updated_at) "
@@ -1166,16 +1251,36 @@ def upsert_mail_message(message: dict) -> bool:
             "subject_normalized=COALESCE(mail_threads.subject_normalized, excluded.subject_normalized), "
             "updated_at=excluded.updated_at",
             (
-                thread_id, message.get("list_id"), message.get("subject_normalized"),
-                message.get("sent_at"), message.get("sent_at"), _now(),
+                thread_id,
+                message.get("list_id"),
+                message.get("subject_normalized"),
+                message.get("sent_at"),
+                message.get("sent_at"),
+                _now(),
             ),
         )
         cols = [
-            "message_id", "thread_id", "parent_message_id", "source", "source_ref",
-            "list_id", "from_email", "from_name",
-            "member_id", "to_json", "cc_json", "reply_to_json", "subject",
-            "sent_at", "received_at", "body_text", "body_clean", "body_html",
-            "attachments_json", "headers_json", "processed_inbound_email_id",
+            "message_id",
+            "thread_id",
+            "parent_message_id",
+            "source",
+            "source_ref",
+            "list_id",
+            "from_email",
+            "from_name",
+            "member_id",
+            "to_json",
+            "cc_json",
+            "reply_to_json",
+            "subject",
+            "sent_at",
+            "received_at",
+            "body_text",
+            "body_clean",
+            "body_html",
+            "attachments_json",
+            "headers_json",
+            "processed_inbound_email_id",
         ]
         row = {
             "message_id": message_id,
@@ -1202,8 +1307,7 @@ def upsert_mail_message(message: dict) -> bool:
         }
         placeholders = ", ".join("?" for _ in cols)
         updates = ", ".join(
-            f"{c}=excluded.{c}" for c in cols
-            if c not in {"message_id", "imported_at"}
+            f"{c}=excluded.{c}" for c in cols if c not in {"message_id", "imported_at"}
         )
         conn.execute(
             f"INSERT INTO mail_messages ({', '.join(cols)}) VALUES ({placeholders}) "
@@ -1216,8 +1320,11 @@ def upsert_mail_message(message: dict) -> bool:
             "(message_id, subject, from_name, from_email, body_clean) "
             "VALUES (?, ?, ?, ?, ?)",
             (
-                message_id, row["subject"] or "", row["from_name"] or "",
-                row["from_email"] or "", row["body_clean"] or "",
+                message_id,
+                row["subject"] or "",
+                row["from_name"] or "",
+                row["from_email"] or "",
+                row["body_clean"] or "",
             ),
         )
         return not existed
@@ -1226,9 +1333,8 @@ def upsert_mail_message(message: dict) -> bool:
 def rebuild_mail_thread_stats() -> None:
     with connect() as conn:
         thread_ids = [
-            r["thread_id"] for r in conn.execute(
-                "SELECT DISTINCT thread_id FROM mail_messages ORDER BY thread_id"
-            )
+            r["thread_id"]
+            for r in conn.execute("SELECT DISTINCT thread_id FROM mail_messages ORDER BY thread_id")
         ]
         for thread_id in thread_ids:
             stats = conn.execute(
@@ -1237,7 +1343,8 @@ def rebuild_mail_thread_stats() -> None:
                 (thread_id,),
             ).fetchone()
             participants = [
-                dict(r) for r in conn.execute(
+                dict(r)
+                for r in conn.execute(
                     "SELECT cm.slug AS member_slug, mm.from_email, mm.from_name, "
                     "COUNT(*) AS message_count "
                     "FROM mail_messages mm LEFT JOIN club_members cm ON cm.id = mm.member_id "
@@ -1252,8 +1359,12 @@ def rebuild_mail_thread_stats() -> None:
                 "message_count = ?, participants_json = ?, updated_at = ? "
                 "WHERE thread_id = ?",
                 (
-                    stats["first_sent_at"], stats["last_sent_at"], stats["c"],
-                    _json_or_none(participants), _now(), thread_id,
+                    stats["first_sent_at"],
+                    stats["last_sent_at"],
+                    stats["c"],
+                    _json_or_none(participants),
+                    _now(),
+                    thread_id,
                 ),
             )
 
@@ -1264,15 +1375,18 @@ def mail_archive_counts() -> dict:
             "messages": conn.execute("SELECT COUNT(*) c FROM mail_messages").fetchone()["c"],
             "threads": conn.execute("SELECT COUNT(*) c FROM mail_threads").fetchone()["c"],
             "attributed": conn.execute(
-                "SELECT COUNT(*) c FROM mail_messages WHERE member_id IS NOT NULL").fetchone()["c"],
+                "SELECT COUNT(*) c FROM mail_messages WHERE member_id IS NOT NULL"
+            ).fetchone()["c"],
         }
 
 
 def mail_senders_for_reattribution(email: str | None = None) -> list[dict]:
     """Archived messages' (message_id, from_email, from_name, member_id) for re-resolving the
     sender → member link. Scope to one normalized address when given (cheap, indexed)."""
-    sql = ("SELECT message_id, from_email, from_name, member_id FROM mail_messages "
-           "WHERE from_email IS NOT NULL")
+    sql = (
+        "SELECT message_id, from_email, from_name, member_id FROM mail_messages "
+        "WHERE from_email IS NOT NULL"
+    )
     args: list = []
     if email:
         sql += " AND from_email = ?"
@@ -1286,8 +1400,7 @@ def set_mail_message_member(message_id: str, member_slug: str | None) -> bool:
     with connect() as conn:
         member_id = _archive_member_id(conn, member_slug)
         cur = conn.execute(
-            "UPDATE mail_messages SET member_id = ? WHERE message_id = ? "
-            "AND member_id IS NOT ?",
+            "UPDATE mail_messages SET member_id = ? WHERE message_id = ? AND member_id IS NOT ?",
             (member_id, message_id, member_id),
         )
         return cur.rowcount > 0
@@ -1298,9 +1411,14 @@ def _fts_query(query: str) -> str:
     return " AND ".join(f'"{t.replace(chr(34), chr(34) * 2)}"' for t in terms)
 
 
-def search_mail_archive(query: str, *, member_slug: str | None = None,
-                        year_from: int | None = None, year_to: int | None = None,
-                        limit: int = 8) -> list[dict]:
+def search_mail_archive(
+    query: str,
+    *,
+    member_slug: str | None = None,
+    year_from: int | None = None,
+    year_to: int | None = None,
+    limit: int = 8,
+) -> list[dict]:
     match = _fts_query(query)
     if not match:
         return []
@@ -1316,22 +1434,30 @@ def search_mail_archive(query: str, *, member_slug: str | None = None,
     )
     args: list = [match]
     if member_slug:
-        sql += " AND m.member_id = (SELECT id FROM club_members WHERE slug = ?)"; args.append(member_slug)
+        sql += " AND m.member_id = (SELECT id FROM club_members WHERE slug = ?)"
+        args.append(member_slug)
     if year_from:
-        sql += " AND m.sent_at >= ?"; args.append(f"{int(year_from):04d}-01-01")
+        sql += " AND m.sent_at >= ?"
+        args.append(f"{int(year_from):04d}-01-01")
     if year_to:
-        sql += " AND m.sent_at < ?"; args.append(f"{int(year_to) + 1:04d}-01-01")
+        sql += " AND m.sent_at < ?"
+        args.append(f"{int(year_to) + 1:04d}-01-01")
     sql += " ORDER BY COALESCE(m.sent_at, m.received_at, m.imported_at) DESC LIMIT ?"
     args.append(limit)
     with connect() as conn:
         return [dict(r) for r in conn.execute(sql, args)]
 
 
-def search_mail_archive_visible(query: str, *, viewer_member_slug: str | None,
-                                is_admin: bool, member_slug: str | None = None,
-                                year_from: int | None = None,
-                                year_to: int | None = None,
-                                limit: int = 8) -> list[dict]:
+def search_mail_archive_visible(
+    query: str,
+    *,
+    viewer_member_slug: str | None,
+    is_admin: bool,
+    member_slug: str | None = None,
+    year_from: int | None = None,
+    year_to: int | None = None,
+    limit: int = 8,
+) -> list[dict]:
     """Actor-scoped mail search for the model tool.
 
     Mailing-list mail is shared among linked club members.  A 1:1 row (``list_id IS NULL``) is
@@ -1376,8 +1502,13 @@ def search_mail_archive_visible(query: str, *, viewer_member_slug: str | None,
         return [dict(r) for r in conn.execute(sql, args)]
 
 
-def mail_messages_since(sent_at: str, *, exclude_from: str | None = None,
-                        mailing_list_only: bool = False, limit: int = 500) -> list[dict]:
+def mail_messages_since(
+    sent_at: str,
+    *,
+    exclude_from: str | None = None,
+    mailing_list_only: bool = False,
+    limit: int = 500,
+) -> list[dict]:
     """Member-authored archive mail newer than ``sent_at``, oldest first.
 
     ``mailing_list_only`` is the deterministic shared/private boundary used by reflection's club
@@ -1392,7 +1523,8 @@ def mail_messages_since(sent_at: str, *, exclude_from: str | None = None,
     if mailing_list_only:
         sql += " AND m.list_id IS NOT NULL"
     if exclude_from:
-        sql += " AND m.from_email != ?"; args.append(exclude_from.lower())
+        sql += " AND m.from_email != ?"
+        args.append(exclude_from.lower())
     sql += " ORDER BY m.sent_at ASC LIMIT ?"
     args.append(limit)
     with connect() as conn:
@@ -1406,8 +1538,14 @@ def latest_mail_sent_at() -> str | None:
     return row["m"] if row and row["m"] else None
 
 
-def mail_messages_between(start: str, end: str, *, member_slug: str | None = None,
-                          exclude_from: str | None = None, limit: int = 500) -> list[dict]:
+def mail_messages_between(
+    start: str,
+    end: str,
+    *,
+    member_slug: str | None = None,
+    exclude_from: str | None = None,
+    limit: int = 500,
+) -> list[dict]:
     """Member-authored archive mail with start < sent_at <= end, oldest first — the archive
     miner's per-year feed (member-filtered for the member lane, unfiltered for the club lane)."""
     sql = (
@@ -1417,9 +1555,11 @@ def mail_messages_between(start: str, end: str, *, member_slug: str | None = Non
     )
     args: list = [start, end]
     if member_slug:
-        sql += " AND cm.slug = ?"; args.append(member_slug)
+        sql += " AND cm.slug = ?"
+        args.append(member_slug)
     if exclude_from:
-        sql += " AND m.from_email != ?"; args.append(exclude_from.lower())
+        sql += " AND m.from_email != ?"
+        args.append(exclude_from.lower())
     sql += " ORDER BY m.sent_at ASC LIMIT ?"
     args.append(limit)
     with connect() as conn:
@@ -1445,8 +1585,9 @@ def get_mail_thread(thread_id: str, *, limit: int = 50) -> dict | None:
     return {"thread": dict(thread), "messages": [dict(r) for r in rows]}
 
 
-def get_mail_thread_visible(thread_id: str, *, viewer_member_slug: str | None,
-                            is_admin: bool, limit: int = 50) -> dict | None:
+def get_mail_thread_visible(
+    thread_id: str, *, viewer_member_slug: str | None, is_admin: bool, limit: int = 50
+) -> dict | None:
     """Actor-scoped, PII-minimized thread transcript for the model tool."""
     if not viewer_member_slug and not is_admin:
         return None
@@ -1480,8 +1621,13 @@ def get_mail_thread_visible(thread_id: str, *, viewer_member_slug: str | None,
 
 
 # ── Conversations + rolling summary ──────────────────────────────────────────
-def log_message(channel_id: str, role: str, content: str, speaker: str | None = None,
-                member_slug: str | None = None) -> None:
+def log_message(
+    channel_id: str,
+    role: str,
+    content: str,
+    speaker: str | None = None,
+    member_slug: str | None = None,
+) -> None:
     with connect() as conn:
         conn.execute(
             "INSERT INTO conversations (channel_id, role, speaker, content, member_slug) "
@@ -1561,9 +1707,13 @@ def conversation_medium(channel_id: str) -> str:
     return "Discord"
 
 
-def search_conversations(query: str, *, limit: int = 12,
-                         channel_ids: list[str] | None = None,
-                         member_slug: str | None = None) -> list[dict]:
+def search_conversations(
+    query: str,
+    *,
+    limit: int = 12,
+    channel_ids: list[str] | None = None,
+    member_slug: str | None = None,
+) -> list[dict]:
     """Keyword search over logged turns across ALL channels and mediums, newest first.
 
     Splits the query into whitespace terms; a row must contain every term (AND match). Spans every
@@ -1591,9 +1741,14 @@ def search_conversations(query: str, *, limit: int = 12,
         return [dict(r) for r in conn.execute(sql, args)]
 
 
-def search_conversations_visible(query: str, *, viewer_member_slug: str | None,
-                                 is_admin: bool, limit: int = 12,
-                                 member_slug: str | None = None) -> list[dict]:
+def search_conversations_visible(
+    query: str,
+    *,
+    viewer_member_slug: str | None,
+    is_admin: bool,
+    limit: int = 12,
+    member_slug: str | None = None,
+) -> list[dict]:
     """Actor-scoped conversation search for ``search_discussion``.
 
     Discord and mailing-list turns are shared with linked members.  Direct-email turns are visible
@@ -1629,8 +1784,9 @@ def search_conversations_visible(query: str, *, viewer_member_slug: str | None,
         return [dict(r) for r in conn.execute(sql, args)]
 
 
-def recent_threads_for_member(member_slug: str, *, exclude_channel: str | None = None,
-                              limit: int = 3) -> list[dict]:
+def recent_threads_for_member(
+    member_slug: str, *, exclude_channel: str | None = None, limit: int = 3
+) -> list[dict]:
     """Most recent conversation per OTHER channel Oliver has had with this member, newest first —
     used to proactively remind Oliver a member has a recent thread on another medium. Each entry:
     {medium, channel_id, last_at, snippet}. `exclude_channel` drops the channel currently being
@@ -1647,18 +1803,21 @@ def recent_threads_for_member(member_slug: str, *, exclude_channel: str | None =
             turn = conn.execute(
                 "SELECT content, created_at FROM conversations WHERE id = ?", (r["last_id"],)
             ).fetchone()
-            out.append({
-                "medium": conversation_medium(r["channel_id"]),
-                "channel_id": r["channel_id"],
-                "last_at": turn["created_at"] if turn else None,
-                "snippet": ((turn["content"] if turn else "") or "")[:160],
-            })
+            out.append(
+                {
+                    "medium": conversation_medium(r["channel_id"]),
+                    "channel_id": r["channel_id"],
+                    "last_at": turn["created_at"] if turn else None,
+                    "snippet": ((turn["content"] if turn else "") or "")[:160],
+                }
+            )
         return out
 
 
 # ── Reminders (Phase 4 scheduler fires these) ────────────────────────────────
-def add_reminder(due_at: str, text: str, *, channel_id: str | None = None,
-                 created_by: str | None = None) -> int:
+def add_reminder(
+    due_at: str, text: str, *, channel_id: str | None = None, created_by: str | None = None
+) -> int:
     with connect() as conn:
         cur = conn.execute(
             "INSERT INTO reminders (due_at, channel_id, text, created_by) VALUES (?, ?, ?, ?)",
@@ -1687,8 +1846,16 @@ def mark_reminder_fired(reminder_id: int) -> None:
 
 
 # ── Usage / cost ─────────────────────────────────────────────────────────────
-def log_usage(channel_id: str | None, model: str, *, input_tokens: int, output_tokens: int,
-              cache_read: int, cache_creation: int, rounds: int) -> None:
+def log_usage(
+    channel_id: str | None,
+    model: str,
+    *,
+    input_tokens: int,
+    output_tokens: int,
+    cache_read: int,
+    cache_creation: int,
+    rounds: int,
+) -> None:
     with connect() as conn:
         conn.execute(
             "INSERT INTO usage_log (channel_id, model, input_tokens, output_tokens, "
@@ -1709,8 +1876,9 @@ def mark_sent(key: str) -> None:
 
 
 # ── Response logging + 👍/👎 feedback ───────────────────────────────────────
-def log_response(*, message_id: str, channel_id: str, speaker: str | None,
-                 question: str, reply: str) -> None:
+def log_response(
+    *, message_id: str, channel_id: str, speaker: str | None, question: str, reply: str
+) -> None:
     """Record a reply Oliver sent so we can join feedback back to its question."""
     with connect() as conn:
         conn.execute(
@@ -1722,13 +1890,15 @@ def log_response(*, message_id: str, channel_id: str, speaker: str | None,
 
 def is_oliver_message(message_id: str) -> bool:
     with connect() as conn:
-        return conn.execute(
-            "SELECT 1 FROM responses WHERE message_id = ?", (message_id,)
-        ).fetchone() is not None
+        return (
+            conn.execute("SELECT 1 FROM responses WHERE message_id = ?", (message_id,)).fetchone()
+            is not None
+        )
 
 
-def add_feedback(*, message_id: str, channel_id: str, user_id: str,
-                 user_name: str | None, reaction: str) -> None:
+def add_feedback(
+    *, message_id: str, channel_id: str, user_id: str, user_name: str | None, reaction: str
+) -> None:
     with connect() as conn:
         conn.execute(
             "INSERT INTO feedback (message_id, channel_id, user_id, user_name, reaction) "
@@ -1773,28 +1943,46 @@ READING_STATUSES = {"not_started", "started", "on_track", "behind", "finished", 
 # caller may also pass `category=` explicitly to override this map (used by the free-form admin log).
 _KIND_CATEGORY = {
     # ── Phase 1: meeting operations ──
-    "attendance_requested": "meeting_ops", "attendance_reported": "meeting_ops",
-    "reading_requested": "meeting_ops", "reading_reported": "meeting_ops",
-    "roll_call_opened": "meeting_ops", "roll_call_closed": "meeting_ops",
-    "attendance_alert_sent": "meeting_ops", "week_reminder_sent": "meeting_ops",
-    "briefing_sent": "meeting_ops", "email_reply": "meeting_ops",
+    "attendance_requested": "meeting_ops",
+    "attendance_reported": "meeting_ops",
+    "reading_requested": "meeting_ops",
+    "reading_reported": "meeting_ops",
+    "roll_call_opened": "meeting_ops",
+    "roll_call_closed": "meeting_ops",
+    "attendance_alert_sent": "meeting_ops",
+    "week_reminder_sent": "meeting_ops",
+    "briefing_sent": "meeting_ops",
+    "email_reply": "meeting_ops",
     # ── meeting lifecycle (Phase 1 hook + Phase 2 chronicle) ──
-    "meeting_scheduled": "meeting", "meeting_rescheduled": "meeting",
-    "meeting_canceled": "meeting", "meeting_held": "meeting", "location_set": "meeting",
+    "meeting_scheduled": "meeting",
+    "meeting_rescheduled": "meeting",
+    "meeting_canceled": "meeting",
+    "meeting_held": "meeting",
+    "location_set": "meeting",
     # ── book selection ──
-    "book_nominated": "selection", "poll_opened": "selection",
-    "vote_cast": "selection", "book_picked": "selection",
+    "book_nominated": "selection",
+    "poll_opened": "selection",
+    "vote_cast": "selection",
+    "book_picked": "selection",
     # ── in-person social ──
-    "dinner": "social", "spouses_event": "social", "hosting": "social",
+    "dinner": "social",
+    "spouses_event": "social",
+    "hosting": "social",
     # ── member life (operational + shared milestones only) ──
-    "member_joined": "member_life", "member_left": "member_life",
-    "member_away": "member_life", "member_milestone": "member_life",
+    "member_joined": "member_life",
+    "member_left": "member_life",
+    "member_away": "member_life",
+    "member_milestone": "member_life",
     # ── club / tooling milestones ──
-    "website_launched": "club", "tooling_change": "club", "mailing_list_flurry": "club",
+    "website_launched": "club",
+    "tooling_change": "club",
+    "mailing_list_flurry": "club",
     "release_notes_sent": "club",
     # ── reading / discussion ──
-    "book_discussed": "reading", "strong_opinion": "reading",
-    "dnf": "reading", "award_given": "reading",
+    "book_discussed": "reading",
+    "strong_opinion": "reading",
+    "dnf": "reading",
+    "award_given": "reading",
     # ── free-form admin / Oliver note (category supplied explicitly) ──
     "note": "other",
 }
@@ -1802,7 +1990,13 @@ _KIND_CATEGORY = {
 # The chronicle vocabulary the miner + live recording surface may emit, grouped by category, for prompt
 # construction + caller-side validation. (meeting_ops kinds are written only by Phase 1 plumbing.)
 CHRONICLE_KINDS: dict[str, tuple[str, ...]] = {
-    "meeting": ("meeting_scheduled", "meeting_rescheduled", "meeting_canceled", "meeting_held", "location_set"),
+    "meeting": (
+        "meeting_scheduled",
+        "meeting_rescheduled",
+        "meeting_canceled",
+        "meeting_held",
+        "location_set",
+    ),
     "selection": ("book_nominated", "poll_opened", "vote_cast", "book_picked"),
     "social": ("dinner", "spouses_event", "hosting"),
     "member_life": ("member_joined", "member_left", "member_away", "member_milestone"),
@@ -1811,7 +2005,10 @@ CHRONICLE_KINDS: dict[str, tuple[str, ...]] = {
 }
 # member kinds whose event updates the meeting_member_status projection (require both ids)
 _PROJECTION_KINDS = {
-    "attendance_requested", "attendance_reported", "reading_requested", "reading_reported",
+    "attendance_requested",
+    "attendance_reported",
+    "reading_requested",
+    "reading_reported",
 }
 
 
@@ -1819,36 +2016,57 @@ def _bump_projection(conn, kind: str, meeting_id: int, member_id: int, detail, n
     conn.execute(
         "INSERT INTO meeting_member_status (meeting_id, member_id) VALUES (?, ?) "
         "ON CONFLICT(meeting_id, member_id) DO NOTHING",
-        (meeting_id, member_id))
+        (meeting_id, member_id),
+    )
     if kind == "attendance_requested":
         conn.execute(
             "UPDATE meeting_member_status SET attendance_asks = attendance_asks + 1, "
             "last_asked_at = ?, updated_at = ? WHERE meeting_id = ? AND member_id = ?",
-            (now, now, meeting_id, member_id))
+            (now, now, meeting_id, member_id),
+        )
     elif kind == "attendance_reported":
         conn.execute(
             "UPDATE meeting_member_status SET attendance = ?, attendance_answered_at = ?, "
             "updated_at = ? WHERE meeting_id = ? AND member_id = ?",
-            (detail, now, now, meeting_id, member_id))
+            (detail, now, now, meeting_id, member_id),
+        )
     elif kind == "reading_requested":
         conn.execute(
             "UPDATE meeting_member_status SET reading_asks = reading_asks + 1, last_asked_at = ?, "
             "reading_last_asked_at = ?, updated_at = ? WHERE meeting_id = ? AND member_id = ?",
-            (now, now, now, meeting_id, member_id))
+            (now, now, now, meeting_id, member_id),
+        )
     elif kind == "reading_reported":
         d = json.loads(detail) if detail else {}
         conn.execute(
             "UPDATE meeting_member_status SET reading = ?, reading_progress = ?, reading_page = ?, "
             "reading_percent = ?, reading_answered_at = ?, updated_at = ? "
             "WHERE meeting_id = ? AND member_id = ?",
-            (d.get("status"), d.get("progress"), d.get("page"), d.get("percent"), now, now,
-             meeting_id, member_id))
+            (
+                d.get("status"),
+                d.get("progress"),
+                d.get("page"),
+                d.get("percent"),
+                now,
+                now,
+                meeting_id,
+                member_id,
+            ),
+        )
 
 
-def record_event(*, actor: str, kind: str, member_id: int | None = None,
-                 meeting_id: int | None = None, detail: str | None = None,
-                 surface: str | None = None, occurred_at: str | None = None,
-                 source: str | None = None, category: str | None = None) -> int:
+def record_event(
+    *,
+    actor: str,
+    kind: str,
+    member_id: int | None = None,
+    meeting_id: int | None = None,
+    detail: str | None = None,
+    surface: str | None = None,
+    occurred_at: str | None = None,
+    source: str | None = None,
+    category: str | None = None,
+) -> int:
     """Append one event to the club timeline; if it's a meeting_ops member event, update the
     meeting_member_status projection in the same transaction. Returns the new event id.
 
@@ -1864,38 +2082,82 @@ def record_event(*, actor: str, kind: str, member_id: int | None = None,
         cur = conn.execute(
             "INSERT INTO events (member_id, meeting_id, actor, category, kind, detail, surface, "
             "source, occurred_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (member_id, meeting_id, actor, category, kind, detail, surface, source,
-             occurred_at or now, now))
+            (
+                member_id,
+                meeting_id,
+                actor,
+                category,
+                kind,
+                detail,
+                surface,
+                source,
+                occurred_at or now,
+                now,
+            ),
+        )
         if kind in _PROJECTION_KINDS:
             _bump_projection(conn, kind, meeting_id, member_id, detail, now)
         return cur.lastrowid
 
 
-def record_attendance_request(meeting_id: int, member_id: int, *, actor: str = "oliver",
-                              surface: str | None = None) -> int:
-    return record_event(actor=actor, kind="attendance_requested",
-                        member_id=member_id, meeting_id=meeting_id, surface=surface)
+def record_attendance_request(
+    meeting_id: int, member_id: int, *, actor: str = "oliver", surface: str | None = None
+) -> int:
+    return record_event(
+        actor=actor,
+        kind="attendance_requested",
+        member_id=member_id,
+        meeting_id=meeting_id,
+        surface=surface,
+    )
 
 
-def record_attendance_report(meeting_id: int, member_id: int, status: str, *,
-                             actor: str = "member", surface: str | None = None,
-                             updated_by: str | None = None) -> int:
+def record_attendance_report(
+    meeting_id: int,
+    member_id: int,
+    status: str,
+    *,
+    actor: str = "member",
+    surface: str | None = None,
+    updated_by: str | None = None,
+) -> int:
     if status not in {"yes", "no", "unsure"}:
         raise ValueError("attendance status must be yes, no, or unsure")
-    return record_event(actor=actor, kind="attendance_reported", member_id=member_id,
-                        meeting_id=meeting_id, detail=status, surface=surface, source=updated_by)
+    return record_event(
+        actor=actor,
+        kind="attendance_reported",
+        member_id=member_id,
+        meeting_id=meeting_id,
+        detail=status,
+        surface=surface,
+        source=updated_by,
+    )
 
 
-def record_reading_request(meeting_id: int, member_id: int, *, actor: str = "oliver",
-                           surface: str | None = None) -> int:
-    return record_event(actor=actor, kind="reading_requested",
-                        member_id=member_id, meeting_id=meeting_id, surface=surface)
+def record_reading_request(
+    meeting_id: int, member_id: int, *, actor: str = "oliver", surface: str | None = None
+) -> int:
+    return record_event(
+        actor=actor,
+        kind="reading_requested",
+        member_id=member_id,
+        meeting_id=meeting_id,
+        surface=surface,
+    )
 
 
-def record_reading_report(meeting_id: int, member_id: int, status: str, *,
-                          progress: str | None = None, page: int | None = None,
-                          percent: int | None = None, actor: str = "member",
-                          surface: str | None = None, updated_by: str | None = None) -> int:
+def record_reading_report(
+    meeting_id: int,
+    member_id: int,
+    status: str,
+    *,
+    progress: str | None = None,
+    page: int | None = None,
+    percent: int | None = None,
+    actor: str = "member",
+    surface: str | None = None,
+    updated_by: str | None = None,
+) -> int:
     if status not in READING_STATUSES:
         raise ValueError(f"reading status must be one of {sorted(READING_STATUSES)}")
     if page is not None and page < 0:
@@ -1903,26 +2165,64 @@ def record_reading_report(meeting_id: int, member_id: int, status: str, *,
     if percent is not None and not 0 <= percent <= 100:
         raise ValueError("percent must be between 0 and 100")
     detail = json.dumps({"status": status, "progress": progress, "page": page, "percent": percent})
-    return record_event(actor=actor, kind="reading_reported", member_id=member_id,
-                        meeting_id=meeting_id, detail=detail, surface=surface, source=updated_by)
+    return record_event(
+        actor=actor,
+        kind="reading_reported",
+        member_id=member_id,
+        meeting_id=meeting_id,
+        detail=detail,
+        surface=surface,
+        source=updated_by,
+    )
 
 
-def record_group_event(meeting_id: int, kind: str, *, actor: str = "oliver",
-                       surface: str = "system", detail: str | None = None,
-                       occurred_at: str | None = None, source: str | None = None) -> int:
-    return record_event(actor=actor, kind=kind, meeting_id=meeting_id, detail=detail,
-                        surface=surface, occurred_at=occurred_at, source=source)
+def record_group_event(
+    meeting_id: int,
+    kind: str,
+    *,
+    actor: str = "oliver",
+    surface: str = "system",
+    detail: str | None = None,
+    occurred_at: str | None = None,
+    source: str | None = None,
+) -> int:
+    return record_event(
+        actor=actor,
+        kind=kind,
+        meeting_id=meeting_id,
+        detail=detail,
+        surface=surface,
+        occurred_at=occurred_at,
+        source=source,
+    )
 
 
-def record_meeting_scheduled(meeting_id: int, *, detail: str | None = None,
-                             occurred_at: str | None = None, actor: str = "admin") -> int:
-    return record_event(actor=actor, kind="meeting_scheduled", meeting_id=meeting_id,
-                        detail=detail, surface="system", occurred_at=occurred_at)
+def record_meeting_scheduled(
+    meeting_id: int,
+    *,
+    detail: str | None = None,
+    occurred_at: str | None = None,
+    actor: str = "admin",
+) -> int:
+    return record_event(
+        actor=actor,
+        kind="meeting_scheduled",
+        meeting_id=meeting_id,
+        detail=detail,
+        surface="system",
+        occurred_at=occurred_at,
+    )
 
 
-def record_release_notes_sent(commit: str, *, scope: str, subject: str,
-                              window: str | None = None, release_name: str | None = None,
-                              occurred_at: str | None = None) -> int:
+def record_release_notes_sent(
+    commit: str,
+    *,
+    scope: str,
+    subject: str,
+    window: str | None = None,
+    release_name: str | None = None,
+    occurred_at: str | None = None,
+) -> int:
     """Log a release-notes send to the club timeline (category 'club').
 
     `commit` is the repo HEAD at send time; it becomes the baseline the *next* release-notes
@@ -1935,8 +2235,14 @@ def record_release_notes_sent(commit: str, *, scope: str, subject: str,
         detail["window"] = window
     if release_name:
         detail["release_name"] = release_name
-    return record_event(actor="oliver", kind="release_notes_sent", category="club",
-                        surface="system", detail=detail, occurred_at=occurred_at)
+    return record_event(
+        actor="oliver",
+        kind="release_notes_sent",
+        category="club",
+        surface="system",
+        detail=detail,
+        occurred_at=occurred_at,
+    )
 
 
 def last_release_notes_commit() -> str | None:
@@ -1945,12 +2251,13 @@ def last_release_notes_commit() -> str | None:
     with connect() as conn:
         row = conn.execute(
             "SELECT detail FROM events WHERE kind = 'release_notes_sent' "
-            "ORDER BY occurred_at DESC, id DESC LIMIT 1").fetchone()
+            "ORDER BY occurred_at DESC, id DESC LIMIT 1"
+        ).fetchone()
     if not row or not row["detail"]:
         return None
     try:
         return json.loads(row["detail"]).get("commit")
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return None
 
 
@@ -1961,15 +2268,22 @@ def release_history() -> list[dict]:
     with connect() as conn:
         rows = conn.execute(
             "SELECT detail, occurred_at FROM events WHERE kind = 'release_notes_sent' "
-            "ORDER BY occurred_at DESC, id DESC").fetchall()
+            "ORDER BY occurred_at DESC, id DESC"
+        ).fetchall()
     out = []
     for row in rows:
         try:
             detail = json.loads(row["detail"]) if row["detail"] else {}
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             detail = {}
-        out.append({"name": detail.get("release_name"), "commit": detail.get("commit"),
-                    "subject": detail.get("subject"), "occurred_at": row["occurred_at"]})
+        out.append(
+            {
+                "name": detail.get("release_name"),
+                "commit": detail.get("commit"),
+                "subject": detail.get("subject"),
+                "occurred_at": row["occurred_at"],
+            }
+        )
     return out
 
 
@@ -1986,7 +2300,9 @@ def meeting_member_status_for_meeting(meeting_id: int) -> list[dict]:
         rows = conn.execute(
             "SELECT s.*, m.slug AS member_slug, m.name AS member_name "
             "FROM meeting_member_status s JOIN club_members m ON m.id = s.member_id "
-            "WHERE s.meeting_id = ? ORDER BY m.name", (meeting_id,)).fetchall()
+            "WHERE s.meeting_id = ? ORDER BY m.name",
+            (meeting_id,),
+        ).fetchall()
     return [dict(r) for r in rows]
 
 
@@ -1995,7 +2311,9 @@ def meeting_member_status(meeting_id: int, member_id: int) -> dict | None:
         row = conn.execute(
             "SELECT s.*, m.slug AS member_slug, m.name AS member_name "
             "FROM meeting_member_status s JOIN club_members m ON m.id = s.member_id "
-            "WHERE s.meeting_id = ? AND s.member_id = ?", (meeting_id, member_id)).fetchone()
+            "WHERE s.meeting_id = ? AND s.member_id = ?",
+            (meeting_id, member_id),
+        ).fetchone()
     return dict(row) if row else None
 
 
@@ -2004,19 +2322,24 @@ def events_for_member(member_id: int, *, limit: int = 100) -> list[dict]:
     with connect() as conn:
         rows = conn.execute(
             "SELECT * FROM events WHERE member_id = ? ORDER BY occurred_at DESC, id DESC LIMIT ?",
-            (member_id, limit)).fetchall()
+            (member_id, limit),
+        ).fetchall()
     return [dict(r) for r in rows]
 
 
-def meeting_events(meeting_id: int, *, member_id: int | None = None, kind: str | None = None,
-                   limit: int = 200) -> list[dict]:
+def meeting_events(
+    meeting_id: int, *, member_id: int | None = None, kind: str | None = None, limit: int = 200
+) -> list[dict]:
     sql = "SELECT * FROM events WHERE meeting_id = ?"
     args: list = [meeting_id]
     if member_id is not None:
-        sql += " AND member_id = ?"; args.append(member_id)
+        sql += " AND member_id = ?"
+        args.append(member_id)
     if kind is not None:
-        sql += " AND kind = ?"; args.append(kind)
-    sql += " ORDER BY created_at DESC, id DESC LIMIT ?"; args.append(limit)
+        sql += " AND kind = ?"
+        args.append(kind)
+    sql += " ORDER BY created_at DESC, id DESC LIMIT ?"
+    args.append(limit)
     with connect() as conn:
         return [dict(r) for r in conn.execute(sql, args)]
 
@@ -2028,12 +2351,16 @@ def current_roll_call(meeting_id: int) -> dict | None:
     with connect() as conn:
         opened = conn.execute(
             "SELECT detail, created_at FROM events WHERE meeting_id = ? AND kind = 'roll_call_opened' "
-            "ORDER BY created_at DESC, id DESC LIMIT 1", (meeting_id,)).fetchone()
+            "ORDER BY created_at DESC, id DESC LIMIT 1",
+            (meeting_id,),
+        ).fetchone()
         if not opened:
             return None
         closed = conn.execute(
             "SELECT created_at FROM events WHERE meeting_id = ? AND kind = 'roll_call_closed' "
-            "ORDER BY created_at DESC, id DESC LIMIT 1", (meeting_id,)).fetchone()
+            "ORDER BY created_at DESC, id DESC LIMIT 1",
+            (meeting_id,),
+        ).fetchone()
     d = json.loads(opened["detail"]) if opened["detail"] else {}
     is_closed = bool(closed and closed["created_at"] >= opened["created_at"])
     return {
@@ -2056,9 +2383,13 @@ def has_group_event(meeting_id: int, kind: str) -> bool:
     """Whether a group (member-less) event of this kind exists for the meeting — replaces the
     cadence dedup keys (week_reminder_sent / briefing_sent / attendance_alert_sent / …)."""
     with connect() as conn:
-        return conn.execute(
-            "SELECT 1 FROM events WHERE meeting_id = ? AND member_id IS NULL AND kind = ? LIMIT 1",
-            (meeting_id, kind)).fetchone() is not None
+        return (
+            conn.execute(
+                "SELECT 1 FROM events WHERE meeting_id = ? AND member_id IS NULL AND kind = ? LIMIT 1",
+                (meeting_id, kind),
+            ).fetchone()
+            is not None
+        )
 
 
 def recent_group_event_details(kind: str, *, limit: int = 3) -> list[str | None]:
@@ -2067,7 +2398,8 @@ def recent_group_event_details(kind: str, *, limit: int = 3) -> list[str | None]
     with connect() as conn:
         rows = conn.execute(
             "SELECT detail FROM events WHERE member_id IS NULL AND kind = ? ORDER BY id DESC LIMIT ?",
-            (kind, limit)).fetchall()
+            (kind, limit),
+        ).fetchall()
     return [r["detail"] for r in rows]
 
 
@@ -2075,26 +2407,41 @@ def event_source_exists(source: str) -> bool:
     """Whether any event already carries this provenance string — the idempotency guard for the
     archive miner's loader (source = 'mail:<thread_id>#<n>'), so re-loads don't duplicate."""
     with connect() as conn:
-        return conn.execute(
-            "SELECT 1 FROM events WHERE source = ? LIMIT 1", (source,)).fetchone() is not None
+        return (
+            conn.execute("SELECT 1 FROM events WHERE source = ? LIMIT 1", (source,)).fetchone()
+            is not None
+        )
 
 
-def timeline(*, category: str | None = None, member_id: int | None = None,
-             since: str | None = None, until: str | None = None, limit: int = 50) -> list[dict]:
+def timeline(
+    *,
+    category: str | None = None,
+    member_id: int | None = None,
+    since: str | None = None,
+    until: str | None = None,
+    limit: int = 50,
+) -> list[dict]:
     """The club-wide timeline (any member, any/no meeting), newest first — the general read behind
     the `club_timeline` tool. Filter by category, member, and/or an occurred_at date window."""
-    sql = "SELECT e.*, m.slug AS member_slug, m.name AS member_name FROM events e " \
-          "LEFT JOIN club_members m ON m.id = e.member_id WHERE 1=1"
+    sql = (
+        "SELECT e.*, m.slug AS member_slug, m.name AS member_name FROM events e "
+        "LEFT JOIN club_members m ON m.id = e.member_id WHERE 1=1"
+    )
     args: list = []
     if category is not None:
-        sql += " AND e.category = ?"; args.append(category)
+        sql += " AND e.category = ?"
+        args.append(category)
     if member_id is not None:
-        sql += " AND e.member_id = ?"; args.append(member_id)
+        sql += " AND e.member_id = ?"
+        args.append(member_id)
     if since is not None:
-        sql += " AND e.occurred_at >= ?"; args.append(since)
+        sql += " AND e.occurred_at >= ?"
+        args.append(since)
     if until is not None:
-        sql += " AND e.occurred_at <= ?"; args.append(until)
-    sql += " ORDER BY e.occurred_at DESC, e.id DESC LIMIT ?"; args.append(limit)
+        sql += " AND e.occurred_at <= ?"
+        args.append(until)
+    sql += " ORDER BY e.occurred_at DESC, e.id DESC LIMIT ?"
+    args.append(limit)
     with connect() as conn:
         return [dict(r) for r in conn.execute(sql, args)]
 
@@ -2110,24 +2457,29 @@ def delete_event(event_id: int) -> bool:
 def list_mail_threads(*, limit: int | None = None) -> list[dict]:
     """Every archived mail thread, oldest-first — the spine the archive miner walks. Returns
     {thread_id, subject, first_sent_at, last_sent_at, message_count}."""
-    sql = ("SELECT thread_id, subject_normalized AS subject, first_sent_at, last_sent_at, "
-           "message_count FROM mail_threads ORDER BY first_sent_at ASC, thread_id ASC")
+    sql = (
+        "SELECT thread_id, subject_normalized AS subject, first_sent_at, last_sent_at, "
+        "message_count FROM mail_threads ORDER BY first_sent_at ASC, thread_id ASC"
+    )
     args: list = []
     if limit is not None:
-        sql += " LIMIT ?"; args.append(limit)
+        sql += " LIMIT ?"
+        args.append(limit)
     with connect() as conn:
         return [dict(r) for r in conn.execute(sql, args)]
 
 
 # ── Oliver action proposals ─────────────────────────────────────────────────
 # ── Review drafts (the review-drive email state machine) ─────────────────────
-def create_review_draft(*, member_id: int, book_slug: str, thread_id: str | None,
-                        draft_json: str | None = None) -> int:
+def create_review_draft(
+    *, member_id: int, book_slug: str, thread_id: str | None, draft_json: str | None = None
+) -> int:
     with connect() as conn:
         cur = conn.execute(
             "INSERT INTO review_drafts (member_id, book_slug, thread_id, draft_json) "
             "VALUES (?, ?, ?, ?)",
-            (member_id, book_slug, thread_id, draft_json))
+            (member_id, book_slug, thread_id, draft_json),
+        )
         return cur.lastrowid
 
 
@@ -2139,7 +2491,9 @@ def draft_for_thread(thread_id: str | None) -> dict | None:
         row = conn.execute(
             "SELECT * FROM review_drafts WHERE thread_id = ? "
             "AND state IN ('awaiting_reply', 'awaiting_confirm') "
-            "ORDER BY id DESC LIMIT 1", (thread_id,)).fetchone()
+            "ORDER BY id DESC LIMIT 1",
+            (thread_id,),
+        ).fetchone()
     return dict(row) if row else None
 
 
@@ -2148,22 +2502,32 @@ def open_draft_for_member(member_id: int) -> dict | None:
         row = conn.execute(
             "SELECT * FROM review_drafts WHERE member_id = ? "
             "AND state IN ('awaiting_reply', 'awaiting_confirm') "
-            "ORDER BY id DESC LIMIT 1", (member_id,)).fetchone()
+            "ORDER BY id DESC LIMIT 1",
+            (member_id,),
+        ).fetchone()
     return dict(row) if row else None
 
 
-def update_review_draft(draft_id: int, *, state: str | None = None,
-                        draft_json: str | None = None, rounds: int | None = None,
-                        thread_id: str | None = None) -> None:
+def update_review_draft(
+    draft_id: int,
+    *,
+    state: str | None = None,
+    draft_json: str | None = None,
+    rounds: int | None = None,
+    thread_id: str | None = None,
+) -> None:
     sets, args = ["updated_at = datetime('now')"], []
-    for col, val in (("state", state), ("draft_json", draft_json),
-                     ("rounds", rounds), ("thread_id", thread_id)):
+    for col, val in (
+        ("state", state),
+        ("draft_json", draft_json),
+        ("rounds", rounds),
+        ("thread_id", thread_id),
+    ):
         if val is not None:
             sets.append(f"{col} = ?")
             args.append(val)
     with connect() as conn:
-        conn.execute(f"UPDATE review_drafts SET {', '.join(sets)} WHERE id = ?",
-                     (*args, draft_id))
+        conn.execute(f"UPDATE review_drafts SET {', '.join(sets)} WHERE id = ?", (*args, draft_id))
 
 
 def expire_stale_review_drafts(days: int) -> int:
@@ -2174,12 +2538,20 @@ def expire_stale_review_drafts(days: int) -> int:
         cur = conn.execute(
             "UPDATE review_drafts SET state = 'expired', updated_at = datetime('now') "
             "WHERE state IN ('awaiting_reply', 'awaiting_confirm') "
-            "AND created_at < datetime('now', ?)", (f"-{days} days",))
+            "AND created_at < datetime('now', ?)",
+            (f"-{days} days",),
+        )
         return cur.rowcount
 
 
-def add_proposal(*, kind: str, title: str, body: str, channel_id: str | None = None,
-                 source_user_id: str | None = None) -> int:
+def add_proposal(
+    *,
+    kind: str,
+    title: str,
+    body: str,
+    channel_id: str | None = None,
+    source_user_id: str | None = None,
+) -> int:
     with connect() as conn:
         cur = conn.execute(
             "INSERT INTO proposals (kind, title, body, channel_id, source_user_id) "
@@ -2213,16 +2585,24 @@ def resolve_proposal(proposal_id: int, status: str, *, resolved_by: str | None =
 # ── Inbound email dedupe ─────────────────────────────────────────────────────
 def email_processed(email_id: str) -> bool:
     with connect() as conn:
-        return conn.execute(
-            "SELECT 1 FROM inbound_emails WHERE email_id = ? AND status IN ('processed', 'ignored')",
-            (email_id,),
-        ).fetchone() is not None
+        return (
+            conn.execute(
+                "SELECT 1 FROM inbound_emails WHERE email_id = ? AND status IN ('processed', 'ignored')",
+                (email_id,),
+            ).fetchone()
+            is not None
+        )
 
 
-def mark_email_processing(*, email_id: str, thread_id: str | None = None,
-                          from_email: str | None = None, subject: str | None = None,
-                          received_at: str | None = None,
-                          stale_after_seconds: int = 1800) -> bool:
+def mark_email_processing(
+    *,
+    email_id: str,
+    thread_id: str | None = None,
+    from_email: str | None = None,
+    subject: str | None = None,
+    received_at: str | None = None,
+    stale_after_seconds: int = 1800,
+) -> bool:
     """Claim an inbound email for processing. Failed emails may be retried."""
     now = _now()
     cutoff = (datetime.now(timezone.utc) - timedelta(seconds=stale_after_seconds)).strftime(
@@ -2249,8 +2629,13 @@ def mark_email_processing(*, email_id: str, thread_id: str | None = None,
         return cur.rowcount > 0
 
 
-def mark_email_processed(email_id: str, *, reply_email_id: str | None = None,
-                         status: str = "processed", error: str | None = None) -> None:
+def mark_email_processed(
+    email_id: str,
+    *,
+    reply_email_id: str | None = None,
+    status: str = "processed",
+    error: str | None = None,
+) -> None:
     if status not in {"processed", "ignored", "failed"}:
         raise ValueError("email status must be processed, ignored, or failed")
     with connect() as conn:
@@ -2291,8 +2676,9 @@ def mark_activity_posted(activity_id: int) -> None:
         )
 
 
-def mark_activity_failed(activity_id: int, error: str, *, max_attempts: int = 5,
-                         retry_delay_seconds: int = 60) -> None:
+def mark_activity_failed(
+    activity_id: int, error: str, *, max_attempts: int = 5, retry_delay_seconds: int = 60
+) -> None:
     with connect() as conn:
         row = conn.execute(
             "SELECT attempts FROM activity_events WHERE id = ?",
@@ -2314,11 +2700,16 @@ def mark_activity_failed(activity_id: int, error: str, *, max_attempts: int = 5,
 
 
 # ── Durable outbound effects ─────────────────────────────────────────────────
-def enqueue_outbox(*, idempotency_key: str, kind: str, payload_json: str,
-                   max_attempts: int = 5) -> dict:
+def enqueue_outbox(
+    *, idempotency_key: str, kind: str, payload_json: str, max_attempts: int = 5
+) -> dict:
     return _outbox_repo.enqueue(
-        connect, now=_now(), idempotency_key=idempotency_key, kind=kind,
-        payload_json=payload_json, max_attempts=max_attempts,
+        connect,
+        now=_now(),
+        idempotency_key=idempotency_key,
+        kind=kind,
+        payload_json=payload_json,
+        max_attempts=max_attempts,
     )
 
 
@@ -2330,38 +2721,50 @@ def pending_outbox(*, limit: int = 20, now: str | None = None) -> list[dict]:
     return _outbox_repo.pending(connect, limit=limit, now=now or _now())
 
 
-def claim_outbox(idempotency_key: str, *, worker_id: str, lease_expires_at: str,
-                 now: str | None = None) -> dict | None:
+def claim_outbox(
+    idempotency_key: str, *, worker_id: str, lease_expires_at: str, now: str | None = None
+) -> dict | None:
     return _outbox_repo.claim(
-        connect, idempotency_key, worker_id=worker_id,
-        lease_expires_at=lease_expires_at, now=now or _now(),
+        connect,
+        idempotency_key,
+        worker_id=worker_id,
+        lease_expires_at=lease_expires_at,
+        now=now or _now(),
     )
 
 
 def mark_outbox_delivering(outbox_id: int, *, worker_id: str, now: str | None = None) -> bool:
-    return _outbox_repo.mark_delivering(
-        connect, outbox_id, worker_id=worker_id, now=now or _now()
-    )
+    return _outbox_repo.mark_delivering(connect, outbox_id, worker_id=worker_id, now=now or _now())
 
 
-def mark_outbox_delivered(outbox_id: int, *, worker_id: str, provider_ref_json: str,
-                          now: str | None = None) -> bool:
+def mark_outbox_delivered(
+    outbox_id: int, *, worker_id: str, provider_ref_json: str, now: str | None = None
+) -> bool:
     return _outbox_repo.mark_delivered(
-        connect, outbox_id, worker_id=worker_id,
-        provider_ref_json=provider_ref_json, now=now or _now(),
+        connect,
+        outbox_id,
+        worker_id=worker_id,
+        provider_ref_json=provider_ref_json,
+        now=now or _now(),
     )
 
 
-def mark_outbox_retry(outbox_id: int, *, worker_id: str, error: str, available_at: str,
-                      now: str | None = None) -> str | None:
+def mark_outbox_retry(
+    outbox_id: int, *, worker_id: str, error: str, available_at: str, now: str | None = None
+) -> str | None:
     return _outbox_repo.mark_retry(
-        connect, outbox_id, worker_id=worker_id, error=error,
-        available_at=available_at, now=now or _now(),
+        connect,
+        outbox_id,
+        worker_id=worker_id,
+        error=error,
+        available_at=available_at,
+        now=now or _now(),
     )
 
 
-def mark_outbox_uncertain(outbox_id: int, *, worker_id: str, error: str,
-                          now: str | None = None) -> bool:
+def mark_outbox_uncertain(
+    outbox_id: int, *, worker_id: str, error: str, now: str | None = None
+) -> bool:
     return _outbox_repo.mark_uncertain(
         connect, outbox_id, worker_id=worker_id, error=error, now=now or _now()
     )
@@ -2377,29 +2780,57 @@ def outbox_status_counts() -> dict[str, int]:
 
 
 # ── Scheduled-job leases and run ledger ─────────────────────────────────────
-def begin_job_run(job_name: str, *, lease_owner: str, lease_expires_at: str,
-                  expected_interval_seconds: int, now: str | None = None) -> dict | None:
+def begin_job_run(
+    job_name: str,
+    *,
+    lease_owner: str,
+    lease_expires_at: str,
+    expected_interval_seconds: int,
+    now: str | None = None,
+) -> dict | None:
     """Atomically acquire a job lease and open its run row; None means another owner is active."""
     return _jobs_repo.begin_run(
-        connect, job_name, lease_owner=lease_owner, lease_expires_at=lease_expires_at,
-        expected_interval_seconds=expected_interval_seconds, now=now or _now(),
+        connect,
+        job_name,
+        lease_owner=lease_owner,
+        lease_expires_at=lease_expires_at,
+        expected_interval_seconds=expected_interval_seconds,
+        now=now or _now(),
     )
 
 
-def renew_job_lease(job_name: str, *, lease_owner: str, lease_expires_at: str,
-                    now: str | None = None) -> bool:
+def renew_job_lease(
+    job_name: str, *, lease_owner: str, lease_expires_at: str, now: str | None = None
+) -> bool:
     return _jobs_repo.renew_lease(
-        connect, job_name, lease_owner=lease_owner,
-        lease_expires_at=lease_expires_at, now=now or _now(),
+        connect,
+        job_name,
+        lease_owner=lease_owner,
+        lease_expires_at=lease_expires_at,
+        now=now or _now(),
     )
 
 
-def finish_job_run(run_id: int, *, job_name: str, lease_owner: str, outcome: str,
-                   duration_ms: int, processed_count: int = 0, error: str | None = None,
-                   now: str | None = None) -> bool:
+def finish_job_run(
+    run_id: int,
+    *,
+    job_name: str,
+    lease_owner: str,
+    outcome: str,
+    duration_ms: int,
+    processed_count: int = 0,
+    error: str | None = None,
+    now: str | None = None,
+) -> bool:
     return _jobs_repo.finish_run(
-        connect, run_id, job_name=job_name, lease_owner=lease_owner, outcome=outcome,
-        duration_ms=duration_ms, processed_count=processed_count, error=error,
+        connect,
+        run_id,
+        job_name=job_name,
+        lease_owner=lease_owner,
+        outcome=outcome,
+        duration_ms=duration_ms,
+        processed_count=processed_count,
+        error=error,
         now=now or _now(),
     )
 

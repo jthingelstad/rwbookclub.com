@@ -11,8 +11,20 @@ from agent.enrich import wikipedia as wp
 
 
 # ── Wikidata: claim parsing + extraction ─────────────────────────────────────
-def _ent(qid, *, p31=(), p106=(), p569=None, p570=None, p27=None, p50=(),
-         p800=(), p856=None, enwiki=None, label=None):
+def _ent(
+    qid,
+    *,
+    p31=(),
+    p106=(),
+    p569=None,
+    p570=None,
+    p27=None,
+    p50=(),
+    p800=(),
+    p856=None,
+    enwiki=None,
+    label=None,
+):
     def idclaims(ids):
         return [{"mainsnak": {"datavalue": {"value": {"id": i}}}} for i in ids]
 
@@ -49,8 +61,14 @@ def test_year_from_time_handles_ad_and_bce():
 
 
 def test_author_facts_extracts_fields(monkeypatch):
-    ent = _ent("Q42", p569="+1971-07-17T00:00:00Z", p27="Q16", p800=["QW1"],
-               p856="https://example.com", enwiki="Cory Doctorow")
+    ent = _ent(
+        "Q42",
+        p569="+1971-07-17T00:00:00Z",
+        p27="Q16",
+        p800=["QW1"],
+        p856="https://example.com",
+        enwiki="Cory Doctorow",
+    )
     monkeypatch.setattr(wd, "labels", lambda ids: {"Q16": "Canada", "QW1": "Little Brother"})
     facts = wd.author_facts(ent)
     assert facts["birth_year"] == 1971
@@ -82,12 +100,20 @@ def test_resolve_author_rejects_writer_only_name_match(monkeypatch):
 
 def test_resolve_author_uses_known_work_to_disambiguate_same_name(monkeypatch):
     actor = _ent(
-        "QACTOR", p31=["Q5"], p106=["Q28389"], p569="+1968-01-01T00:00:00Z",
-        label="Matthew Walker", enwiki="Matthew Walker (American actor)",
+        "QACTOR",
+        p31=["Q5"],
+        p106=["Q28389"],
+        p569="+1968-01-01T00:00:00Z",
+        label="Matthew Walker",
+        enwiki="Matthew Walker (American actor)",
     )
     scientist = _ent(
-        "QSCI", p31=["Q5"], p106=["Q212980"], p569="+1973-01-01T00:00:00Z",
-        label="Matthew P. Walker", enwiki="Matthew Walker (scientist)",
+        "QSCI",
+        p31=["Q5"],
+        p106=["Q212980"],
+        p569="+1973-01-01T00:00:00Z",
+        label="Matthew P. Walker",
+        enwiki="Matthew Walker (scientist)",
     )
     work = _ent("QWORK", p31=["Q571"], p50=["QSCI"], label="Why We Sleep")
     entities = {"QACTOR": actor, "QSCI": scientist, "QWORK": work}
@@ -102,8 +128,11 @@ def test_resolve_author_uses_known_work_to_disambiguate_same_name(monkeypatch):
 
 def test_resolve_author_accepts_birth_year_corroboration(monkeypatch):
     scientist = _ent(
-        "Q11", p31=["Q5"], p106=["Q937857"],
-        p569="+1973-01-01T00:00:00Z", label="Common Name",
+        "Q11",
+        p31=["Q5"],
+        p106=["Q937857"],
+        p569="+1973-01-01T00:00:00Z",
+        label="Common Name",
     )
     monkeypatch.setattr(wd, "search", lambda name, limit=8: ["Q11"])
     monkeypatch.setattr(wd, "entity", lambda qid: scientist)
@@ -135,17 +164,37 @@ def test_isbn13_and_year():
 
 
 def test_book_facts_composes_from_work_and_doc(monkeypatch):
-    monkeypatch.setattr(ol, "search_best_match", lambda t, a: {
-        "key": "/works/OLX", "cover_i": 99, "ratings_average": 4.37,
-        "ratings_count": 10, "edition_count": 7, "first_publish_year": 2011,
-        "number_of_pages_median": 300, "isbn": ["9780804139021"], "subject": ["Mars"]})
-    monkeypatch.setattr(ol, "work", lambda key: {
-        "description": "A novel.", "subjects": ["Survival"], "covers": [12345],
-        "authors": [{"author": {"key": "/authors/OLA"}}]})
-    monkeypatch.setattr(ol, "editions", lambda key, limit=50: {"edition_count": 7, "languages": ["eng"]})
+    monkeypatch.setattr(
+        ol,
+        "search_best_match",
+        lambda t, a: {
+            "key": "/works/OLX",
+            "cover_i": 99,
+            "ratings_average": 4.37,
+            "ratings_count": 10,
+            "edition_count": 7,
+            "first_publish_year": 2011,
+            "number_of_pages_median": 300,
+            "isbn": ["9780804139021"],
+            "subject": ["Mars"],
+        },
+    )
+    monkeypatch.setattr(
+        ol,
+        "work",
+        lambda key: {
+            "description": "A novel.",
+            "subjects": ["Survival"],
+            "covers": [12345],
+            "authors": [{"author": {"key": "/authors/OLA"}}],
+        },
+    )
+    monkeypatch.setattr(
+        ol, "editions", lambda key, limit=50: {"edition_count": 7, "languages": ["eng"]}
+    )
     f = ol.book_facts("The Martian", ["Andy Weir"], None, None)
     assert f["ol_key"] == "/works/OLX"
-    assert f["ol_cover_id"] == 12345               # work cover wins over doc cover_i
+    assert f["ol_cover_id"] == 12345  # work cover wins over doc cover_i
     assert f["synopsis"] == "A novel."
     assert f["ratings_average"] == 4.37
     assert f["isbn13"] == "9780804139021"
@@ -155,10 +204,16 @@ def test_book_facts_composes_from_work_and_doc(monkeypatch):
 def test_resolve_author_key_disambiguates_by_last_name(monkeypatch):
     work_one = {"authors": [{"author": {"key": "/authors/OL1"}}]}
     assert ol.resolve_author_key(work_one, "Solo Author") == "/authors/OL1"
-    work_many = {"authors": [{"author": {"key": "/authors/OL1"}},
-                             {"author": {"key": "/authors/OL2"}}]}
-    monkeypatch.setattr(ol, "author", lambda key: {"/authors/OL1": {"name": "Jane Other"},
-                                                   "/authors/OL2": {"name": "Andy Weir"}}[key])
+    work_many = {
+        "authors": [{"author": {"key": "/authors/OL1"}}, {"author": {"key": "/authors/OL2"}}]
+    }
+    monkeypatch.setattr(
+        ol,
+        "author",
+        lambda key: {"/authors/OL1": {"name": "Jane Other"}, "/authors/OL2": {"name": "Andy Weir"}}[
+            key
+        ],
+    )
     assert ol.resolve_author_key(work_many, "Andy Weir") == "/authors/OL2"
 
 
@@ -171,14 +226,14 @@ def test_summary_honors_override(monkeypatch):
         return {"type": "standard", "extract": "YC essayist."} if "programmer" in title else None
 
     monkeypatch.setattr(wp, "_fetch", fake_fetch)
-    out = wp.summary("paul-graham", "Paul Graham")          # OVERRIDES → _(programmer)
+    out = wp.summary("paul-graham", "Paul Graham")  # OVERRIDES → _(programmer)
     assert out and out["extract"] == "YC essayist."
     assert any("programmer" in t for t in fetched)
 
 
 def test_summary_none_override_skips(monkeypatch):
     monkeypatch.setattr(wp, "_fetch", lambda title: {"type": "standard", "extract": "x"})
-    assert wp.summary("steve-weber", "Steve Weber") is None   # OVERRIDES → None
+    assert wp.summary("steve-weber", "Steve Weber") is None  # OVERRIDES → None
 
 
 def test_usable_rejects_disambiguation_and_empty():
@@ -193,6 +248,7 @@ def test_get_json_returns_none_on_error(monkeypatch):
 
     class _Resp:
         ok = False
+
         def json(self):
             raise AssertionError("must not parse a non-ok response")
 
@@ -210,7 +266,13 @@ def test_get_json_returns_none_on_error(monkeypatch):
 def test_select_gap_fills_and_filters():
     items = [{"id": 1, "slug": "a"}, {"id": 2, "slug": "b"}, {"id": 3, "slug": "c"}]
     done = {1}
-    assert [e["id"] for e in loop._select(items, done, id_key="id", force=False, slug=None, limit=None)] == [2, 3]
-    assert [e["id"] for e in loop._select(items, done, id_key="id", force=True, slug=None, limit=None)] == [1, 2, 3]
-    assert [e["id"] for e in loop._select(items, done, id_key="id", force=True, slug="b", limit=None)] == [2]
+    assert [
+        e["id"] for e in loop._select(items, done, id_key="id", force=False, slug=None, limit=None)
+    ] == [2, 3]
+    assert [
+        e["id"] for e in loop._select(items, done, id_key="id", force=True, slug=None, limit=None)
+    ] == [1, 2, 3]
+    assert [
+        e["id"] for e in loop._select(items, done, id_key="id", force=True, slug="b", limit=None)
+    ] == [2]
     assert len(loop._select(items, set(), id_key="id", force=True, slug=None, limit=2)) == 2

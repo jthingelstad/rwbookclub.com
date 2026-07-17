@@ -15,7 +15,13 @@ def _names(group) -> set[str]:
 def test_top_level_groups_and_commands():
     top = _names(commands.oliver_cmds)
     assert {
-        "ping", "my-club", "private-feedback", "whoami", "reading", "meeting", "timeline",
+        "ping",
+        "my-club",
+        "private-feedback",
+        "whoami",
+        "reading",
+        "meeting",
+        "timeline",
         "admin",
     } <= top
     # retired groups + old command names must not come back
@@ -25,8 +31,17 @@ def test_top_level_groups_and_commands():
 def test_admin_group_contents():
     admin = next(c for c in commands.oliver_cmds.commands if c.name == "admin")
     names = _names(admin)
-    assert {"status", "link-member", "release-notes", "postscript", "feedback",
-            "proposals", "resolve", "reattribute-mail", "tick"} <= names
+    assert {
+        "status",
+        "link-member",
+        "release-notes",
+        "postscript",
+        "feedback",
+        "proposals",
+        "resolve",
+        "reattribute-mail",
+        "tick",
+    } <= names
     assert "stats" not in names  # renamed to status
 
 

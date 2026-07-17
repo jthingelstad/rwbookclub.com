@@ -34,16 +34,17 @@ from agent.mail import email_policy, outbound
 
 log = logging.getLogger("oliver.review_drive")
 
-ASK_WEEKDAY = 2          # Wednesday
-ASK_HOUR = 10            # 10am club time
-MAX_ASKS_PER_BOOK = 2    # then never ask about that book again
-ASK_COOLDOWN_DAYS = 7    # "at most once a week" per member
+ASK_WEEKDAY = 2  # Wednesday
+ASK_HOUR = 10  # 10am club time
+MAX_ASKS_PER_BOOK = 2  # then never ask about that book again
+ASK_COOLDOWN_DAYS = 7  # "at most once a week" per member
 MAX_CORRECTION_ROUNDS = 2  # then park and point at the web app
-ASK_EXPIRY_DAYS = 21       # an unanswered ask expires; the member is free for future asks
+ASK_EXPIRY_DAYS = 21  # an unanswered ask expires; the member is free for future asks
 
 JOB_KEY = "review_drive"
-YES_RE = re.compile(r"^\s*(yes|yep|yeah|yup|looks good|perfect|that works|correct|👍|do it)\b",
-                    re.IGNORECASE)
+YES_RE = re.compile(
+    r"^\s*(yes|yep|yeah|yup|looks good|perfect|that works|correct|👍|do it)\b", re.IGNORECASE
+)
 NO_RE = re.compile(r"^\s*(no thanks|no\b|nope|skip|pass|not now)", re.IGNORECASE)
 
 _EXTRACT_SYSTEM = (
@@ -52,7 +53,7 @@ _EXTRACT_SYSTEM = (
     "email pleasantries — NEVER paraphrased, NEVER summarized, NEVER improved.\n\n"
     "Numeric fields are captured ONLY when explicitly stated: 'four stars' or '4/5' → rating 4; "
     "'8 out of 10' → rating 4 (halve a stated 10-scale, round down); 'DNF'/'couldn't finish' → "
-    "rating \"DNF\". A stated discussion quality (1-5) likewise. If a number is not explicitly "
+    'rating "DNF". A stated discussion quality (1-5) likewise. If a number is not explicitly '
     "stated, the field is null — NEVER infer a rating from tone.\n"
     "`recommend` true/false only on an explicit statement ('I'd recommend it'); else null. "
     "`quote` only if they call out a favorite quote/passage; else null.\n"
@@ -73,19 +74,22 @@ def allowlisted_slugs() -> set[str]:
     if raw.lower() == "all":
         return {m["slug"] for m in cr.human_current_members()}
     return {s.strip() for s in raw.split(",") if s.strip()} & {
-        m["slug"] for m in cr.human_current_members()}
+        m["slug"] for m in cr.human_current_members()
+    }
 
 
 def _ask_counts(conn, member_id: int) -> tuple[dict[str, int], str | None]:
     """(per-book ask counts, most recent ask timestamp) from the review_requested ledger."""
     rows = conn.execute(
         "SELECT detail, occurred_at FROM events WHERE kind = 'review_requested' "
-        "AND member_id = ? ORDER BY occurred_at DESC", (member_id,)).fetchall()
+        "AND member_id = ? ORDER BY occurred_at DESC",
+        (member_id,),
+    ).fetchall()
     counts: dict[str, int] = {}
     for r in rows:
         try:
             slug = json.loads(r["detail"] or "{}").get("book_slug")
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             slug = None
         if slug:
             counts[slug] = counts.get(slug, 0) + 1
@@ -93,9 +97,13 @@ def _ask_counts(conn, member_id: int) -> tuple[dict[str, int], str | None]:
 
 
 def _opted_out(conn, member_id: int) -> bool:
-    return conn.execute(
-        "SELECT 1 FROM events WHERE kind = 'review_optout' AND member_id = ? LIMIT 1",
-        (member_id,)).fetchone() is not None
+    return (
+        conn.execute(
+            "SELECT 1 FROM events WHERE kind = 'review_optout' AND member_id = ? LIMIT 1",
+            (member_id,),
+        ).fetchone()
+        is not None
+    )
 
 
 def next_candidate(slug: str) -> dict | None:
@@ -109,9 +117,12 @@ def next_candidate(slug: str) -> dict | None:
         if _opted_out(conn, member_id):
             return None
         counts, last_ask = _ask_counts(conn, member_id)
-        if last_ask and conn.execute(
-                "SELECT 1 WHERE ? > datetime('now', ?)",
-                (last_ask, f"-{ASK_COOLDOWN_DAYS} days")).fetchone():
+        if (
+            last_ask
+            and conn.execute(
+                "SELECT 1 WHERE ? > datetime('now', ?)", (last_ask, f"-{ASK_COOLDOWN_DAYS} days")
+            ).fetchone()
+        ):
             return None
         rows = conn.execute(
             "SELECT b.slug, b.title, r.rating, MAX(m.date) AS read_date "
@@ -125,16 +136,24 @@ def next_candidate(slug: str) -> dict | None:
             "GROUP BY b.id "
             # never ask about a book the club read before this member joined (fail open on NULLs)
             "HAVING (mem.joined IS NULL OR MAX(m.date) IS NULL OR MAX(m.date) >= mem.joined) "
-            "ORDER BY r.rating DESC, read_date DESC", (slug,)).fetchall()
+            "ORDER BY r.rating DESC, read_date DESC",
+            (slug,),
+        ).fetchall()
     for r in rows:
         if counts.get(r["slug"], 0) < MAX_ASKS_PER_BOOK:
-            return {"slug": r["slug"], "title": r["title"], "rating": r["rating"],
-                    "readDate": r["read_date"], "memberId": member_id}
+            return {
+                "slug": r["slug"],
+                "title": r["title"],
+                "rating": r["rating"],
+                "readDate": r["read_date"],
+                "memberId": member_id,
+            }
     return None
 
 
-def send_ask(slug: str, candidate: dict | None = None, *,
-             idempotency_key: str | None = None) -> dict | None:
+def send_ask(
+    slug: str, candidate: dict | None = None, *, idempotency_key: str | None = None
+) -> dict | None:
     """Send one review ask to `slug` (candidate auto-selected if not given). Creates the
     draft row + the review_requested ledger event. Returns {book, threadId} or None."""
     member = cr.find_member(slug)
@@ -149,13 +168,20 @@ def send_ask(slug: str, candidate: dict | None = None, *,
         "book they rated but never reviewed — reference their own rating and when the club "
         "read it, and make clear they can just REPLY to this email in their own words; a few "
         "sentences is a great review, and you'll handle recording it",
-        {"member": first, "book": cand["title"], "theirRating": cand["rating"],
-         "whenRead": when or "a while back"},
-        fallback=(f"Hi {first} — you gave *{cand['title']}* {cand['rating']} stars"
-                  + (f" back when we read it ({when})" if when else "") +
-                  ", but the club record has no written review from you. Would you write one? "
-                  "Just reply to this email in your own words — a few sentences is a great "
-                  "review, and I'll take care of recording it."))
+        {
+            "member": first,
+            "book": cand["title"],
+            "theirRating": cand["rating"],
+            "whenRead": when or "a while back",
+        },
+        fallback=(
+            f"Hi {first} — you gave *{cand['title']}* {cand['rating']} stars"
+            + (f" back when we read it ({when})" if when else "")
+            + ", but the club record has no written review from you. Would you write one? "
+            "Just reply to this email in your own words — a few sentences is a great "
+            "review, and I'll take care of recording it."
+        ),
+    )
     sent = outbound.send(
         to=[rec["email"]],
         subject=f"Your review of {cand['title']}?",
@@ -167,19 +193,31 @@ def send_ask(slug: str, candidate: dict | None = None, *,
     # into the draft so the extraction turn cannot forget it merely because the member replies
     # with prose rather than repeating a number Oliver just quoted back to them.
     initial = {
-        "body": "", "rating": cand["rating"], "recommend": None,
-        "discussion": None, "quote": None,
+        "body": "",
+        "rating": cand["rating"],
+        "recommend": None,
+        "discussion": None,
+        "quote": None,
     }
-    draft_id = db.create_review_draft(member_id=cand["memberId"], book_slug=cand["slug"],
-                                      thread_id=sent.get("threadId"),
-                                      draft_json=json.dumps(initial))
-    db.record_event(actor="oliver", kind="review_requested", member_id=cand["memberId"],
-                    surface="email", category="reading",
-                    detail=json.dumps({"book_slug": cand["slug"],
-                                       "thread_id": sent.get("threadId"),
-                                       "draft_id": draft_id}))
-    db.add_activity("review_drive", "Review requested",
-                    f"Asked {slug} for a review of {cand['title']}.")
+    draft_id = db.create_review_draft(
+        member_id=cand["memberId"],
+        book_slug=cand["slug"],
+        thread_id=sent.get("threadId"),
+        draft_json=json.dumps(initial),
+    )
+    db.record_event(
+        actor="oliver",
+        kind="review_requested",
+        member_id=cand["memberId"],
+        surface="email",
+        category="reading",
+        detail=json.dumps(
+            {"book_slug": cand["slug"], "thread_id": sent.get("threadId"), "draft_id": draft_id}
+        ),
+    )
+    db.add_activity(
+        "review_drive", "Review requested", f"Asked {slug} for a review of {cand['title']}."
+    )
     log.info("review ask sent: %s -> %s (%s)", cand["title"], slug, sent.get("threadId"))
     return {"book": cand["title"], "threadId": sent.get("threadId")}
 
@@ -197,8 +235,11 @@ def run(now) -> int:
         return 0
     expired = db.expire_stale_review_drafts(ASK_EXPIRY_DAYS)
     if expired:
-        db.add_activity("review_drive", "Review drafts expired",
-                        f"{expired} unanswered ask(s) older than {ASK_EXPIRY_DAYS} days released.")
+        db.add_activity(
+            "review_drive",
+            "Review drafts expired",
+            f"{expired} unanswered ask(s) older than {ASK_EXPIRY_DAYS} days released.",
+        )
     sent = 0
     for slug in sorted(slugs):
         try:
@@ -218,8 +259,13 @@ def _extract(book_title: str, text: str, prior: dict | None) -> dict | None:
         user += f"PRIOR DRAFT (the new text below corrects it):\n{json.dumps(prior)}\n\n"
     user += f"Member's email:\n{text}"
     for _ in range(2):
-        raw = oliver.complete(_EXTRACT_SYSTEM, user, model=oliver.MODEL, max_tokens=16000,
-                              usage_channel="review_drive")
+        raw = oliver.complete(
+            _EXTRACT_SYSTEM,
+            user,
+            model=oliver.MODEL,
+            max_tokens=16000,
+            usage_channel="review_drive",
+        )
         m = re.search(r"\{.*\}", raw, re.S)
         if m:
             try:
@@ -233,25 +279,42 @@ def _extract(book_title: str, text: str, prior: dict | None) -> dict | None:
 
 def _confirmation_body(first: str, book_title: str, d: dict) -> str:
     rating = d.get("rating")
-    stars = ("DNF" if rating == "DNF"
-             else "★" * int(rating) + "☆" * (5 - int(rating)) if rating else "(no rating stated)")
-    bits = [f"Hi {first} — here's how I'll record your review of *{book_title}*:", "",
-            f"- **Rating**: {stars}"]
+    stars = (
+        "DNF"
+        if rating == "DNF"
+        else "★" * int(rating) + "☆" * (5 - int(rating))
+        if rating
+        else "(no rating stated)"
+    )
+    bits = [
+        f"Hi {first} — here's how I'll record your review of *{book_title}*:",
+        "",
+        f"- **Rating**: {stars}",
+    ]
     if d.get("recommend") is not None:
         bits.append(f"- **Would recommend**: {'yes' if d['recommend'] else 'no'}")
     if d.get("discussion"):
         bits.append(f"- **Discussion quality**: {d['discussion']}/5")
     if d.get("quote"):
         bits.append(f"- **Favorite quote**: “{d['quote']}”")
-    bits += ["", "> " + (d.get("body") or "").replace("\n", "\n> "), "",
-             "Reply **YES** and it's recorded (your words, verbatim) — or just tell me what "
-             "to change."]
+    bits += [
+        "",
+        "> " + (d.get("body") or "").replace("\n", "\n> "),
+        "",
+        "Reply **YES** and it's recorded (your words, verbatim) — or just tell me what to change.",
+    ]
     return "\n".join(bits)
 
 
 def _write(draft: dict, d: dict) -> dict:
-    member_name = next((m["name"] for m in cr.members()
-                        if clubdb.lookup_member_id(m["slug"]) == draft["member_id"]), None)
+    member_name = next(
+        (
+            m["name"]
+            for m in cr.members()
+            if clubdb.lookup_member_id(m["slug"]) == draft["member_id"]
+        ),
+        None,
+    )
     # Review-drive candidates already have a structured review row (at least a rating). A prose
     # reply may omit those fields, which means "unchanged", not "clear them". Read the canonical
     # row as a final deterministic guard even for drafts created before rating seeding shipped.
@@ -278,12 +341,14 @@ def _write(draft: dict, d: dict) -> dict:
         quote = existing.get("favorite_quote")
     body = d.get("body") or existing.get("body")
     return reviews.write_review(
-        draft["book_slug"], member_name,
+        draft["book_slug"],
+        member_name,
         rating=str(rating) if rating else None,
         review=body or None,
         recommend="yes" if recommend else None,
         discussion=str(discussion) if discussion else None,
-        quote=quote or None)
+        quote=quote or None,
+    )
 
 
 def handle_reply(draft: dict, msg) -> bool:
@@ -294,13 +359,18 @@ def handle_reply(draft: dict, msg) -> bool:
     be created on the bot's asyncio event loop.
     """
 
-    member = next((m for m in cr.members()
-                   if clubdb.lookup_member_id(m["slug"]) == draft["member_id"]), None)
+    member = next(
+        (m for m in cr.members() if clubdb.lookup_member_id(m["slug"]) == draft["member_id"]), None
+    )
     first = ((member or {}).get("name") or "there").split()[0]
     book = cr.find_book(draft["book_slug"]) or {"title": draft["book_slug"]}
     text = email_policy.current_message_text(getattr(msg, "text", "") or "")
-    reply_kw = dict(to=[msg.from_email], subject=f"Re: {msg.subject}",
-                    in_reply_to=msg.message_id, references=msg.references)
+    reply_kw = dict(
+        to=[msg.from_email],
+        subject=f"Re: {msg.subject}",
+        in_reply_to=msg.message_id,
+        references=msg.references,
+    )
     source_id = getattr(msg, "id", None) or msg.message_id
 
     def _reply(body: str, action: str) -> dict:
@@ -313,20 +383,33 @@ def handle_reply(draft: dict, msg) -> bool:
 
     def _finish(state: str, note: str) -> None:
         db.update_review_draft(draft["id"], state=state)
-        db.add_activity("review_drive", f"Review draft {state}",
-                        f"{(member or {}).get('slug', draft['member_id'])} / {book['title']}: {note}")
+        db.add_activity(
+            "review_drive",
+            f"Review draft {state}",
+            f"{(member or {}).get('slug', draft['member_id'])} / {book['title']}: {note}",
+        )
 
     if draft["state"] == "awaiting_confirm" and YES_RE.search(text):
         d = json.loads(draft["draft_json"] or "{}")
         result = _write(draft, d)
-        _reply(oliver.compose(
-            "a one-or-two sentence warm thanks: their review is recorded and will be on the "
-            "club site shortly", {"member": first, "book": book["title"]},
-            fallback=f"Recorded — thanks, {first}! Your review of *{book['title']}* will be on "
-                     "the club site shortly."), "recorded")
-        db.record_event(actor="member", kind="review_recorded", member_id=draft["member_id"],
-                        surface="email", category="reading",
-                        detail=json.dumps({"book_slug": draft["book_slug"]}))
+        _reply(
+            oliver.compose(
+                "a one-or-two sentence warm thanks: their review is recorded and will be on the "
+                "club site shortly",
+                {"member": first, "book": book["title"]},
+                fallback=f"Recorded — thanks, {first}! Your review of *{book['title']}* will be on "
+                "the club site shortly.",
+            ),
+            "recorded",
+        )
+        db.record_event(
+            actor="member",
+            kind="review_recorded",
+            member_id=draft["member_id"],
+            surface="email",
+            category="reading",
+            detail=json.dumps({"book_slug": draft["book_slug"]}),
+        )
         _finish("written", f"review written ({result.get('rating') or 'no rating'})")
         return True
 
@@ -338,11 +421,19 @@ def handle_reply(draft: dict, msg) -> bool:
 
     d = _extract(book["title"], text, d0)
     if d is None:
-        db.add_activity("warning", "Review extraction failed",
-                        f"{book['title']}: unparseable extraction twice; parked.")
-        _reply((f"I had trouble turning that into the record cleanly, {first} — "
+        db.add_activity(
+            "warning",
+            "Review extraction failed",
+            f"{book['title']}: unparseable extraction twice; parked.",
+        )
+        _reply(
+            (
+                f"I had trouble turning that into the record cleanly, {first} — "
                 "mind finishing it in the web app? `/oliver my-club` in Discord "
-                "gets you a link, and your email is safe with me meanwhile."), "parked-extraction")
+                "gets you a link, and your email is safe with me meanwhile."
+            ),
+            "parked-extraction",
+        )
         _finish("parked", "extraction unparseable")
         return False
 
@@ -354,13 +445,24 @@ def handle_reply(draft: dict, msg) -> bool:
                 d[field] = d0[field]
 
     if d.get("stop_asking"):
-        db.record_event(actor="member", kind="review_optout", member_id=draft["member_id"],
-                        surface="email", category="reading")
-        db.add_memory("Prefers not to receive review-request emails",
-                      scope="member", subject=(member or {}).get("slug"),
-                      source="member_request")
-        _reply(f"Understood, {first} — no more review emails from me. "
-               "The web app's always there if the mood ever strikes.", "optout")
+        db.record_event(
+            actor="member",
+            kind="review_optout",
+            member_id=draft["member_id"],
+            surface="email",
+            category="reading",
+        )
+        db.add_memory(
+            "Prefers not to receive review-request emails",
+            scope="member",
+            subject=(member or {}).get("slug"),
+            source="member_request",
+        )
+        _reply(
+            f"Understood, {first} — no more review emails from me. "
+            "The web app's always there if the mood ever strikes.",
+            "optout",
+        )
         _finish("declined", "member opted out of review emails")
         return False
 
@@ -371,15 +473,24 @@ def handle_reply(draft: dict, msg) -> bool:
 
     rounds = draft["rounds"] + (1 if draft["state"] == "awaiting_confirm" else 0)
     if rounds > MAX_CORRECTION_ROUNDS:
-        _reply((f"We're going in circles by email, {first} — easier hands-on: "
+        _reply(
+            (
+                f"We're going in circles by email, {first} — easier hands-on: "
                 "`/oliver my-club` in Discord opens the web app and your words so "
-                "far are saved in this thread."), "parked-rounds")
+                "far are saved in this thread."
+            ),
+            "parked-rounds",
+        )
         _finish("parked", "correction rounds exhausted")
         return False
 
-    db.update_review_draft(draft["id"], state="awaiting_confirm",
-                           draft_json=json.dumps(d), rounds=rounds)
+    db.update_review_draft(
+        draft["id"], state="awaiting_confirm", draft_json=json.dumps(d), rounds=rounds
+    )
     _reply(_confirmation_body(first, book["title"], d), f"confirmation-{rounds}")
-    db.add_activity("review_drive", "Review draft awaiting confirmation",
-                    f"{(member or {}).get('slug', '?')} / {book['title']} (round {rounds})")
+    db.add_activity(
+        "review_drive",
+        "Review draft awaiting confirmation",
+        f"{(member or {}).get('slug', '?')} / {book['title']} (round {rounds})",
+    )
     return False

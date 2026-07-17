@@ -17,11 +17,14 @@ def _instant(value: str) -> datetime:
 
 def test_central_calendar_date_cases():
     for case in CASES["today"]:
-        assert _instant(case["now"]).astimezone(clock.tz()).date().isoformat() == case["centralDate"]
+        assert (
+            _instant(case["now"]).astimezone(clock.tz()).date().isoformat() == case["centralDate"]
+        )
 
 
 def test_meeting_roll_boundary_cases():
     for case in CASES["upcoming"]:
-        assert clock.is_upcoming(
-            case["meetingDate"], case["startTime"], now=_instant(case["now"])
-        ) is case["expected"]
+        assert (
+            clock.is_upcoming(case["meetingDate"], case["startTime"], now=_instant(case["now"]))
+            is case["expected"]
+        )

@@ -42,7 +42,7 @@ def _extract_email(text: str) -> str:
     # <email>, then strip any stray tag so it never leaks into the sent email.
     opened = re.search(r"<email>", text, re.I)
     if opened:
-        text = text[opened.end():]
+        text = text[opened.end() :]
     return _strip_cite_tags(re.sub(r"</?email\s*>", "", text, flags=re.I).strip())
 
 
@@ -105,16 +105,18 @@ def topic_email(meeting: dict | None = None) -> dict:
     meeting = meeting or meeting_rules.next_meeting()
     title = (meeting.get("book") or {}).get("title") or "our next book"
     when = _friendly_date(meeting.get("date"))
-    body = _extract_email(oliver.generate(topic_email_prompt(meeting)))  # signature added by outbound.send
+    body = _extract_email(
+        oliver.generate(topic_email_prompt(meeting))
+    )  # signature added by outbound.send
     subject = f"Preface: {title}" + (f" — {when}" if when else "")
     return {"subject": subject, "body": body}
 
 
 # ── Postscript: the ~1-week-after-meeting digest of what's new with our books ──
-POSTSCRIPT_KIND = "postscript_sent"          # group-event kind (dedup + rotation store)
-POSTSCRIPT_SEARCH_BUDGET = 15                 # raised web_search cap (default 3 is far too few)
-POSTSCRIPT_POOL_SIZE = 15                     # candidates fed to Oliver (spanning eras)
-_MAX_PER_AUTHOR = 2                           # cap repeats so the pool isn't clustered
+POSTSCRIPT_KIND = "postscript_sent"  # group-event kind (dedup + rotation store)
+POSTSCRIPT_SEARCH_BUDGET = 15  # raised web_search cap (default 3 is far too few)
+POSTSCRIPT_POOL_SIZE = 15  # candidates fed to Oliver (spanning eras)
+_MAX_PER_AUTHOR = 2  # cap repeats so the pool isn't clustered
 
 
 def _most_recent_read_book() -> dict | None:
@@ -130,7 +132,7 @@ def _recent_featured_slugs(limit: int = 3) -> set[str]:
             continue
         try:
             out.update(json.loads(detail).get("featured") or [])
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             continue
     return out
 
@@ -139,8 +141,9 @@ def _candidate_facts(book: dict, author: dict | None) -> dict:
     """Targeting facts for one candidate so Oliver's news search is specific — and ready link
     targets (our own book page + an external reference) so it links rather than inventing URLs."""
     slug = book.get("slug")
-    external = (f"https://openlibrary.org{book['olKey']}" if book.get("olKey")
-                else book.get("wikipediaUrl"))
+    external = (
+        f"https://openlibrary.org{book['olKey']}" if book.get("olKey") else book.get("wikipediaUrl")
+    )
     return {
         "slug": slug,
         "title": book.get("title"),
@@ -168,8 +171,9 @@ def _news_score(book: dict, author: dict | None) -> int:
     return s
 
 
-def select_postscript_candidates(anchor_slug: str | None, *, exclude: set[str] | None = None,
-                                  limit: int = POSTSCRIPT_POOL_SIZE) -> list[dict]:
+def select_postscript_candidates(
+    anchor_slug: str | None, *, exclude: set[str] | None = None, limit: int = POSTSCRIPT_POOL_SIZE
+) -> list[dict]:
     """A temporally varied, author-diverse pool of read books likely to have real news. Read books
     are split into Distant / Middle / Recent thirds by meeting date and the top-scored few are drawn
     from EACH era, so an edition spans the club's history rather than clustering on recent reads; the
@@ -178,11 +182,13 @@ def select_postscript_candidates(anchor_slug: str | None, *, exclude: set[str] |
     exclude = exclude or set()
     read = [b for b in cr.books() if b.get("isRead") and b.get("slug") and b.get("meetingDate")]
     by_slug = {b["slug"]: b for b in read}
-    eligible = sorted((b for b in read if b["slug"] not in exclude and b["slug"] != anchor_slug),
-                      key=lambda b: b["meetingDate"])  # oldest → newest
+    eligible = sorted(
+        (b for b in read if b["slug"] not in exclude and b["slug"] != anchor_slug),
+        key=lambda b: b["meetingDate"],
+    )  # oldest → newest
     n = len(eligible)
     third = max(1, n // 3)
-    eras = [eligible[:third], eligible[third:2 * third], eligible[2 * third:]] if n else []
+    eras = [eligible[:third], eligible[third : 2 * third], eligible[2 * third :]] if n else []
     per_era = max(1, limit // 3)
 
     _author_cache: dict[str, dict | None] = {}
@@ -209,8 +215,9 @@ def select_postscript_candidates(anchor_slug: str | None, *, exclude: set[str] |
     for era in eras:
         # Cheap prerank (fiction, then newest within the era) bounds get_author to a shortlist;
         # then rank that shortlist by newsworthiness and take the top few, capping per author.
-        shortlist = sorted(era, key=lambda b: (b.get("fiction", False), b.get("meetingDate") or ""),
-                           reverse=True)[:per_era * 3]
+        shortlist = sorted(
+            era, key=lambda b: (b.get("fiction", False), b.get("meetingDate") or ""), reverse=True
+        )[: per_era * 3]
         ranked = sorted(shortlist, key=lambda b: _news_score(b, author_of(b)), reverse=True)
         added = 0
         for b in ranked:
@@ -244,7 +251,9 @@ def postscript_prompt(candidates: list[dict], *, anchor_title: str | None = None
     anchor_line = (
         f"Lead with a follow-up on *{anchor_title}* (the book we just discussed) IF you find "
         "something genuinely new about it; otherwise skip straight to the rest.\n\n"
-        if anchor_title else "")
+        if anchor_title
+        else ""
+    )
     return (
         "Write 'Postscript' — the club's after-meeting email, sent about a week after we meet, to "
         "the whole mailing list. It's a warm, magazine-y digest of what's genuinely NEW or newly "
@@ -298,15 +307,23 @@ def postscript_email(anchor: dict | None = None) -> dict:
     the `offered` candidate slugs (the scheduler records these so future editions rotate)."""
     anchor = anchor if anchor is not None else (_most_recent_read_book() or {})
     candidates = select_postscript_candidates(anchor.get("slug"), exclude=_recent_featured_slugs())
-    body = _extract_email(oliver.generate(
-        postscript_prompt(candidates, anchor_title=anchor.get("title")),
-        web_search_max_uses=POSTSCRIPT_SEARCH_BUDGET))
-    return {"subject": "Postscript: what's new with our books", "body": body,
-            "offered": [c["slug"] for c in candidates if c.get("slug")]}
+    body = _extract_email(
+        oliver.generate(
+            postscript_prompt(candidates, anchor_title=anchor.get("title")),
+            web_search_max_uses=POSTSCRIPT_SEARCH_BUDGET,
+        )
+    )
+    return {
+        "subject": "Postscript: what's new with our books",
+        "body": body,
+        "offered": [c["slug"] for c in candidates if c.get("slug")],
+    }
 
 
 def _names(status: dict, *want: str) -> list[str]:
-    return [r["member"] for r in status.get("attendance", []) if r["status"] in want and r.get("member")]
+    return [
+        r["member"] for r in status.get("attendance", []) if r["status"] in want and r.get("member")
+    ]
 
 
 def week_reminder(meeting: dict | None = None, status: dict | None = None) -> dict:
@@ -322,8 +339,11 @@ def week_reminder(meeting: dict | None = None, status: dict | None = None) -> di
         f"Hi all — a reminder that the R/W Book Club meets {when} to discuss {title}.\n\n"
         + (f"Coming: {', '.join(coming)}.\n" if coming else "")
         + (f"Can't make it: {', '.join(not_coming)}.\n" if not_coming else "")
-        + (f"\nStill need to hear from {', '.join(waiting_on)} — please reply.\n"
-           if waiting_on else "\nThat's everyone — thanks for the quick replies.\n")
+        + (
+            f"\nStill need to hear from {', '.join(waiting_on)} — please reply.\n"
+            if waiting_on
+            else "\nThat's everyone — thanks for the quick replies.\n"
+        )
     )
     body = oliver.compose(
         "one-week-out reminder email to the whole club mailing list",
@@ -335,7 +355,7 @@ def week_reminder(meeting: dict | None = None, status: dict | None = None) -> di
             "not able to make it": ", ".join(not_coming) or None,
             "still waiting to hear from": ", ".join(waiting_on) or "everyone has responded",
             "ask": "warmly nudge ONLY the people we're still waiting to hear from; never ask "
-                   "someone who already said yes or no to respond again",
+            "someone who already said yes or no to respond again",
         },
         fallback=fallback,
         medium="email",
@@ -346,8 +366,11 @@ def week_reminder(meeting: dict | None = None, status: dict | None = None) -> di
 
 def _main() -> None:
     from agent import database
+
     database.initialize()
-    parser = argparse.ArgumentParser(description="Preview (and optionally send) a club meeting email.")
+    parser = argparse.ArgumentParser(
+        description="Preview (and optionally send) a club meeting email."
+    )
     parser.add_argument("kind", choices=["topic", "week", "postscript"])
     parser.add_argument("--send", metavar="EMAIL", help="also deliver the draft to this address")
     args = parser.parse_args()

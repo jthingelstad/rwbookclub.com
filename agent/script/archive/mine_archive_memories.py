@@ -40,14 +40,19 @@ def _members() -> list[str]:
 
 
 def _lines(msgs: list[dict]) -> list[str]:
-    return [f"[mailing list] {m.get('member_slug')} — {m.get('subject') or '(no subject)'}: "
-            f"{(m.get('body_clean') or '')[:1500]}" for m in msgs]
+    return [
+        f"[mailing list] {m.get('member_slug')} — {m.get('subject') or '(no subject)'}: "
+        f"{(m.get('body_clean') or '')[:1500]}"
+        for m in msgs
+    ]
 
 
 def _era_note(year: int) -> str:
-    return (f"This material is all from {year}. Prefer durable tastes and lore over moment-to-"
-            f"moment chatter; if an opinion or event is clearly time-bound, note the year in "
-            f"the memory.")
+    return (
+        f"This material is all from {year}. Prefer durable tastes and lore over moment-to-"
+        f"moment chatter; if an opinion or event is clearly time-bound, note the year in "
+        f"the memory."
+    )
 
 
 def _mine_lane(lane: str, *, until: str, years: list[int], dry_run: bool) -> dict:
@@ -61,13 +66,19 @@ def _mine_lane(lane: str, *, until: str, years: list[int], dry_run: bool) -> dic
             continue
         start, end = f"{year}-01-01", min(f"{year + 1}-01-01", until)
         member = None if lane == CLUB_LANE else lane
-        msgs = db.mail_messages_between(start, end, member_slug=member,
-                                        exclude_from=config.OLIVER_EMAIL_ADDRESS)
+        msgs = db.mail_messages_between(
+            start, end, member_slug=member, exclude_from=config.OLIVER_EMAIL_ADDRESS
+        )
         if msgs:
             scope = "club" if lane == CLUB_LANE else "member"
             res = reflection.consolidate(
-                _lines(msgs), scope=scope, subject=member, era_note=_era_note(year),
-                dry_run=dry_run, usage_channel="reflection:mining")
+                _lines(msgs),
+                scope=scope,
+                subject=member,
+                era_note=_era_note(year),
+                dry_run=dry_run,
+                usage_channel="reflection:mining",
+            )
             if "skipped" in res:
                 print(f"  !! {lane} {year}: {res['skipped']} — lane stopped; re-run to resume here")
                 break
@@ -97,6 +108,7 @@ def _report() -> None:
 
 def main() -> None:
     from agent import database
+
     database.initialize()
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dry-run", action="store_true", help="preview proposals; write nothing")
@@ -104,8 +116,11 @@ def main() -> None:
     ap.add_argument("--club-only", action="store_true", help="mine only the club-lore lane")
     ap.add_argument("--members-only", action="store_true", help="skip the club-lore lane")
     ap.add_argument("--year", type=int, help="mine only this single year (calibration)")
-    ap.add_argument("--until", help="mine mail with sent_at <= this ISO instant "
-                                    "(default: the weekly reflection job's initial mail cursor)")
+    ap.add_argument(
+        "--until",
+        help="mine mail with sent_at <= this ISO instant "
+        "(default: the weekly reflection job's initial mail cursor)",
+    )
     ap.add_argument("--report", action="store_true", help="only print the final memory sets")
     args = ap.parse_args()
 
@@ -115,8 +130,10 @@ def main() -> None:
 
     until = args.until or (db.get_job_state(reflection.JOB_KEY) or {}).get("mail_sent_at")
     if not until:
-        raise SystemExit("No boundary: the weekly reflection job has no mail cursor yet and no "
-                         "--until was given. Run the weekly job once (or pass --until).")
+        raise SystemExit(
+            "No boundary: the weekly reflection job has no mail cursor yet and no "
+            "--until was given. Run the weekly job once (or pass --until)."
+        )
     last_year = int(until[:4])
     years = [args.year] if args.year else list(range(FIRST_YEAR, last_year + 1))
 
@@ -132,8 +149,11 @@ def main() -> None:
         print(f"    {counts}")
 
     if not args.dry_run:
-        db.add_activity("reflection", "Archive memory mining run",
-                        f"Lanes: {', '.join(lanes)}\nYears: {years[0]}–{years[-1]}\nUntil: {until}")
+        db.add_activity(
+            "reflection",
+            "Archive memory mining run",
+            f"Lanes: {', '.join(lanes)}\nYears: {years[0]}–{years[-1]}\nUntil: {until}",
+        )
         _report()
 
 

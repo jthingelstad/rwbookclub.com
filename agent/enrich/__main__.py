@@ -9,6 +9,7 @@ from agent.enrich.loop import run
 
 def main() -> None:
     from agent import database
+
     database.initialize()
     ap = argparse.ArgumentParser(description="Fill the club_*_enrichment sidecars.")
     ap.add_argument("--books", action="store_true", help="enrich books")
@@ -21,8 +22,14 @@ def main() -> None:
     # Default to both when neither flag is given.
     do_books = args.books or not (args.books or args.authors)
     do_authors = args.authors or not (args.books or args.authors)
-    counts = run(do_books=do_books, do_authors=do_authors, force=args.force,
-                 limit=args.limit, slug=args.slug, fetch_images=not args.no_images)
+    counts = run(
+        do_books=do_books,
+        do_authors=do_authors,
+        force=args.force,
+        limit=args.limit,
+        slug=args.slug,
+        fetch_images=not args.no_images,
+    )
     print(f"\nenriched {counts['books']} books, {counts['authors']} authors")
 
 

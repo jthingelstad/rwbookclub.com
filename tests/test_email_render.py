@@ -14,9 +14,9 @@ def test_text_to_html_renders_markdown():
 
 def test_text_to_html_escapes_and_has_no_tracking_pixel():
     html = email_render.text_to_html("Hi Jamie,\n\n<finished>")
-    assert "&lt;finished&gt;" in html          # body html-escaped
-    assert "<img" not in html                  # no open-pixel
-    assert "was opened" not in html            # no tracking-notice footer
+    assert "&lt;finished&gt;" in html  # body html-escaped
+    assert "<img" not in html  # no open-pixel
+    assert "was opened" not in html  # no tracking-notice footer
 
 
 def test_code_span_angle_brackets_not_double_escaped():

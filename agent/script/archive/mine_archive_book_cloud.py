@@ -65,13 +65,18 @@ def _read_titles() -> list[str]:
 
 
 def _prompt(member: str, year: int, msgs: list[dict], read_titles: list[str]) -> str:
-    parts = [f"Member: {member} — emails from {year}\n",
-             "Books the club has READ (skip mentions of these):",
-             "; ".join(read_titles), "\nEmails:"]
+    parts = [
+        f"Member: {member} — emails from {year}\n",
+        "Books the club has READ (skip mentions of these):",
+        "; ".join(read_titles),
+        "\nEmails:",
+    ]
     for m in msgs:
         body = (m.get("body_clean") or "")[:MAX_BODY]
-        parts.append(f"[{m['message_id']} | {(m.get('sent_at') or '')[:10]} | "
-                     f"{m.get('subject') or '(no subject)'}]\n{body}\n")
+        parts.append(
+            f"[{m['message_id']} | {(m.get('sent_at') or '')[:10]} | "
+            f"{m.get('subject') or '(no subject)'}]\n{body}\n"
+        )
     return "\n".join(parts)
 
 
@@ -81,7 +86,7 @@ def _parse(raw: str) -> list | None:
         return [] if (raw or "").strip() in ("", "[]") else None
     try:
         out = json.loads(m.group(0))
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return None
     return out if isinstance(out, list) else None
 
@@ -89,8 +94,9 @@ def _parse(raw: str) -> list | None:
 def _mine_member_year(member: str, year: int, *, until: str, dry_run: bool) -> dict | None:
     """Extract one member-year. Returns counts, or None on a (retried) parse failure."""
     start, end = f"{year}-01-01", min(f"{year + 1}-01-01", until)
-    msgs = db.mail_messages_between(start, end, member_slug=member,
-                                    exclude_from=config.OLIVER_EMAIL_ADDRESS)
+    msgs = db.mail_messages_between(
+        start, end, member_slug=member, exclude_from=config.OLIVER_EMAIL_ADDRESS
+    )
     if not msgs:
         return {"mentions": 0, "messages": 0}
     by_id = {m["message_id"]: m for m in msgs}
@@ -99,14 +105,25 @@ def _mine_member_year(member: str, year: int, *, until: str, dry_run: bool) -> d
 
     mentions = None
     for attempt in (1, 2):  # same stochastic-format + retry posture as the memory miner
-        raw = oliver.complete(SYSTEM, _prompt(member, year, msgs, read_titles),
-                              model=oliver.MODEL, thinking=False, effort=None, max_tokens=16000,
-                              usage_channel=None if dry_run else "book_cloud:mining")
+        raw = oliver.complete(
+            SYSTEM,
+            _prompt(member, year, msgs, read_titles),
+            model=oliver.MODEL,
+            thinking=False,
+            effort=None,
+            max_tokens=16000,
+            usage_channel=None if dry_run else "book_cloud:mining",
+        )
         mentions = _parse(raw)
         if mentions is not None:
             break
-        log.warning("cloud mining: unparseable output for %s %s (attempt %d): %r",
-                    member, year, attempt, (raw or "")[:300])
+        log.warning(
+            "cloud mining: unparseable output for %s %s (attempt %d): %r",
+            member,
+            year,
+            attempt,
+            (raw or "")[:300],
+        )
     if mentions is None:
         return None
 
@@ -118,16 +135,21 @@ def _mine_member_year(member: str, year: int, *, until: str, dry_run: bool) -> d
             continue  # enforce the skip-read rule in code too
         src = by_id.get(str(m.get("message_id") or ""))
         if dry_run:
-            print(f"  + {title}"
-                  + (f" — {m.get('author')}" if m.get("author") else "")
-                  + f" [{m.get('reason_kind') or '?'}] {reason}"
-                  + (f"  ({(src or {}).get('sent_at', '')[:10]})" if src else ""))
+            print(
+                f"  + {title}"
+                + (f" — {m.get('author')}" if m.get("author") else "")
+                + f" [{m.get('reason_kind') or '?'}] {reason}"
+                + (f"  ({(src or {}).get('sent_at', '')[:10]})" if src else "")
+            )
         else:
             db.add_book_cloud_entry(
-                title=title, reason=reason, author=(m.get("author") or None),
+                title=title,
+                reason=reason,
+                author=(m.get("author") or None),
                 reason_kind=(m.get("reason_kind") or None),
                 book_slug=(cr.find_book(title) or {}).get("slug"),
-                mentioned_by=member, surface="mailing_list",
+                mentioned_by=member,
+                surface="mailing_list",
                 source_message_id=(src or {}).get("message_id"),
                 created_at=((src or {}).get("sent_at") or None),
             )
@@ -142,12 +164,15 @@ def _report() -> None:
     print(f"\n===== BOOK CLOUD ===== ({len(unread)} unread titles aggregated; showing by recency)")
     for r in unread[:60]:
         who = ",".join(r["mentioners"]) or "?"
-        print(f"  {r['first_mentioned'][:10]}→{r['last_mentioned'][:10]} ×{r['mention_count']} "
-              f"[{who}] {r['title']} — {r['recentReasons'][0] if r['recentReasons'] else ''}")
+        print(
+            f"  {r['first_mentioned'][:10]}→{r['last_mentioned'][:10]} ×{r['mention_count']} "
+            f"[{who}] {r['title']} — {r['recentReasons'][0] if r['recentReasons'] else ''}"
+        )
 
 
 def main() -> None:
     from agent import database
+
     database.initialize()
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dry-run", action="store_true")
@@ -164,8 +189,11 @@ def main() -> None:
     if not until:
         raise SystemExit("No boundary: run the weekly reflection once or pass --until.")
     years = [args.year] if args.year else list(range(FIRST_YEAR, int(until[:4]) + 1))
-    members = [args.member] if args.member else sorted(
-        m["slug"] for m in cr.members() if m.get("isCurrent"))
+    members = (
+        [args.member]
+        if args.member
+        else sorted(m["slug"] for m in cr.members() if m.get("isCurrent"))
+    )
 
     for member in members:
         state = db.get_job_state(JOB_KEY) or {"done": {}}
@@ -188,8 +216,11 @@ def main() -> None:
         print(f"    mentions kept: {total}")
 
     if not args.dry_run:
-        db.add_activity("reflection", "Book Cloud archive seeding run",
-                        f"Members: {', '.join(members)}\nYears: {years[0]}–{years[-1]}")
+        db.add_activity(
+            "reflection",
+            "Book Cloud archive seeding run",
+            f"Members: {', '.join(members)}\nYears: {years[0]}–{years[-1]}",
+        )
         _report()
 
 

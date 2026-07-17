@@ -29,14 +29,19 @@ def test_fixture_columns_match_live_schema():
             live = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}
             assert set(fixture_cols) == live, (
                 f"{table}: fixture columns {sorted(fixture_cols)} != live schema "
-                f"{sorted(live)} — regenerate tests/fixtures/club_seed.sql")
+                f"{sorted(live)} — regenerate tests/fixtures/club_seed.sql"
+            )
 
 
 def test_fixture_seeds_core_tables():
     """The autouse seed must populate the core tables (catches a truncated/empty fixture)."""
     with db.connect() as conn:
-        for table, floor in [("club_books", 100), ("club_authors", 100),
-                             ("club_meetings", 100), ("club_members", 5)]:
+        for table, floor in [
+            ("club_books", 100),
+            ("club_authors", 100),
+            ("club_meetings", 100),
+            ("club_members", 5),
+        ]:
             n = conn.execute(f"SELECT COUNT(*) AS c FROM {table}").fetchone()["c"]
             assert n >= floor, f"{table} has only {n} rows — fixture truncated?"
 

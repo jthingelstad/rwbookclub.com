@@ -56,16 +56,17 @@ _ALLOWED = db.CHRONICLE_KINDS  # category -> allowed kinds
 def _roster() -> list[dict]:
     """All club members (current and past — the chronicle spans the whole history), name + slug."""
     return sorted(
-        ({"slug": m.get("slug"), "name": m.get("name"), "current": bool(m.get("isCurrent"))}
-         for m in corpus_read.members() if m.get("slug")),
+        (
+            {"slug": m.get("slug"), "name": m.get("name"), "current": bool(m.get("isCurrent"))}
+            for m in corpus_read.members()
+            if m.get("slug")
+        ),
         key=lambda m: m["name"] or m["slug"],
     )
 
 
 def _system_prompt(roster: list[dict]) -> str:
-    taxonomy = "\n".join(
-        f"- {cat}: {', '.join(kinds)}" for cat, kinds in _ALLOWED.items()
-    )
+    taxonomy = "\n".join(f"- {cat}: {', '.join(kinds)}" for cat, kinds in _ALLOWED.items())
     roster_lines = "\n".join(
         f"- {m['name']} → {m['slug']}" + ("" if m["current"] else " (former member)")
         for m in roster
@@ -76,7 +77,7 @@ def _system_prompt(roster: list[dict]) -> str:
         "TIMELINE of the club's history. For the thread below, extract the durable club events it "
         "documents.\n\n"
         "Output a STRICT JSON array and NOTHING else. Each element:\n"
-        '{\n'
+        "{\n"
         '  "category": one of [meeting, selection, social, member_life, club, reading],\n'
         '  "kind": one of the kinds listed for that category,\n'
         '  "occurred_at": "YYYY-MM-DD" (the day it happened — use the email dates in the thread; '
@@ -100,8 +101,8 @@ def _system_prompt(roster: list[dict]) -> str:
         "trouble, job loss, or anything a member would not want preserved in a shared club "
         "history. When in doubt, leave it out.\n"
         "- member_away is ONLY for a member proactively announcing they will miss UPCOMING "
-        "meeting(s) or be away for a stretch — a forward-looking heads-up (\"Tom will be away "
-        "Feb 8–28\"). Do NOT create a member_away for a routine same-day \"can't make it tonight\" "
+        'meeting(s) or be away for a stretch — a forward-looking heads-up ("Tom will be away '
+        'Feb 8–28"). Do NOT create a member_away for a routine same-day "can\'t make it tonight" '
         "no-show — that is low-signal and already implied by the meeting. When you do record one, "
         "give only the absence and dates — NEVER a medical/health or otherwise personal reason "
         "(include a reason only if plainly non-sensitive, e.g. travel, and keep it minimal).\n"
@@ -121,7 +122,7 @@ def _system_prompt(roster: list[dict]) -> str:
         "member proactively announcing upcoming travel/absence (member_away), and a decision to drop "
         "or swap a book mid-read (dnf). Don't discard a whole thread as chatter if it contains one "
         "of these.\n"
-        "- Otherwise skip pure logistics chatter (\"what time works?\", \"see you there\") that "
+        '- Otherwise skip pure logistics chatter ("what time works?", "see you there") that '
         "settles nothing durable; many threads correctly yield []. Don't pad — but do keep every "
         "distinct pick, nomination, meeting, and decision.\n"
         "- Output the JSON array only — no prose, no markdown fences."
@@ -162,7 +163,7 @@ def _parse_events(text: str) -> list[dict]:
     if start == -1 or end == -1 or end < start:
         return []
     try:
-        parsed = json.loads(s[start:end + 1])
+        parsed = json.loads(s[start : end + 1])
     except json.JSONDecodeError:
         return []
     return parsed if isinstance(parsed, list) else []
@@ -209,8 +210,16 @@ def _done_threads(progress_path: pathlib.Path) -> set[str]:
     return {line.strip() for line in progress_path.read_text().splitlines() if line.strip()}
 
 
-def mine(*, limit: int | None, force: bool, thread_id: str | None, sample: int | None,
-         out_path: pathlib.Path, model: str, thinking: bool = False) -> dict:
+def mine(
+    *,
+    limit: int | None,
+    force: bool,
+    thread_id: str | None,
+    sample: int | None,
+    out_path: pathlib.Path,
+    model: str,
+    thinking: bool = False,
+) -> dict:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     progress_path = out_path.with_suffix(out_path.suffix + ".threads")
 
@@ -233,9 +242,11 @@ def mine(*, limit: int | None, force: bool, thread_id: str | None, sample: int |
     if limit is not None:
         todo = todo[:limit]
 
-    print(f"mining {len(todo)} thread(s) "
-          f"(skipping {len(threads) - len(todo)} already done / over-limit); "
-          f"model={model} thinking={thinking}")
+    print(
+        f"mining {len(todo)} thread(s) "
+        f"(skipping {len(threads) - len(todo)} already done / over-limit); "
+        f"model={model} thinking={thinking}"
+    )
     stats = {"threads": 0, "events": 0, "empty": 0, "errors": 0}
     for i, t in enumerate(todo, 1):
         tid = t["thread_id"]
@@ -248,7 +259,9 @@ def mine(*, limit: int | None, force: bool, thread_id: str | None, sample: int |
             reply = oliver.complete(system, _thread_prompt(full), model=model, thinking=thinking)
         except Exception as e:
             stats["errors"] += 1
-            print(f"  [{i}/{len(todo)}] {tid}: ERROR {type(e).__name__}: {e} — leaving for a re-run")
+            print(
+                f"  [{i}/{len(todo)}] {tid}: ERROR {type(e).__name__}: {e} — leaving for a re-run"
+            )
             continue
         events = []
         for n, raw in enumerate(_parse_events(reply)):
@@ -264,8 +277,10 @@ def mine(*, limit: int | None, force: bool, thread_id: str | None, sample: int |
             stats["empty"] += 1
         subj = (full["thread"].get("subject_normalized") or "")[:48]
         print(f"  [{i}/{len(todo)}] {tid}: {len(events)} event(s)  {subj}")
-    print(f"done: {stats['threads']} threads mined, {stats['events']} candidate event(s) "
-          f"({stats['empty']} empty, {stats['errors']} errored). Review → {out_path}")
+    print(
+        f"done: {stats['threads']} threads mined, {stats['events']} candidate event(s) "
+        f"({stats['empty']} empty, {stats['errors']} errored). Review → {out_path}"
+    )
     return stats
 
 
@@ -307,8 +322,10 @@ def load(*, out_path: pathlib.Path) -> dict:
             source=source,
         )
         stats["inserted"] += 1
-    print(f"loaded: {stats['inserted']} inserted, {stats['skipped']} already present, "
-          f"{stats['unapproved']} not approved, {stats['invalid']} invalid.")
+    print(
+        f"loaded: {stats['inserted']} inserted, {stats['skipped']} already present, "
+        f"{stats['unapproved']} not approved, {stats['invalid']} invalid."
+    )
     return stats
 
 
@@ -343,7 +360,9 @@ def stats(*, out_path: pathlib.Path) -> dict:
     for r in rows:
         by_cat[r.get("category")] = by_cat.get(r.get("category"), 0) + 1
         by_kind[r.get("kind")] = by_kind.get(r.get("kind"), 0) + 1
-        by_year[(r.get("occurred_at") or "????")[:4]] = by_year.get((r.get("occurred_at") or "????")[:4], 0) + 1
+        by_year[(r.get("occurred_at") or "????")[:4]] = (
+            by_year.get((r.get("occurred_at") or "????")[:4], 0) + 1
+        )
         approved += bool(r.get("approve"))
     print(f"{len(rows)} candidate event(s) in {out_path}  ({approved} approved)\n")
     print("by category:")
@@ -356,11 +375,15 @@ def stats(*, out_path: pathlib.Path) -> dict:
     for y, n in sorted(by_year.items()):
         print(f"  {y}  {n}")
     sensitive = [r for r in rows if r.get("category") in SENSITIVE_CATEGORIES]
-    print(f"\n── {len(sensitive)} privacy-sensitive event(s) (member_life/social) — review each by hand ──")
+    print(
+        f"\n── {len(sensitive)} privacy-sensitive event(s) (member_life/social) — review each by hand ──"
+    )
     for r in sensitive:
         mark = "✓" if r.get("approve") else " "
         members = ", ".join(r.get("member_slugs") or []) or "—"
-        print(f"  [{mark}] {(r.get('occurred_at') or '')[:10]} {r.get('kind'):16} ({members}) {r.get('summary')}")
+        print(
+            f"  [{mark}] {(r.get('occurred_at') or '')[:10]} {r.get('kind'):16} ({members}) {r.get('summary')}"
+        )
     return {"total": len(rows), "approved": approved, "sensitive": len(sensitive)}
 
 
@@ -369,8 +392,10 @@ def approve(*, out_path: pathlib.Path, categories: set[str]) -> dict:
     Refuses the privacy-sensitive categories — those must be approved individually by hand-editing."""
     blocked = categories & SENSITIVE_CATEGORIES
     if blocked:
-        print(f"refusing to bulk-approve {sorted(blocked)} — review member_life/social by hand "
-              "(edit the file directly).")
+        print(
+            f"refusing to bulk-approve {sorted(blocked)} — review member_life/social by hand "
+            "(edit the file directly)."
+        )
         categories = categories - SENSITIVE_CATEGORIES
     if not categories:
         return {"approved": 0}
@@ -395,25 +420,42 @@ DEFAULT_MODEL = "claude-sonnet-5"  # mining is constrained extraction — no nee
 
 def main(argv: list[str] | None = None) -> int:
     from agent import database
+
     database.initialize()
     p = argparse.ArgumentParser(description="Mine the email archive into Oliver's club timeline.")
     mode = p.add_mutually_exclusive_group()
-    mode.add_argument("--load", action="store_true",
-                      help="Insert approved candidates from the review file (instead of mining).")
-    mode.add_argument("--stats", action="store_true",
-                      help="Summarize the review file (counts + sensitive events) without changing it.")
-    mode.add_argument("--approve", metavar="CATS",
-                      help="Bulk-approve candidates in these comma-separated categories "
-                           "(member_life/social are refused — review those by hand).")
+    mode.add_argument(
+        "--load",
+        action="store_true",
+        help="Insert approved candidates from the review file (instead of mining).",
+    )
+    mode.add_argument(
+        "--stats",
+        action="store_true",
+        help="Summarize the review file (counts + sensitive events) without changing it.",
+    )
+    mode.add_argument(
+        "--approve",
+        metavar="CATS",
+        help="Bulk-approve candidates in these comma-separated categories "
+        "(member_life/social are refused — review those by hand).",
+    )
     p.add_argument("--limit", type=int, default=None, help="Max threads to mine this run.")
-    p.add_argument("--sample", type=int, default=None,
-                   help="Mine an evenly-spaced sample of N threads across the archive (for calibration).")
+    p.add_argument(
+        "--sample",
+        type=int,
+        default=None,
+        help="Mine an evenly-spaced sample of N threads across the archive (for calibration).",
+    )
     p.add_argument("--thread", default=None, help="Mine a single thread id.")
     p.add_argument("--force", action="store_true", help="Re-mine threads already marked done.")
     p.add_argument("--out", type=pathlib.Path, default=OUT_PATH, help="Review file path.")
     p.add_argument("--model", default=DEFAULT_MODEL, help="Model id for extraction.")
-    p.add_argument("--thinking", action="store_true",
-                   help="Enable adaptive thinking (off by default — extraction is mechanical).")
+    p.add_argument(
+        "--thinking",
+        action="store_true",
+        help="Enable adaptive thinking (off by default — extraction is mechanical).",
+    )
     args = p.parse_args(argv)
 
     if args.load:
@@ -423,10 +465,19 @@ def main(argv: list[str] | None = None) -> int:
         stats(out_path=args.out)
         return 0
     if args.approve:
-        approve(out_path=args.out, categories={c.strip() for c in args.approve.split(",") if c.strip()})
+        approve(
+            out_path=args.out, categories={c.strip() for c in args.approve.split(",") if c.strip()}
+        )
         return 0
-    mine(limit=args.limit, force=args.force, thread_id=args.thread, sample=args.sample,
-         out_path=args.out, model=args.model, thinking=args.thinking)
+    mine(
+        limit=args.limit,
+        force=args.force,
+        thread_id=args.thread,
+        sample=args.sample,
+        out_path=args.out,
+        model=args.model,
+        thinking=args.thinking,
+    )
     return 0
 
 

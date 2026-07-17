@@ -152,9 +152,7 @@ def test_valid_command_opens_one_private_note_modal(fresh_db):
 
 def test_modal_submission_saves_private_feedback(fresh_db):
     identities.link_member_identity(str(USER_ID), "jamie", linked_by="test")
-    modal = commands.PrivateBookFeedbackModal(
-        book={"slug": "watchmen", "title": "Watchmen"}
-    )
+    modal = commands.PrivateBookFeedbackModal(book={"slug": "watchmen", "title": "Watchmen"})
     modal.note.component._value = NOTE
     interaction = _Interaction(USER_ID)
 
@@ -175,16 +173,28 @@ def test_private_dnf_reason_is_recallable_only_by_its_member(fresh_db):
         source_message_id="interaction-271828",
     )
 
-    jamie = json.loads(dispatch("recall", {"query": "argument felt repetitive"}, {
-        "speaker": "Jamie",
-        "speaker_user_id": str(USER_ID),
-        "member_slug": "jamie",
-    }))
-    erik = json.loads(dispatch("recall", {"query": "argument felt repetitive"}, {
-        "speaker": "Erik",
-        "speaker_user_id": "other-user",
-        "member_slug": "erik",
-    }))
+    jamie = json.loads(
+        dispatch(
+            "recall",
+            {"query": "argument felt repetitive"},
+            {
+                "speaker": "Jamie",
+                "speaker_user_id": str(USER_ID),
+                "member_slug": "jamie",
+            },
+        )
+    )
+    erik = json.loads(
+        dispatch(
+            "recall",
+            {"query": "argument felt repetitive"},
+            {
+                "speaker": "Erik",
+                "speaker_user_id": "other-user",
+                "member_slug": "erik",
+            },
+        )
+    )
 
     assert len(jamie) == 1
     assert jamie[0]["scope"] == "member"

@@ -27,9 +27,12 @@ def test_identity_capability_is_not_reexported_by_database_facade():
 
 class TestWebsiteSurface:
     def test_link_normalizes_and_lists(self, fresh_db):
-        identities.link_member_website("tomeri.org", "jamie")            # no scheme → https://
+        identities.link_member_website("tomeri.org", "jamie")  # no scheme → https://
         identities.link_member_website("https://example.com/", "jamie")  # trailing slash dropped
-        assert set(identities.websites_for_member("jamie")) == {"https://tomeri.org", "https://example.com"}
+        assert set(identities.websites_for_member("jamie")) == {
+            "https://tomeri.org",
+            "https://example.com",
+        }
         listed = {(r["member_slug"], r["url"]) for r in identities.list_member_websites()}
         assert ("jamie", "https://tomeri.org") in listed
         assert ("jamie", "https://example.com") in listed
@@ -54,9 +57,13 @@ class TestRemoval:
     def test_remove_website_and_phone(self, fresh_db):
         identities.link_member_website("https://a.example", "jamie")
         identities.link_member_sms("612-555-1212", "jamie")
-        assert identities.remove_member_website("https://a.example/", "jamie") is True   # normalize matches
+        assert (
+            identities.remove_member_website("https://a.example/", "jamie") is True
+        )  # normalize matches
         assert identities.websites_for_member("jamie") == []
-        assert identities.remove_member_sms("(612) 555-1212", "jamie") is True           # same normalized form
+        assert (
+            identities.remove_member_sms("(612) 555-1212", "jamie") is True
+        )  # same normalized form
         assert identities.sms_for_member("jamie") == []
 
     def test_email_can_never_be_removed(self, fresh_db):
@@ -78,12 +85,15 @@ class TestRemoval:
 class TestMigration:
     def test_website_column_folds_into_identities(self, fresh_db):
         from agent import clubdb
+
         db = fresh_db
         jamie = clubdb.lookup_member_id("jamie")
         with db.connect() as conn:
             # Recreate the pre-migration shape (the column was dropped from CLUB_SCHEMA).
             conn.execute("ALTER TABLE club_members ADD COLUMN website TEXT")
-            conn.execute("UPDATE club_members SET website = 'https://jamie.example' WHERE id = ?", (jamie,))
+            conn.execute(
+                "UPDATE club_members SET website = 'https://jamie.example' WHERE id = ?", (jamie,)
+            )
             conn.commit()
             db.migrate_website_to_identities(conn)
             cols = {r["name"] for r in conn.execute("PRAGMA table_info(club_members)")}

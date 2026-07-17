@@ -32,6 +32,7 @@ def test_human_current_members_excludes_oliver_and_former(monkeypatch):
 
 def test_prompt_roster_excludes_oliver(monkeypatch):
     from agent import context
+
     monkeypatch.setattr(cr, "members", _fake_members)
     roster = context.club_context()
     assert "Oliver (" not in roster  # no "Oliver (0 picks, 0 hosted)" in his own prompt

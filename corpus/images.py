@@ -85,6 +85,7 @@ def main() -> None:
     # Read OL identifiers from the authoritative DB (ol_cover_id preferred, else the
     # Work key) rather than the generated corpus files.
     from agent import clubdb, database, db
+
     database.initialize()
 
     with db.connect() as conn:
@@ -96,11 +97,17 @@ def main() -> None:
     print(f"{len(books)} books; {len(missing)} missing covers")
     for b in missing:
         slug = b["slug"]
-        url = cover_url_from_id(b["ol_cover_id"]) if b.get("ol_cover_id") else (
-            ol_cover_url(b["ol_key"]) if b.get("ol_key") else None)
+        url = (
+            cover_url_from_id(b["ol_cover_id"])
+            if b.get("ol_cover_id")
+            else (ol_cover_url(b["ol_key"]) if b.get("ol_key") else None)
+        )
         if not url:
-            print(f"  ✗ {slug}: no OL cover id / key — run `python -m agent.enrich --books` "
-                  f"or add a cover manually", file=sys.stderr)
+            print(
+                f"  ✗ {slug}: no OL cover id / key — run `python -m agent.enrich --books` "
+                f"or add a cover manually",
+                file=sys.stderr,
+            )
             continue
         try:
             widths = process_image(url, slug, COVERS_DIR, COVER_WIDTHS)

@@ -8,9 +8,12 @@ from agent.mail import mail_archive
 from agent.mail.email_jmap import InboundEmail
 
 
-def _message(*, sender: str = "Jamie <jamie@example.test>",
-             subject: str = "Re: [rwbookclub] Book picks",
-             body: str = "I nominate Cities.\n\n-- \nYou received this message because you are subscribed to the Google Groups") -> EmailMessage:
+def _message(
+    *,
+    sender: str = "Jamie <jamie@example.test>",
+    subject: str = "Re: [rwbookclub] Book picks",
+    body: str = "I nominate Cities.\n\n-- \nYou received this message because you are subscribed to the Google Groups",
+) -> EmailMessage:
     msg = EmailMessage()
     msg["From"] = sender
     msg["To"] = "R/W Book Club <rwbookclub@googlegroups.com>"
@@ -37,7 +40,8 @@ def test_clean_body_removes_google_footer_and_quotes():
 def test_normalized_from_mbox_message_resolves_alias_and_thread(fresh_db):
     identities.link_member_email("jamie@example.test", "jamie")
     normalized, stats = mail_archive.normalized_from_mbox_message(
-        _message(), source_ref="fixture:1",
+        _message(),
+        source_ref="fixture:1",
     )
     assert normalized["message_id"] == "<m1@example.test>"
     assert normalized["thread_id"] == "x-gm-thrid:12345"

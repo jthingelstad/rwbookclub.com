@@ -43,16 +43,30 @@ def _validate(payload: dict) -> None:
         if recipients != [mailing_list]:
             raise ValueError("cadence email policy requires only the configured mailing list")
     elif policy == "reply":
-        if any(not (email_policy.is_known_member_address(address)
-                   or email_policy.is_mailing_list_address(address)) for address in recipients):
+        if any(
+            not (
+                email_policy.is_known_member_address(address)
+                or email_policy.is_mailing_list_address(address)
+            )
+            for address in recipients
+        ):
             raise ValueError("reply email policy requires a linked member or the mailing list")
     elif policy != "trusted":
         raise ValueError(f"unknown outbound email policy: {policy}")
 
 
-def send(*, to, subject: str, body: str, sign: bool = True,
-         cc=None, in_reply_to: str | None = None, references=None,
-         idempotency_key: str | None = None, policy: str = "trusted") -> dict:
+def send(
+    *,
+    to,
+    subject: str,
+    body: str,
+    sign: bool = True,
+    cc=None,
+    in_reply_to: str | None = None,
+    references=None,
+    idempotency_key: str | None = None,
+    policy: str = "trusted",
+) -> dict:
     """Send as multipart: a plain-text part (body + plain signature) and an HTML part (the markdown
     body rendered, with the signature's own HTML footer injected). Building the two parts here —
     rather than signing the body and letting the renderer turn it into HTML — is what lets the
@@ -60,8 +74,11 @@ def send(*, to, subject: str, body: str, sign: bool = True,
     JMAP send result."""
     text_sig, html_sig = signature.email_signatures() if sign else (None, None)
     text_body = f"{body.rstrip()}\n\n{text_sig}" if text_sig else body
-    html_body = (email_render.text_to_html(body, signature_html=html_sig)
-                 if config.OLIVER_EMAIL_HTML_ENABLED else None)
+    html_body = (
+        email_render.text_to_html(body, signature_html=html_sig)
+        if config.OLIVER_EMAIL_HTML_ENABLED
+        else None
+    )
     payload = {
         "to": to,
         "subject": subject,

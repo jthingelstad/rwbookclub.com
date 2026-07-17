@@ -39,15 +39,19 @@ def test_unknown_and_empty_token_resolve_to_none():
 
 
 def test_expired_token_resolves_to_none():
-    assert webapp.resolve_token(webapp.mint_token(_jamie_id(), is_admin=False,
-                                                  ttl=timedelta(seconds=-1))) is None
+    assert (
+        webapp.resolve_token(
+            webapp.mint_token(_jamie_id(), is_admin=False, ttl=timedelta(seconds=-1))
+        )
+        is None
+    )
 
 
 def test_consume_token_is_single_use():
     token = webapp.mint_token(_jamie_id(), is_admin=False)
-    assert webapp.consume_token(token)["slug"] == "jamie"   # first use works
-    assert webapp.consume_token(token) is None              # second use rejected
-    assert webapp.resolve_token(token) is None              # and it's now spent
+    assert webapp.consume_token(token)["slug"] == "jamie"  # first use works
+    assert webapp.consume_token(token) is None  # second use rejected
+    assert webapp.resolve_token(token) is None  # and it's now spent
 
 
 # ── Signed session cookies ───────────────────────────────────────────────────
@@ -80,16 +84,22 @@ def test_csrf_ok():
 
 def test_website_rejects_dangerous_schemes():
     import pytest
+
     # http(s) and scheme-less (→ https) are accepted and stored.
     identities.link_member_website("https://blog.example.com", "jamie", linked_by="t")
-    identities.link_member_website("example.org/path", "jamie", linked_by="t")  # gets https:// prefix
+    identities.link_member_website(
+        "example.org/path", "jamie", linked_by="t"
+    )  # gets https:// prefix
     stored = {h["identifier"] for h in identities.member_handles("jamie", "website")}
     assert "https://blog.example.com" in stored and "https://example.org/path" in stored
     # javascript:/data: must be rejected even when crafted to carry "://" and a dotted host —
     # otherwise it renders as a clickable XSS href on the public member page.
-    for bad in ("javascript://%0aalert(document.domain)//x.com",
-                "javascript:alert(1)", "data:text/html,<script>alert(1)</script>",
-                "ftp://example.com"):
+    for bad in (
+        "javascript://%0aalert(document.domain)//x.com",
+        "javascript:alert(1)",
+        "data:text/html,<script>alert(1)</script>",
+        "ftp://example.com",
+    ):
         with pytest.raises(ValueError):
             identities.link_member_website(bad, "jamie", linked_by="t")
 
@@ -97,26 +107,40 @@ def test_website_rejects_dangerous_schemes():
 def test_update_member_website_renames_and_repoints(fresh_db):
     identities.link_member_website("https://old.example.com", "jamie", linked_by="t", label="Blog")
     # rename only — same URL, new label
-    assert identities.update_member_website("https://old.example.com", "jamie", label="My Blog") is True
+    assert (
+        identities.update_member_website("https://old.example.com", "jamie", label="My Blog")
+        is True
+    )
     h = identities.member_handles("jamie", "website")[0]
     assert h["identifier"] == "https://old.example.com" and h["label"] == "My Blog"
     # change the URL and clear the label in one edit
-    assert identities.update_member_website("https://old.example.com", "jamie",
-                                    url="https://new.example.com", label="") is True
+    assert (
+        identities.update_member_website(
+            "https://old.example.com", "jamie", url="https://new.example.com", label=""
+        )
+        is True
+    )
     h = identities.member_handles("jamie", "website")[0]
     assert h["identifier"] == "https://new.example.com" and h["label"] is None
     # an unknown old URL changes nothing
-    assert identities.update_member_website("https://missing.example.com", "jamie", label="x") is False
+    assert (
+        identities.update_member_website("https://missing.example.com", "jamie", label="x") is False
+    )
 
 
 def test_update_member_website_rejects_bad_url_and_collision(fresh_db):
     import pytest
+
     identities.link_member_website("https://a.example.com", "jamie", linked_by="t")
     identities.link_member_website("https://b.example.com", "jamie", linked_by="t")
     with pytest.raises(ValueError):  # XSS scheme rejected, same as add
-        identities.update_member_website("https://a.example.com", "jamie", url="javascript:alert(1)")
+        identities.update_member_website(
+            "https://a.example.com", "jamie", url="javascript:alert(1)"
+        )
     with pytest.raises(ValueError):  # collide with the member's other website
-        identities.update_member_website("https://a.example.com", "jamie", url="https://b.example.com")
+        identities.update_member_website(
+            "https://a.example.com", "jamie", url="https://b.example.com"
+        )
 
 
 def test_delete_event(fresh_db):
@@ -130,44 +154,90 @@ def test_delete_event(fresh_db):
 def test_new_webapp_templates_render():
     """The split lists pages and reworked events page render without Jinja errors."""
     from agent.webapp.render import _env
+
     base_ctx = {"csrf": "tok", "member_name": "Jamie", "is_admin": True}
-    lst = {"slug": "my-list", "name": "My List", "description": "desc",
-           "books": [{"book": "heart-of-darkness", "note": "great"}]}
+    lst = {
+        "slug": "my-list",
+        "name": "My List",
+        "description": "desc",
+        "books": [{"book": "heart-of-darkness", "note": "great"}],
+    }
     books = [{"slug": "heart-of-darkness", "title": "Heart of Darkness"}]
     titles = {"heart-of-darkness": "Heart of Darkness"}
-    detail = _env.get_template("list_detail.html").render(lst=lst, books=books, titles=titles, **base_ctx)
+    detail = _env.get_template("list_detail.html").render(
+        lst=lst, books=books, titles=titles, **base_ctx
+    )
     assert "My List" in detail and "Heart of Darkness" in detail and "remove-book" in detail
     admin_detail = _env.get_template("admin_list_detail.html").render(
-        lst=lst, books=books, titles=titles, **base_ctx)
+        lst=lst, books=books, titles=titles, **base_ctx
+    )
     assert "My List" in admin_detail
     index = _env.get_template("lists.html").render(lists=[lst], **base_ctx)
     assert "Manage items" in index and "/webapp/lists/my-list" in index
-    events = [{"id": 7, "occurred_at": "2026-06-01", "category": "club", "kind": "note",
-               "member_name": None, "actor": "oliver", "detail": "hello", "surface": "system"}]
+    events = [
+        {
+            "id": 7,
+            "occurred_at": "2026-06-01",
+            "category": "club",
+            "kind": "note",
+            "member_name": None,
+            "actor": "oliver",
+            "detail": "hello",
+            "surface": "system",
+        }
+    ]
     page = _env.get_template("admin_events.html").render(
-        events=events, categories=["club"], members=[], query_string="category=club",
-        f={"category": "club", "member": "", "since": "", "until": "", "limit": 200}, **base_ctx)
+        events=events,
+        categories=["club"],
+        members=[],
+        query_string="category=club",
+        f={"category": "club", "member": "", "since": "", "until": "", "limit": 200},
+        **base_ctx,
+    )
     assert "ev-detail" in page and "hello" in page and "/webapp/admin/events/delete" in page
-    memories = [{"id": 3, "scope": "member", "subject": "jamie", "note": "Enjoys hard SF",
-                 "source": "reflection", "created_at": "2026-07-01T00:00:00+00:00"}]
+    memories = [
+        {
+            "id": 3,
+            "scope": "member",
+            "subject": "jamie",
+            "note": "Enjoys hard SF",
+            "source": "reflection",
+            "created_at": "2026-07-01T00:00:00+00:00",
+        }
+    ]
     mem_page = _env.get_template("admin_memories.html").render(
-        rows=memories, total=1, sources=["reflection"], members=[],
-        f={"q": "", "subject": "", "scope": "", "source": "", "limit": 200}, **base_ctx)
+        rows=memories,
+        total=1,
+        sources=["reflection"],
+        members=[],
+        f={"q": "", "subject": "", "scope": "", "source": "", "limit": 200},
+        **base_ctx,
+    )
     assert "Enjoys hard SF" in mem_page and "/webapp/admin/memories/act" in mem_page
     assert "Retire" in mem_page
     members_page = _env.get_template("admin_members.html").render(
-        members=[{"slug": "jamie", "name": "Jamie", "current": True,
-                  "coverage": {"discord": True, "email": True}}], **base_ctx)
+        members=[
+            {
+                "slug": "jamie",
+                "name": "Jamie",
+                "current": True,
+                "coverage": {"discord": True, "email": True},
+            }
+        ],
+        **base_ctx,
+    )
     assert "no SMS link" in members_page and "Discord linked" in members_page
 
 
 def test_refresh_if_stale_slides_only_near_expiry():
     fresh = sessions.make_session(
-        {"member_id": 1, "slug": "jamie", "name": "Jamie", "is_admin": False})
+        {"member_id": 1, "slug": "jamie", "name": "Jamie", "is_admin": False}
+    )
     payload = sessions.read_session(fresh)
     assert sessions.refresh_if_stale(payload) is None  # brand-new: nothing to do
     # Age it: rewrite exp to 5 minutes out (past half of the 30-min TTL).
     from datetime import timedelta
+
     payload["exp"] = (sessions._now() + timedelta(minutes=5)).isoformat()
     renewed = sessions.refresh_if_stale(payload)
     assert renewed is not None
@@ -178,23 +248,36 @@ def test_refresh_if_stale_slides_only_near_expiry():
 
 def test_member_templates_render():
     from agent.webapp.render import _env
-    base_ctx = {"csrf": "tok", "member_name": "Oliver", "is_admin": False,
-                "assets_v": "x", "site_dirty": False}
+
+    base_ctx = {
+        "csrf": "tok",
+        "member_name": "Oliver",
+        "is_admin": False,
+        "assets_v": "x",
+        "site_dirty": False,
+    }
     mem = _env.get_template("memories.html").render(
         rows=[{"id": 1, "note": "Enjoys hard SF", "created_at": "2026-07-01T00:00:00+00:00"}],
-        **base_ctx)
+        **base_ctx,
+    )
     assert "What Oliver knows about you" in mem and "/webapp/memories/act" in mem
     cloud = _env.get_template("bookcloud.html").render(
-        rows=[], kinds=[], members=[], action="/webapp/bookcloud",
+        rows=[],
+        kinds=[],
+        members=[],
+        action="/webapp/bookcloud",
         f={"view": "titles", "q": "", "member": "", "kind": "", "unread": True, "limit": 200},
-        **base_ctx)
+        **base_ctx,
+    )
     assert "The Book Cloud" in cloud and 'action="/webapp/bookcloud"' in cloud
 
 
 def test_memories_filters_and_count(fresh_db):
     fresh_db.add_memory("Enjoys hard SF", scope="member", subject="jamie", source="reflection")
     fresh_db.add_memory("December social meeting", scope="club", source="reflection")
-    fresh_db.add_memory("Prefers audiobooks", scope="member", subject="jamie", source="member_request")
+    fresh_db.add_memory(
+        "Prefers audiobooks", scope="member", subject="jamie", source="member_request"
+    )
     assert fresh_db.count_memories() == 3
     assert len(fresh_db.get_memories(subject="jamie")) == 2
     assert len(fresh_db.get_memories(source="reflection")) == 2
@@ -209,9 +292,13 @@ def test_webapp_email_link_reattributes_archive(fresh_db, monkeypatch):
     # The retired Discord link-email command re-attributed archived mail; the webapp
     # writer must do the same so history never silently lags a new link.
     from agent.webapp import routes_member
+
     calls = []
-    monkeypatch.setattr(routes_member.mail_archive, "reattribute_archive",
-                        lambda email=None: calls.append(email) or 0)
+    monkeypatch.setattr(
+        routes_member.mail_archive,
+        "reattribute_archive",
+        lambda email=None: calls.append(email) or 0,
+    )
     routes_member.apply_identity_op("jamie", "add-email", "jamie@example.test")
     assert calls == ["jamie@example.test"]
     rows = identities.list_member_emails()
@@ -220,6 +307,7 @@ def test_webapp_email_link_reattributes_archive(fresh_db, monkeypatch):
 
 def test_webapp_refuses_dev_secret(monkeypatch):
     import pytest
+
     # Fail closed: the public server must never bind while signing sessions with the dev literal.
     monkeypatch.setattr(config, "WEBAPP_SECRET", config.WEBAPP_DEV_SECRET)
     monkeypatch.setattr(server, "_runner", None)
@@ -229,12 +317,19 @@ def test_webapp_refuses_dev_secret(monkeypatch):
 
 def test_safe_return_blocks_open_redirect():
     from agent.webapp.routes_member import _safe_return
+
     # legitimate in-app paths pass through
     assert _safe_return({"return": "/webapp/admin/lists"}, "/webapp/lists") == "/webapp/admin/lists"
     assert _safe_return({"return": "/webapp/profile"}, "/webapp/lists") == "/webapp/profile"
     # off-site / scheme-relative / backslash variants fall back to the default
-    for evil in ("//evil.com", "https://evil.com", "/webapp//evil.com",
-                 "/webapp/\\evil.com", "", "/etc/passwd"):
+    for evil in (
+        "//evil.com",
+        "https://evil.com",
+        "/webapp//evil.com",
+        "/webapp/\\evil.com",
+        "",
+        "/etc/passwd",
+    ):
         assert _safe_return({"return": evil}, "/webapp/lists") == "/webapp/lists"
 
 
@@ -245,8 +340,10 @@ def test_set_rating_preserves_existing_review_body():
         member_id = _jamie_id()
         clubdb.upsert_review(conn, book_id=book_id, member_id=member_id, rating=3, body="loved it")
         clubdb.set_rating(conn, book_id, member_id, rating=5, dnf=False)
-        row = conn.execute("SELECT rating, dnf, body FROM club_reviews WHERE book_id=? AND member_id=?",
-                           (book_id, member_id)).fetchone()
+        row = conn.execute(
+            "SELECT rating, dnf, body FROM club_reviews WHERE book_id=? AND member_id=?",
+            (book_id, member_id),
+        ).fetchone()
     assert row["rating"] == 5 and row["dnf"] == 0 and row["body"] == "loved it"
 
 
@@ -255,7 +352,9 @@ def test_set_rating_creates_row_when_absent():
         book_id = clubdb.book_id_for_slug(conn, "enshittification")
         member_id = _jamie_id()
         rid = clubdb.set_rating(conn, book_id, member_id, rating=None, dnf=True)
-        row = conn.execute("SELECT id, rating, dnf, body FROM club_reviews WHERE id=?", (rid,)).fetchone()
+        row = conn.execute(
+            "SELECT id, rating, dnf, body FROM club_reviews WHERE id=?", (rid,)
+        ).fetchone()
     assert row["dnf"] == 1 and row["rating"] is None and row["body"] is None
 
 
@@ -291,10 +390,21 @@ def test_meeting_id_or_404_rejects_non_int():
 
 def test_events_view_filters():
     jamie = _jamie_id()
-    db.record_event(actor="admin", kind="note", category="social", member_id=jamie,
-                    detail="game night", occurred_at="2026-05-01 12:00:00")
-    db.record_event(actor="admin", kind="note", category="club",
-                    detail="anniversary", occurred_at="2026-05-02 12:00:00")
+    db.record_event(
+        actor="admin",
+        kind="note",
+        category="social",
+        member_id=jamie,
+        detail="game night",
+        occurred_at="2026-05-01 12:00:00",
+    )
+    db.record_event(
+        actor="admin",
+        kind="note",
+        category="club",
+        detail="anniversary",
+        occurred_at="2026-05-02 12:00:00",
+    )
     # category filter
     social = routes_oliver_pages._load_events("social", "", "", "", 100)
     assert social and all(e["category"] == "social" for e in social)
@@ -312,22 +422,27 @@ def test_events_view_filters():
 def test_meeting_save_sets_host_and_derives_picker():
     """The meeting edit form sets the host; the book's picker is derived from it (view)."""
     from agent.webapp import routes_admin
+
     with db.connect() as conn:
         # a fresh book living only on the meeting we edit → clean derivation
         bid = clubdb._next_id(conn, "club_books")
-        conn.execute("INSERT INTO club_books(id, slug, title) VALUES (?,?,?)",
-                     (bid, "derive-test-book", "Derive Test Book"))
+        conn.execute(
+            "INSERT INTO club_books(id, slug, title) VALUES (?,?,?)",
+            (bid, "derive-test-book", "Derive Test Book"),
+        )
         mid = clubdb.create_meeting(conn, date_iso="2026-07-01", book_id=None)
     form = {"date": "2026-07-01", "start_time": "18:00"}
-    routes_admin._save_meeting(mid, form, host_slugs=["jamie"],
-                               book_slugs=["derive-test-book"], types=["Book"])
+    routes_admin._save_meeting(
+        mid, form, host_slugs=["jamie"], book_slugs=["derive-test-book"], types=["Book"]
+    )
     with db.connect() as conn:
         m = next(x for x in clubdb.all_meetings(conn) if x["id"] == mid)
         assert m["book_slugs"] == ["derive-test-book"] and m["host_slugs"] == ["jamie"]
-        assert clubdb.book_picker_slugs(conn, bid) == ["jamie"]   # derived from the host
+        assert clubdb.book_picker_slugs(conn, bid) == ["jamie"]  # derived from the host
     # clearing the host clears the derived picker
-    routes_admin._save_meeting(mid, form, host_slugs=[],
-                               book_slugs=["derive-test-book"], types=["Book"])
+    routes_admin._save_meeting(
+        mid, form, host_slugs=[], book_slugs=["derive-test-book"], types=["Book"]
+    )
     with db.connect() as conn:
         assert clubdb.book_picker_slugs(conn, bid) == []
 
@@ -336,8 +451,10 @@ def test_multi_picker_derives_from_two_meetings():
     """A book discussed at two meetings has both meetings' hosts as pickers (pick-events)."""
     with db.connect() as conn:
         bid = clubdb._next_id(conn, "club_books")
-        conn.execute("INSERT INTO club_books(id, slug, title) VALUES (?,?,?)",
-                     (bid, "two-meeting-book", "Two Meeting Book"))
+        conn.execute(
+            "INSERT INTO club_books(id, slug, title) VALUES (?,?,?)",
+            (bid, "two-meeting-book", "Two Meeting Book"),
+        )
         m1 = clubdb.create_meeting(conn, date_iso="2020-01-01", book_id=bid)
         m2 = clubdb.create_meeting(conn, date_iso="2021-01-01", book_id=bid)
         clubdb.set_meeting_hosts(conn, m1, [clubdb.member_id_for_slug(conn, "jamie")])
@@ -349,9 +466,15 @@ def test_create_and_retire_member():
     with db.connect() as conn:
         res = clubdb.create_member(conn, "Test Person")
         assert res["slug"] == "test-person"
-        assert next(m for m in clubdb.all_members(conn) if m["slug"] == "test-person")["is_current"] == 1
+        assert (
+            next(m for m in clubdb.all_members(conn) if m["slug"] == "test-person")["is_current"]
+            == 1
+        )
         assert clubdb.set_member_current(conn, "test-person", is_current=False) is True
-        assert next(m for m in clubdb.all_members(conn) if m["slug"] == "test-person")["is_current"] == 0
+        assert (
+            next(m for m in clubdb.all_members(conn) if m["slug"] == "test-person")["is_current"]
+            == 0
+        )
 
 
 def test_rename_member_keeps_slug():
@@ -372,13 +495,21 @@ def test_reorder_list_books_keeps_unmentioned():
         clubdb.set_list_book(conn, lst["id"], b1)
         clubdb.set_list_book(conn, lst["id"], b2)
         clubdb.reorder_list_books(conn, lst["id"], [b2, b1])
-        order = [r["book_id"] for r in conn.execute(
-            "SELECT book_id FROM club_list_books WHERE list_id=? ORDER BY ordinal", (lst["id"],))]
+        order = [
+            r["book_id"]
+            for r in conn.execute(
+                "SELECT book_id FROM club_list_books WHERE list_id=? ORDER BY ordinal", (lst["id"],)
+            )
+        ]
         assert order == [b2, b1]
         # a stale order with only one id keeps the other at the end (no row dropped)
         clubdb.reorder_list_books(conn, lst["id"], [b1])
-        order2 = [r["book_id"] for r in conn.execute(
-            "SELECT book_id FROM club_list_books WHERE list_id=? ORDER BY ordinal", (lst["id"],))]
+        order2 = [
+            r["book_id"]
+            for r in conn.execute(
+                "SELECT book_id FROM club_list_books WHERE list_id=? ORDER BY ordinal", (lst["id"],)
+            )
+        ]
         assert order2 == [b1, b2]
 
 
@@ -391,19 +522,26 @@ def test_move_list_book_preserves_notes():
         clubdb.set_list_book(conn, lst["id"], b1, "note-a")
         clubdb.set_list_book(conn, lst["id"], b2, "note-b")
         assert clubdb.move_list_book(conn, lst["id"], b2, up=True) is True
-        rows = conn.execute("SELECT book_id, note FROM club_list_books WHERE list_id=? ORDER BY ordinal",
-                            (lst["id"],)).fetchall()
+        rows = conn.execute(
+            "SELECT book_id, note FROM club_list_books WHERE list_id=? ORDER BY ordinal",
+            (lst["id"],),
+        ).fetchall()
         assert [(r["book_id"], r["note"]) for r in rows] == [(b2, "note-b"), (b1, "note-a")]
 
 
 def test_member_handles_and_set_primary():
     identities.link_member_email("a@x.com", "jamie", linked_by="t")
     identities.link_member_email("b@x.com", "jamie", linked_by="t")
-    assert {h["identifier"] for h in identities.member_handles("jamie", "email")} >= {"a@x.com", "b@x.com"}
+    assert {h["identifier"] for h in identities.member_handles("jamie", "email")} >= {
+        "a@x.com",
+        "b@x.com",
+    }
     assert identities.set_primary_identity("jamie", "email", "b@x.com") is True
     by = {h["identifier"]: h["is_primary"] for h in identities.member_handles("jamie", "email")}
     assert by["b@x.com"] is True and by["a@x.com"] is False
-    assert identities.set_primary_identity("jamie", "email", "nobody@x.com") is False  # not this member's
+    assert (
+        identities.set_primary_identity("jamie", "email", "nobody@x.com") is False
+    )  # not this member's
 
 
 def test_create_bookless_meeting_and_set_books():
@@ -415,7 +553,7 @@ def test_create_bookless_meeting_and_set_books():
         clubdb.set_meeting_books(conn, mid, [b1, b2])  # two books, ordered
         got = next(m for m in clubdb.all_meetings(conn) if m["id"] == mid)["book_slugs"]
         assert got == ["heart-of-darkness", "enshittification"]
-        clubdb.set_meeting_books(conn, mid, [])        # back to bookless
+        clubdb.set_meeting_books(conn, mid, [])  # back to bookless
         assert next(m for m in clubdb.all_meetings(conn) if m["id"] == mid)["book_slugs"] == []
 
 
@@ -427,7 +565,9 @@ def test_routes_end_to_end(monkeypatch):
     base = "http://127.0.0.1:8798"
     jamie = _jamie_id()
     # Build the session cookie directly (aiohttp's jar won't send a Secure cookie over plain http).
-    sess_val = sessions.make_session({"member_id": jamie, "slug": "jamie", "name": "Jamie", "is_admin": False})
+    sess_val = sessions.make_session(
+        {"member_id": jamie, "slug": "jamie", "name": "Jamie", "is_admin": False}
+    )
     csrf = sessions.read_session(sess_val)["csrf"]
     hdr = {"Cookie": f"{sessions.COOKIE_NAME}={sess_val}"}
 
@@ -435,14 +575,21 @@ def test_routes_end_to_end(monkeypatch):
         published = {"n": 0}
         # Don't actually rebuild the site during the test.
         import agent.webapp.server as srv
-        monkeypatch.setattr(srv, "_trigger_publish", lambda: published.__setitem__("n", published["n"] + 1))
+
+        monkeypatch.setattr(
+            srv, "_trigger_publish", lambda: published.__setitem__("n", published["n"] + 1)
+        )
         try:
             await webapp.ensure_running()
             async with aiohttp.ClientSession() as s:
                 # a chat link-preview bot must NOT spend the single-use token
-                botua = {"User-Agent": "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discord.com)"}
+                botua = {
+                    "User-Agent": "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discord.com)"
+                }
                 ptok = webapp.mint_token(jamie, is_admin=False)
-                async with s.get(f"{base}/webapp?t={ptok}", headers=botua, allow_redirects=False) as r:
+                async with s.get(
+                    f"{base}/webapp?t={ptok}", headers=botua, allow_redirects=False
+                ) as r:
                     assert r.status == 200  # neutral page, not a redirect — token untouched
                 async with s.get(f"{base}/webapp?t={ptok}", allow_redirects=False) as r:
                     assert r.status == 302  # the real tap still exchanges it
@@ -458,29 +605,46 @@ def test_routes_end_to_end(monkeypatch):
                     csp = r.headers["Content-Security-Policy"]
                     assert "unsafe-inline" not in csp and "script-src 'self'" in csp
                 # member pages render
-                for path, needle in [("/webapp/ratings", "Rate books"),
-                                     ("/webapp/reviews", "Write a review"),
-                                     ("/webapp/lists", "Your lists"),
-                                     ("/webapp/profile", "Your profile"),
-                                     ("/webapp/memories", "What Oliver knows about you"),
-                                     ("/webapp/bookcloud", "The Book Cloud")]:
+                for path, needle in [
+                    ("/webapp/ratings", "Rate books"),
+                    ("/webapp/reviews", "Write a review"),
+                    ("/webapp/lists", "Your lists"),
+                    ("/webapp/profile", "Your profile"),
+                    ("/webapp/memories", "What Oliver knows about you"),
+                    ("/webapp/bookcloud", "The Book Cloud"),
+                ]:
                     async with s.get(base + path, headers=hdr) as r:
                         assert r.status == 200, path
                         assert needle in await r.text(), path
                 # markdown preview renders server-side with raw HTML neutralized
-                async with s.post(base + "/webapp/preview", headers=dict(hdr, **{"X-Requested-With": "fetch"}),
-                                  data={"csrf": csrf, "text": "**bold** <script>x</script>"}) as r:
+                async with s.post(
+                    base + "/webapp/preview",
+                    headers=dict(hdr, **{"X-Requested-With": "fetch"}),
+                    data={"csrf": csrf, "text": "**bold** <script>x</script>"},
+                ) as r:
                     j = await r.json()
                     assert "<strong>bold</strong>" in j["html"] and "<script>" not in j["html"]
                 # a member can retire THEIR OWN memory, but never someone else's
-                mine = db.add_memory("jamie test note", scope="member", subject="jamie", source="reflection")
-                theirs = db.add_memory("erik test note", scope="member", subject="erik", source="reflection")
-                async with s.post(base + "/webapp/memories/act", headers=hdr, allow_redirects=False,
-                                  data={"csrf": csrf, "id": str(theirs)}) as r:
+                mine = db.add_memory(
+                    "jamie test note", scope="member", subject="jamie", source="reflection"
+                )
+                theirs = db.add_memory(
+                    "erik test note", scope="member", subject="erik", source="reflection"
+                )
+                async with s.post(
+                    base + "/webapp/memories/act",
+                    headers=hdr,
+                    allow_redirects=False,
+                    data={"csrf": csrf, "id": str(theirs)},
+                ) as r:
                     assert r.status == 302
                 assert db.get_memories(subject="erik", query="erik test note")  # untouched
-                async with s.post(base + "/webapp/memories/act", headers=hdr, allow_redirects=False,
-                                  data={"csrf": csrf, "id": str(mine)}) as r:
+                async with s.post(
+                    base + "/webapp/memories/act",
+                    headers=hdr,
+                    allow_redirects=False,
+                    data={"csrf": csrf, "id": str(mine)},
+                ) as r:
                     assert r.status == 302
                 assert not db.get_memories(subject="jamie", query="jamie test note")  # gone
                 db.delete_memory(theirs)  # cleanup
@@ -489,94 +653,182 @@ def test_routes_end_to_end(monkeypatch):
                     assert r.status == 403
                 # an ADMIN session can load every admin page (exercises the DB-in-thread paths)
                 admin_val = sessions.make_session(
-                    {"member_id": jamie, "slug": "jamie", "name": "Jamie", "is_admin": True})
+                    {"member_id": jamie, "slug": "jamie", "name": "Jamie", "is_admin": True}
+                )
                 ahdr = {"Cookie": f"{sessions.COOKIE_NAME}={admin_val}"}
                 with db.connect() as conn:
                     mid = clubdb.all_meetings(conn)[0]["id"]
-                mem_id = db.add_memory("Web e2e test memory", scope="member", subject="jamie",
-                                       source="reflection")
-                for path, needle in [("/webapp/admin/books", "Edit book data"),
-                                     ("/webapp/admin/books/heart-of-darkness", "Open Library key"),
-                                     ("/webapp/admin/meetings", "Schedule a meeting"),
-                                     (f"/webapp/admin/meetings/{mid}", "the host picks"),
-                                     ("/webapp/admin/members", "no SMS link"),
-                                     ("/webapp/admin/memories", "Web e2e test memory")]:
+                mem_id = db.add_memory(
+                    "Web e2e test memory", scope="member", subject="jamie", source="reflection"
+                )
+                for path, needle in [
+                    ("/webapp/admin/books", "Edit book data"),
+                    ("/webapp/admin/books/heart-of-darkness", "Open Library key"),
+                    ("/webapp/admin/meetings", "Schedule a meeting"),
+                    (f"/webapp/admin/meetings/{mid}", "the host picks"),
+                    ("/webapp/admin/members", "no SMS link"),
+                    ("/webapp/admin/memories", "Web e2e test memory"),
+                ]:
                     async with s.get(base + path, headers=ahdr) as r:
                         assert r.status == 200, path
                         assert needle in await r.text(), path
                 acsrf_early = sessions.read_session(admin_val)["csrf"]
                 # memory grooming: edit the note, then retire it (leaves no active row behind)
-                async with s.post(base + "/webapp/admin/memories/act", headers=ahdr, allow_redirects=False,
-                                  data={"csrf": acsrf_early, "op": "edit", "id": str(mem_id),
-                                        "note": "Web e2e test memory (edited)"}) as r:
+                async with s.post(
+                    base + "/webapp/admin/memories/act",
+                    headers=ahdr,
+                    allow_redirects=False,
+                    data={
+                        "csrf": acsrf_early,
+                        "op": "edit",
+                        "id": str(mem_id),
+                        "note": "Web e2e test memory (edited)",
+                    },
+                ) as r:
                     assert r.status == 302
                 assert db.get_memories(query="(edited)")[0]["id"] == mem_id
-                async with s.post(base + "/webapp/admin/memories/act", headers=ahdr, allow_redirects=False,
-                                  data={"csrf": acsrf_early, "op": "retire", "id": str(mem_id)}) as r:
+                async with s.post(
+                    base + "/webapp/admin/memories/act",
+                    headers=ahdr,
+                    allow_redirects=False,
+                    data={"csrf": acsrf_early, "op": "retire", "id": str(mem_id)},
+                ) as r:
                     assert r.status == 302
                 assert not db.get_memories(query="Web e2e test memory")
                 # admin can create a two-book meeting and a bookless meeting
                 acsrf = sessions.read_session(admin_val)["csrf"]
-                async with s.post(base + "/webapp/admin/meetings/add", headers=ahdr, allow_redirects=False,
-                                  data=[("csrf", acsrf), ("date", "2026-10-01"),
-                                        ("books", "heart-of-darkness"), ("books", "enshittification")]) as r:
+                async with s.post(
+                    base + "/webapp/admin/meetings/add",
+                    headers=ahdr,
+                    allow_redirects=False,
+                    data=[
+                        ("csrf", acsrf),
+                        ("date", "2026-10-01"),
+                        ("books", "heart-of-darkness"),
+                        ("books", "enshittification"),
+                    ],
+                ) as r:
                     assert r.status == 302
-                async with s.post(base + "/webapp/admin/meetings/add", headers=ahdr, allow_redirects=False,
-                                  data=[("csrf", acsrf), ("date", "2026-10-02")]) as r:
+                async with s.post(
+                    base + "/webapp/admin/meetings/add",
+                    headers=ahdr,
+                    allow_redirects=False,
+                    data=[("csrf", acsrf), ("date", "2026-10-02")],
+                ) as r:
                     assert r.status == 302
                 # set two pickers on a book via the admin editor
-                async with s.post(base + "/webapp/admin/books/enshittification", headers=ahdr, allow_redirects=False,
-                                  data=[("csrf", acsrf), ("pickers", "jamie"), ("pickers", "erik")]) as r:
+                async with s.post(
+                    base + "/webapp/admin/books/enshittification",
+                    headers=ahdr,
+                    allow_redirects=False,
+                    data=[("csrf", acsrf), ("pickers", "jamie"), ("pickers", "erik")],
+                ) as r:
                     assert r.status == 302
                 # member management: add then retire
-                async with s.post(base + "/webapp/admin/members", headers=ahdr, allow_redirects=False,
-                                  data={"csrf": acsrf, "op": "add", "name": "Web Test Member"}) as r:
+                async with s.post(
+                    base + "/webapp/admin/members",
+                    headers=ahdr,
+                    allow_redirects=False,
+                    data={"csrf": acsrf, "op": "add", "name": "Web Test Member"},
+                ) as r:
                     assert r.status == 302
-                async with s.post(base + "/webapp/admin/members", headers=ahdr, allow_redirects=False,
-                                  data={"csrf": acsrf, "op": "retire", "slug": "web-test-member"}) as r:
+                async with s.post(
+                    base + "/webapp/admin/members",
+                    headers=ahdr,
+                    allow_redirects=False,
+                    data={"csrf": acsrf, "op": "retire", "slug": "web-test-member"},
+                ) as r:
                     assert r.status == 302
                 # no session at all → 401-ish (expired page)
                 async with s.get(base + "/webapp/ratings", allow_redirects=False) as r:
                     assert r.status == 401
                 # AJAX rating with CSRF writes through
                 ajax = dict(hdr, **{"X-Requested-With": "fetch"})
-                async with s.post(base + "/webapp/ratings/set", headers=ajax,
-                                  data={"book_slug": "heart-of-darkness", "rating": "4", "csrf": csrf}) as r:
+                async with s.post(
+                    base + "/webapp/ratings/set",
+                    headers=ajax,
+                    data={"book_slug": "heart-of-darkness", "rating": "4", "csrf": csrf},
+                ) as r:
                     assert r.status == 200 and (await r.json())["ok"] is True
                 # bad CSRF rejected
-                async with s.post(base + "/webapp/ratings/set", headers=ajax,
-                                  data={"book_slug": "heart-of-darkness", "rating": "4", "csrf": "bad"}) as r:
+                async with s.post(
+                    base + "/webapp/ratings/set",
+                    headers=ajax,
+                    data={"book_slug": "heart-of-darkness", "rating": "4", "csrf": "bad"},
+                ) as r:
                     assert r.status == 403
                 # publish endpoint runs the (patched) trigger
                 async with s.post(base + "/webapp/publish", headers=ajax, data={"csrf": csrf}) as r:
                     assert r.status == 200
                 # lists: create, add two books, reorder
-                async with s.post(base + "/webapp/lists/create", headers=hdr, allow_redirects=False,
-                                  data={"csrf": csrf, "name": "E2E List"}) as r:
+                async with s.post(
+                    base + "/webapp/lists/create",
+                    headers=hdr,
+                    allow_redirects=False,
+                    data={"csrf": csrf, "name": "E2E List"},
+                ) as r:
                     assert r.status == 302
                 for bk in ("heart-of-darkness", "enshittification"):
-                    async with s.post(base + "/webapp/lists/act", headers=hdr, allow_redirects=False,
-                                      data={"csrf": csrf, "op": "add-book", "list": "jamie-e2e-list", "book": bk}) as r:
+                    async with s.post(
+                        base + "/webapp/lists/act",
+                        headers=hdr,
+                        allow_redirects=False,
+                        data={"csrf": csrf, "op": "add-book", "list": "jamie-e2e-list", "book": bk},
+                    ) as r:
                         assert r.status == 302
-                async with s.post(base + "/webapp/lists/act", headers=hdr, allow_redirects=False,
-                                  data={"csrf": csrf, "op": "move-up", "list": "jamie-e2e-list", "book": "enshittification"}) as r:
+                async with s.post(
+                    base + "/webapp/lists/act",
+                    headers=hdr,
+                    allow_redirects=False,
+                    data={
+                        "csrf": csrf,
+                        "op": "move-up",
+                        "list": "jamie-e2e-list",
+                        "book": "enshittification",
+                    },
+                ) as r:
                     assert r.status == 302
                 # profile: add two emails, make the second primary
                 for em in ("one@x.com", "two@x.com"):
-                    async with s.post(base + "/webapp/profile/act", headers=hdr, allow_redirects=False,
-                                      data={"csrf": csrf, "op": "add-email", "value": em}) as r:
+                    async with s.post(
+                        base + "/webapp/profile/act",
+                        headers=hdr,
+                        allow_redirects=False,
+                        data={"csrf": csrf, "op": "add-email", "value": em},
+                    ) as r:
                         assert r.status == 302
-                async with s.post(base + "/webapp/profile/act", headers=hdr, allow_redirects=False,
-                                  data={"csrf": csrf, "op": "primary-email", "value": "two@x.com"}) as r:
+                async with s.post(
+                    base + "/webapp/profile/act",
+                    headers=hdr,
+                    allow_redirects=False,
+                    data={"csrf": csrf, "op": "primary-email", "value": "two@x.com"},
+                ) as r:
                     assert r.status == 302
                 # profile: add a website, then EDIT its name + URL (the reported bug)
-                async with s.post(base + "/webapp/profile/act", headers=hdr, allow_redirects=False,
-                                  data={"csrf": csrf, "op": "add-website", "label": "Blog",
-                                        "value": "https://old.example.com"}) as r:
+                async with s.post(
+                    base + "/webapp/profile/act",
+                    headers=hdr,
+                    allow_redirects=False,
+                    data={
+                        "csrf": csrf,
+                        "op": "add-website",
+                        "label": "Blog",
+                        "value": "https://old.example.com",
+                    },
+                ) as r:
                     assert r.status == 302
-                async with s.post(base + "/webapp/profile/act", headers=hdr, allow_redirects=False,
-                                  data={"csrf": csrf, "op": "edit-website", "value": "https://old.example.com",
-                                        "label": "My Blog", "new_value": "https://new.example.com"}) as r:
+                async with s.post(
+                    base + "/webapp/profile/act",
+                    headers=hdr,
+                    allow_redirects=False,
+                    data={
+                        "csrf": csrf,
+                        "op": "edit-website",
+                        "value": "https://old.example.com",
+                        "label": "My Blog",
+                        "new_value": "https://new.example.com",
+                    },
+                ) as r:
                     assert r.status == 302
                 # lists: the index links into a per-list detail page that manages its books
                 async with s.get(base + "/webapp/lists/jamie-e2e-list", headers=hdr) as r:
@@ -584,11 +836,20 @@ def test_routes_end_to_end(monkeypatch):
                     assert "Heart of Darkness" in await r.text()
                 # admin: events page offers a Delete control; deleting removes the row
                 evid = await asyncio.to_thread(
-                    db.record_event, actor="oliver", kind="note", category="club", detail="webtest-event")
+                    db.record_event,
+                    actor="oliver",
+                    kind="note",
+                    category="club",
+                    detail="webtest-event",
+                )
                 async with s.get(base + "/webapp/admin/events", headers=ahdr) as r:
                     assert r.status == 200 and "Delete" in await r.text()
-                async with s.post(base + "/webapp/admin/events/delete", headers=ahdr, allow_redirects=False,
-                                  data={"csrf": acsrf, "id": str(evid)}) as r:
+                async with s.post(
+                    base + "/webapp/admin/events/delete",
+                    headers=ahdr,
+                    allow_redirects=False,
+                    data={"csrf": acsrf, "id": str(evid)},
+                ) as r:
                     assert r.status == 302
                 # admin: the club-list detail page renders
                 async with s.get(base + "/webapp/admin/lists/books-of-the-year", headers=ahdr) as r:
@@ -601,26 +862,38 @@ def test_routes_end_to_end(monkeypatch):
     asyncio.run(scenario())
     with db.connect() as conn:
         bid = clubdb.book_id_for_slug(conn, "heart-of-darkness")
-        row = conn.execute("SELECT rating FROM club_reviews WHERE book_id=? AND member_id=?",
-                           (bid, _jamie_id())).fetchone()
+        row = conn.execute(
+            "SELECT rating FROM club_reviews WHERE book_id=? AND member_id=?", (bid, _jamie_id())
+        ).fetchone()
         meetings = {m["date"]: m for m in clubdb.all_meetings(conn)}
         pickers = clubdb.book_picker_slugs(conn, clubdb.book_id_for_slug(conn, "enshittification"))
         # picker is derived from the host(s) of the meeting(s) the book is on
-        ensh_hosts = sorted({h for m in clubdb.all_meetings(conn)
-                             if "enshittification" in (m["book_slugs"] or [])
-                             for h in (m["host_slugs"] or [])})
+        ensh_hosts = sorted(
+            {
+                h
+                for m in clubdb.all_meetings(conn)
+                if "enshittification" in (m["book_slugs"] or [])
+                for h in (m["host_slugs"] or [])
+            }
+        )
         wtm = [m for m in clubdb.all_members(conn) if m["slug"] == "web-test-member"]
         e2e = next(x for x in clubdb.all_lists(conn) if x["slug"] == "jamie-e2e-list")
     assert row["rating"] == 4
     assert meetings["2026-10-01"]["book_slugs"] == ["heart-of-darkness", "enshittification"]
     assert meetings["2026-10-02"]["book_slugs"] == []  # bookless meeting created
-    assert sorted(pickers) == ensh_hosts               # picker is derived from the meeting host(s)
-    assert wtm and wtm[0]["is_current"] == 0           # member added then retired
-    assert [e["book_slug"] for e in e2e["entries"]] == ["enshittification", "heart-of-darkness"]  # reordered
-    primary = next((h["identifier"] for h in identities.member_handles("jamie", "email") if h["is_primary"]), None)
+    assert sorted(pickers) == ensh_hosts  # picker is derived from the meeting host(s)
+    assert wtm and wtm[0]["is_current"] == 0  # member added then retired
+    assert [e["book_slug"] for e in e2e["entries"]] == [
+        "enshittification",
+        "heart-of-darkness",
+    ]  # reordered
+    primary = next(
+        (h["identifier"] for h in identities.member_handles("jamie", "email") if h["is_primary"]),
+        None,
+    )
     assert primary == "two@x.com"
     sites = {h["identifier"]: h["label"] for h in identities.member_handles("jamie", "website")}
-    assert sites == {"https://new.example.com": "My Blog"}     # renamed + re-pointed in place
+    assert sites == {"https://new.example.com": "My Blog"}  # renamed + re-pointed in place
     assert all(e["detail"] != "webtest-event" for e in db.timeline(limit=500))  # event deleted
 
 

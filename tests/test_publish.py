@@ -45,7 +45,7 @@ def test_bin_falls_back_to_extra_dirs(monkeypatch):
 
 def test_publish_site_refuses_empty_build(monkeypatch, tmp_path):
     monkeypatch.setattr(publish, "ensure_corpus", lambda: {})
-    monkeypatch.setattr(publish, "_run", lambda *a, **k: None)        # build produces nothing
+    monkeypatch.setattr(publish, "_run", lambda *a, **k: None)  # build produces nothing
     monkeypatch.setattr(publish, "SITE_DIR", tmp_path / "site")
     with pytest.raises(publish.PublishError, match="index.html"):
         _REAL_PUBLISH_SITE()
@@ -54,8 +54,11 @@ def test_publish_site_refuses_empty_build(monkeypatch, tmp_path):
 def test_publish_site_refuses_when_cname_missing(monkeypatch, tmp_path):
     site = tmp_path / "site"
     monkeypatch.setattr(publish, "ensure_corpus", lambda: {})
-    monkeypatch.setattr(publish, "_run", lambda *a, **k: (site.mkdir(parents=True),
-                                                          (site / "index.html").write_text("x")))
+    monkeypatch.setattr(
+        publish,
+        "_run",
+        lambda *a, **k: (site.mkdir(parents=True), (site / "index.html").write_text("x")),
+    )
     monkeypatch.setattr(publish, "_deploy_gh_pages", lambda *a, **k: None)
     monkeypatch.setattr(publish, "SITE_DIR", site)
     with pytest.raises(publish.PublishError, match="CNAME"):
@@ -97,7 +100,7 @@ def test_publisher_reruns_for_a_write_that_lands_mid_build(monkeypatch):
 
     def fake_publish():
         calls.append(1)
-        if len(calls) == 1:               # simulate a write landing during the first build
+        if len(calls) == 1:  # simulate a write landing during the first build
             publishing._publish_dirty = True
         return {"deployed": True}
 

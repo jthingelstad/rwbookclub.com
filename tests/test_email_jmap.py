@@ -28,39 +28,69 @@ class FakeJMAPClient(JMAPClient):
         self.calls.append((method_calls, using))
         first = method_calls[0][0]
         if first == "Mailbox/get":
-            return [[
-                "Mailbox/get",
-                {"list": [
-                    {"id": "inbox", "name": "Inbox", "parentId": None, "role": "inbox"},
-                    {"id": "inbox-oliver", "name": "Oliver", "parentId": "inbox", "role": None},
-                    {"id": "sent", "name": "Sent", "parentId": None, "role": "sent"},
-                    {"id": "sent-oliver", "name": "Oliver", "parentId": "sent", "role": None},
-                    {"id": "drafts", "name": "Drafts", "parentId": None, "role": "drafts"},
-                ]},
-                "mailboxes",
-            ]]
+            return [
+                [
+                    "Mailbox/get",
+                    {
+                        "list": [
+                            {"id": "inbox", "name": "Inbox", "parentId": None, "role": "inbox"},
+                            {
+                                "id": "inbox-oliver",
+                                "name": "Oliver",
+                                "parentId": "inbox",
+                                "role": None,
+                            },
+                            {"id": "sent", "name": "Sent", "parentId": None, "role": "sent"},
+                            {
+                                "id": "sent-oliver",
+                                "name": "Oliver",
+                                "parentId": "sent",
+                                "role": None,
+                            },
+                            {"id": "drafts", "name": "Drafts", "parentId": None, "role": "drafts"},
+                        ]
+                    },
+                    "mailboxes",
+                ]
+            ]
         if first == "Email/query":
             return [
                 ["Email/query", {"ids": ["m1"]}, "query"],
-                ["Email/get", {"list": [{
-                    "id": "m1",
-                    "threadId": "t1",
-                    "messageId": ["msg1@example.test"],
-                    "from": [{"name": "Jamie", "email": "jamie@example.test"}],
-                    "to": [{"name": "Oliver", "email": "oliver@rwbookclub.com"}],
-                    "cc": [],
-                    "replyTo": [],
-                    "subject": "Question",
-                    "receivedAt": "2026-06-09T12:00:00Z",
-                    "textBody": [{"partId": "text"}],
-                    "bodyValues": {"text": {"value": "Hello Oliver"}},
-                    "references": ["prior@example.test"],
-                }]}, "get"],
+                [
+                    "Email/get",
+                    {
+                        "list": [
+                            {
+                                "id": "m1",
+                                "threadId": "t1",
+                                "messageId": ["msg1@example.test"],
+                                "from": [{"name": "Jamie", "email": "jamie@example.test"}],
+                                "to": [{"name": "Oliver", "email": "oliver@rwbookclub.com"}],
+                                "cc": [],
+                                "replyTo": [],
+                                "subject": "Question",
+                                "receivedAt": "2026-06-09T12:00:00Z",
+                                "textBody": [{"partId": "text"}],
+                                "bodyValues": {"text": {"value": "Hello Oliver"}},
+                                "references": ["prior@example.test"],
+                            }
+                        ]
+                    },
+                    "get",
+                ],
             ]
         if first == "Email/set" and len(method_calls) == 2:
             return [
-                ["Email/set", {"created": {"oliverDraft": {"id": "draft1", "threadId": "thread1"}}}, "create"],
-                ["EmailSubmission/set", {"created": {"oliverSend": {"id": "submission1"}}}, "submit"],
+                [
+                    "Email/set",
+                    {"created": {"oliverDraft": {"id": "draft1", "threadId": "thread1"}}},
+                    "create",
+                ],
+                [
+                    "EmailSubmission/set",
+                    {"created": {"oliverSend": {"id": "submission1"}}},
+                    "submit",
+                ],
             ]
         if first == "Email/set":
             return [["Email/set", {"updated": {"m1": None}}, "mark"]]
@@ -74,13 +104,15 @@ def test_addresses_parses_and_dedupes():
 
 
 def test_text_body_joins_text_parts():
-    text = _text_body({
-        "textBody": [{"partId": "a"}, {"partId": "b"}],
-        "bodyValues": {
-            "a": {"value": "first"},
-            "b": {"value": "second"},
-        },
-    })
+    text = _text_body(
+        {
+            "textBody": [{"partId": "a"}, {"partId": "b"}],
+            "bodyValues": {
+                "a": {"value": "first"},
+                "b": {"value": "second"},
+            },
+        }
+    )
     assert text == "first\n\nsecond"
 
 

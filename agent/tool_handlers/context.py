@@ -32,8 +32,13 @@ class RequestContext:
     @property
     def surface(self) -> str:
         channel = str(self.channel_id or "")
-        return ("mailing_list" if channel.startswith("email:list:")
-                else "email" if channel.startswith("email:") else "discord")
+        return (
+            "mailing_list"
+            if channel.startswith("email:list:")
+            else "email"
+            if channel.startswith("email:")
+            else "discord"
+        )
 
     @property
     def is_email(self) -> bool:

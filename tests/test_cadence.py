@@ -1,4 +1,5 @@
 """Club-wide cadence send helpers: chunking + mailing-list + Discord mirror."""
+
 import asyncio
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -30,8 +31,8 @@ def test_two_day_bound_honors_time_not_midnight():
     meeting_dt = clock.meeting_start("2026-06-30", "18:30")
     open_at = meeting_dt - timedelta(days=2)
     midnight_two_days_before = datetime(2026, 6, 28, 0, 0, tzinfo=_TZ)
-    assert midnight_two_days_before < open_at          # midnight is BEFORE the window → no send
-    assert datetime(2026, 6, 28, 18, 30, tzinfo=_TZ) >= open_at   # the meeting hour opens it
+    assert midnight_two_days_before < open_at  # midnight is BEFORE the window → no send
+    assert datetime(2026, 6, 28, 18, 30, tzinfo=_TZ) >= open_at  # the meeting hour opens it
 
 
 def test_chunk_respects_limit():
@@ -65,15 +66,19 @@ class _Client:
 def test_send_club_email_targets_list_and_mirrors_to_discord(fresh_db, monkeypatch):
     sent = {}
     monkeypatch.setattr(proactive.outbound, "finalize", lambda body: body + "\n\n— Oliver")
-    monkeypatch.setattr(proactive.outbound, "send", lambda **kw: sent.update(kw) or {"emailId": "e1"})
+    monkeypatch.setattr(
+        proactive.outbound, "send", lambda **kw: sent.update(kw) or {"emailId": "e1"}
+    )
     channel = _Channel()
     monkeypatch.setattr(proactive, "_client", _Client(channel))
     monkeypatch.setattr(config, "MAIN_CHANNEL_ID", 123)
 
-    asyncio.run(proactive.send_club_email(
-        "Subject", "The body", idempotency_key="club-email:test-cadence"))
-    asyncio.run(proactive.send_club_email(
-        "Subject", "The body", idempotency_key="club-email:test-cadence"))
+    asyncio.run(
+        proactive.send_club_email("Subject", "The body", idempotency_key="club-email:test-cadence")
+    )
+    asyncio.run(
+        proactive.send_club_email("Subject", "The body", idempotency_key="club-email:test-cadence")
+    )
 
     # Emailed to the whole mailing list, already-finalized (no double signature).
     assert sent["to"] == [config.BOOK_CLUB_MAILING_LIST_ADDRESS]

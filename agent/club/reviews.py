@@ -57,9 +57,16 @@ def _validate_or_raise() -> None:
         raise ReviewError(f"Corpus validation failed: {preview}{more}")
 
 
-def write_review(book_query: str, member_name: str, *, rating: str | None = None,
-                 review: str | None = None, recommend: str | None = None,
-                 discussion: str | None = None, quote: str | None = None) -> dict:
+def write_review(
+    book_query: str,
+    member_name: str,
+    *,
+    rating: str | None = None,
+    review: str | None = None,
+    recommend: str | None = None,
+    discussion: str | None = None,
+    quote: str | None = None,
+) -> dict:
     member = cr.find_member(member_name)
     if not member:
         raise ReviewError("I can only record reviews from club members.")
@@ -77,15 +84,21 @@ def write_review(book_query: str, member_name: str, *, rating: str | None = None
     # DB-backed write (the club record is authoritative); the corpus review file is then
     # regenerated from the DB. The review's stable corpus `id` is its club_reviews.id (the
     # integer PK), preserved across edits — mirrors the old markdown id/createdAt behavior.
-    with db.connect() as conn:                          # transaction = commit point
+    with db.connect() as conn:  # transaction = commit point
         book_id = clubdb.book_id_for_slug(conn, book["slug"])
         member_id = clubdb.member_id_for_slug(conn, member["slug"])
         if book_id is None or member_id is None:
             raise ReviewError("That book or member isn't in the club database yet.")
         res = clubdb.upsert_review(
-            conn, book_id=book_id, member_id=member_id, rating=rating_val, dnf=dnf,
-            discussion_quality=discussion_val, would_recommend=_parse_bool(recommend),
-            favorite_quote=quote_val, body=body or None,
+            conn,
+            book_id=book_id,
+            member_id=member_id,
+            rating=rating_val,
+            dnf=dnf,
+            discussion_quality=discussion_val,
+            would_recommend=_parse_bool(recommend),
+            favorite_quote=quote_val,
+            body=body or None,
         )
         path = corpus_gen.write_review_file(conn, res["id"], DATA_DIR)
     _validate_or_raise()

@@ -1,4 +1,5 @@
 """oliver.compose() voices facts in Oliver's register, and degrades to a template."""
+
 from agent import oliver
 
 
@@ -24,9 +25,9 @@ def test_compose_returns_model_text(monkeypatch):
                 return _Resp("Next up: Stiff on the 28th — see you there.")
 
     monkeypatch.setattr(oliver, "_get_client", lambda: _Client())
-    out = oliver.compose("meeting reminder",
-                         {"book": "Stiff", "date": "2026-07-28"},
-                         fallback="TEMPLATE")
+    out = oliver.compose(
+        "meeting reminder", {"book": "Stiff", "date": "2026-07-28"}, fallback="TEMPLATE"
+    )
     assert out == "Next up: Stiff on the 28th — see you there."
     # No tools and the charter-rich system prompt are used; facts reach the prompt.
     assert "tools" not in captured
@@ -45,8 +46,9 @@ def test_compose_email_medium_asks_for_greeting_and_signoff(monkeypatch):
                 return _Resp("Hi Tom, can you make the meeting? — Oliver")
 
     monkeypatch.setattr(oliver, "_get_client", lambda: _Client())
-    oliver.compose("roll-call email", {"recipient name": "Tom"},
-                   fallback="TEMPLATE", medium="email")
+    oliver.compose(
+        "roll-call email", {"recipient name": "Tom"}, fallback="TEMPLATE", medium="email"
+    )
     prompt = captured["messages"][0]["content"]
     assert "sign off" in prompt.lower()
     assert "email" in prompt.lower()

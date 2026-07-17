@@ -23,8 +23,10 @@ from agent.webapp.routes_member import _form
 
 def _members() -> list[dict]:
     with db.connect() as conn:
-        return [{"slug": m["slug"], "name": m["name"], "id": m["id"], "current": bool(m["is_current"])}
-                for m in clubdb.all_members(conn)]
+        return [
+            {"slug": m["slug"], "name": m["name"], "id": m["id"], "current": bool(m["is_current"])}
+            for m in clubdb.all_members(conn)
+        ]
 
 
 async def _sorted_members() -> list[dict]:
@@ -34,8 +36,10 @@ async def _sorted_members() -> list[dict]:
 # ── Club events (admin, read-only + delete) ──────────────────────────────────
 def _event_categories() -> list[str]:
     with db.connect() as conn:
-        return [r["category"] for r in conn.execute(
-            "SELECT DISTINCT category FROM events ORDER BY category")]
+        return [
+            r["category"]
+            for r in conn.execute("SELECT DISTINCT category FROM events ORDER BY category")
+        ]
 
 
 def _load_events(category: str, member_slug: str, since: str, until: str, limit: int) -> list[dict]:
@@ -43,8 +47,13 @@ def _load_events(category: str, member_slug: str, since: str, until: str, limit:
     if member_slug:
         with db.connect() as conn:
             member_id = clubdb.member_id_for_slug(conn, member_slug)
-    return db.timeline(category=category or None, member_id=member_id,
-                       since=since or None, until=until or None, limit=limit)
+    return db.timeline(
+        category=category or None,
+        member_id=member_id,
+        since=since or None,
+        until=until or None,
+        limit=limit,
+    )
 
 
 async def events_page(request: web.Request) -> web.Response:
@@ -58,10 +67,15 @@ async def events_page(request: web.Request) -> web.Response:
     events = await asyncio.to_thread(_load_events, category, member, since, until, limit)
     categories = await asyncio.to_thread(_event_categories)
     members = await _sorted_members()
-    return render("admin_events.html", request, events=events, categories=categories,
-                  members=members, query_string=request.query_string,
-                  f={"category": category, "member": member,
-                     "since": since, "until": until, "limit": limit})
+    return render(
+        "admin_events.html",
+        request,
+        events=events,
+        categories=categories,
+        members=members,
+        query_string=request.query_string,
+        f={"category": category, "member": member, "since": since, "until": until, "limit": limit},
+    )
 
 
 async def event_delete(request: web.Request) -> web.Response:
@@ -80,15 +94,15 @@ async def event_delete(request: web.Request) -> web.Response:
 
 
 # ── Book Cloud (admin + member — same full view, per Jamie) ──────────────────
-def _bookcloud_view(*, view: str, q: str, member: str, kind: str, unread: bool,
-                    limit: int) -> dict:
+def _bookcloud_view(*, view: str, q: str, member: str, kind: str, unread: bool, limit: int) -> dict:
     """Filtered Book Cloud data. `view` is 'titles' (aggregated orbit — one row per title with
     first/last mention, who, count) or 'mentions' (raw rows, newest first). `unread` (titles
     view) drops titles matching books the club has read."""
     read_slugs = {b["slug"] for b in cr.books() if b.get("isRead")}
     if view == "mentions":
-        rows = db.recent_book_cloud(limit=limit, query=q or None, member=member or None,
-                                    kind=kind or None)
+        rows = db.recent_book_cloud(
+            limit=limit, query=q or None, member=member or None, kind=kind or None
+        )
         return {"view": "mentions", "rows": rows}
     titles = db.book_cloud_titles(query=q or None, member=member or None, limit=limit)
     for t in titles:
@@ -100,28 +114,45 @@ def _bookcloud_view(*, view: str, q: str, member: str, kind: str, unread: bool,
 
 def _bookcloud_kinds() -> list[str]:
     with db.connect() as conn:
-        return [r["reason_kind"] for r in conn.execute(
-            "SELECT DISTINCT reason_kind FROM book_cloud "
-            "WHERE reason_kind IS NOT NULL ORDER BY reason_kind")]
+        return [
+            r["reason_kind"]
+            for r in conn.execute(
+                "SELECT DISTINCT reason_kind FROM book_cloud "
+                "WHERE reason_kind IS NOT NULL ORDER BY reason_kind"
+            )
+        ]
 
 
 async def _render_bookcloud(request: web.Request, template: str, action: str) -> web.Response:
     p = request.query
     view = "mentions" if p.get("view") == "mentions" else "titles"
     q, member, kind = p.get("q", "").strip(), p.get("member", ""), p.get("kind", "")
-    unread = p.get("include_read") != "1"    # titles view defaults to unread-only
+    unread = p.get("include_read") != "1"  # titles view defaults to unread-only
     try:
         limit = min(max(int(p.get("limit") or 200), 1), 500)
     except ValueError:
         limit = 200
-    data = await asyncio.to_thread(_bookcloud_view, view=view, q=q, member=member,
-                                   kind=kind, unread=unread, limit=limit)
+    data = await asyncio.to_thread(
+        _bookcloud_view, view=view, q=q, member=member, kind=kind, unread=unread, limit=limit
+    )
     kinds = await asyncio.to_thread(_bookcloud_kinds)
     members = await _sorted_members()
-    return render(template, request, rows=data["rows"], kinds=kinds, members=members,
-                  action=action,
-                  f={"view": data["view"], "q": q, "member": member, "kind": kind,
-                     "unread": unread, "limit": limit})
+    return render(
+        template,
+        request,
+        rows=data["rows"],
+        kinds=kinds,
+        members=members,
+        action=action,
+        f={
+            "view": data["view"],
+            "q": q,
+            "member": member,
+            "kind": kind,
+            "unread": unread,
+            "limit": limit,
+        },
+    )
 
 
 async def bookcloud_page(request: web.Request) -> web.Response:
@@ -137,28 +168,47 @@ async def member_bookcloud_page(request: web.Request) -> web.Response:
 # Retire only — provenance stays clean (a wrong note is retired, not rewritten by its subject).
 def _memory_sources() -> list[str]:
     with db.connect() as conn:
-        return [r["source"] for r in conn.execute(
-            "SELECT DISTINCT source FROM memories WHERE status = 'active' AND source IS NOT NULL "
-            "ORDER BY source")]
+        return [
+            r["source"]
+            for r in conn.execute(
+                "SELECT DISTINCT source FROM memories WHERE status = 'active' AND source IS NOT NULL "
+                "ORDER BY source"
+            )
+        ]
 
 
 async def memories_page(request: web.Request) -> web.Response:
     p = request.query
-    q, subject, scope, source = (p.get("q", "").strip(), p.get("subject", "").strip(),
-                                 p.get("scope", ""), p.get("source", ""))
+    q, subject, scope, source = (
+        p.get("q", "").strip(),
+        p.get("subject", "").strip(),
+        p.get("scope", ""),
+        p.get("source", ""),
+    )
     try:
         limit = min(max(int(p.get("limit") or 200), 1), 500)
     except ValueError:
         limit = 200
     rows = await asyncio.to_thread(
-        db.get_memories, subject=subject or None, scope=scope or None,
-        query=q or None, source=source or None, limit=limit)
+        db.get_memories,
+        subject=subject or None,
+        scope=scope or None,
+        query=q or None,
+        source=source or None,
+        limit=limit,
+    )
     total = await asyncio.to_thread(db.count_memories)
     sources = await asyncio.to_thread(_memory_sources)
     members = await _sorted_members()
-    return render("admin_memories.html", request, rows=rows, total=total, sources=sources,
-                  members=members,
-                  f={"q": q, "subject": subject, "scope": scope, "source": source, "limit": limit})
+    return render(
+        "admin_memories.html",
+        request,
+        rows=rows,
+        total=total,
+        sources=sources,
+        members=members,
+        f={"q": q, "subject": subject, "scope": scope, "source": source, "limit": limit},
+    )
 
 
 async def memory_action(request: web.Request) -> web.Response:
@@ -212,19 +262,23 @@ async def preview(request: web.Request) -> web.Response:
 
 
 def add_admin_routes(app: web.Application) -> None:
-    app.add_routes([
-        web.get("/webapp/admin/events", events_page),
-        web.post("/webapp/admin/events/delete", event_delete),
-        web.get("/webapp/admin/bookcloud", bookcloud_page),
-        web.get("/webapp/admin/memories", memories_page),
-        web.post("/webapp/admin/memories/act", memory_action),
-    ])
+    app.add_routes(
+        [
+            web.get("/webapp/admin/events", events_page),
+            web.post("/webapp/admin/events/delete", event_delete),
+            web.get("/webapp/admin/bookcloud", bookcloud_page),
+            web.get("/webapp/admin/memories", memories_page),
+            web.post("/webapp/admin/memories/act", memory_action),
+        ]
+    )
 
 
 def add_member_routes(app: web.Application) -> None:
-    app.add_routes([
-        web.get("/webapp/memories", member_memories_page),
-        web.post("/webapp/memories/act", member_memory_retire),
-        web.get("/webapp/bookcloud", member_bookcloud_page),
-        web.post("/webapp/preview", preview),
-    ])
+    app.add_routes(
+        [
+            web.get("/webapp/memories", member_memories_page),
+            web.post("/webapp/memories/act", member_memory_retire),
+            web.get("/webapp/bookcloud", member_bookcloud_page),
+            web.post("/webapp/preview", preview),
+        ]
+    )

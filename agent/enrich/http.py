@@ -12,9 +12,7 @@ import time
 
 import requests
 
-USER_AGENT = (
-    "rwbookclub-enricher/1.0 (https://rwbookclub.com; book-club data enrichment)"
-)
+USER_AGENT = "rwbookclub-enricher/1.0 (https://rwbookclub.com; book-club data enrichment)"
 SLEEP_BETWEEN = 0.2  # polite pause between requests
 DEFAULT_TIMEOUT = 20
 
@@ -22,7 +20,9 @@ SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": USER_AGENT, "Accept": "application/json"})
 
 
-def get_json(url: str, params: dict | None = None, timeout: int = DEFAULT_TIMEOUT) -> dict | list | None:
+def get_json(
+    url: str, params: dict | None = None, timeout: int = DEFAULT_TIMEOUT
+) -> dict | list | None:
     """GET and parse JSON, returning None on any error (non-fatal by design)."""
     try:
         r = SESSION.get(url, params=params, timeout=timeout)
