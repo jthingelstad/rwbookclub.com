@@ -14,7 +14,6 @@ corpus/
 ├── images.py       # ensure book covers exist; fetch missing ones from Open Library (OL ids from the DB)
 ├── validate.py     # referential-integrity check (every slug reference resolves)
 ├── paths.py        # filesystem paths + the slug helper
-├── requirements.txt
 └── data/                       # GENERATED from the club_* tables; gitignored (private, on-disk only)
     ├── manifest.json              # { "schemaVersion": 1 }; checked before every website build
     ├── books/<slug>.json

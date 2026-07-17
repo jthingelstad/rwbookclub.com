@@ -131,9 +131,8 @@ Long-running process — **not** GitHub Pages/Actions (that's the website). Run 
 always-on host (VPS, Fly.io, home server). Locally:
 
 ```bash
-python3.13 -m venv venv
-venv/bin/pip install -c agent/constraints.txt -r agent/requirements.txt
-venv/bin/python -m agent.bot                 # run from the repo root
+uv sync --locked
+uv run --locked python -m agent.bot          # run from the repo root
 ```
 
 Run from the **repo root** so the `agent` and `corpus` packages resolve.
@@ -215,12 +214,12 @@ they edit on a page. The server starts on demand and idles off after ~15 min; ch
 ## Tests
 
 ```bash
-venv/bin/pip install -c agent/constraints.txt -r tests/requirements.txt
-venv/bin/ruff check .
-venv/bin/mypy                      # incremental typed infrastructure scope (see pyproject.toml)
-venv/bin/pytest tests/
-venv/bin/pytest tests/ -q --cov=agent --cov=corpus --cov-fail-under=75
-venv/bin/pip-audit -r agent/constraints.txt
+uv sync --locked
+uv run --locked ruff check .
+uv run --locked mypy                      # incremental typed infrastructure scope (see pyproject.toml)
+uv run --locked pytest tests/
+uv run --locked pytest tests/ -q --cov=agent --cov=corpus --cov-fail-under=75
+uv run --locked pip-audit
 ```
 
 Pure helpers (`_is_addressed`, `_strip_address`, rating parsers, `parse_frontmatter`,
@@ -232,7 +231,7 @@ and `OLIVER_CORPUS_DIR` before any agent module imports), seed `club_*` from the
 `publish.publish_site`, and `OLIVER_ENRICH_ON_WRITE=0` keeps add-book offline — so no test builds,
 deploys, or hits the network.
 
-CI runs on Python 3.13 and 3.14. Ruff includes a transitional McCabe complexity ceiling of 18;
+CI and production run on the latest Python 3.14 patch release managed by uv. Ruff includes a transitional McCabe complexity ceiling of 18;
 coverage excludes only archived one-time scripts and cannot fall below 75%. Mypy deliberately
 starts at the configuration/security/bootstrap, publishing, repository, identity, tool-contract,
 and enrichment-validation seams; expand its `files` list as neighboring modules gain useful types.

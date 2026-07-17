@@ -20,16 +20,15 @@ artifact generated from them that both the website build and Oliver read.
 ## Quick start
 
 ```bash
-python3.13 -m venv venv
-venv/bin/pip install -c agent/constraints.txt -r agent/requirements.txt
+uv sync --locked
 npm ci                      # install the website workspace from the lockfile
 
-venv/bin/python -m agent.corpus_gen  # regenerate the private corpus from the DB
+uv run --locked python -m agent.corpus_gen  # regenerate the private corpus from the DB
 npm run build                      # build the site → website/_site
 npm run serve                      # local dev server
 npm run covers                     # backfill missing covers from Open Library
 npm run deploy                     # regen + build + deploy to gh-pages
-venv/bin/python -m agent.bot       # run Oliver (needs keys in .env)
+uv run --locked python -m agent.bot       # run Oliver (needs keys in .env)
 ```
 
 Club data lives in the `club_*` SQLite tables; Oliver's write tools edit the DB and the

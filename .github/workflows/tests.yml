@@ -11,44 +11,33 @@ permissions:
 jobs:
   python:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: astral-sh/setup-uv@v7
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-      - run: pip install -c agent/constraints.txt -r agent/requirements.txt -r corpus/requirements.txt -r tests/requirements.txt
+          enable-cache: true
+      - run: uv sync --locked
       - name: Lint (ruff)
-        run: ruff check .
+        run: uv run --locked ruff check .
       - name: Static types (incremental scope)
-        if: matrix.python-version == '3.13'
-        run: mypy
-      - name: Audit pinned Python dependencies
-        if: matrix.python-version == '3.13'
-        run: pip-audit -r agent/constraints.txt
+        run: uv run --locked mypy
+      - name: Audit locked Python environment
+        run: uv run --locked pip-audit
       - name: Tests with coverage floor
-        if: matrix.python-version == '3.13'
-        run: pytest tests/ -q --cov=agent --cov=corpus --cov-report=term-missing:skip-covered --cov-fail-under=75
-      - name: Tests
-        if: matrix.python-version != '3.13'
-        run: pytest tests/ -q
+        run: uv run --locked pytest tests/ -q --cov=agent --cov=corpus --cov-report=term-missing:skip-covered --cov-fail-under=75
 
   website:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: astral-sh/setup-uv@v7
         with:
-          python-version: "3.13"
-          cache: pip
+          enable-cache: true
       - uses: actions/setup-node@v6
         with:
           node-version-file: .node-version
           cache: npm
-      - run: pip install -c agent/constraints.txt -r agent/requirements.txt -r corpus/requirements.txt
+      - run: uv sync --locked --no-dev
       - run: npm ci
       - name: Audit JavaScript dependencies
         run: npm audit --audit-level=moderate
@@ -58,7 +47,7 @@ jobs:
         env:
           OLIVER_DB_PATH: ${{ runner.temp }}/oliver-site-build.db
           OLIVER_CORPUS_DIR: ${{ runner.temp }}/corpus
-        run: python -m agent.script.build_fixture_corpus
+        run: uv run --locked --no-dev python -m agent.script.build_fixture_corpus
       - name: Build website
         env:
           OLIVER_CORPUS_DIR: ${{ runner.temp }}/corpus

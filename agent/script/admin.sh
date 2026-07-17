@@ -12,39 +12,23 @@ LOG_DIR="$AGENT_DIR/logs"
 DB="$AGENT_DIR/oliver.db"
 BACKUP_DIR="$AGENT_DIR/backups"
 KEEP_RESTART_BACKUPS=10
-
-resolve_venv() {
-    if [ -n "${OLIVER_VENV:-}" ] && [ -x "$OLIVER_VENV/bin/python" ]; then
-        echo "$OLIVER_VENV"
-        return
-    fi
-    if [ -x "$REPO_ROOT/venv/bin/python" ]; then
-        echo "$REPO_ROOT/venv"
-        return
-    fi
-    if [ -x "$AGENT_DIR/venv/bin/python" ]; then
-        echo "$AGENT_DIR/venv"
-        return
-    fi
-    return 1
-}
+VENV="$REPO_ROOT/.venv"
 
 require_venv() {
-    if ! VENV="$(resolve_venv)"; then
-        echo "Error: no Python venv found." >&2
-        echo "  Looked in: \$OLIVER_VENV, $REPO_ROOT/venv, $AGENT_DIR/venv" >&2
-        echo "  Create one with:  python3.13 -m venv $REPO_ROOT/venv && $REPO_ROOT/venv/bin/pip install -c $AGENT_DIR/constraints.txt -r $AGENT_DIR/requirements.txt" >&2
+    if [ ! -x "$VENV/bin/python" ]; then
+        echo "Error: uv project environment not found at $VENV." >&2
+        echo "  Create it with:  cd $REPO_ROOT && uv sync --locked --no-dev" >&2
         exit 1
     fi
-    echo "$VENV"
 }
 
 permissions() {
     local python
-    if VENV="$(resolve_venv)"; then
+    if [ -x "$VENV/bin/python" ]; then
         python="$VENV/bin/python"
     else
-        python="$(command -v python3)"
+        echo "Error: uv project environment not found at $VENV." >&2
+        exit 1
     fi
     (cd "$REPO_ROOT" && "$python" -m agent.security "$@")
 }
@@ -64,7 +48,7 @@ backup_and_vacuum() {
         echo "==> No database at $DB; skipping backup + vacuum."
         return 0
     fi
-    if ! VENV="$(resolve_venv)"; then
+    if [ ! -x "$VENV/bin/python" ]; then
         echo "==> Warning: no venv found; skipping DB backup + vacuum." >&2
         return 0
     fi
@@ -107,11 +91,26 @@ PY
 }
 
 status() {
-    if launchctl list | grep -q "$LABEL"; then
-        echo "oliver is running."
-    else
+    local details state pid last_exit
+    if ! details="$(launchctl print "gui/$(id -u)/$LABEL" 2>/dev/null)"; then
         echo "oliver is stopped."
+        return
     fi
+    state="$(printf '%s\n' "$details" | awk '$1 == "state" { print $3; exit }')"
+    pid="$(printf '%s\n' "$details" | awk '$1 == "pid" { print $3; exit }')"
+    if [ "$state" = "running" ] && [ -n "$pid" ]; then
+        echo "oliver is running (pid $pid)."
+        return
+    fi
+    last_exit="$(printf '%s\n' "$details" | awk -F'= ' '/last exit code/ { print $2; exit }')"
+    echo "oliver is loaded but not running (state: ${state:-unknown}, last exit: ${last_exit:-unknown})."
+}
+
+require_running() {
+    local details
+    details="$(launchctl print "gui/$(id -u)/$LABEL" 2>/dev/null)" || return 1
+    printf '%s\n' "$details" | grep -q 'state = running' &&
+        printf '%s\n' "$details" | grep -q 'pid = '
 }
 
 stop_bot() {
@@ -132,6 +131,11 @@ start_bot() {
     launchctl bootstrap "gui/$(id -u)" "$PLIST"
     sleep 3
     status
+    if ! require_running; then
+        echo "Error: Oliver failed to reach running state." >&2
+        tail -n 40 "$LOG_DIR/oliver.err" >&2 || true
+        exit 1
+    fi
 }
 
 restart_bot() {
@@ -141,7 +145,7 @@ restart_bot() {
 }
 
 install_bot() {
-    VENV="$(require_venv)"
+    require_venv
     mkdir -p -m 700 "$LOG_DIR"
     repair_permissions
     echo "==> Installing launchd plist..."
@@ -189,15 +193,17 @@ PLIST
 }
 
 upgrade_bot() {
-    VENV="$(require_venv)"
+    require_venv
     stop_bot
     backup_and_vacuum
 
     echo "==> Pulling latest from origin..."
-    (cd "$REPO_ROOT" && git pull origin main)
+    (cd "$REPO_ROOT" && git pull --ff-only origin main)
 
-    echo "==> Updating dependencies..."
-    "$VENV/bin/pip" install -q -c "$AGENT_DIR/constraints.txt" -r "$AGENT_DIR/requirements.txt"
+    echo "==> Synchronizing locked uv environment..."
+    (cd "$REPO_ROOT" && uv sync --locked --no-dev)
+    uv pip check --python "$VENV/bin/python"
+    "$VENV/bin/python" -c 'import agent.bot, aiohttp, anthropic, discord'
 
     start_bot
 }

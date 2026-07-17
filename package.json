@@ -14,7 +14,7 @@
     "test": "npm run test -w website",
     "serve": "npm run serve -w website",
     "clean": "npm run clean -w website",
-    "covers": "python3 -m corpus.images",
-    "deploy": "python3 -m agent.publish"
+    "covers": "uv run --locked python -m corpus.images",
+    "deploy": "uv run --locked python -m agent.publish"
   }
 }

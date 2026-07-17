@@ -19,8 +19,7 @@ worst case — the old Mac is gone and all you have is GitHub + iCloud + your pa
    ```bash
    git clone https://github.com/jthingelstad/rwbookclub.com.git ~/Projects/rwbookclub.com
    cd ~/Projects/rwbookclub.com
-   python3.13 -m venv venv
-   venv/bin/pip install -c agent/constraints.txt -r agent/requirements.txt
+   uv sync --locked
    npm ci
    ```
 2. **Secrets** — copy `.env.example` to `.env`, fill values from the password manager
@@ -29,12 +28,12 @@ worst case — the old Mac is gone and all you have is GitHub + iCloud + your pa
    ```bash
    gunzip -c "$(ls -t ~/Library/Mobile\ Documents/com~apple~CloudDocs/Oliver/backups/oliver-*.db.gz | head -1)" \
      > agent/oliver.db
-   venv/bin/python -c "import sqlite3; print(sqlite3.connect('agent/oliver.db').execute('PRAGMA integrity_check').fetchone())"
+   uv run --locked python -c "import sqlite3; print(sqlite3.connect('agent/oliver.db').execute('PRAGMA integrity_check').fetchone())"
    ```
 4. **Regenerate derived state** — corpus + covers/portraits:
    ```bash
-   venv/bin/python -m agent.corpus_gen
-   venv/bin/python -m agent.enrich --books --authors   # refetches missing images (network)
+   uv run --locked python -m agent.corpus_gen
+   uv run --locked python -m agent.enrich --books --authors   # refetches missing images (network)
    ```
 5. **launchd** — the plist is in the repo:
    ```bash

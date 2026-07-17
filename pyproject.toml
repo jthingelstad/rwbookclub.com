@@ -1,5 +1,34 @@
-# Project tooling config. Ruff keeps its own `ruff.toml`; this file currently
-# only pins pytest discovery so the test run is explicit rather than implicit.
+[project]
+name = "rwbookclub"
+version = "0.0.0"
+description = "R/W Book Club website, private corpus, and Oliver agent"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "aiohttp>=3.12",
+    "anthropic>=0.112.0",
+    "discord.py>=2.7.1",
+    "jinja2>=3.1",
+    "markdown>=3.10.2",
+    "pillow>=12.2.0",
+    "pydantic>=2.13.4",
+    "python-dotenv>=1.2.2",
+    "pyyaml>=6.0.3",
+    "requests>=2.34.2",
+    "unidecode>=1.4.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy==2.2.0",
+    "pip-audit==2.10.1",
+    "pre-commit>=4.5.0",
+    "pytest>=9.1.1,<10",
+    "pytest-cov==7.1.0",
+    "ruff==0.15.20",
+]
+
+[tool.uv]
+package = false
 
 [tool.pytest.ini_options]
 # Only collect the unit suite under tests/. Note tests/eval.py is the LLM-driven
@@ -12,7 +41,7 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.14"
 # Start with the typed infrastructure seams where static contracts pay off most. Expand this
 # list as adjacent modules are annotated; do not silence the rest of the repository wholesale.
 files = [

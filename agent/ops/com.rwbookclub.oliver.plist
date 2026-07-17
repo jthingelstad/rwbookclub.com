@@ -7,7 +7,7 @@
     <string>com.rwbookclub.oliver</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/otto/Projects/rwbookclub.com/venv/bin/python</string>
+        <string>/Users/otto/Projects/rwbookclub.com/.venv/bin/python</string>
         <string>-m</string>
         <string>agent.bot</string>
     </array>
@@ -16,7 +16,7 @@
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>/Users/otto/Projects/rwbookclub.com/venv/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+        <string>/Users/otto/Projects/rwbookclub.com/.venv/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
         <key>PYTHONUNBUFFERED</key>
         <string>1</string>
     </dict>

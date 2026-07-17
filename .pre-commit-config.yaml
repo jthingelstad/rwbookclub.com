@@ -2,7 +2,7 @@
 # CI enforces on push (see .github/workflows/tests.yml).
 #
 # Activate once per clone:
-#   pip install pre-commit && pre-commit install
+#   uv sync --locked && uv run pre-commit install
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.20
