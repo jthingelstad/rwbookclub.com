@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 
-
 # ── parse_frontmatter ────────────────────────────────────────────────────────
 class TestParseFrontmatter:
     def test_yaml_frontmatter(self):
@@ -88,6 +87,7 @@ class TestBooksCache:
 
     def test_cache_invalidates_on_file_touch(self, reset_books_cache):
         import os
+
         from agent import corpus_read as cr
 
         first = cr.books()

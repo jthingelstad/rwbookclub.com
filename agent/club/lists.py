@@ -8,10 +8,10 @@ deployed separately by the publish step (the corpus is not committed to git).
 
 from __future__ import annotations
 
-from corpus.paths import DATA_DIR
-from corpus.validate import validate_data_dir
 from agent import clubdb, corpus_gen, db
 from agent import corpus_read as cr
+from corpus.paths import DATA_DIR
+from corpus.validate import validate_data_dir
 
 
 class ListError(Exception):

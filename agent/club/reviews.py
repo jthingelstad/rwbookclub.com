@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import re
 
-from corpus.paths import DATA_DIR
-from corpus.validate import validate_data_dir
 from agent import clubdb, corpus_gen, db
 from agent import corpus_read as cr
+from corpus.paths import DATA_DIR
+from corpus.validate import validate_data_dir
 
 
 class ReviewError(Exception):

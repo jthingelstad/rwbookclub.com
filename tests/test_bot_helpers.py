@@ -11,8 +11,8 @@ from agent.bot import (
     _is_addressed,
     _strip_address,
 )
-from agent.mail.inbound import record_ignored_email, roll_call_status_from_email
 from agent.mail.email_jmap import InboundEmail
+from agent.mail.inbound import record_ignored_email, roll_call_status_from_email
 
 
 class TestIsAddressed:

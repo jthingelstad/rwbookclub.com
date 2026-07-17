@@ -8,7 +8,7 @@ config.OLIVER_MEMBER_SLUG explicitly.
 
 import pytest
 
-from agent import access, config, clubdb, db
+from agent import access, clubdb, config, db
 from agent import corpus_read as cr
 from agent.club import meeting_rules
 from agent.tool_handlers import picking

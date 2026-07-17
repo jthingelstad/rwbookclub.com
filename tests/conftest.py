@@ -92,6 +92,7 @@ def _frozen_club_clock(monkeypatch):
     agent.clock.club_now."""
     import datetime as _dt
     from zoneinfo import ZoneInfo
+
     from agent import clock
     from agent import corpus_read as _cr
     frozen = _dt.datetime(2026, 6, 29, 12, 0, tzinfo=ZoneInfo("America/Chicago"))

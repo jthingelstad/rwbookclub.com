@@ -5,7 +5,6 @@ from zoneinfo import ZoneInfo
 
 from agent import clock, config, proactive
 
-
 _TZ = ZoneInfo(config.CLUB_TIMEZONE)
 
 

@@ -8,7 +8,6 @@ from pathlib import Path
 
 from agent import clock
 
-
 CASES = json.loads((Path(__file__).parent / "fixtures" / "clock_cases.json").read_text())
 
 

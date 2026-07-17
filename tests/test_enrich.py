@@ -8,9 +8,8 @@ import json
 import pytest
 
 from agent import clubdb, corpus_gen, db
-from agent.enrich import loop
+from agent.enrich import loop, validation
 from agent.enrich import openlibrary as ol
-from agent.enrich import validation
 from agent.enrich import wikidata as wd
 from agent.enrich import wikipedia as wp
 

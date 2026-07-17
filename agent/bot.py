@@ -35,9 +35,9 @@ from agent import (
     identities,
     oliver,
     outbox,
+    proactive,
     publish,
     publishing,
-    proactive,
     security,
 )
 from agent import (

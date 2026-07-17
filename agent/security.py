@@ -13,7 +13,6 @@ import stat
 from dataclasses import dataclass, field
 from pathlib import Path
 
-
 PRIVATE_FILE_MODE = 0o600
 PRIVATE_DIR_MODE = 0o700
 

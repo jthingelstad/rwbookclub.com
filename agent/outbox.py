@@ -18,7 +18,6 @@ from datetime import datetime, timedelta, timezone
 
 from agent import db
 
-
 LEASE_SECONDS = 120
 MAX_RETRY_DELAY_SECONDS = 3600
 

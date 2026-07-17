@@ -5,8 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from agent import clock, clubdb, db, identities, oliver
-from agent import corpus_read
+from agent import clock, clubdb, corpus_read, db, identities, oliver
 from agent.club import meeting_campaign, meeting_rules
 from agent.mail import outbound
 

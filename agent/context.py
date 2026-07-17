@@ -10,9 +10,8 @@ from __future__ import annotations
 from collections import Counter
 from datetime import datetime, timezone
 
-from agent import clock
+from agent import clock, db
 from agent import corpus_read as cr
-from agent import db
 from agent.club import meeting_rules
 
 

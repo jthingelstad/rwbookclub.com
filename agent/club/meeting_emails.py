@@ -16,9 +16,8 @@ import argparse
 import json
 import re
 
-from agent import config
+from agent import config, db, oliver
 from agent import corpus_read as cr
-from agent import db, oliver
 from agent.club import meeting_rules
 from agent.club.meeting_rules import friendly_date as _friendly_date
 from agent.mail import outbound

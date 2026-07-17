@@ -1,12 +1,13 @@
 # Ruff config for Oliver. The default rule set (pyflakes F + core pycodestyle
 # E4/E7/E9) catches the problems that matter — unused imports/variables, undefined
 # names, shadowing — without reformatting deliberate style. Run: `ruff check .`
-target-version = "py313"
+target-version = "py314"
+line-length = 100
 
 [lint]
 # Bugbear catches a small set of correctness hazards; RUF100 keeps suppressions aligned with the
 # rules this project actually enforces.
-extend-select = ["B", "C90", "RUF100"]
+extend-select = ["B", "C90", "I", "RUF100"]
 # E702 (';'-separated compound statements) is an intentional compact pattern in
 # db.py's SQL builders ("sql += ...; args.append(...)"); keep it.
 ignore = ["E702"]

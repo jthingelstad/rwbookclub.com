@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from agent import db, identities
 from agent import corpus_read as cr
+from agent import db, identities
 from agent.tool_handlers.context import RequestContext
 
 NAMES = frozenset({

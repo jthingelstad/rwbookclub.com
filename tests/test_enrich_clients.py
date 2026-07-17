@@ -4,8 +4,7 @@ SESSION.get); no network."""
 
 from __future__ import annotations
 
-from agent.enrich import http
-from agent.enrich import loop
+from agent.enrich import http, loop
 from agent.enrich import openlibrary as ol
 from agent.enrich import wikidata as wd
 from agent.enrich import wikipedia as wp

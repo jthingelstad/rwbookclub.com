@@ -7,7 +7,6 @@ import pytest
 
 from agent import jobs
 
-
 BASE = datetime(2026, 7, 14, 12, 0, tzinfo=timezone.utc)
 
 
