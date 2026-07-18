@@ -11,7 +11,7 @@ A monorepo for the R/W Book Club: the **`agent/`** Discord agent "Oliver" (Pytho
 **SQLite (`agent/oliver.db`, the `club_*` tables) is the source of truth**; the corpus
 (`corpus/data/`) is generated from it and is **private/gitignored**; the site builds + deploys
 **locally** to the `gh-pages` branch (`main` is pure source — CI only runs tests). All Python
-runs from the repo root (`python -m agent.bot`, `python -m agent.publish`, `python -m agent.corpus_gen`).
+runs from the repo root (`uv run --locked python -m agent.bot`, `uv run --locked python -m agent.publish`, `uv run --locked python -m agent.corpus_gen`).
 History of the SQLite inversion lives in `docs/archive/MIGRATION-*`.
 
 ## Non-negotiables (full list + rationale in `CLAUDE.md` → "Things not to do")

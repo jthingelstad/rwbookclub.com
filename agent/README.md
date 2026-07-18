@@ -94,7 +94,7 @@ agent/
   in the 2-day window, with at least two days between automated asks. A persistent renewable
   lease prevents overlapping hourly/manual ticks; recurring components also record start/end,
   outcome, duration, processed count, and privacy-safe error class in `job_runs`. Inspect current
-  owners, expiry, last success/failure, and overdue state with `python -m agent.jobs status`.
+  owners, expiry, last success/failure, and overdue state with `uv run --locked python -m agent.jobs status`.
   `club/outreach.py` owns member-scoped roll-call and reading-check-in email delivery; slash
   commands and the proactive runtime call the same capability.
 - **Email** (`email_jmap.py` + `bot.py`): optional Fastmail JMAP integration. Oliver sends HTML
@@ -236,7 +236,7 @@ coverage excludes only archived one-time scripts and cannot fall below 75%. Mypy
 starts at the configuration/security/bootstrap, publishing, repository, identity, tool-contract,
 and enrichment-validation seams; expand its `files` list as neighboring modules gain useful types.
 
-For behavioral quality, `python -m tests.eval --round N --note "..."` runs Oliver through
+For behavioral quality, `uv run --locked python -m tests.eval --round N --note "..."` runs Oliver through
 generated plus golden Discord-style conversations and judges tool choice, grounding, tone,
 identity, memory use, and multi-turn context. It writes rounds to `agent/logs/oliver-eval-log.md` (gitignored).
 

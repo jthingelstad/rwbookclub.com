@@ -59,7 +59,7 @@ live under `AGENT-TEAM/work/` and `docs/archive/`.
 ## Deploy
 
 The bot runs under launchd (`com.rwbookclub.oliver`). The public site is built + force-pushed to
-`gh-pages` by `python -m agent.publish` (regen corpus → `npm run build` → deploy). Both are the
+`gh-pages` by `uv run --locked python -m agent.publish` (regen corpus → `npm run build` → deploy). Both are the
 **Operations Manager's** to run; the Build Manager commits code and hands deploy/restart off via
 the issue.
 

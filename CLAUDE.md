@@ -6,7 +6,7 @@ Project-specific context for Claude Code. The site is live at rwbookclub.com (se
 
 rwbookclub.com is the home of the R/W Book Club, which has been meeting since April 2003. The club reads about 8 books per year, mostly non-fiction (about 88%), and rotates picking and hosting among members.
 
-**SQLite is the source of truth** for club data — the `club_*` tables in `agent/oliver.db` hold the authoritative club record (books/meetings/members/authors/reviews/lists) under integer primary keys and real foreign keys. The Git corpus (`corpus/data/`) **and** the website are **generated** from it (`python -m agent.corpus_gen`). See [`docs/ERD.md`](docs/ERD.md) for the full database ERD (both the `club_*` record and Oliver's private state). **Do not hand-edit `corpus/data/` — a regen will clobber it.** Change the data through Oliver's write tools / the DB. Airtable was the original home and was retired after a one-time import (`python -m agent.script.archive.import_airtable`). See `docs/archive/MIGRATION-PLAN.md` and `docs/archive/MIGRATION-STATUS.md` for the full inversion history (it happened 2026-06-26), and `docs/archive/AIRTABLE-REFERENCE.md` for the retired Airtable schema.
+**SQLite is the source of truth** for club data — the `club_*` tables in `agent/oliver.db` hold the authoritative club record (books/meetings/members/authors/reviews/lists) under integer primary keys and real foreign keys. The Git corpus (`corpus/data/`) **and** the website are **generated** from it (`uv run --locked python -m agent.corpus_gen`). See [`docs/ERD.md`](docs/ERD.md) for the full database ERD (both the `club_*` record and Oliver's private state). **Do not hand-edit `corpus/data/` — a regen will clobber it.** Change the data through Oliver's write tools / the DB. Airtable was the original home and was retired after a one-time import (`uv run --locked python -m agent.script.archive.import_airtable`). See `docs/archive/MIGRATION-PLAN.md` and `docs/archive/MIGRATION-STATUS.md` for the full inversion history (it happened 2026-06-26), and `docs/archive/AIRTABLE-REFERENCE.md` for the retired Airtable schema.
 
 ## Monorepo layout
 
@@ -14,10 +14,10 @@ This repo is a flat, polyglot monorepo with three top-level concerns:
 
 - **`website/`** — the Eleventy 3 static site (Node). Consumes the corpus.
 - **`corpus/`** — the **generated** knowledge layer (Python). Per-entity text files in `corpus/data/` (`books/`, `members/`, `meetings/`, `authors/`, `reviews/`, `lists/`) are produced from the `club_*` SQLite tables by `agent/corpus_gen.py`, reproducing the normalized on-disk shape: each fact once, relationships by **slug** (slug = filename stem, an output detail — never identity in the DB), derived fields computed at build/read time. Records are JSON, reviews Markdown+frontmatter. `corpus/schema.py` defines the tracked versioned file contract; `manifest.json` declares its version; `corpus/validate.py` checks structure and references; Eleventy rejects missing or unsupported manifests before building. `corpus/images.py` backfills covers from Open Library (reads OL ids from the DB). (The legacy Airtable→corpus modules `fetch.py`/`migrate.py`/`normalize.py` were **removed**; the archived one-time re-seed path is now `agent.script.archive.import_airtable` → DB → `agent.corpus_gen`.) **Oliver now owns this**: writes land in the DB, then the corpus is regenerated on disk (it is **gitignored/private**, never committed) and the site is rebuilt + deployed locally to `gh-pages` (see "Site build + deploy").
-- **External enrichment** lives in **1:1 sidecar tables** (`club_book_enrichment`, `club_author_enrichment`) that the loop `agent/enrich/` owns exclusively — the curated `club_books`/`club_authors` core is never written by enrichment, so it can't be clobbered, and enrichment is regenerable (`DELETE` + re-run). Run it deliberately/online: `python -m agent.enrich [--books] [--authors] [--force] [--limit N] [--slug X]` (sources: Open Library + Wikidata + Wikipedia; Google Books stays blocked). Gap-filling + idempotent (skips rows with `enriched_at` set). Author identity must be corroborated by known-work authorship, an Open Library link, or a matching birth year; name/occupation alone is not trusted. Chronology is validated before projection, with status/warnings stored in the author sidecar while raw source facts remain in `enrichment_json`. `corpus_gen` stays network-free; `all_books`/`all_authors` `COALESCE` the dual-source fields (synopsis/bio/year/pages/isbn/subjects) **core-first**, while net-new fields (ratings/editions/dates/nationality/links/awards/notable works) come straight from the sidecar. Author portraits land in `website/src/assets/images/authors/`. `/oliver add-book` triggers inline enrichment (gated off in tests via `OLIVER_ENRICH_ON_WRITE=0`).
+- **External enrichment** lives in **1:1 sidecar tables** (`club_book_enrichment`, `club_author_enrichment`) that the loop `agent/enrich/` owns exclusively — the curated `club_books`/`club_authors` core is never written by enrichment, so it can't be clobbered, and enrichment is regenerable (`DELETE` + re-run). Run it deliberately/online: `uv run --locked python -m agent.enrich [--books] [--authors] [--force] [--limit N] [--slug X]` (sources: Open Library + Wikidata + Wikipedia; Google Books stays blocked). Gap-filling + idempotent (skips rows with `enriched_at` set). Author identity must be corroborated by known-work authorship, an Open Library link, or a matching birth year; name/occupation alone is not trusted. Chronology is validated before projection, with status/warnings stored in the author sidecar while raw source facts remain in `enrichment_json`. `corpus_gen` stays network-free; `all_books`/`all_authors` `COALESCE` the dual-source fields (synopsis/bio/year/pages/isbn/subjects) **core-first**, while net-new fields (ratings/editions/dates/nationality/links/awards/notable works) come straight from the sidecar. Author portraits land in `website/src/assets/images/authors/`. `/oliver add-book` triggers inline enrichment (gated off in tests via `OLIVER_ENRICH_ON_WRITE=0`).
 - **`agent/`** — Oliver, the club's Discord bot (Python). Consumes the corpus; answers questions in `#ask-oliver` via Claude.
 
-A root `package.json` (npm workspace over `website`) provides `npm run build`/`serve`/`covers`. All Python runs from the repo root (`python -m corpus.images`, `python -m agent.bot`). One shared root `.env`.
+A root `package.json` (npm workspace over `website`) provides `npm run build`/`serve`/`covers`. All Python runs from the repo root (`uv run --locked python -m corpus.images`, `uv run --locked python -m agent.bot`). One shared root `.env`.
 
 ## Site build + deploy (local — the corpus is private, not in git)
 
@@ -28,14 +28,14 @@ context for Oliver. CI builds the site only from the PII-free fixture generated 
 Oliver writes nothing to it. The site is built + deployed **locally** to the **`gh-pages` branch**.
 
 - **Generator:** Eleventy 3, in `website/` (`npm run build`, `npm run serve` from the repo root).
-- **Deploy:** `python -m agent.publish` (or `npm run deploy`) = regen corpus from the DB → `npm run build`
+- **Deploy:** `uv run --locked python -m agent.publish` (or `npm run deploy`) = regen corpus from the DB → `npm run build`
   → force-push `website/_site` (built HTML + all images + `CNAME` + `.nojekyll`) as a clean orphan to
   `gh-pages`. Refuses to deploy an empty site (guards on `_site/index.html` + `_site/CNAME`). Oliver
   runs this in the background after every data write (`commands.schedule_publish`); a developer runs it
   after a template/code change. A startup `publish.ensure_corpus()` (bot `on_ready`) regenerates the
   corpus so on-disk mirrors the DB.
-- **Covers:** `npm run covers` (`python -m corpus.images`) backfills missing covers from Open Library
-  (OL ids read from the DB). The enrichment loop (`python -m agent.enrich`) also fetches covers + author
+- **Covers:** `npm run covers` (`uv run --locked python -m corpus.images`) backfills missing covers from Open Library
+  (OL ids read from the DB). The enrichment loop (`uv run --locked python -m agent.enrich`) also fetches covers + author
   portraits. All land in the gitignored `assets/images/{covers,authors}/`.
 - **Input:** `website/src/` Nunjucks templates; `website/src/_data/*.js` glob `corpus/data/`. **Private-data
   boundary:** the `_data` modules only read `books/ meetings/ members/ authors/ reviews/ lists/`, so any
@@ -170,7 +170,7 @@ Some titles contain non-ASCII characters that must round-trip cleanly: `Cræft`,
 
 ## Things not to do
 
-- Don't reintroduce Airtable as a live dependency, and **don't hand-edit `corpus/data/`** — **SQLite (`club_*`) is authoritative** and the corpus is generated (regen clobbers hand edits). Change data via Oliver's write tools / the DB, then `python -m agent.corpus_gen`.
+- Don't reintroduce Airtable as a live dependency, and **don't hand-edit `corpus/data/`** — **SQLite (`club_*`) is authoritative** and the corpus is generated (regen clobbers hand edits). Change data via Oliver's write tools / the DB, then `uv run --locked python -m agent.corpus_gen`.
 - Don't change the corpus file schema/shape (fields, file layout) without updating its versioned contract, validator, generator, Python/JavaScript consumers, and shared tests. Bump `manifest.json`'s version for incompatible changes.
 - Don't re-categorize books across the Topic field without per-book confirmation from Jamie.
 - Don't fetch metadata from Google Books. The unauthenticated daily quota is exhausted on this network. Use Open Library.

@@ -14,7 +14,7 @@ live DB, PII included) and live here only as local restore points. Two kinds:
 
 **Migration snapshots** — one-off `oliver-pre-<change>-<timestamp>.db`, taken before a risky
 migration. Retention: keep the 2 most-recent uncompressed for a quick restore, gzip the rest —
-`python -m agent.script.prune_backups`.
+`uv run --locked python -m agent.script.prune_backups`.
 
 Restore: copy a `.db` back over `agent/oliver.db` while Oliver is stopped; `gunzip <file>.db.gz`
 first for a gzipped one. The next `agent.bot` start explicitly runs `agent.database.initialize()`

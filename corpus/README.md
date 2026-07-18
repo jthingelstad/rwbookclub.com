@@ -38,13 +38,13 @@ build when `manifest.json` is missing or declares a schema version it does not s
 ## Editing
 
 Don't hand-edit these files (a regen clobbers them) — edit the DB via Oliver's
-write tools, then `python -m agent.publish` regenerates the corpus, builds, and
+write tools, then `uv run --locked python -m agent.publish` regenerates the corpus, builds, and
 deploys the site to the `gh-pages` branch.
 
 ## Covers
 
 ```bash
-python -m corpus.images    # from the repo root
+uv run --locked python -m corpus.images    # from the repo root
 ```
 
 Idempotent and self-healing: only fetches covers that are missing on disk,
@@ -58,14 +58,14 @@ new member's photo file manually.
 The corpus is rebuilt from the DB; it is never hand-edited:
 
 ```bash
-python -m agent.corpus_gen   # club_* tables → corpus/data/* (full regen + prune)
-python -m corpus.validate    # check every reference resolves
-python -m corpus.images      # backfill any missing covers
+uv run --locked python -m agent.corpus_gen   # club_* tables → corpus/data/* (full regen + prune)
+uv run --locked python -m corpus.validate    # check every reference resolves
+uv run --locked python -m corpus.images      # backfill any missing covers
 ```
 
 One-time re-seed of the DB from the original Airtable snapshot (reads the on-disk
 cache under `agent/script/_airtable_cache/`, not the API — no credentials needed):
-`python -m agent.script.archive.import_airtable` (the table IDs live in that script).
+`uv run --locked python -m agent.script.archive.import_airtable` (the table IDs live in that script).
 
 ## Contract changes
 
