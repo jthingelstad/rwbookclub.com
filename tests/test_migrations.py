@@ -55,6 +55,62 @@ def test_author_validation_migration_upgrades_existing_sidecar():
     conn.close()
 
 
+def test_private_pronoun_migration_seeds_current_members_once_without_a_future_default():
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    conn.executescript(
+        "CREATE TABLE club_members ("
+        "id INTEGER PRIMARY KEY, slug TEXT NOT NULL UNIQUE, name TEXT NOT NULL, "
+        "is_current INTEGER NOT NULL DEFAULT 0);"
+        "CREATE TABLE member_preferences ("
+        "member_id INTEGER PRIMARY KEY REFERENCES club_members(id), "
+        "pronouns TEXT NOT NULL, source TEXT NOT NULL, "
+        "created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL);"
+        "INSERT INTO club_members VALUES (1, 'jamie', 'Jamie', 1);"
+        "INSERT INTO club_members VALUES (2, 'oliver', 'Oliver', 1);"
+        "INSERT INTO club_members VALUES (3, 'former', 'Former', 0);"
+        "INSERT INTO member_preferences(member_id, pronouns, source, updated_at) "
+        "VALUES (1, 'they/them', 'member', 'earlier');"
+    )
+
+    database._seed_private_member_pronouns(conn)
+
+    rows = [
+        tuple(row)
+        for row in conn.execute(
+            "SELECT m.slug, p.pronouns, p.source FROM member_preferences p "
+            "JOIN club_members m ON m.id = p.member_id ORDER BY m.id"
+        )
+    ]
+    assert rows == [
+        ("jamie", "they/them", "member"),  # never overwrite an explicit value
+        ("oliver", "he/him", "admin_seed"),
+    ]
+
+    # The migration is a one-time backfill, not a schema default for later members.
+    conn.execute("INSERT INTO club_members VALUES (4, 'future', 'Future', 1)")
+    assert conn.execute("SELECT 1 FROM member_preferences WHERE member_id = 4").fetchone() is None
+    conn.close()
+
+
+def test_registered_pronoun_migration_backfills_every_current_member_including_oliver(fresh_db):
+    with fresh_db.connect() as conn:
+        conn.execute("DELETE FROM member_preferences")
+        conn.execute("DELETE FROM schema_migrations WHERE version = 11")
+
+    database.run_migrations()
+
+    with fresh_db.connect() as conn:
+        rows = conn.execute(
+            "SELECT m.slug, p.pronouns FROM club_members m "
+            "LEFT JOIN member_preferences p ON p.member_id = m.id "
+            "WHERE m.is_current = 1 ORDER BY m.slug"
+        ).fetchall()
+    assert rows
+    assert "oliver" in {row["slug"] for row in rows}
+    assert all(row["pronouns"] == "he/him" for row in rows)
+
+
 def test_runner_applies_each_migration_once_in_order(monkeypatch, fresh_db):
     conn = sqlite3.connect(":memory:")
     conn.row_factory = sqlite3.Row
@@ -118,10 +174,10 @@ def test_legacy_email_tracking_upgrade_is_recorded(fresh_db):
         }
     assert tables == set()
     assert [(version, name) for version, name, _ in _ledger(fresh_db)][-4:] == [
-        (7, "drop_email_open_tracking"),
         (8, "unified_meeting_events"),
         (9, "legacy_club_schema"),
         (10, "author_enrichment_validation"),
+        (11, "private_member_pronouns"),
     ]
 
 

@@ -45,6 +45,7 @@ _FK_DEPENDENTS = (
     "mail_message_fts",
     "mail_messages",
     "member_identities",
+    "member_preferences",
 )
 
 

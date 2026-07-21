@@ -9,7 +9,7 @@ from datetime import timedelta
 import aiohttp
 import pytest
 
-from agent import clubdb, config, db, identities, webapp
+from agent import clubdb, config, db, identities, member_preferences, webapp
 from agent.webapp import routes_oliver_pages, server, sessions
 
 pytestmark = pytest.mark.usefixtures("fresh_db")
@@ -270,6 +270,12 @@ def test_member_templates_render():
         **base_ctx,
     )
     assert "The Book Cloud" in cloud and 'action="/webapp/bookcloud"' in cloud
+    profile = _env.get_template("profile.html").render(
+        pronouns="he/him", websites=[], emails=[], phones=[], **base_ctx
+    )
+    assert "private — Oliver only" in profile
+    assert 'value="he/him"' in profile
+    assert "never published on the website" in profile
 
 
 def test_memories_filters_and_count(fresh_db):
@@ -804,6 +810,15 @@ def test_routes_end_to_end(monkeypatch):
                     data={"csrf": csrf, "op": "primary-email", "value": "two@x.com"},
                 ) as r:
                     assert r.status == 302
+                # pronouns are self-managed private context and never dirty the public site
+                async with s.post(
+                    base + "/webapp/profile/act",
+                    headers=hdr,
+                    allow_redirects=False,
+                    data={"csrf": csrf, "op": "set-pronouns", "value": "he/him"},
+                ) as r:
+                    assert r.status == 302
+                assert member_preferences.for_member("jamie") == "he/him"
                 # profile: add a website, then EDIT its name + URL (the reported bug)
                 async with s.post(
                     base + "/webapp/profile/act",
@@ -892,6 +907,7 @@ def test_routes_end_to_end(monkeypatch):
         None,
     )
     assert primary == "two@x.com"
+    assert member_preferences.for_member("jamie") == "he/him"
     sites = {h["identifier"]: h["label"] for h in identities.member_handles("jamie", "website")}
     assert sites == {"https://new.example.com": "My Blog"}  # renamed + re-pointed in place
     assert all(e["detail"] != "webtest-event" for e in db.timeline(limit=500))  # event deleted

@@ -156,7 +156,7 @@ are 1:1 sidecars (PK = the parent's id, `CASCADE`) regenerable by `agent/enrich/
 
 ---
 
-## 2. Class B — identity + the event log / status projection
+## 2. Class B — identity, private member preferences + the event log / status projection
 
 Meeting operations are event-sourced: one append-only `events` log (the club's **timeline**) plus a
 `meeting_member_status` current-state **projection**, both written atomically by `db.record_event`.
@@ -171,6 +171,7 @@ The projection is sparse — a missing row, or `attendance='unknown'`, means "pe
 ```mermaid
 erDiagram
     club_members   ||--o{ member_identities      : "discord/email/sms handles"
+    club_members   ||--o| member_preferences     : "private Oliver context"
     club_members   ||--o{ events                  : "actor / subject (nullable)"
     club_meetings  ||--o{ events                  : "scope (nullable)"
     club_members   ||--o{ meeting_member_status   : ""
@@ -184,6 +185,12 @@ erDiagram
         int member_id FK
         int is_primary
         text linked_by
+    }
+    member_preferences {
+        int member_id PK,FK
+        text pronouns
+        text source
+        text updated_at
     }
     events {
         int id PK
@@ -209,6 +216,11 @@ erDiagram
         text reading_last_asked_at
     }
 ```
+
+`member_preferences.pronouns` is structured Class-B memory, not a public member-profile field.
+Oliver receives it only in private model context and uses it silently when ordinary grammar calls
+for a pronoun. It is never read by `corpus_gen`, emitted under `corpus/data/members/`, or rendered by
+the website. Missing means unknown; there is deliberately no default for newly created members.
 
 ---
 

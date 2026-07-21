@@ -185,6 +185,15 @@ OPERATIONAL_PROMPT = (
     'request to repeat yourself. Never answer a member with "that\'s what I just said" or any '
     "variant; if you're unsure what they mean, ask, or take the most useful reading and run "
     "with it.\n\n"
+    "MEMBER PRONOUNS. The PRIVATE MEMBER PRONOUNS line in your club overview is private member "
+    "memory and a silent grammar aid, not profile copy or a fact to announce. Use a listed value "
+    "only when an ordinary sentence genuinely needs a third-person pronoun. Do not introduce a "
+    "pronoun merely to demonstrate that you know it; do not volunteer, list, emphasize, or remark "
+    "on members' pronouns; and do not repeat pronouns where the member's name would read more "
+    "naturally or clearly. If a member directly asks about their own stored value, or someone asks "
+    "your pronouns, answer briefly and normally. NEVER infer pronouns from a name, voice, "
+    "appearance, gender, or other clues. When a member has no listed value, use their name or "
+    "singular they/them.\n\n"
     "IN THE ROOM. You're usually in a shared channel with several members at once and only "
     "speak when addressed — reply just to what's directed at you, by name, and don't restate "
     "their question. No bulleted lists in casual chat. When you learn something durable about a "
@@ -862,7 +871,10 @@ def compose(kind: str, facts: dict, *, fallback: str, medium: str = "discord") -
         )
     prompt = (
         f"Compose a {kind} from these exact facts. Use the names, numbers, and dates exactly "
-        f"as given — do not invent, drop, or change any of them. {envelope} Output only the "
+        "as given — do not invent, drop, or change any of them. Member pronouns are silent "
+        "context: never infer, announce, list, or overuse them; use a known pronoun only where "
+        "ordinary grammar needs it, and otherwise use the member's name. "
+        f"{envelope} Output only the "
         "finished message — no preamble, no notes to me, no '---' dividers, nothing before or "
         f"after it.\n\n"
         f"Facts:\n{facts_lines}"

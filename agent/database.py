@@ -28,10 +28,27 @@ def _add_author_enrichment_validation(conn: sqlite3.Connection) -> None:
         )
 
 
+def _seed_private_member_pronouns(conn: sqlite3.Connection) -> None:
+    """One-time approved seed for members active when migration 11 is deployed.
+
+    The declarative runtime schema creates ``member_preferences`` before migrations run. Keeping
+    this as an INSERT-only application migration matters: future members must not silently inherit
+    pronouns, and an already-recorded value must never be overwritten by the initial backfill.
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO member_preferences (member_id, pronouns, source, updated_at) "
+        "SELECT id, 'he/him', 'admin_seed', ? FROM club_members WHERE is_current = 1 "
+        "ON CONFLICT(member_id) DO NOTHING",
+        (now,),
+    )
+
+
 MIGRATIONS = (
     *db.RUNTIME_MIGRATIONS,
     (9, "legacy_club_schema", clubdb.migrate_legacy_club_schema),
     (10, "author_enrichment_validation", _add_author_enrichment_validation),
+    (11, "private_member_pronouns", _seed_private_member_pronouns),
 )
 
 

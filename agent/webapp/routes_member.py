@@ -11,7 +11,7 @@ import asyncio
 
 from aiohttp import web
 
-from agent import clubdb, corpus_gen, db, identities
+from agent import clubdb, corpus_gen, db, identities, member_preferences
 from agent import corpus_read as cr
 from agent.club import lists as lists_writer
 from agent.club import reviews as reviews_writer
@@ -386,10 +386,18 @@ async def lists_action(request: web.Request) -> web.Response:
 # ── Profile / contact ────────────────────────────────────────────────────────
 async def profile_page(request: web.Request) -> web.Response:
     slug = request["session"]["slug"]
+    pronouns = await asyncio.to_thread(member_preferences.for_member, slug)
     websites = await asyncio.to_thread(identities.member_handles, slug, "website")
     emails = await asyncio.to_thread(identities.member_handles, slug, "email")
     phones = await asyncio.to_thread(identities.member_handles, slug, "sms")
-    return render("profile.html", request, websites=websites, emails=emails, phones=phones)
+    return render(
+        "profile.html",
+        request,
+        pronouns=pronouns,
+        websites=websites,
+        emails=emails,
+        phones=phones,
+    )
 
 
 async def profile_action(request: web.Request) -> web.Response:
@@ -400,7 +408,13 @@ async def profile_action(request: web.Request) -> web.Response:
     label = (form.get("label") or "").strip() or None
     new_value = (form.get("new_value") or "").strip() or None
     try:
-        published = await asyncio.to_thread(apply_identity_op, slug, op, val, label, new_value)
+        if op == "set-pronouns":
+            await asyncio.to_thread(
+                member_preferences.set_for_member, slug, val, source="member_webapp"
+            )
+            published = False  # private state; never marks the public site dirty
+        else:
+            published = await asyncio.to_thread(apply_identity_op, slug, op, val, label, new_value)
     except ValueError:
         published = False  # bad input — re-render current state
     if published:

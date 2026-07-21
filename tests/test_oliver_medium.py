@@ -43,6 +43,16 @@ def test_guardrail_never_posts_to_group_on_a_members_behalf():
     assert "post it themselves" in p
 
 
+def test_member_pronoun_policy_is_explicit_neutral_and_not_performative():
+    prompt = oliver.OPERATIONAL_PROMPT
+    assert "NEVER infer pronouns" in prompt
+    assert "use their name or singular they/them" in prompt
+    assert "only when an ordinary sentence genuinely needs" in prompt
+    assert "Do not introduce a pronoun merely to demonstrate" in prompt
+    assert "do not volunteer, list, emphasize, or remark" in prompt
+    assert "do not repeat pronouns where the member's name would read more naturally" in prompt
+
+
 def test_horizon_prompt_is_status_not_picker_pressure():
     prompt = oliver.OPERATIONAL_PROMPT
     assert "call horizon" in prompt

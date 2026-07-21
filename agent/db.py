@@ -79,6 +79,19 @@ CREATE TABLE IF NOT EXISTS member_identities (
 -- member_id indexes for these tables are created post-migration (see ensure_member_indexes),
 -- because on a pre-migration DB the member_id column doesn't exist yet.
 
+-- Private, structured member context for Oliver. Pronouns are a silent grammar aid: they are
+-- deliberately absent from club_members and the generated corpus/public website. No default is
+-- defined here; unknown members stay unknown until an explicit value is recorded.
+CREATE TABLE IF NOT EXISTS member_preferences (
+    member_id   INTEGER PRIMARY KEY REFERENCES club_members(id),
+    pronouns    TEXT NOT NULL CHECK (
+        LENGTH(TRIM(pronouns)) BETWEEN 1 AND 64
+    ),
+    source      TEXT NOT NULL,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS conversations (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     channel_id TEXT NOT NULL,

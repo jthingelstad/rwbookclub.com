@@ -49,6 +49,7 @@ files = [
     "agent/security.py",
     "agent/database.py",
     "agent/identities.py",
+    "agent/member_preferences.py",
     "agent/publishing.py",
     "agent/repositories",
     "agent/enrich/validation.py",

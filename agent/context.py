@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections import Counter
 from datetime import datetime, timezone
 
-from agent import clock, db
+from agent import clock, db, member_preferences
 from agent import corpus_read as cr
 from agent.club import meeting_rules
 
@@ -79,6 +79,14 @@ def club_context() -> str:
         )
         + ".",
     ]
+    pronouns = member_preferences.for_current_members()
+    if pronouns:
+        lines.append(
+            "PRIVATE MEMBER PRONOUNS — silent grammar reference only; never announce or recite "
+            "this list unprompted, and treat anyone not listed as unknown: "
+            + "; ".join(f"{row['name']}: {row['pronouns']}" for row in pronouns)
+            + "."
+        )
     if upcoming:
         parts = []
         for u in upcoming[:4]:

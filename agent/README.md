@@ -168,6 +168,11 @@ Thing pattern). Oliver enforces owner-only modes for `.env`, SQLite and its side
 `agent/logs/`, `agent/backups/`, the generated private corpus, and offsite backups. Audit with
 `./agent/script/admin.sh permissions`; repair safe mode drift with `permissions-repair`.
 
+Member pronouns are optional structured private memory in `member_preferences`, keyed to the
+canonical member id. Members manage their own value on the web-app Profile page. Oliver receives it
+only as a quiet grammar aid: unknown values stay neutral, and no pronoun value enters the generated
+corpus or public website.
+
 ### Command structure
 
 `/oliver` is organized into subcommand groups by purpose (Discord's 2-level nesting:
@@ -204,7 +209,7 @@ they edit on a page. The server starts on demand and idles off after ~15 min; ch
 **Publish** button or on idle shutdown (deferred publish — no per-write rebuild).
 
 - **Member tabs:** Ratings (one-click 1–5/DNF across all books), Reviews (per-book, Markdown body),
-  Lists (CRUD), Profile (websites/emails/phones).
+  Lists (CRUD), Profile (private pronouns plus websites/emails/phones).
 - **Admin tabs:** Books (edit core fields; title is read-only to keep the slug), Meetings (add + edit,
   mark held), Hosts.
 - **Writers are reused** — `reviews.write_review`, `agent/club/lists.py`, `db.link_member_*`,

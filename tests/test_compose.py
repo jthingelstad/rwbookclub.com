@@ -31,7 +31,10 @@ def test_compose_returns_model_text(monkeypatch):
     assert out == "Next up: Stiff on the 28th — see you there."
     # No tools and the charter-rich system prompt are used; facts reach the prompt.
     assert "tools" not in captured
-    assert "Stiff" in captured["messages"][0]["content"]
+    prompt = captured["messages"][0]["content"]
+    assert "Stiff" in prompt
+    assert "never infer, announce, list, or overuse" in prompt
+    assert "only where ordinary grammar needs it" in prompt
     assert captured["system"][0]["text"].startswith("# WHO YOU ARE")
 
 

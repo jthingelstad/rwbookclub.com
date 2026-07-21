@@ -29,6 +29,20 @@
   <h1>Your profile</h1>
 
   <div class="card">
+    <h2 class="mt0">Pronouns <span class="muted">(private — Oliver only)</span></h2>
+    <p class="muted">A quiet grammar aid for Oliver. This is never published on the website, and
+      Oliver is instructed to use it only when a sentence naturally calls for a pronoun—not to
+      announce it or force it into conversation.</p>
+    <form method="post" action="/webapp/profile/act" class="row mt-4 gap-4">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="op" value="set-pronouns">
+      <input type="text" name="value" value="{{ pronouns or '' }}" maxlength="64"
+        placeholder="he/him, she/her, they/them" autocomplete="off" class="grow">
+      <button class="primary">Save</button>
+    </form>
+    <p class="muted">Leave blank and save to clear it; Oliver will use your name or they/them.</p>
+  </div>
+
+  <div class="card">
     <h2 class="mt0" >Websites <span class="muted">(public — shown on your member page)</span></h2>
     <table>
       {% for w in websites %}
