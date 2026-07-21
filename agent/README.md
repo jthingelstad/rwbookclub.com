@@ -153,8 +153,8 @@ Run from the **repo root** so the `agent` and `corpus` packages resolve.
 | `OLIVER_ENRICH_ON_WRITE` | Optional — set to `0` to skip inline enrichment on add-book (tests) |
 | `FASTMAIL_JMAP_TOKEN` | Optional — Fastmail API token for Oliver email |
 | `OLIVER_EMAIL_ADDRESS` | Optional — defaults to `oliver@rwbookclub.com` |
-| `OLIVER_EMAIL_INBOX_PARENT` / `OLIVER_EMAIL_INBOX_FOLDER` | Optional — defaults to `Inbox` / `Oliver`; only this folder is polled |
-| `OLIVER_EMAIL_SENT_PARENT` / `OLIVER_EMAIL_SENT_FOLDER` | Optional — defaults to `Sent` / `Oliver`; sent mail is moved here |
+| `OLIVER_EMAIL_INBOX_PARENT` / `OLIVER_EMAIL_INBOX_FOLDER` | Optional — defaults to `Inbox` / `Oliver-In`; only this folder is polled |
+| `OLIVER_EMAIL_SENT_PARENT` / `OLIVER_EMAIL_SENT_FOLDER` | Optional — defaults to `Sent` / `Oliver-Sent`; sent mail is moved here |
 | `OLIVER_EMAIL_POLL_SECONDS` | Optional — defaults to `120` |
 | `OLIVER_EMAIL_HTML_ENABLED` | Optional — defaults to `1`; sends HTML plus plain-text alternative mail |
 | `DISCORD_OLIVER_LOG_WEBHOOK_URL` | Optional — webhook for `#oliver-log` operational activity |

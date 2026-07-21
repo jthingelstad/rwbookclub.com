@@ -36,14 +36,14 @@ class FakeJMAPClient(JMAPClient):
                             {"id": "inbox", "name": "Inbox", "parentId": None, "role": "inbox"},
                             {
                                 "id": "inbox-oliver",
-                                "name": "Oliver",
+                                "name": "Oliver-In",
                                 "parentId": "inbox",
                                 "role": None,
                             },
                             {"id": "sent", "name": "Sent", "parentId": None, "role": "sent"},
                             {
                                 "id": "sent-oliver",
-                                "name": "Oliver",
+                                "name": "Oliver-Sent",
                                 "parentId": "sent",
                                 "role": None,
                             },
@@ -128,9 +128,9 @@ def test_folder_resolution_errors_without_oliver_child():
         {"id": "inbox", "name": "Inbox", "parentId": None, "role": "inbox"},
     ]
     try:
-        JMAPClient._find_child(rows, {"inbox": rows[0]}, "inbox", "Oliver", "Inbox/Oliver")
+        JMAPClient._find_child(rows, {"inbox": rows[0]}, "inbox", "Oliver-In", "Inbox/Oliver-In")
     except JMAPError as e:
-        assert "Inbox/Oliver" in str(e)
+        assert "Inbox/Oliver-In" in str(e)
     else:
         raise AssertionError("expected JMAPError")
 

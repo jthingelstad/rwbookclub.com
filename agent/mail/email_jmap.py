@@ -1,7 +1,7 @@
 """Fastmail JMAP mail client for Oliver.
 
 The shared mailbox contains folders for multiple agents. Oliver only reads from
-Inbox/Oliver and stores sent mail in Sent/Oliver; both names are configurable in
+Inbox/Oliver-In and stores sent mail in Sent/Oliver-Sent; both names are configurable in
 agent.config, but the isolation rule lives here.
 """
 
