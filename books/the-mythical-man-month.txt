@@ -1,0 +1,32 @@
+# The Mythical Man-Month
+
+- **Author:** Frederick P. Brooks Jr.
+- **Read:** April 2007
+- **Topic:** Technology
+- **Subjects:** Computer programming management, Software engineering, Electronic digital computers, Programming, Computer programming, MULTICS, Technologie logiciel, Gestion projet, Programmation (Informatique), Gestion, Système exploitation 360
+- **Published:** 1975
+- **Pages:** 195
+- **Picked by:** David
+- **ISBN-13:** 9780201835953
+- **Open Library:** https://openlibrary.org/works/OL3510570W
+- **Cover:** https://rwbookclub.com/assets/images/covers/the-mythical-man-month-470.jpg
+- **Canonical page:** https://rwbookclub.com/books/the-mythical-man-month/
+
+## Synopsis
+
+Classic text on the human side of software engineering, containing essays on the management of software teams, projections about how computer languages and tools will evolve, and philosophical speculation. Unlike most other books about computing, Brooks' work has been remarkably enduring, remaining in print for at least four decades. The book is most famous for its statement of Brooks' Law: "adding manpower to a late software project makes it later".
+
+## Related books
+
+- Beautiful Code (Shared themes: Software engineering · Computer programming)
+  https://rwbookclub.com/books/beautiful-code.txt
+- Hackers and Painters (Shared themes: Computer programming)
+  https://rwbookclub.com/books/hackers-and-painters.txt
+- The Search (Technology)
+  https://rwbookclub.com/books/the-search.txt
+- Co-Intelligence (Technology)
+  https://rwbookclub.com/books/co-intelligence.txt
+- Life After Google (Technology)
+  https://rwbookclub.com/books/life-after-google.txt
+- Beautiful Evidence (Technology)
+  https://rwbookclub.com/books/beautiful-evidence.txt

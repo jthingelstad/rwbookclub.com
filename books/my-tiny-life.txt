@@ -1,0 +1,28 @@
+# My Tiny Life: Crime and Passion in a Virtual World
+
+- **Author:** Julian Dibbell
+- **Read:** April 2003
+- **Topic:** Technology
+- **Subjects:** Computer crimes, LambdaMOO, Virtual reality, World Wide Web, Criminaliteit, Internet
+- **Published:** 1998
+- **Pages:** 352
+- **Picked by:** John
+- **ISBN-13:** 9781841150574
+- **Open Library:** https://openlibrary.org/works/OL1856237W
+- **Cover:** https://rwbookclub.com/assets/images/covers/my-tiny-life-432.jpg
+- **Canonical page:** https://rwbookclub.com/books/my-tiny-life/
+
+## Related books
+
+- Don't Make Me Think (Shared themes: World Wide Web · Internet)
+  https://rwbookclub.com/books/don-t-make-me-think.txt
+- The Search (Shared themes: World Wide Web · Internet)
+  https://rwbookclub.com/books/the-search.txt
+- Life After Google (Shared themes: Internet)
+  https://rwbookclub.com/books/life-after-google.txt
+- The Master Switch (Shared themes: Internet)
+  https://rwbookclub.com/books/the-master-switch.txt
+- Enshittification (Technology)
+  https://rwbookclub.com/books/enshittification.txt
+- Co-Intelligence (Technology)
+  https://rwbookclub.com/books/co-intelligence.txt

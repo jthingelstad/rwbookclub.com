@@ -1,0 +1,32 @@
+# The Box: How the Shipping Container Made the World Smaller and the World Economy Bigger
+
+- **Author:** Marc Levinson
+- **Read:** September 2007
+- **Topic:** Technology
+- **Subjects:** Containerization, International economic integration, International economic relations, Containervervoer
+- **Published:** 2006
+- **Pages:** 400
+- **Picked by:** Tom
+- **ISBN-13:** 9780691170817
+- **Open Library:** https://openlibrary.org/works/OL4988033W
+- **Cover:** https://rwbookclub.com/assets/images/covers/the-box-173.jpg
+- **Canonical page:** https://rwbookclub.com/books/the-box/
+
+## Synopsis
+
+In April 1956, a refitted oil tanker carried fifty-eight shipping containers from Newark to Houston. From that modest beginning, container shipping developed into a huge industry that made the boom in global trade possible. The Box tells the dramatic story of the container's creation, the decade of struggle before it was widely adopted, and the sweeping economic consequences of the sharp fall in transportation costs that containerization brought about. Drawing on previously neglected sources, economist Marc Levinson shows how the container transformed economic geography, devastating traditional ports such as New York and London and fueling the growth of previously obscure ones, such as Oakland. By making shipping so cheap that industry could locate factories far from its customers, the container paved the way for Asia to become the world's workshop and brought consumers a previously unimaginable variety of low-cost products from around the globe.--From publisher description.
+
+## Related books
+
+- Beautiful Code (By the same author)
+  https://rwbookclub.com/books/beautiful-code.txt
+- Daemon (Shared themes: International economic integration)
+  https://rwbookclub.com/books/daemon.txt
+- The Master Switch (Technology)
+  https://rwbookclub.com/books/the-master-switch.txt
+- Co-Intelligence (Technology)
+  https://rwbookclub.com/books/co-intelligence.txt
+- Beautiful Evidence (Technology)
+  https://rwbookclub.com/books/beautiful-evidence.txt
+- The Search (Technology)
+  https://rwbookclub.com/books/the-search.txt

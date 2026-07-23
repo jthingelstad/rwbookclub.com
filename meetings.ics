@@ -1,0 +1,2051 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//R/W Book Club//Meetings//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:R/W Book Club
+X-WR-TIMEZONE:America/Chicago
+BEGIN:VTIMEZONE
+TZID:America/Chicago
+X-LIC-LOCATION:America/Chicago
+BEGIN:DAYLIGHT
+TZOFFSETFROM:-0600
+TZOFFSETTO:-0500
+TZNAME:CDT
+DTSTART:19700308T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:-0500
+TZOFFSETTO:-0600
+TZNAME:CST
+DTSTART:19701101T020000
+RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:meeting-187@rwbookclub.com
+DTSTAMP:20260929T000000Z
+DTSTART;TZID=America/Chicago:20260929T183000
+DTEND;TZID=America/Chicago:20260929T203000
+SUMMARY:Book Club: Book
+DESCRIPTION:Hosted by Erik.
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-186@rwbookclub.com
+DTSTAMP:20260825T000000Z
+DTSTART;TZID=America/Chicago:20260825T183000
+DTEND;TZID=America/Chicago:20260825T203000
+SUMMARY:Book Club: Book
+DESCRIPTION:Hosted by Nick.
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-185@rwbookclub.com
+DTSTAMP:20260728T000000Z
+DTSTART;TZID=America/Chicago:20260728T183000
+DTEND;TZID=America/Chicago:20260728T203000
+SUMMARY:Book Club: Blindsight
+DESCRIPTION:Blindsight by Peter Watts\nPicked by Loren.\nHosted by Loren.\n
+ https://rwbookclub.com/books/blindsight/
+URL:https://rwbookclub.com/books/blindsight/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-184@rwbookclub.com
+DTSTAMP:20260630T000000Z
+DTSTART;TZID=America/Chicago:20260630T183000
+DTEND;TZID=America/Chicago:20260630T203000
+SUMMARY:Book Club: A World Appears
+DESCRIPTION:A World Appears by Michael Pollan\nPicked by Jamie.\nHosted by 
+ Jamie.\nTopic: Essays & Literature.\nhttps://rwbookclub.com/books/a-world-
+ appears/
+LOCATION:Broder’s
+URL:https://rwbookclub.com/books/a-world-appears/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-183@rwbookclub.com
+DTSTAMP:20260526T000000Z
+DTSTART;TZID=America/Chicago:20260526T183000
+DTEND;TZID=America/Chicago:20260526T203000
+SUMMARY:Book Club: Patterns in Nature
+DESCRIPTION:Patterns in Nature by Philip Ball\nPicked by Tom.\nHosted by To
+ m.\nTopic: Science and Math.\nhttps://rwbookclub.com/books/patterns-in-nat
+ ure/
+URL:https://rwbookclub.com/books/patterns-in-nature/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-182@rwbookclub.com
+DTSTAMP:20260127T000000Z
+DTSTART;TZID=America/Chicago:20260127T190000
+DTEND;TZID=America/Chicago:20260127T210000
+SUMMARY:Book Club: The Overstory
+DESCRIPTION:The Overstory by Richard Powers\nPicked by Erik.\nHosted by Eri
+ k.\nTopic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/the-ov
+ erstory/
+URL:https://rwbookclub.com/books/the-overstory/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-1@rwbookclub.com
+DTSTAMP:20251125T000000Z
+DTSTART;TZID=America/Chicago:20251125T183000
+DTEND;TZID=America/Chicago:20251125T203000
+SUMMARY:Book Club: Enshittification
+DESCRIPTION:Enshittification by Cory Doctorow\nPicked by Tom.\nHosted by To
+ m.\nTopic: Technology.\nhttps://rwbookclub.com/books/enshittification/
+LOCATION:Waterbury Restaurant
+URL:https://rwbookclub.com/books/enshittification/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-2@rwbookclub.com
+DTSTAMP:20250930T000000Z
+DTSTART;TZID=America/Chicago:20250930T183000
+DTEND;TZID=America/Chicago:20250930T203000
+SUMMARY:Book Club: Heart of Darkness
+DESCRIPTION:Heart of Darkness by Joseph Conrad\nPicked by Nick.\nHosted by 
+ Nick.\nTopic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/hea
+ rt-of-darkness/
+LOCATION:Waterbury Restaurant
+URL:https://rwbookclub.com/books/heart-of-darkness/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-3@rwbookclub.com
+DTSTAMP:20250826T000000Z
+DTSTART;TZID=America/Chicago:20250826T183000
+DTEND;TZID=America/Chicago:20250826T203000
+SUMMARY:Book Club: The Origins of Totalitarianism
+DESCRIPTION:The Origins of Totalitarianism by Hannah Arendt\nPicked by Lore
+ n.\nHosted by Loren.\nTopic: Politics & Social Sciences.\nhttps://rwbookcl
+ ub.com/books/the-origins-of-totalitarianism/
+LOCATION:Waterbury Restaurant
+URL:https://rwbookclub.com/books/the-origins-of-totalitarianism/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-4@rwbookclub.com
+DTSTAMP:20250624T000000Z
+DTSTART;TZID=America/Chicago:20250624T183000
+DTEND;TZID=America/Chicago:20250624T203000
+SUMMARY:Book Club: Co-Intelligence
+DESCRIPTION:Co-Intelligence by Ethan Mollick\nPicked by Jamie.\nHosted by J
+ amie.\nTopic: Technology.\nhttps://rwbookclub.com/books/co-intelligence/
+LOCATION:Waterbury Restaurant
+URL:https://rwbookclub.com/books/co-intelligence/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-5@rwbookclub.com
+DTSTAMP:20250527T000000Z
+DTSTART;TZID=America/Chicago:20250527T183000
+DTEND;TZID=America/Chicago:20250527T203000
+SUMMARY:Book Club: How to Do Nothing
+DESCRIPTION:How to Do Nothing by Jenny Odell\nPicked by Erik.\nHosted by Er
+ ik.\nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/books/how-
+ to-do-nothing/
+LOCATION:Waterbury Restaurant
+URL:https://rwbookclub.com/books/how-to-do-nothing/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-6@rwbookclub.com
+DTSTAMP:20250421T000000Z
+DTSTART;TZID=America/Chicago:20250421T183000
+DTEND;TZID=America/Chicago:20250421T203000
+SUMMARY:Book Club: Picking
+LOCATION:Waterbury Restaurant
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-7@rwbookclub.com
+DTSTAMP:20241029T000000Z
+DTSTART;TZID=America/Chicago:20241029T180000
+DTEND;TZID=America/Chicago:20241029T200000
+SUMMARY:Book Club: Through the Language Glass
+DESCRIPTION:Through the Language Glass by Guy Deutscher\nPicked by Erik.\nH
+ osted by Erik.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/t
+ hrough-the-language-glass/
+URL:https://rwbookclub.com/books/through-the-language-glass/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-8@rwbookclub.com
+DTSTAMP:20240917T000000Z
+DTSTART;TZID=America/Chicago:20240917T180000
+DTEND;TZID=America/Chicago:20240917T200000
+SUMMARY:Book Club: Army of None
+DESCRIPTION:Army of None by Paul Scharre\nPicked by Tom.\nHosted by Tom.\nT
+ opic: Technology.\nhttps://rwbookclub.com/books/army-of-none/
+URL:https://rwbookclub.com/books/army-of-none/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-9@rwbookclub.com
+DTSTAMP:20240529T000000Z
+DTSTART;TZID=America/Chicago:20240529T180000
+DTEND;TZID=America/Chicago:20240529T200000
+SUMMARY:Book Club: The Power Law
+DESCRIPTION:The Power Law by Sebastian Mallaby\nPicked by Nick.\nHosted by 
+ Nick.\nTopic: History & Economics.\nhttps://rwbookclub.com/books/the-power
+ -law/
+URL:https://rwbookclub.com/books/the-power-law/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-10@rwbookclub.com
+DTSTAMP:20240423T000000Z
+DTSTART;TZID=America/Chicago:20240423T180000
+DTEND;TZID=America/Chicago:20240423T200000
+SUMMARY:Book Club: Dictionary People
+DESCRIPTION:Dictionary People by Sarah Ogilvie\nPicked by Loren.\nHosted by
+  Loren.\nTopic: Current Events & People.\nhttps://rwbookclub.com/books/dic
+ tionary-people/
+URL:https://rwbookclub.com/books/dictionary-people/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-11@rwbookclub.com
+DTSTAMP:20240228T000000Z
+DTSTART;TZID=America/Chicago:20240228T180000
+DTEND;TZID=America/Chicago:20240228T200000
+SUMMARY:Book Club: Medici Money
+DESCRIPTION:Medici Money by Tim Parks\nPicked by Jamie.\nHosted by Jamie.\n
+ Topic: History & Economics.\nhttps://rwbookclub.com/books/medici-money/
+URL:https://rwbookclub.com/books/medici-money/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-12@rwbookclub.com
+DTSTAMP:20240110T000000Z
+DTSTART;TZID=America/Chicago:20240110T200000
+DTEND;TZID=America/Chicago:20240110T220000
+SUMMARY:Book Club: Picking
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-13@rwbookclub.com
+DTSTAMP:20231220T000000Z
+DTSTART;TZID=America/Chicago:20231220T180000
+DTEND;TZID=America/Chicago:20231220T200000
+SUMMARY:Book Club: Dawn of Everything
+DESCRIPTION:Dawn of Everything by David Graeber and David Wengrow\nPicked b
+ y Erik.\nHosted by Erik.\nTopic: History & Economics.\nhttps://rwbookclub.
+ com/books/dawn-of-everything/
+LOCATION:Monte Carlo
+URL:https://rwbookclub.com/books/dawn-of-everything/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-14@rwbookclub.com
+DTSTAMP:20230831T000000Z
+DTSTART;TZID=America/Chicago:20230831T180000
+DTEND;TZID=America/Chicago:20230831T200000
+SUMMARY:Book Club: Otherlands
+DESCRIPTION:Otherlands by Thomas Halliday\nPicked by Tom.\nHosted by Tom.\n
+ Topic: Science and Math.\nhttps://rwbookclub.com/books/otherlands/
+URL:https://rwbookclub.com/books/otherlands/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-15@rwbookclub.com
+DTSTAMP:20230711T000000Z
+DTSTART;TZID=America/Chicago:20230711T180000
+DTEND;TZID=America/Chicago:20230711T200000
+SUMMARY:Book Club: Men Without Work & Nation of Takers
+DESCRIPTION:Men Without Work by Nicholas Eberstadt\nNation of Takers by Nic
+ holas Eberstadt\nPicked by Nick.\nHosted by Nick.\nTopic: Politics & Socia
+ l Sciences.\nhttps://rwbookclub.com/books/men-without-work/\nhttps://rwboo
+ kclub.com/books/nation-of-takers/
+LOCATION:French Meadow
+URL:https://rwbookclub.com/books/men-without-work/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-16@rwbookclub.com
+DTSTAMP:20230530T000000Z
+DTSTART;TZID=America/Chicago:20230530T180000
+DTEND;TZID=America/Chicago:20230530T200000
+SUMMARY:Book Club: A Supposedly Fun Thing I'll Never Do Again
+DESCRIPTION:A Supposedly Fun Thing I'll Never Do Again by David Foster Wall
+ ace\nPicked by Loren.\nHosted by Loren.\nTopic: Essays & Literature.\nhttp
+ s://rwbookclub.com/books/a-supposedly-fun-thing-i-ll-never-do-again/
+URL:https://rwbookclub.com/books/a-supposedly-fun-thing-i-ll-never-do-again
+ /
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-17@rwbookclub.com
+DTSTAMP:20230411T000000Z
+DTSTART;TZID=America/Chicago:20230411T180000
+DTEND;TZID=America/Chicago:20230411T200000
+SUMMARY:Book Club: To Shake the Sleeping Self
+DESCRIPTION:To Shake the Sleeping Self by Jedidiah Jenkins\nPicked by Jamie
+ .\nHosted by Jamie.\nTopic: Travel & Memoir.\nhttps://rwbookclub.com/books
+ /to-shake-the-sleeping-self/
+URL:https://rwbookclub.com/books/to-shake-the-sleeping-self/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-18@rwbookclub.com
+DTSTAMP:20230207T000000Z
+DTSTART;TZID=America/Chicago:20230207T180000
+DTEND;TZID=America/Chicago:20230207T200000
+SUMMARY:Book Club: Picking
+DESCRIPTION:Hosted by Jamie.
+LOCATION:Jamie's House
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-19@rwbookclub.com
+DTSTAMP:20221214T000000Z
+DTSTART;TZID=America/Chicago:20221214T180000
+DTEND;TZID=America/Chicago:20221214T200000
+SUMMARY:Book Club: Mni Sota Makoce
+DESCRIPTION:Mni Sota Makoce by Gwen Westerman and Bruce White\nPicked by Er
+ ik.\nHosted by Erik.\nTopic: History & Economics.\nhttps://rwbookclub.com/
+ books/mni-sota-makoce/
+LOCATION:Erik's Apartment
+URL:https://rwbookclub.com/books/mni-sota-makoce/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-20@rwbookclub.com
+DTSTAMP:20220921T000000Z
+DTSTART;TZID=America/Chicago:20220921T190000
+DTEND;TZID=America/Chicago:20220921T210000
+SUMMARY:Book Club: Addiction by Design
+DESCRIPTION:Addiction by Design by Natasha Dow Schüll\nPicked by Tom.\nHos
+ ted by Tom.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/addi
+ ction-by-design/
+URL:https://rwbookclub.com/books/addiction-by-design/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-21@rwbookclub.com
+DTSTAMP:20220601T000000Z
+DTSTART;TZID=America/Chicago:20220601T180000
+DTEND;TZID=America/Chicago:20220601T200000
+SUMMARY:Book Club: Aeschylus I & The Florentines
+DESCRIPTION:Aeschylus I by Aeschylus\nThe Florentines by Paul Strathern\nPi
+ cked by Nick.\nHosted by Nick.\nTopic: History & Economics.\nOnly reading 
+ "Prometheus Bound" from the Aeschylus I.\nhttps://rwbookclub.com/books/aes
+ chylus-i/\nhttps://rwbookclub.com/books/the-florentines/
+URL:https://rwbookclub.com/books/aeschylus-i/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-22@rwbookclub.com
+DTSTAMP:20220414T000000Z
+DTSTART;TZID=America/Chicago:20220414T180000
+DTEND;TZID=America/Chicago:20220414T200000
+SUMMARY:Book Club: Empire of Pain
+DESCRIPTION:Empire of Pain by Patrick Radden Keefe\nPicked by Loren.\nHoste
+ d by Loren.\nTopic: Current Events & People.\nhttps://rwbookclub.com/books
+ /empire-of-pain/
+URL:https://rwbookclub.com/books/empire-of-pain/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-23@rwbookclub.com
+DTSTAMP:20220124T000000Z
+DTSTART;TZID=America/Chicago:20220124T180000
+DTEND;TZID=America/Chicago:20220124T200000
+SUMMARY:Book Club: The Blocksize War
+DESCRIPTION:The Blocksize War by Jonathan Bier\nPicked by Jamie.\nHosted by
+  Jamie.\nTopic: Technology.\nSpecial guest: Hector Fernandez\nhttps://rwbo
+ okclub.com/books/the-blocksize-war/
+LOCATION:Zoom
+URL:https://rwbookclub.com/books/the-blocksize-war/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-24@rwbookclub.com
+DTSTAMP:20211220T000000Z
+DTSTART;TZID=America/Chicago:20211220T190000
+DTEND;TZID=America/Chicago:20211220T210000
+SUMMARY:Book Club: Picking
+LOCATION:Zoom
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-25@rwbookclub.com
+DTSTAMP:20211214T000000Z
+DTSTART;TZID=America/Chicago:20211214T183000
+DTEND;TZID=America/Chicago:20211214T203000
+SUMMARY:Book Club: Caste
+DESCRIPTION:Caste by Isabel Wilkerson\nPicked by Erik.\nHosted by Erik.\nTo
+ pic: Politics & Social Sciences.\nhttps://rwbookclub.com/books/caste/
+LOCATION:Erik's Home
+URL:https://rwbookclub.com/books/caste/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-26@rwbookclub.com
+DTSTAMP:20211012T000000Z
+DTSTART;TZID=America/Chicago:20211012T180000
+DTEND;TZID=America/Chicago:20211012T200000
+SUMMARY:Book Club: Nature & Walking
+DESCRIPTION:Nature & Walking by Henry David Thoreau and Ralph Waldo Emerson
+ \nPicked by Nick.\nHosted by Nick.\nTopic: Essays & Literature.\nhttps://r
+ wbookclub.com/books/nature-walking/
+LOCATION:Walk in Woods\, Birch's on the Lake
+URL:https://rwbookclub.com/books/nature-walking/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-27@rwbookclub.com
+DTSTAMP:20210901T000000Z
+DTSTART;TZID=America/Chicago:20210901T180000
+DTEND;TZID=America/Chicago:20210901T200000
+SUMMARY:Book Club: Evicted
+DESCRIPTION:Evicted by Matthew Desmond\nPicked by Loren.\nHosted by Loren.\
+ nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/books/evicted/
+LOCATION:McCoy's Public House
+URL:https://rwbookclub.com/books/evicted/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-28@rwbookclub.com
+DTSTAMP:20210729T000000Z
+DTSTART;TZID=America/Chicago:20210729T190000
+DTEND;TZID=America/Chicago:20210729T210000
+SUMMARY:Book Club: A Man at Arms
+DESCRIPTION:A Man at Arms by Steven Pressfield\nPicked by Jamie.\nHosted by
+  Jamie.\nTopic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/a
+ -man-at-arms/
+LOCATION:Lake & Irving
+URL:https://rwbookclub.com/books/a-man-at-arms/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-29@rwbookclub.com
+DTSTAMP:20210616T000000Z
+DTSTART;TZID=America/Chicago:20210616T180000
+DTEND;TZID=America/Chicago:20210616T200000
+SUMMARY:Book Club: Klara and the Sun
+DESCRIPTION:Klara and the Sun by Kazuo Ishiguro\nPicked by Tom.\nHosted by 
+ Tom.\nTopic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/klar
+ a-and-the-sun/
+LOCATION:Jamie's House
+URL:https://rwbookclub.com/books/klara-and-the-sun/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-30@rwbookclub.com
+DTSTAMP:20210512T000000Z
+DTSTART;TZID=America/Chicago:20210512T190000
+DTEND;TZID=America/Chicago:20210512T210000
+SUMMARY:Book Club: The Horse\, the Wheel\, and Language
+DESCRIPTION:The Horse\, the Wheel\, and Language by David Anthony\nPicked b
+ y Loren.\nHosted by Loren.\nTopic: History & Economics.\nhttps://rwbookclu
+ b.com/books/the-horse-the-wheel-and-language/
+LOCATION:Zoom
+URL:https://rwbookclub.com/books/the-horse-the-wheel-and-language/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-31@rwbookclub.com
+DTSTAMP:20210429T000000Z
+DTSTART;TZID=America/Chicago:20210429T190000
+DTEND;TZID=America/Chicago:20210429T210000
+SUMMARY:Book Club: Picking
+LOCATION:Zoom
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-32@rwbookclub.com
+DTSTAMP:20210318T000000Z
+DTSTART;TZID=America/Chicago:20210318T190000
+DTEND;TZID=America/Chicago:20210318T210000
+SUMMARY:Book Club: Running with Sherman
+DESCRIPTION:Running with Sherman by Christopher McDougall\nPicked by Jamie.
+ \nHosted by Jamie.\nTopic: Travel & Memoir.\nhttps://rwbookclub.com/books/
+ running-with-sherman/
+LOCATION:Zoom
+URL:https://rwbookclub.com/books/running-with-sherman/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-33@rwbookclub.com
+DTSTAMP:20210218T000000Z
+DTSTART;TZID=America/Chicago:20210218T190000
+DTEND;TZID=America/Chicago:20210218T210000
+SUMMARY:Book Club: The WEIRDest People in the World
+DESCRIPTION:The WEIRDest People in the World by Joseph Henrich\nPicked by E
+ rik.\nHosted by Erik.\nTopic: Politics & Social Sciences.\nhttps://rwbookc
+ lub.com/books/the-weirdest-people-in-the-world/
+LOCATION:Zoom
+URL:https://rwbookclub.com/books/the-weirdest-people-in-the-world/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-34@rwbookclub.com
+DTSTAMP:20210106T000000Z
+DTSTART;TZID=America/Chicago:20210106T190000
+DTEND;TZID=America/Chicago:20210106T210000
+SUMMARY:Book Club: Mama's Last Hug
+DESCRIPTION:Mama's Last Hug by Frans De Waal\nPicked by Tom.\nHosted by Tom
+ .\nTopic: Science and Math.\nhttps://rwbookclub.com/books/mama-s-last-hug/
+LOCATION:Zoom
+URL:https://rwbookclub.com/books/mama-s-last-hug/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-35@rwbookclub.com
+DTSTAMP:20201123T000000Z
+DTSTART;TZID=America/Chicago:20201123T190000
+DTEND;TZID=America/Chicago:20201123T210000
+SUMMARY:Book Club: Unflattening
+DESCRIPTION:Unflattening by Nick Sousanis\nPicked by Nick.\nHosted by Nick.
+ \nTopic: Essays & Literature.\nhttps://rwbookclub.com/books/unflattening/
+LOCATION:Zoom
+URL:https://rwbookclub.com/books/unflattening/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-36@rwbookclub.com
+DTSTAMP:20201008T000000Z
+DTSTART;TZID=America/Chicago:20201008T190000
+DTEND;TZID=America/Chicago:20201008T210000
+SUMMARY:Book Club: Picking
+LOCATION:Zoom
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-37@rwbookclub.com
+DTSTAMP:20200916T000000Z
+DTSTART;TZID=America/Chicago:20200916T183000
+DTEND;TZID=America/Chicago:20200916T203000
+SUMMARY:Book Club: Bending Adversity
+DESCRIPTION:Bending Adversity by David Pilling\nPicked by Loren.\nHosted by
+  Loren.\nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/books/
+ bending-adversity/
+LOCATION:Zoom
+URL:https://rwbookclub.com/books/bending-adversity/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-38@rwbookclub.com
+DTSTAMP:20200812T000000Z
+DTSTART;TZID=America/Chicago:20200812T190000
+DTEND;TZID=America/Chicago:20200812T210000
+SUMMARY:Book Club: The Rise of Big Data Policing
+DESCRIPTION:The Rise of Big Data Policing by Andrew Guthrie Ferguson\nPicke
+ d by Jamie.\nHosted by Jamie.\nTopic: Politics & Social Sciences.\nhttps:/
+ /rwbookclub.com/books/the-rise-of-big-data-policing/
+LOCATION:Zoom
+URL:https://rwbookclub.com/books/the-rise-of-big-data-policing/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-39@rwbookclub.com
+DTSTAMP:20200603T000000Z
+DTSTART;TZID=America/Chicago:20200603T190000
+DTEND;TZID=America/Chicago:20200603T210000
+SUMMARY:Book Club: Benjamin Franklin
+DESCRIPTION:Benjamin Franklin by Walter Isaacson\nPicked by Erik.\nHosted b
+ y Erik.\nTopic: History & Economics.\nhttps://rwbookclub.com/books/benjami
+ n-franklin/
+LOCATION:Zoom
+URL:https://rwbookclub.com/books/benjamin-franklin/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-40@rwbookclub.com
+DTSTAMP:20200429T000000Z
+DTSTART;TZID=America/Chicago:20200429T183000
+DTEND;TZID=America/Chicago:20200429T203000
+SUMMARY:Book Club: Replay
+DESCRIPTION:Replay by Ken Grimwood\nPicked by Tom.\nHosted by Tom.\nTopic: 
+ Science Fiction & Fiction.\nhttps://rwbookclub.com/books/replay/
+LOCATION:Zoom
+URL:https://rwbookclub.com/books/replay/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-41@rwbookclub.com
+DTSTAMP:20200325T000000Z
+DTSTART;TZID=America/Chicago:20200325T180000
+DTEND;TZID=America/Chicago:20200325T200000
+SUMMARY:Book Club: The Roman Republic & The Hundred-Year Marathon
+DESCRIPTION:The Roman Republic by David M. Gwynn\nThe Hundred-Year Marathon
+  by Michael Pillsbury\nPicked by Nick.\nHosted by Nick.\nTopic: History & 
+ Economics.\nhttps://rwbookclub.com/books/the-roman-republic/\nhttps://rwbo
+ okclub.com/books/the-hundred-year-marathon/
+LOCATION:Zoom
+URL:https://rwbookclub.com/books/the-roman-republic/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-42@rwbookclub.com
+DTSTAMP:20200130T000000Z
+DTSTART;TZID=America/Chicago:20200130T180000
+DTEND;TZID=America/Chicago:20200130T200000
+SUMMARY:Book Club: The Master Algorithm & The Nordic Theory of Everything
+DESCRIPTION:The Master Algorithm by Pedro Domingos\nThe Nordic Theory of Ev
+ erything by Anu Partanen\nPicked by Loren and Jamie.\nHosted by Loren and 
+ Jamie.\nTopic: Technology\, Current Events & People.\nDecember meeting was
+  cancelled at last minute and two books consolidated into January meeting.
+ \nhttps://rwbookclub.com/books/the-master-algorithm/\nhttps://rwbookclub.c
+ om/books/the-nordic-theory-of-everything/
+URL:https://rwbookclub.com/books/the-master-algorithm/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-43@rwbookclub.com
+DTSTAMP:20191107T000000Z
+DTSTART;TZID=America/Chicago:20191107T180000
+DTEND;TZID=America/Chicago:20191107T200000
+SUMMARY:Book Club: Genesis
+DESCRIPTION:Genesis by Edward O. Wilson\nPicked by Erik.\nHosted by Erik.\n
+ Topic: Science and Math.\nhttps://rwbookclub.com/books/genesis/
+URL:https://rwbookclub.com/books/genesis/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-44@rwbookclub.com
+DTSTAMP:20190918T000000Z
+DTSTART;TZID=America/Chicago:20190918T180000
+DTEND;TZID=America/Chicago:20190918T200000
+SUMMARY:Book Club: How to Read a Book
+DESCRIPTION:How to Read a Book by Mortimer J. Adler and Charles Van Doren\n
+ Picked by Tom.\nHosted by Tom.\nTopic: Brain & Psychology.\nhttps://rwbook
+ club.com/books/how-to-read-a-book/
+URL:https://rwbookclub.com/books/how-to-read-a-book/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-45@rwbookclub.com
+DTSTAMP:20190815T000000Z
+DTSTART;TZID=America/Chicago:20190815T180000
+DTEND;TZID=America/Chicago:20190815T200000
+SUMMARY:Book Club: Zen and the Art of Motorcycle Maintenance
+DESCRIPTION:Zen and the Art of Motorcycle Maintenance by Robert Pirsig\nPic
+ ked by Nick.\nHosted by Nick.\nTopic: Science Fiction & Fiction.\nhttps://
+ rwbookclub.com/books/zen-and-the-art-of-motorcycle-maintenance/
+URL:https://rwbookclub.com/books/zen-and-the-art-of-motorcycle-maintenance/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-46@rwbookclub.com
+DTSTAMP:20190717T000000Z
+DTSTART;TZID=America/Chicago:20190717T180000
+DTEND;TZID=America/Chicago:20190717T200000
+SUMMARY:Book Club: Educated
+DESCRIPTION:Educated by Tara Westover\nPicked by Loren.\nHosted by Loren.\n
+ Topic: Current Events & People.\nhttps://rwbookclub.com/books/educated/
+URL:https://rwbookclub.com/books/educated/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-47@rwbookclub.com
+DTSTAMP:20190610T000000Z
+DTSTART;TZID=America/Chicago:20190610T180000
+DTEND;TZID=America/Chicago:20190610T200000
+SUMMARY:Book Club: Cræft & Growing a Revolution
+DESCRIPTION:Cræft by Alexander Langlands\nGrowing a Revolution by David R.
+  Montgomery\nPicked by Jamie and Erik.\nHosted by Jamie and Erik.\nTopic: 
+ Politics & Social Sciences\, Science and Math.\nhttps://rwbookclub.com/boo
+ ks/craeft/\nhttps://rwbookclub.com/books/growing-a-revolution/
+LOCATION:Lake & Harriet
+URL:https://rwbookclub.com/books/craeft/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-48@rwbookclub.com
+DTSTAMP:20190122T000000Z
+DTSTART;TZID=America/Chicago:20190122T180000
+DTEND;TZID=America/Chicago:20190122T200000
+SUMMARY:Book Club: Scale
+DESCRIPTION:Scale by Geoffrey West\nPicked by Tom.\nHosted by Tom.\nTopic: 
+ Science and Math.\nhttps://rwbookclub.com/books/scale/
+URL:https://rwbookclub.com/books/scale/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-49@rwbookclub.com
+DTSTAMP:20181119T000000Z
+DTSTART;TZID=America/Chicago:20181119T180000
+DTEND;TZID=America/Chicago:20181119T200000
+SUMMARY:Book Club: Life After Google
+DESCRIPTION:Life After Google by George Gilder\nPicked by Nick.\nHosted by 
+ Nick.\nTopic: Technology.\nhttps://rwbookclub.com/books/life-after-google/
+URL:https://rwbookclub.com/books/life-after-google/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-50@rwbookclub.com
+DTSTAMP:20181001T000000Z
+DTSTART;TZID=America/Chicago:20181001T180000
+DTEND;TZID=America/Chicago:20181001T200000
+SUMMARY:Book Club: How to Change Your Mind
+DESCRIPTION:How to Change Your Mind by Michael Pollan\nPicked by Jamie.\nHo
+ sted by Jamie.\nTopic: Health & Medicine.\nhttps://rwbookclub.com/books/ho
+ w-to-change-your-mind/
+URL:https://rwbookclub.com/books/how-to-change-your-mind/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-51@rwbookclub.com
+DTSTAMP:20180830T000000Z
+DTSTART;TZID=America/Chicago:20180830T180000
+DTEND;TZID=America/Chicago:20180830T200000
+SUMMARY:Book Club: Freedom™
+DESCRIPTION:Freedom™ by Daniel Suarez\nPicked by Loren.\nHosted by Loren.
+ \nTopic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/freedom-
+ tm/
+URL:https://rwbookclub.com/books/freedom-tm/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-52@rwbookclub.com
+DTSTAMP:20180725T000000Z
+DTSTART;TZID=America/Chicago:20180725T180000
+DTEND;TZID=America/Chicago:20180725T200000
+SUMMARY:Book Club: Collapse
+DESCRIPTION:Collapse by Jared Diamond\nPicked by Erik.\nHosted by Erik.\nTo
+ pic: History & Economics.\nhttps://rwbookclub.com/books/collapse/
+URL:https://rwbookclub.com/books/collapse/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-53@rwbookclub.com
+DTSTAMP:20180606T000000Z
+DTSTART;TZID=America/Chicago:20180606T180000
+DTEND;TZID=America/Chicago:20180606T200000
+SUMMARY:Book Club: Sapiens
+DESCRIPTION:Sapiens by Yuval Noah Harari\nPicked by Loren.\nHosted by Loren
+ .\nTopic: History & Economics.\nhttps://rwbookclub.com/books/sapiens/
+URL:https://rwbookclub.com/books/sapiens/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-54@rwbookclub.com
+DTSTAMP:20180509T000000Z
+DTSTART;TZID=America/Chicago:20180509T180000
+DTEND;TZID=America/Chicago:20180509T200000
+SUMMARY:Book Club: Why We Sleep
+DESCRIPTION:Why We Sleep by Matthew Walker\nPicked by Nick.\nHosted by Nick
+ .\nTopic: Health & Medicine.\nhttps://rwbookclub.com/books/why-we-sleep/
+URL:https://rwbookclub.com/books/why-we-sleep/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-55@rwbookclub.com
+DTSTAMP:20180326T000000Z
+DTSTART;TZID=America/Chicago:20180326T180000
+DTEND;TZID=America/Chicago:20180326T200000
+SUMMARY:Book Club: Why Buddhism is True
+DESCRIPTION:Why Buddhism is True by Robert Wright\nPicked by Tom.\nHosted b
+ y Tom.\nTopic: Philosophy & Religion.\nhttps://rwbookclub.com/books/why-bu
+ ddhism-is-true/
+URL:https://rwbookclub.com/books/why-buddhism-is-true/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-56@rwbookclub.com
+DTSTAMP:20180123T000000Z
+DTSTART;TZID=America/Chicago:20180123T180000
+DTEND;TZID=America/Chicago:20180123T200000
+SUMMARY:Book Club: Walkaway
+DESCRIPTION:Walkaway by Cory Doctorow\nPicked by Loren.\nHosted by Loren.\n
+ Topic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/walkaway/
+URL:https://rwbookclub.com/books/walkaway/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-57@rwbookclub.com
+DTSTAMP:20171221T000000Z
+DTSTART;TZID=America/Chicago:20171221T180000
+DTEND;TZID=America/Chicago:20171221T200000
+SUMMARY:Book Club: Daemon
+DESCRIPTION:Daemon by Daniel Suarez\nPicked by Jamie.\nHosted by Jamie.\nTo
+ pic: Technology.\nhttps://rwbookclub.com/books/daemon/
+LOCATION:Cafe Alma
+URL:https://rwbookclub.com/books/daemon/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-58@rwbookclub.com
+DTSTAMP:20171025T000000Z
+DTSTART;TZID=America/Chicago:20171025T180000
+DTEND;TZID=America/Chicago:20171025T200000
+SUMMARY:Book Club: A Crack in Creation
+DESCRIPTION:A Crack in Creation by Jennifer A. Doudna and Samuel H. Sternbe
+ rg\nPicked by Erik.\nHosted by Erik.\nTopic: Science and Math.\nhttps://rw
+ bookclub.com/books/a-crack-in-creation/
+LOCATION:Surly
+URL:https://rwbookclub.com/books/a-crack-in-creation/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-59@rwbookclub.com
+DTSTAMP:20170926T000000Z
+DTSTART;TZID=America/Chicago:20170926T180000
+DTEND;TZID=America/Chicago:20170926T200000
+SUMMARY:Book Club: How to Live
+DESCRIPTION:How to Live by Sarah Bakewell\nPicked by Tom.\nHosted by Tom.\n
+ Topic: Philosophy & Religion.\nhttps://rwbookclub.com/books/how-to-live/
+LOCATION:Lake and Irving
+URL:https://rwbookclub.com/books/how-to-live/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-60@rwbookclub.com
+DTSTAMP:20170824T000000Z
+DTSTART;TZID=America/Chicago:20170824T180000
+DTEND;TZID=America/Chicago:20170824T200000
+SUMMARY:Book Club: Peak
+DESCRIPTION:Peak by Anders Ericsson\nPicked by Nick.\nHosted by Nick.\nTopi
+ c: Brain & Psychology.\nhttps://rwbookclub.com/books/peak/
+LOCATION:Heyday
+URL:https://rwbookclub.com/books/peak/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-61@rwbookclub.com
+DTSTAMP:20170720T000000Z
+DTSTART;TZID=America/Chicago:20170720T160000
+DTEND;TZID=America/Chicago:20170720T180000
+SUMMARY:Book Club: The Epigenetics Revolution
+DESCRIPTION:The Epigenetics Revolution by Nessa Carey\nPicked by Loren.\nHo
+ sted by Loren.\nTopic: Science and Math.\nhttps://rwbookclub.com/books/the
+ -epigenetics-revolution/
+LOCATION:Nick's Cabin
+URL:https://rwbookclub.com/books/the-epigenetics-revolution/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-62@rwbookclub.com
+DTSTAMP:20170606T000000Z
+DTSTART;TZID=America/Chicago:20170606T180000
+DTEND;TZID=America/Chicago:20170606T200000
+SUMMARY:Book Club: Stuff Matters
+DESCRIPTION:Stuff Matters by Mark Miodownik\nPicked by Jamie.\nHosted by Ja
+ mie.\nTopic: Science and Math.\nhttps://rwbookclub.com/books/stuff-matters
+ /
+LOCATION:Agra Culture
+URL:https://rwbookclub.com/books/stuff-matters/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-63@rwbookclub.com
+DTSTAMP:20170424T000000Z
+DTSTART;TZID=America/Chicago:20170424T180000
+DTEND;TZID=America/Chicago:20170424T200000
+SUMMARY:Book Club: Norse Mythology
+DESCRIPTION:Norse Mythology by Neil Gaiman\nPicked by Erik.\nHosted by Erik
+ .\nTopic: History & Economics.\nhttps://rwbookclub.com/books/norse-mytholo
+ gy/
+LOCATION:Surly Brewing
+URL:https://rwbookclub.com/books/norse-mythology/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-64@rwbookclub.com
+DTSTAMP:20170321T000000Z
+DTSTART;TZID=America/Chicago:20170321T180000
+DTEND;TZID=America/Chicago:20170321T200000
+SUMMARY:Book Club: All Art Is Propaganda
+DESCRIPTION:All Art Is Propaganda by George Orwell\nPicked by Tom.\nHosted 
+ by Tom.\nTopic: Essays & Literature.\nhttps://rwbookclub.com/books/all-art
+ -is-propaganda/
+LOCATION:Lake & Harriet
+URL:https://rwbookclub.com/books/all-art-is-propaganda/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-65@rwbookclub.com
+DTSTAMP:20170222T000000Z
+DTSTART;TZID=America/Chicago:20170222T180000
+DTEND;TZID=America/Chicago:20170222T200000
+SUMMARY:Book Club: The Vital Question
+DESCRIPTION:The Vital Question by Nick Lane\nPicked by Nick.\nHosted by Nic
+ k.\nTopic: Science and Math.\nhttps://rwbookclub.com/books/the-vital-quest
+ ion/
+LOCATION:Lake Monster Brewing
+URL:https://rwbookclub.com/books/the-vital-question/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-66@rwbookclub.com
+DTSTAMP:20170116T000000Z
+DTSTART;TZID=America/Chicago:20170116T180000
+DTEND;TZID=America/Chicago:20170116T200000
+SUMMARY:Book Club: Shadow Elite
+DESCRIPTION:Shadow Elite by Janine R. Wedel\nPicked by Loren.\nHosted by Lo
+ ren.\nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/books/sha
+ dow-elite/
+LOCATION:George & The Dragon
+URL:https://rwbookclub.com/books/shadow-elite/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-67@rwbookclub.com
+DTSTAMP:20161206T000000Z
+DTSTART;TZID=America/Chicago:20161206T180000
+DTEND;TZID=America/Chicago:20161206T200000
+SUMMARY:Book Club: Hillbilly Eligy
+DESCRIPTION:Hillbilly Eligy by J. D. Vance\nPicked by Jamie.\nHosted by Jam
+ ie.\nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/books/hill
+ billy-eligy/
+LOCATION:Lake & Harriet
+URL:https://rwbookclub.com/books/hillbilly-eligy/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-68@rwbookclub.com
+DTSTAMP:20160927T000000Z
+DTSTART;TZID=America/Chicago:20160927T180000
+DTEND;TZID=America/Chicago:20160927T200000
+SUMMARY:Book Club: Ancillary Justice
+DESCRIPTION:Ancillary Justice by Ann Leckie\nPicked by Erik.\nHosted by Eri
+ k.\nTopic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/ancill
+ ary-justice/
+URL:https://rwbookclub.com/books/ancillary-justice/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-69@rwbookclub.com
+DTSTAMP:20160822T000000Z
+DTSTART;TZID=America/Chicago:20160822T180000
+DTEND;TZID=America/Chicago:20160822T200000
+SUMMARY:Book Club: The Metaphysical Club
+DESCRIPTION:The Metaphysical Club by Louis Menand\nPicked by Tom.\nHosted b
+ y Tom.\nTopic: History & Economics.\nhttps://rwbookclub.com/books/the-meta
+ physical-club/
+URL:https://rwbookclub.com/books/the-metaphysical-club/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-70@rwbookclub.com
+DTSTAMP:20160502T000000Z
+DTSTART;TZID=America/Chicago:20160502T180000
+DTEND;TZID=America/Chicago:20160502T200000
+SUMMARY:Book Club: American Nations
+DESCRIPTION:American Nations by Colin Woodard\nPicked by Nick.\nHosted by N
+ ick.\nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/books/ame
+ rican-nations/
+URL:https://rwbookclub.com/books/american-nations/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-71@rwbookclub.com
+DTSTAMP:20160322T000000Z
+DTSTART;TZID=America/Chicago:20160322T180000
+DTEND;TZID=America/Chicago:20160322T200000
+SUMMARY:Book Club: The Rise and Fall of American Growth
+DESCRIPTION:The Rise and Fall of American Growth by Robert J. Gordon\nPicke
+ d by Loren.\nHosted by Loren.\nTopic: History & Economics.\nhttps://rwbook
+ club.com/books/the-rise-and-fall-of-american-growth/
+URL:https://rwbookclub.com/books/the-rise-and-fall-of-american-growth/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-72@rwbookclub.com
+DTSTAMP:20160216T000000Z
+DTSTART;TZID=America/Chicago:20160216T180000
+DTEND;TZID=America/Chicago:20160216T200000
+SUMMARY:Book Club: Elon Musk
+DESCRIPTION:Elon Musk by Ashlee Vance\nPicked by Jamie.\nHosted by Jamie.\n
+ Topic: Current Events & People.\nhttps://rwbookclub.com/books/elon-musk/
+URL:https://rwbookclub.com/books/elon-musk/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-73@rwbookclub.com
+DTSTAMP:20151221T000000Z
+DTSTART;TZID=America/Chicago:20151221T180000
+DTEND;TZID=America/Chicago:20151221T200000
+SUMMARY:Book Club: Superforecasting
+DESCRIPTION:Superforecasting by Philip E. Tetlock\nPicked by Erik.\nHosted 
+ by Erik.\nTopic: Science and Math.\nhttps://rwbookclub.com/books/superfore
+ casting/
+URL:https://rwbookclub.com/books/superforecasting/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-74@rwbookclub.com
+DTSTAMP:20151124T000000Z
+DTSTART;TZID=America/Chicago:20151124T180000
+DTEND;TZID=America/Chicago:20151124T200000
+SUMMARY:Book Club: Being Mortal
+DESCRIPTION:Being Mortal by Atul Gawande\nTopic: Health & Medicine.\nhttps:
+ //rwbookclub.com/books/being-mortal/
+URL:https://rwbookclub.com/books/being-mortal/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-75@rwbookclub.com
+DTSTAMP:20151026T000000Z
+DTSTART;TZID=America/Chicago:20151026T180000
+DTEND;TZID=America/Chicago:20151026T200000
+SUMMARY:Book Club: The World Until Yesterday
+DESCRIPTION:The World Until Yesterday by Jared Diamond\nPicked by Nick.\nHo
+ sted by Nick.\nTopic: History & Economics.\nhttps://rwbookclub.com/books/t
+ he-world-until-yesterday/
+URL:https://rwbookclub.com/books/the-world-until-yesterday/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-76@rwbookclub.com
+DTSTAMP:20150817T000000Z
+DTSTART;TZID=America/Chicago:20150817T180000
+DTEND;TZID=America/Chicago:20150817T200000
+SUMMARY:Book Club: Amusing Ourselves to Death
+DESCRIPTION:Amusing Ourselves to Death by Neil Postman\nPicked by Tom.\nHos
+ ted by Tom.\nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/bo
+ oks/amusing-ourselves-to-death/
+URL:https://rwbookclub.com/books/amusing-ourselves-to-death/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-77@rwbookclub.com
+DTSTAMP:20150722T000000Z
+DTSTART;TZID=America/Chicago:20150722T180000
+DTEND;TZID=America/Chicago:20150722T200000
+SUMMARY:Book Club: Roadside Picnic
+DESCRIPTION:Roadside Picnic by Arkady Strugatsky and Boris Strugatsky\nPick
+ ed by Loren.\nHosted by Loren.\nTopic: Science Fiction & Fiction.\nhttps:/
+ /rwbookclub.com/books/roadside-picnic/
+URL:https://rwbookclub.com/books/roadside-picnic/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-78@rwbookclub.com
+DTSTAMP:20150615T000000Z
+DTSTART;TZID=America/Chicago:20150615T180000
+DTEND;TZID=America/Chicago:20150615T200000
+SUMMARY:Book Club: The Innovators
+DESCRIPTION:The Innovators by Walter Isaacson\nPicked by Jamie.\nHosted by 
+ Jamie.\nTopic: History & Economics.\nhttps://rwbookclub.com/books/the-inno
+ vators/
+URL:https://rwbookclub.com/books/the-innovators/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-79@rwbookclub.com
+DTSTAMP:20150504T000000Z
+DTSTART;TZID=America/Chicago:20150504T180000
+DTEND;TZID=America/Chicago:20150504T200000
+SUMMARY:Book Club: Complexity
+DESCRIPTION:Complexity by John H. Holland\nTopic: Science and Math.\nhttps:
+ //rwbookclub.com/books/complexity/
+URL:https://rwbookclub.com/books/complexity/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-80@rwbookclub.com
+DTSTAMP:20150420T000000Z
+DTSTART;TZID=America/Chicago:20150420T180000
+DTEND;TZID=America/Chicago:20150420T200000
+SUMMARY:Book Club: No Place to Hide
+DESCRIPTION:No Place to Hide by Glenn Greenwald\nPicked by Erik.\nHosted by
+  Erik.\nTopic: Current Events & People.\nhttps://rwbookclub.com/books/no-p
+ lace-to-hide/
+URL:https://rwbookclub.com/books/no-place-to-hide/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-81@rwbookclub.com
+DTSTAMP:20150316T000000Z
+DTSTART;TZID=America/Chicago:20150316T180000
+DTEND;TZID=America/Chicago:20150316T200000
+SUMMARY:Book Club: The Age of Cryptocurrency
+DESCRIPTION:The Age of Cryptocurrency by Paul Vigna and Michael J. Casey\nP
+ icked by Tom.\nHosted by Tom.\nTopic: Current Events & People.\nhttps://rw
+ bookclub.com/books/the-age-of-cryptocurrency/
+URL:https://rwbookclub.com/books/the-age-of-cryptocurrency/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-82@rwbookclub.com
+DTSTAMP:20150119T000000Z
+DTSTART;TZID=America/Chicago:20150119T180000
+DTEND;TZID=America/Chicago:20150119T200000
+SUMMARY:Book Club: The Structure and Dynamics of Networks
+DESCRIPTION:The Structure and Dynamics of Networks by Mark Newman and Dunca
+ n J. Watts\nPicked by Nick.\nHosted by Nick.\nTopic: Science and Math.\nht
+ tps://rwbookclub.com/books/the-structure-and-dynamics-of-networks/
+URL:https://rwbookclub.com/books/the-structure-and-dynamics-of-networks/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-83@rwbookclub.com
+DTSTAMP:20141218T000000Z
+DTSTART;TZID=America/Chicago:20141218T180000
+DTEND;TZID=America/Chicago:20141218T200000
+SUMMARY:Book Club: Love Sense
+DESCRIPTION:Love Sense by Sue Johnson\nTopic: Brain & Psychology.\nhttps://
+ rwbookclub.com/books/love-sense/
+URL:https://rwbookclub.com/books/love-sense/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-84@rwbookclub.com
+DTSTAMP:20141103T000000Z
+DTSTART;TZID=America/Chicago:20141103T180000
+DTEND;TZID=America/Chicago:20141103T200000
+SUMMARY:Book Club: Far from the Tree
+DESCRIPTION:Far from the Tree by Andrew Solomon\nPicked by Erik and Jamie.\
+ nHosted by Jamie.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/book
+ s/far-from-the-tree/
+URL:https://rwbookclub.com/books/far-from-the-tree/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-85@rwbookclub.com
+DTSTAMP:20140922T000000Z
+DTSTART;TZID=America/Chicago:20140922T180000
+DTEND;TZID=America/Chicago:20140922T200000
+SUMMARY:Book Club: Far from the Tree
+DESCRIPTION:Far from the Tree by Andrew Solomon\nPicked by Erik and Jamie.\
+ nHosted by Erik.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books
+ /far-from-the-tree/
+URL:https://rwbookclub.com/books/far-from-the-tree/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-86@rwbookclub.com
+DTSTAMP:20140826T000000Z
+DTSTART;TZID=America/Chicago:20140826T180000
+DTEND;TZID=America/Chicago:20140826T200000
+SUMMARY:Book Club: Thinking in Systems
+DESCRIPTION:Thinking in Systems by Donella Meadows\nPicked by Tom.\nHosted 
+ by Tom.\nTopic: Science and Math.\nhttps://rwbookclub.com/books/thinking-i
+ n-systems/
+URL:https://rwbookclub.com/books/thinking-in-systems/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-87@rwbookclub.com
+DTSTAMP:20140721T000000Z
+DTSTART;TZID=America/Chicago:20140721T180000
+DTEND;TZID=America/Chicago:20140721T200000
+SUMMARY:Book Club: The Everything Store
+DESCRIPTION:The Everything Store by Brad Stone\nPicked by Nick.\nHosted by 
+ Nick.\nTopic: Current Events & People.\nhttps://rwbookclub.com/books/the-e
+ verything-store/
+URL:https://rwbookclub.com/books/the-everything-store/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-88@rwbookclub.com
+DTSTAMP:20140610T000000Z
+DTSTART;TZID=America/Chicago:20140610T180000
+DTEND;TZID=America/Chicago:20140610T200000
+SUMMARY:Book Club: Antifragile
+DESCRIPTION:Antifragile by Nassim Nicholas Taleb\nPicked by Jamie.\nHosted 
+ by Jamie.\nTopic: Science and Math.\nhttps://rwbookclub.com/books/antifrag
+ ile/
+URL:https://rwbookclub.com/books/antifragile/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-89@rwbookclub.com
+DTSTAMP:20140422T000000Z
+DTSTART;TZID=America/Chicago:20140422T180000
+DTEND;TZID=America/Chicago:20140422T200000
+SUMMARY:Book Club: The Martian
+DESCRIPTION:The Martian by Andy Weir\nPicked by Erik.\nHosted by Erik.\nTop
+ ic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/the-martian/
+URL:https://rwbookclub.com/books/the-martian/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-90@rwbookclub.com
+DTSTAMP:20140313T000000Z
+DTSTART;TZID=America/Chicago:20140313T180000
+DTEND;TZID=America/Chicago:20140313T200000
+SUMMARY:Book Club: A History of God
+DESCRIPTION:A History of God by Karen Armstrong\nPicked by Tom.\nHosted by 
+ Tom.\nTopic: History & Economics.\nhttps://rwbookclub.com/books/a-history-
+ of-god/
+URL:https://rwbookclub.com/books/a-history-of-god/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-91@rwbookclub.com
+DTSTAMP:20140127T000000Z
+DTSTART;TZID=America/Chicago:20140127T180000
+DTEND;TZID=America/Chicago:20140127T200000
+SUMMARY:Book Club: Quiet
+DESCRIPTION:Quiet by Susan Cain\nPicked by Nick.\nHosted by Nick.\nTopic: B
+ rain & Psychology.\nhttps://rwbookclub.com/books/quiet/
+URL:https://rwbookclub.com/books/quiet/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-92@rwbookclub.com
+DTSTAMP:20131220T000000Z
+DTSTART;TZID=America/Chicago:20131220T180000
+DTEND;TZID=America/Chicago:20131220T200000
+SUMMARY:Book Club: Powering the Dream
+DESCRIPTION:Powering the Dream by Alexis Madrigal\nPicked by Jamie.\nHosted
+  by Jamie.\nTopic: Technology.\nhttps://rwbookclub.com/books/powering-the-
+ dream/
+URL:https://rwbookclub.com/books/powering-the-dream/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-93@rwbookclub.com
+DTSTAMP:20131201T000000Z
+DTSTART;TZID=America/Chicago:20131201T180000
+DTEND;TZID=America/Chicago:20131201T200000
+SUMMARY:Book Club: The Emperor of All Maladies
+DESCRIPTION:The Emperor of All Maladies by Siddhartha Mukherjee\nPicked by 
+ Dan.\nHosted by Dan.\nTopic: Health & Medicine.\nhttps://rwbookclub.com/bo
+ oks/the-emperor-of-all-maladies/
+URL:https://rwbookclub.com/books/the-emperor-of-all-maladies/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-94@rwbookclub.com
+DTSTAMP:20131104T000000Z
+DTSTART;TZID=America/Chicago:20131104T180000
+DTEND;TZID=America/Chicago:20131104T200000
+SUMMARY:Book Club: Behind the Beautiful Forevers
+DESCRIPTION:Behind the Beautiful Forevers by Katherine Boo\nPicked by Jamie
+ .\nHosted by Jamie.\nTopic: Current Events & People.\nhttps://rwbookclub.c
+ om/books/behind-the-beautiful-forevers/
+URL:https://rwbookclub.com/books/behind-the-beautiful-forevers/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-95@rwbookclub.com
+DTSTAMP:20130923T000000Z
+DTSTART;TZID=America/Chicago:20130923T180000
+DTEND;TZID=America/Chicago:20130923T200000
+SUMMARY:Book Club: This Machine Kills Secrets
+DESCRIPTION:This Machine Kills Secrets by Andy Greenberg\nPicked by Erik.\n
+ Hosted by Erik.\nTopic: Current Events & People.\nhttps://rwbookclub.com/b
+ ooks/this-machine-kills-secrets/
+URL:https://rwbookclub.com/books/this-machine-kills-secrets/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-96@rwbookclub.com
+DTSTAMP:20130821T000000Z
+DTSTART;TZID=America/Chicago:20130821T180000
+DTEND;TZID=America/Chicago:20130821T200000
+SUMMARY:Book Club: The Real North Korea
+DESCRIPTION:The Real North Korea by Andrei Lankov\nPicked by Tom.\nHosted b
+ y Tom.\nTopic: Current Events & People.\nhttps://rwbookclub.com/books/the-
+ real-north-korea/
+URL:https://rwbookclub.com/books/the-real-north-korea/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-97@rwbookclub.com
+DTSTAMP:20130522T000000Z
+DTSTART;TZID=America/Chicago:20130522T180000
+DTEND;TZID=America/Chicago:20130522T200000
+SUMMARY:Book Club: The Joy of x
+DESCRIPTION:The Joy of x by Steven Strogatz\nPicked by John.\nHosted by Joh
+ n.\nTopic: Science and Math.\nhttps://rwbookclub.com/books/the-joy-of-x/
+URL:https://rwbookclub.com/books/the-joy-of-x/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-98@rwbookclub.com
+DTSTAMP:20130417T000000Z
+DTSTART;TZID=America/Chicago:20130417T180000
+DTEND;TZID=America/Chicago:20130417T200000
+SUMMARY:Book Club: The Willpower Instinct
+DESCRIPTION:The Willpower Instinct by Kelly McGonigal\nPicked by Jamie.\nHo
+ sted by Jamie.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/t
+ he-willpower-instinct/
+URL:https://rwbookclub.com/books/the-willpower-instinct/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-99@rwbookclub.com
+DTSTAMP:20130312T000000Z
+DTSTART;TZID=America/Chicago:20130312T180000
+DTEND;TZID=America/Chicago:20130312T200000
+SUMMARY:Book Club: The Signal and the Noise
+DESCRIPTION:The Signal and the Noise by Nate Silver\nPicked by Erik.\nHoste
+ d by Erik.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/the-s
+ ignal-and-the-noise/
+URL:https://rwbookclub.com/books/the-signal-and-the-noise/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-100@rwbookclub.com
+DTSTAMP:20130120T000000Z
+DTSTART;TZID=America/Chicago:20130120T180000
+DTEND;TZID=America/Chicago:20130120T200000
+SUMMARY:Book Club: To Say Nothing of the Dog
+DESCRIPTION:To Say Nothing of the Dog by Connie Willis\nPicked by Dan.\nHos
+ ted by Dan.\nTopic: Science Fiction & Fiction.\nhttps://rwbookclub.com/boo
+ ks/to-say-nothing-of-the-dog/
+URL:https://rwbookclub.com/books/to-say-nothing-of-the-dog/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-101@rwbookclub.com
+DTSTAMP:20121219T000000Z
+DTSTART;TZID=America/Chicago:20121219T180000
+DTEND;TZID=America/Chicago:20121219T200000
+SUMMARY:Book Club: Liars and Outliers
+DESCRIPTION:Liars and Outliers by Bruce Schneier\nPicked by Dan.\nHosted by
+  Dan.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/liars-and-
+ outliers/
+URL:https://rwbookclub.com/books/liars-and-outliers/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-102@rwbookclub.com
+DTSTAMP:20121128T000000Z
+DTSTART;TZID=America/Chicago:20121128T180000
+DTEND;TZID=America/Chicago:20121128T200000
+SUMMARY:Book Club: Join the Club
+DESCRIPTION:Join the Club by Tina Rosenberg\nPicked by Tom.\nHosted by Tom.
+ \nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/join-the-club/
+URL:https://rwbookclub.com/books/join-the-club/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-103@rwbookclub.com
+DTSTAMP:20121023T000000Z
+DTSTART;TZID=America/Chicago:20121023T180000
+DTEND;TZID=America/Chicago:20121023T200000
+SUMMARY:Book Club: Flagrant Conduct
+DESCRIPTION:Flagrant Conduct by Dale Carpenter\nPicked by John.\nHosted by 
+ John.\nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/books/fl
+ agrant-conduct/
+URL:https://rwbookclub.com/books/flagrant-conduct/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-104@rwbookclub.com
+DTSTAMP:20120925T000000Z
+DTSTART;TZID=America/Chicago:20120925T180000
+DTEND;TZID=America/Chicago:20120925T200000
+SUMMARY:Book Club: A Canticle for Leibowitz & The Devil in the White City
+DESCRIPTION:A Canticle for Leibowitz by Walter M. Miller\, Jr.\nThe Devil i
+ n the White City by Erik Larson\nPicked by Jamie and Erik.\nHosted by Jami
+ e and Erik.\nTopic: Science Fiction & Fiction\, History & Economics.\nhttp
+ s://rwbookclub.com/books/a-canticle-for-leibowitz/\nhttps://rwbookclub.com
+ /books/the-devil-in-the-white-city/
+URL:https://rwbookclub.com/books/a-canticle-for-leibowitz/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-105@rwbookclub.com
+DTSTAMP:20120702T000000Z
+DTSTART;TZID=America/Chicago:20120702T180000
+DTEND;TZID=America/Chicago:20120702T200000
+SUMMARY:Book Club: The Mystery of Banking
+DESCRIPTION:The Mystery of Banking by Murray N. Rothbard\nPicked by Dan.\nH
+ osted by Dan.\nTopic: History & Economics.\nhttps://rwbookclub.com/books/t
+ he-mystery-of-banking/
+URL:https://rwbookclub.com/books/the-mystery-of-banking/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-106@rwbookclub.com
+DTSTAMP:20120529T000000Z
+DTSTART;TZID=America/Chicago:20120529T180000
+DTEND;TZID=America/Chicago:20120529T200000
+SUMMARY:Book Club: Count Zero
+DESCRIPTION:Count Zero by William Gibson\nPicked by Tom.\nHosted by Tom.\nT
+ opic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/count-zero/
+URL:https://rwbookclub.com/books/count-zero/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-107@rwbookclub.com
+DTSTAMP:20120430T000000Z
+DTSTART;TZID=America/Chicago:20120430T180000
+DTEND;TZID=America/Chicago:20120430T200000
+SUMMARY:Book Club: Thinking Fast and Slow
+DESCRIPTION:Thinking Fast and Slow by Daniel Kahneman\nPicked by John.\nHos
+ ted by John.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/thi
+ nking-fast-and-slow/
+URL:https://rwbookclub.com/books/thinking-fast-and-slow/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-108@rwbookclub.com
+DTSTAMP:20120308T000000Z
+DTSTART;TZID=America/Chicago:20120308T180000
+DTEND;TZID=America/Chicago:20120308T200000
+SUMMARY:Book Club: The Most Human Human
+DESCRIPTION:The Most Human Human by Brian Christian\nPicked by Jamie.\nHost
+ ed by Jamie.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/the
+ -most-human-human/
+URL:https://rwbookclub.com/books/the-most-human-human/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-109@rwbookclub.com
+DTSTAMP:20120124T000000Z
+DTSTART;TZID=America/Chicago:20120124T180000
+DTEND;TZID=America/Chicago:20120124T200000
+SUMMARY:Book Club: Republic\, Lost
+DESCRIPTION:Republic\, Lost by Lawrence Lessig\nPicked by Erik.\nHosted by 
+ Erik.\nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/books/re
+ public-lost/
+URL:https://rwbookclub.com/books/republic-lost/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-110@rwbookclub.com
+DTSTAMP:20111213T000000Z
+DTSTART;TZID=America/Chicago:20111213T180000
+DTEND;TZID=America/Chicago:20111213T200000
+SUMMARY:Book Club: Darwin's Radio
+DESCRIPTION:Darwin's Radio by Greg Bear\nPicked by Dan.\nHosted by Dan.\nTo
+ pic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/darwin-s-rad
+ io/
+URL:https://rwbookclub.com/books/darwin-s-radio/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-111@rwbookclub.com
+DTSTAMP:20111110T000000Z
+DTSTART;TZID=America/Chicago:20111110T180000
+DTEND;TZID=America/Chicago:20111110T200000
+SUMMARY:Book Club: Videos
+DESCRIPTION:Hosted by Jamie\, Erik\, Dan\, John\, and Tom.\n<TED videofest>
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-112@rwbookclub.com
+DTSTAMP:20111017T000000Z
+DTSTART;TZID=America/Chicago:20111017T180000
+DTEND;TZID=America/Chicago:20111017T200000
+SUMMARY:Book Club: The Selfish Gene
+DESCRIPTION:The Selfish Gene by Richard Dawkins\nPicked by Tom.\nHosted by 
+ Tom.\nTopic: Science and Math.\nhttps://rwbookclub.com/books/the-selfish-g
+ ene/
+URL:https://rwbookclub.com/books/the-selfish-gene/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-113@rwbookclub.com
+DTSTAMP:20110913T000000Z
+DTSTART;TZID=America/Chicago:20110913T180000
+DTEND;TZID=America/Chicago:20110913T200000
+SUMMARY:Book Club: The Checklist Manifesto
+DESCRIPTION:The Checklist Manifesto by Atul Gawande\nPicked by John.\nHoste
+ d by John.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/the-c
+ hecklist-manifesto/
+URL:https://rwbookclub.com/books/the-checklist-manifesto/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-114@rwbookclub.com
+DTSTAMP:20110726T000000Z
+DTSTART;TZID=America/Chicago:20110726T180000
+DTEND;TZID=America/Chicago:20110726T200000
+SUMMARY:Book Club: Ant Encounters
+DESCRIPTION:Ant Encounters by Deborah Gordon\nPicked by Jamie.\nHosted by J
+ amie.\nTopic: Science and Math.\nhttps://rwbookclub.com/books/ant-encounte
+ rs/
+URL:https://rwbookclub.com/books/ant-encounters/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-115@rwbookclub.com
+DTSTAMP:20110620T000000Z
+DTSTART;TZID=America/Chicago:20110620T180000
+DTEND;TZID=America/Chicago:20110620T200000
+SUMMARY:Book Club: Never Let Me Go
+DESCRIPTION:Never Let Me Go by Kazuo Ishiguro\nPicked by Erik.\nHosted by E
+ rik.\nTopic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/neve
+ r-let-me-go/
+URL:https://rwbookclub.com/books/never-let-me-go/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-116@rwbookclub.com
+DTSTAMP:20110419T000000Z
+DTSTART;TZID=America/Chicago:20110419T180000
+DTEND;TZID=America/Chicago:20110419T200000
+SUMMARY:Book Club: Triumph of the City
+DESCRIPTION:Triumph of the City by Edward Glaeser\nPicked by Dan.\nHosted b
+ y Dan.\nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/books/t
+ riumph-of-the-city/
+URL:https://rwbookclub.com/books/triumph-of-the-city/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-117@rwbookclub.com
+DTSTAMP:20110301T000000Z
+DTSTART;TZID=America/Chicago:20110301T180000
+DTEND;TZID=America/Chicago:20110301T200000
+SUMMARY:Book Club: The Master Switch
+DESCRIPTION:The Master Switch by Tim Wu\nPicked by Tom.\nHosted by Tom.\nTo
+ pic: Technology.\nhttps://rwbookclub.com/books/the-master-switch/
+URL:https://rwbookclub.com/books/the-master-switch/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-118@rwbookclub.com
+DTSTAMP:20110131T000000Z
+DTSTART;TZID=America/Chicago:20110131T180000
+DTEND;TZID=America/Chicago:20110131T200000
+SUMMARY:Book Club: Essay
+DESCRIPTION:Hosted by Jamie\, Erik\, Tom\, Dan\, and John.\n<read papers on
+  Wikileaks>
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-119@rwbookclub.com
+DTSTAMP:20101215T000000Z
+DTSTART;TZID=America/Chicago:20101215T180000
+DTEND;TZID=America/Chicago:20101215T200000
+SUMMARY:Book Club: In a Sunburned Country
+DESCRIPTION:In a Sunburned Country by Bill Bryson\nPicked by John.\nHosted 
+ by John.\nTopic: Travel & Memoir.\nhttps://rwbookclub.com/books/in-a-sunbu
+ rned-country/
+URL:https://rwbookclub.com/books/in-a-sunburned-country/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-120@rwbookclub.com
+DTSTAMP:20101111T000000Z
+DTSTART;TZID=America/Chicago:20101111T180000
+DTEND;TZID=America/Chicago:20101111T200000
+SUMMARY:Book Club: Hegemony or Survival
+DESCRIPTION:Hegemony or Survival by Noam Chomsky\nPicked by Jamie.\nHosted 
+ by Jamie.\nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/book
+ s/hegemony-or-survival/
+URL:https://rwbookclub.com/books/hegemony-or-survival/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-121@rwbookclub.com
+DTSTAMP:20101007T000000Z
+DTSTART;TZID=America/Chicago:20101007T180000
+DTEND;TZID=America/Chicago:20101007T200000
+SUMMARY:Book Club: A Distant Mirror
+DESCRIPTION:A Distant Mirror by Barbara Tuchman\nPicked by Dan.\nHosted by 
+ Dan.\nTopic: History & Economics.\nhttps://rwbookclub.com/books/a-distant-
+ mirror/
+URL:https://rwbookclub.com/books/a-distant-mirror/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-122@rwbookclub.com
+DTSTAMP:20100902T000000Z
+DTSTART;TZID=America/Chicago:20100902T180000
+DTEND;TZID=America/Chicago:20100902T200000
+SUMMARY:Book Club: A Distant Mirror
+DESCRIPTION:A Distant Mirror by Barbara Tuchman\nPicked by Dan.\nHosted by 
+ Dan.\nTopic: History & Economics.\nhttps://rwbookclub.com/books/a-distant-
+ mirror/
+URL:https://rwbookclub.com/books/a-distant-mirror/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-123@rwbookclub.com
+DTSTAMP:20100721T000000Z
+DTSTART;TZID=America/Chicago:20100721T180000
+DTEND;TZID=America/Chicago:20100721T200000
+SUMMARY:Book Club: Wetware
+DESCRIPTION:Wetware by Dennis Bray\nPicked by Tom.\nHosted by Tom.\nTopic: 
+ Science and Math.\nhttps://rwbookclub.com/books/wetware/
+URL:https://rwbookclub.com/books/wetware/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-124@rwbookclub.com
+DTSTAMP:20100608T000000Z
+DTSTART;TZID=America/Chicago:20100608T180000
+DTEND;TZID=America/Chicago:20100608T200000
+SUMMARY:Book Club: Team of Rivals
+DESCRIPTION:Team of Rivals by Doris Kearns Goodwin\nPicked by John.\nHosted
+  by John.\nTopic: History & Economics.\nhttps://rwbookclub.com/books/team-
+ of-rivals/
+URL:https://rwbookclub.com/books/team-of-rivals/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-125@rwbookclub.com
+DTSTAMP:20100419T000000Z
+DTSTART;TZID=America/Chicago:20100419T180000
+DTEND;TZID=America/Chicago:20100419T200000
+SUMMARY:Book Club: The Golden Age
+DESCRIPTION:The Golden Age by John C. Wright\nPicked by Jamie.\nHosted by J
+ amie.\nTopic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/the
+ -golden-age/
+URL:https://rwbookclub.com/books/the-golden-age/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-126@rwbookclub.com
+DTSTAMP:20100322T000000Z
+DTSTART;TZID=America/Chicago:20100322T180000
+DTEND;TZID=America/Chicago:20100322T200000
+SUMMARY:Book Club: Don't Make Me Think
+DESCRIPTION:Don't Make Me Think by Steve Krug\nPicked by Erik.\nHosted by E
+ rik.\nTopic: Technology.\nhttps://rwbookclub.com/books/don-t-make-me-think
+ /
+URL:https://rwbookclub.com/books/don-t-make-me-think/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-127@rwbookclub.com
+DTSTAMP:20100215T000000Z
+DTSTART;TZID=America/Chicago:20100215T180000
+DTEND;TZID=America/Chicago:20100215T200000
+SUMMARY:Book Club: Creating a World without Poverty
+DESCRIPTION:Creating a World without Poverty by Muhammad Yunus\nPicked by D
+ an.\nHosted by Dan.\nTopic: Politics & Social Sciences.\nhttps://rwbookclu
+ b.com/books/creating-a-world-without-poverty/
+URL:https://rwbookclub.com/books/creating-a-world-without-poverty/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-128@rwbookclub.com
+DTSTAMP:20100110T000000Z
+DTSTART;TZID=America/Chicago:20100110T180000
+DTEND;TZID=America/Chicago:20100110T200000
+SUMMARY:Book Club: Influence
+DESCRIPTION:Influence by Robert B. Cialdini\nPicked by Tom.\nHosted by Tom.
+ \nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/influence/
+URL:https://rwbookclub.com/books/influence/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-129@rwbookclub.com
+DTSTAMP:20091228T000000Z
+DTSTART;TZID=America/Chicago:20091228T180000
+DTEND;TZID=America/Chicago:20091228T200000
+SUMMARY:Book Club: Essay
+DESCRIPTION:Hosted by Jamie\, Erik\, Dan\, Tom\, and John.\n<each member se
+ lected an essay to read>
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-130@rwbookclub.com
+DTSTAMP:20091201T000000Z
+DTSTART;TZID=America/Chicago:20091201T180000
+DTEND;TZID=America/Chicago:20091201T200000
+SUMMARY:Book Club: Play
+DESCRIPTION:Play by Stuart Brown and Christopher Vaughan\nPicked by John.\n
+ Hosted by John.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/
+ play/
+URL:https://rwbookclub.com/books/play/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-131@rwbookclub.com
+DTSTAMP:20091101T000000Z
+DTSTART;TZID=America/Chicago:20091101T180000
+DTEND;TZID=America/Chicago:20091101T200000
+SUMMARY:Book Club: Movie
+DESCRIPTION:Hosted by John.\n<outing to see District 9>
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-132@rwbookclub.com
+DTSTAMP:20091019T000000Z
+DTSTART;TZID=America/Chicago:20091019T180000
+DTEND;TZID=America/Chicago:20091019T200000
+SUMMARY:Book Club: Creativity
+DESCRIPTION:Creativity by Mihaly Csikszentmihalyi\nPicked by Jamie.\nHosted
+  by Jamie.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/creat
+ ivity/
+URL:https://rwbookclub.com/books/creativity/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-133@rwbookclub.com
+DTSTAMP:20090917T000000Z
+DTSTART;TZID=America/Chicago:20090917T180000
+DTEND;TZID=America/Chicago:20090917T200000
+SUMMARY:Book Club: Sustainable Energy Without the Hot Air
+DESCRIPTION:Sustainable Energy Without the Hot Air by David MacKay\nPicked 
+ by Erik.\nHosted by Erik.\nTopic: Technology.\nhttps://rwbookclub.com/book
+ s/sustainable-energy-without-the-hot-air/
+URL:https://rwbookclub.com/books/sustainable-energy-without-the-hot-air/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-134@rwbookclub.com
+DTSTAMP:20090812T000000Z
+DTSTART;TZID=America/Chicago:20090812T180000
+DTEND;TZID=America/Chicago:20090812T200000
+SUMMARY:Book Club: The China Study
+DESCRIPTION:The China Study by Thomas Campbell and T. Colin Campbell\nPicke
+ d by Dan.\nHosted by Dan.\nTopic: Health & Medicine.\nhttps://rwbookclub.c
+ om/books/the-china-study/
+URL:https://rwbookclub.com/books/the-china-study/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-135@rwbookclub.com
+DTSTAMP:20090529T000000Z
+DTSTART;TZID=America/Chicago:20090529T180000
+DTEND;TZID=America/Chicago:20090529T200000
+SUMMARY:Book Club: Honest Signals
+DESCRIPTION:Honest Signals by Alexander (Sandy) Pentland\nPicked by Tom.\nH
+ osted by Tom.\nTopic: Science and Math.\nhttps://rwbookclub.com/books/hone
+ st-signals/
+URL:https://rwbookclub.com/books/honest-signals/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-136@rwbookclub.com
+DTSTAMP:20090422T000000Z
+DTSTART;TZID=America/Chicago:20090422T180000
+DTEND;TZID=America/Chicago:20090422T200000
+SUMMARY:Book Club: Doomsday Book
+DESCRIPTION:Doomsday Book by Connie Willis\nPicked by John.\nHosted by John
+ .\nTopic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/doomsda
+ y-book/
+URL:https://rwbookclub.com/books/doomsday-book/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-137@rwbookclub.com
+DTSTAMP:20090302T000000Z
+DTSTART;TZID=America/Chicago:20090302T180000
+DTEND;TZID=America/Chicago:20090302T200000
+SUMMARY:Book Club: Money-Driven Medicine
+DESCRIPTION:Money-Driven Medicine by Maggie Mahar\nPicked by Jamie.\nHosted
+  by Jamie.\nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/boo
+ ks/money-driven-medicine/
+URL:https://rwbookclub.com/books/money-driven-medicine/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-138@rwbookclub.com
+DTSTAMP:20090203T000000Z
+DTSTART;TZID=America/Chicago:20090203T180000
+DTEND;TZID=America/Chicago:20090203T200000
+SUMMARY:Book Club: The Nine
+DESCRIPTION:The Nine by Jeffrey Toobin\nPicked by Erik.\nHosted by Erik.\nT
+ opic: Politics & Social Sciences.\nhttps://rwbookclub.com/books/the-nine/
+URL:https://rwbookclub.com/books/the-nine/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-139@rwbookclub.com
+DTSTAMP:20081208T000000Z
+DTSTART;TZID=America/Chicago:20081208T180000
+DTEND;TZID=America/Chicago:20081208T200000
+SUMMARY:Book Club: The Looming Tower
+DESCRIPTION:The Looming Tower by Lawrence Wright\nPicked by Dan.\nHosted by
+  Dan.\nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/books/th
+ e-looming-tower/
+URL:https://rwbookclub.com/books/the-looming-tower/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-140@rwbookclub.com
+DTSTAMP:20081103T000000Z
+DTSTART;TZID=America/Chicago:20081103T180000
+DTEND;TZID=America/Chicago:20081103T200000
+SUMMARY:Book Club: Traffic
+DESCRIPTION:Traffic by Tom Vanderbilt\nPicked by Tom.\nHosted by Tom.\nTopi
+ c: Brain & Psychology.\nhttps://rwbookclub.com/books/traffic/
+URL:https://rwbookclub.com/books/traffic/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-141@rwbookclub.com
+DTSTAMP:20081005T000000Z
+DTSTART;TZID=America/Chicago:20081005T180000
+DTEND;TZID=America/Chicago:20081005T200000
+SUMMARY:Book Club: Nudge
+DESCRIPTION:Nudge by Richard H. Thaler and Cass R. Sunstein\nPicked by John
+ .\nHosted by John.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/boo
+ ks/nudge/
+URL:https://rwbookclub.com/books/nudge/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-142@rwbookclub.com
+DTSTAMP:20080814T000000Z
+DTSTART;TZID=America/Chicago:20080814T180000
+DTEND;TZID=America/Chicago:20080814T200000
+SUMMARY:Book Club: Animal\, Vegetable\, Miracle
+DESCRIPTION:Animal\, Vegetable\, Miracle by Barbara Kingsolver\nPicked by J
+ amie.\nHosted by Jamie.\nTopic: Travel & Memoir.\nhttps://rwbookclub.com/b
+ ooks/animal-vegetable-miracle/
+URL:https://rwbookclub.com/books/animal-vegetable-miracle/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-143@rwbookclub.com
+DTSTAMP:20080722T000000Z
+DTSTART;TZID=America/Chicago:20080722T180000
+DTEND;TZID=America/Chicago:20080722T200000
+SUMMARY:Book Club: Shaping Things
+DESCRIPTION:Shaping Things by Bruce Sterling\nPicked by Erik.\nHosted by Er
+ ik.\nTopic: Technology.\nhttps://rwbookclub.com/books/shaping-things/
+URL:https://rwbookclub.com/books/shaping-things/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-144@rwbookclub.com
+DTSTAMP:20080520T000000Z
+DTSTART;TZID=America/Chicago:20080520T180000
+DTEND;TZID=America/Chicago:20080520T200000
+SUMMARY:Book Club: The Black Swan
+DESCRIPTION:The Black Swan by Nassim Nicholas Taleb\nPicked by Dan.\nHosted
+  by Dan.\nTopic: Science and Math.\nhttps://rwbookclub.com/books/the-black
+ -swan/
+URL:https://rwbookclub.com/books/the-black-swan/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-145@rwbookclub.com
+DTSTAMP:20080414T000000Z
+DTSTART;TZID=America/Chicago:20080414T180000
+DTEND;TZID=America/Chicago:20080414T200000
+SUMMARY:Book Club: Cheating
+DESCRIPTION:Cheating by Mia Consalvo\nPicked by Tom.\nHosted by Tom.\nTopic
+ : Technology.\nhttps://rwbookclub.com/books/cheating/
+URL:https://rwbookclub.com/books/cheating/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-146@rwbookclub.com
+DTSTAMP:20080314T000000Z
+DTSTART;TZID=America/Chicago:20080314T180000
+DTEND;TZID=America/Chicago:20080314T200000
+SUMMARY:Book Club: How Doctors Think
+DESCRIPTION:How Doctors Think by Jerome Groopman\nPicked by John.\nHosted b
+ y John.\nTopic: Health & Medicine.\nhttps://rwbookclub.com/books/how-docto
+ rs-think/
+URL:https://rwbookclub.com/books/how-doctors-think/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-147@rwbookclub.com
+DTSTAMP:20080131T000000Z
+DTSTART;TZID=America/Chicago:20080131T180000
+DTEND;TZID=America/Chicago:20080131T200000
+SUMMARY:Book Club: The World Without Us
+DESCRIPTION:The World Without Us by Alan Weisman\nPicked by Jamie.\nHosted 
+ by Jamie.\nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/book
+ s/the-world-without-us/
+URL:https://rwbookclub.com/books/the-world-without-us/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-148@rwbookclub.com
+DTSTAMP:20071226T000000Z
+DTSTART;TZID=America/Chicago:20071226T180000
+DTEND;TZID=America/Chicago:20071226T200000
+SUMMARY:Book Club: Beautiful Evidence
+DESCRIPTION:Beautiful Evidence by Edward Tufte\nPicked by Erik.\nHosted by 
+ Erik.\nTopic: Technology.\nhttps://rwbookclub.com/books/beautiful-evidence
+ /
+URL:https://rwbookclub.com/books/beautiful-evidence/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-149@rwbookclub.com
+DTSTAMP:20071029T000000Z
+DTSTART;TZID=America/Chicago:20071029T180000
+DTEND;TZID=America/Chicago:20071029T200000
+SUMMARY:Book Club: Musicophilia
+DESCRIPTION:Musicophilia by Oliver Sacks\nPicked by Dan.\nHosted by Dan.\nT
+ opic: Brain & Psychology.\nhttps://rwbookclub.com/books/musicophilia/
+URL:https://rwbookclub.com/books/musicophilia/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-150@rwbookclub.com
+DTSTAMP:20070928T000000Z
+DTSTART;TZID=America/Chicago:20070928T180000
+DTEND;TZID=America/Chicago:20070928T200000
+SUMMARY:Book Club: The Box
+DESCRIPTION:The Box by Marc Levinson\nPicked by Tom.\nHosted by Tom.\nTopic
+ : Technology.\nhttps://rwbookclub.com/books/the-box/
+URL:https://rwbookclub.com/books/the-box/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-151@rwbookclub.com
+DTSTAMP:20070726T000000Z
+DTSTART;TZID=America/Chicago:20070726T180000
+DTEND;TZID=America/Chicago:20070726T200000
+SUMMARY:Book Club: Beautiful Code
+DESCRIPTION:Beautiful Code by Marc Levinson\nPicked by John.\nHosted by Joh
+ n.\nTopic: Technology.\nhttps://rwbookclub.com/books/beautiful-code/
+URL:https://rwbookclub.com/books/beautiful-code/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-152@rwbookclub.com
+DTSTAMP:20070613T000000Z
+DTSTART;TZID=America/Chicago:20070613T180000
+DTEND;TZID=America/Chicago:20070613T200000
+SUMMARY:Book Club: Watchmen & Understanding Comics
+DESCRIPTION:Watchmen by Alan Moore\nUnderstanding Comics by David Gibbons\n
+ Picked by Erik.\nHosted by Erik.\nTopic: Science Fiction & Fiction\, Essay
+ s & Literature.\nhttps://rwbookclub.com/books/watchmen/\nhttps://rwbookclu
+ b.com/books/understanding-comics/
+URL:https://rwbookclub.com/books/watchmen/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-153@rwbookclub.com
+DTSTAMP:20070429T000000Z
+DTSTART;TZID=America/Chicago:20070429T180000
+DTEND;TZID=America/Chicago:20070429T200000
+SUMMARY:Book Club: The Mythical Man-Month
+DESCRIPTION:The Mythical Man-Month by Frederick P. Brooks Jr.\nPicked by Da
+ vid.\nHosted by David.\nTopic: Technology.\nhttps://rwbookclub.com/books/t
+ he-mythical-man-month/
+URL:https://rwbookclub.com/books/the-mythical-man-month/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-154@rwbookclub.com
+DTSTAMP:20070317T000000Z
+DTSTART;TZID=America/Chicago:20070317T180000
+DTEND;TZID=America/Chicago:20070317T200000
+SUMMARY:Book Club: Happiness
+DESCRIPTION:Happiness by Matthieu Ricard\nPicked by Dan.\nHosted by Dan.\nT
+ opic: Philosophy & Religion.\nhttps://rwbookclub.com/books/happiness/
+URL:https://rwbookclub.com/books/happiness/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-155@rwbookclub.com
+DTSTAMP:20070126T000000Z
+DTSTART;TZID=America/Chicago:20070126T180000
+DTEND;TZID=America/Chicago:20070126T200000
+SUMMARY:Book Club: The Long Tail
+DESCRIPTION:The Long Tail by Chris Anderson\nPicked by Tom.\nHosted by Tom.
+ \nTopic: History & Economics.\nhttps://rwbookclub.com/books/the-long-tail/
+URL:https://rwbookclub.com/books/the-long-tail/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-156@rwbookclub.com
+DTSTAMP:20070103T000000Z
+DTSTART;TZID=America/Chicago:20070103T180000
+DTEND;TZID=America/Chicago:20070103T200000
+SUMMARY:Book Club: The Road
+DESCRIPTION:The Road by Cormac McCarthy\nPicked by John.\nHosted by John.\n
+ Topic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/the-road/
+URL:https://rwbookclub.com/books/the-road/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-157@rwbookclub.com
+DTSTAMP:20061030T000000Z
+DTSTART;TZID=America/Chicago:20061030T170000
+DTEND;TZID=America/Chicago:20061030T190000
+SUMMARY:Book Club: The Omnivore's Dilemma
+DESCRIPTION:The Omnivore's Dilemma by Michael Pollan\nPicked by Erik.\nHost
+ ed by Erik.\nTopic: Travel & Memoir.\nhttps://rwbookclub.com/books/the-omn
+ ivore-s-dilemma/
+URL:https://rwbookclub.com/books/the-omnivore-s-dilemma/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-158@rwbookclub.com
+DTSTAMP:20061003T000000Z
+DTSTART;TZID=America/Chicago:20061003T180000
+DTEND;TZID=America/Chicago:20061003T200000
+SUMMARY:Book Club: Stumbling on Happiness
+DESCRIPTION:Stumbling on Happiness by Daniel Gilbert\nPicked by David.\nHos
+ ted by David.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/st
+ umbling-on-happiness/
+URL:https://rwbookclub.com/books/stumbling-on-happiness/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-159@rwbookclub.com
+DTSTAMP:20060729T000000Z
+DTSTART;TZID=America/Chicago:20060729T180000
+DTEND;TZID=America/Chicago:20060729T200000
+SUMMARY:Book Club: Genghis Khan and the Making of the Modern World
+DESCRIPTION:Genghis Khan and the Making of the Modern World by Jack Weather
+ ford\nPicked by Dan.\nHosted by Dan.\nTopic: History & Economics.\nhttps:/
+ /rwbookclub.com/books/genghis-khan-and-the-making-of-the-modern-world/
+URL:https://rwbookclub.com/books/genghis-khan-and-the-making-of-the-modern-
+ world/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-160@rwbookclub.com
+DTSTAMP:20060630T000000Z
+DTSTART;TZID=America/Chicago:20060630T180000
+DTEND;TZID=America/Chicago:20060630T200000
+SUMMARY:Book Club: Bowling Alone
+DESCRIPTION:Bowling Alone by Robert Putnam\nPicked by Tom.\nHosted by Tom.\
+ nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/books/bowling-
+ alone/
+URL:https://rwbookclub.com/books/bowling-alone/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-161@rwbookclub.com
+DTSTAMP:20060523T000000Z
+DTSTART;TZID=America/Chicago:20060523T180000
+DTEND;TZID=America/Chicago:20060523T200000
+SUMMARY:Book Club: Across Realtime
+DESCRIPTION:Across Realtime by Vernor Vinge\nPicked by John.\nHosted by Joh
+ n.\nTopic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/across
+ -realtime/
+URL:https://rwbookclub.com/books/across-realtime/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-163@rwbookclub.com
+DTSTAMP:20060322T000000Z
+DTSTART;TZID=America/Chicago:20060322T170000
+DTEND;TZID=America/Chicago:20060322T190000
+SUMMARY:Book Club: Democratizing Innovation
+DESCRIPTION:Democratizing Innovation by Eric von Hippel\nPicked by Erik.\nH
+ osted by Erik.\nTopic: Technology.\nhttps://rwbookclub.com/books/democrati
+ zing-innovation/
+URL:https://rwbookclub.com/books/democratizing-innovation/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-162@rwbookclub.com
+DTSTAMP:20060322T000000Z
+DTSTART;TZID=America/Chicago:20060322T170000
+DTEND;TZID=America/Chicago:20060322T190000
+SUMMARY:Book Club: The Success of Open Source
+DESCRIPTION:The Success of Open Source by Steve Weber\nPicked by David.\nHo
+ sted by David.\nTopic: Technology.\nhttps://rwbookclub.com/books/the-succe
+ ss-of-open-source/
+URL:https://rwbookclub.com/books/the-success-of-open-source/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-164@rwbookclub.com
+DTSTAMP:20051220T000000Z
+DTSTART;TZID=America/Chicago:20051220T180000
+DTEND;TZID=America/Chicago:20051220T200000
+SUMMARY:Book Club: Beyond Oil
+DESCRIPTION:Beyond Oil by Kenneth S. Deffeyes\nPicked by Dan.\nHosted by Da
+ n.\nTopic: Current Events & People.\nhttps://rwbookclub.com/books/beyond-o
+ il/
+URL:https://rwbookclub.com/books/beyond-oil/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-165@rwbookclub.com
+DTSTAMP:20051123T000000Z
+DTSTART;TZID=America/Chicago:20051123T180000
+DTEND;TZID=America/Chicago:20051123T200000
+SUMMARY:Book Club: The Search
+DESCRIPTION:The Search by John Battelle\nPicked by Tom.\nHosted by Tom.\nTo
+ pic: Technology.\nhttps://rwbookclub.com/books/the-search/
+URL:https://rwbookclub.com/books/the-search/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-166@rwbookclub.com
+DTSTAMP:20051026T000000Z
+DTSTART;TZID=America/Chicago:20051026T180000
+DTEND;TZID=America/Chicago:20051026T200000
+SUMMARY:Book Club: The Complexity of Cooperation
+DESCRIPTION:The Complexity of Cooperation by Robert Axelrod\nPicked by John
+ .\nHosted by John.\nTopic: Science and Math.\nhttps://rwbookclub.com/books
+ /the-complexity-of-cooperation/
+URL:https://rwbookclub.com/books/the-complexity-of-cooperation/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-167@rwbookclub.com
+DTSTAMP:20050830T000000Z
+DTSTART;TZID=America/Chicago:20050830T180000
+DTEND;TZID=America/Chicago:20050830T200000
+SUMMARY:Book Club: Freakonomics
+DESCRIPTION:Freakonomics by Steven D. Levitt and Stephen J. Dubner\nPicked 
+ by David.\nHosted by David.\nTopic: History & Economics.\nhttps://rwbookcl
+ ub.com/books/freakonomics/
+URL:https://rwbookclub.com/books/freakonomics/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-168@rwbookclub.com
+DTSTAMP:20050610T000000Z
+DTSTART;TZID=America/Chicago:20050610T180000
+DTEND;TZID=America/Chicago:20050610T200000
+SUMMARY:Book Club: The Plot Against America
+DESCRIPTION:The Plot Against America by Philip Roth\nPicked by Erik.\nHoste
+ d by Erik.\nTopic: Science Fiction & Fiction.\nhttps://rwbookclub.com/book
+ s/the-plot-against-america/
+URL:https://rwbookclub.com/books/the-plot-against-america/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-169@rwbookclub.com
+DTSTAMP:20050426T000000Z
+DTSTART;TZID=America/Chicago:20050426T180000
+DTEND;TZID=America/Chicago:20050426T200000
+SUMMARY:Book Club: Hackers and Painters
+DESCRIPTION:Hackers and Painters by Paul Graham\nPicked by Dan.\nHosted by 
+ Dan.\nTopic: Technology.\nhttps://rwbookclub.com/books/hackers-and-painter
+ s/
+URL:https://rwbookclub.com/books/hackers-and-painters/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-170@rwbookclub.com
+DTSTAMP:20050312T000000Z
+DTSTART;TZID=America/Chicago:20050312T180000
+DTEND;TZID=America/Chicago:20050312T200000
+SUMMARY:Book Club: Free Culture
+DESCRIPTION:Free Culture by Lawrence Lessig\nPicked by John.\nHosted by Joh
+ n.\nTopic: Politics & Social Sciences.\nhttps://rwbookclub.com/books/free-
+ culture/
+URL:https://rwbookclub.com/books/free-culture/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-171@rwbookclub.com
+DTSTAMP:20050125T000000Z
+DTSTART;TZID=America/Chicago:20050125T180000
+DTEND;TZID=America/Chicago:20050125T200000
+SUMMARY:Book Club: Divorce Among the Gulls
+DESCRIPTION:Divorce Among the Gulls by William Jordan\nPicked by David.\nHo
+ sted by David.\nTopic: Science and Math.\nhttps://rwbookclub.com/books/div
+ orce-among-the-gulls/
+URL:https://rwbookclub.com/books/divorce-among-the-gulls/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-172@rwbookclub.com
+DTSTAMP:20041205T000000Z
+DTSTART;TZID=America/Chicago:20041205T180000
+DTEND;TZID=America/Chicago:20041205T200000
+SUMMARY:Book Club: Sailing Alone Around the Room
+DESCRIPTION:Sailing Alone Around the Room by Billy Collins\nPicked by Erik.
+ \nHosted by Erik.\nTopic: Essays & Literature.\nhttps://rwbookclub.com/boo
+ ks/sailing-alone-around-the-room/
+URL:https://rwbookclub.com/books/sailing-alone-around-the-room/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-173@rwbookclub.com
+DTSTAMP:20041028T000000Z
+DTSTART;TZID=America/Chicago:20041028T180000
+DTEND;TZID=America/Chicago:20041028T200000
+SUMMARY:Book Club: The Paradox of Choice
+DESCRIPTION:The Paradox of Choice by Barry Schwartz\nPicked by John.\nHoste
+ d by John.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/the-p
+ aradox-of-choice/
+URL:https://rwbookclub.com/books/the-paradox-of-choice/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-174@rwbookclub.com
+DTSTAMP:20041018T000000Z
+DTSTART;TZID=America/Chicago:20041018T180000
+DTEND;TZID=America/Chicago:20041018T200000
+SUMMARY:Book Club: When We Were Orphans
+DESCRIPTION:When We Were Orphans by Kazuo Ishiguro\nPicked by Scott.\nHoste
+ d by Scott.\nTopic: Science Fiction & Fiction.\nhttps://rwbookclub.com/boo
+ ks/when-we-were-orphans/
+URL:https://rwbookclub.com/books/when-we-were-orphans/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-175@rwbookclub.com
+DTSTAMP:20040707T000000Z
+DTSTART;TZID=America/Chicago:20040707T180000
+DTEND;TZID=America/Chicago:20040707T200000
+SUMMARY:Book Club: Wisdom of Crowds
+DESCRIPTION:Wisdom of Crowds by James Surowiecki\nPicked by Dan.\nHosted by
+  Dan.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/wisdom-of-
+ crowds/
+URL:https://rwbookclub.com/books/wisdom-of-crowds/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-176@rwbookclub.com
+DTSTAMP:20040516T000000Z
+DTSTART;TZID=America/Chicago:20040516T180000
+DTEND;TZID=America/Chicago:20040516T200000
+SUMMARY:Book Club: Over the Edge of the World
+DESCRIPTION:Over the Edge of the World by Laurence Bergreen\nPicked by John
+ .\nHosted by John.\nTopic: History & Economics.\nhttps://rwbookclub.com/bo
+ oks/over-the-edge-of-the-world/
+URL:https://rwbookclub.com/books/over-the-edge-of-the-world/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-177@rwbookclub.com
+DTSTAMP:20040415T000000Z
+DTSTART;TZID=America/Chicago:20040415T180000
+DTEND;TZID=America/Chicago:20040415T200000
+SUMMARY:Book Club: Pompeii
+DESCRIPTION:Pompeii by Robert Harris\nPicked by Brad.\nHosted by Brad.\nTop
+ ic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/pompeii/
+URL:https://rwbookclub.com/books/pompeii/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-178@rwbookclub.com
+DTSTAMP:20030926T000000Z
+DTSTART;TZID=America/Chicago:20030926T180000
+DTEND;TZID=America/Chicago:20030926T200000
+SUMMARY:Book Club: Quicksilver
+DESCRIPTION:Quicksilver by Neal Stephenson\nPicked by Erik.\nHosted by Erik
+ .\nTopic: Science Fiction & Fiction.\nhttps://rwbookclub.com/books/quicksi
+ lver/
+URL:https://rwbookclub.com/books/quicksilver/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-179@rwbookclub.com
+DTSTAMP:20030820T000000Z
+DTSTART;TZID=America/Chicago:20030820T180000
+DTEND;TZID=America/Chicago:20030820T200000
+SUMMARY:Book Club: The Blank Slate
+DESCRIPTION:The Blank Slate by Steven Pinker\nPicked by John.\nHosted by Jo
+ hn.\nTopic: Brain & Psychology.\nhttps://rwbookclub.com/books/the-blank-sl
+ ate/
+URL:https://rwbookclub.com/books/the-blank-slate/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-180@rwbookclub.com
+DTSTAMP:20030428T000000Z
+DTSTART;TZID=America/Chicago:20030428T180000
+DTEND;TZID=America/Chicago:20030428T200000
+SUMMARY:Book Club: My Tiny Life
+DESCRIPTION:My Tiny Life by Julian Dibbell\nPicked by John.\nHosted by John
+ .\nTopic: Technology.\nhttps://rwbookclub.com/books/my-tiny-life/
+URL:https://rwbookclub.com/books/my-tiny-life/
+END:VEVENT
+BEGIN:VEVENT
+UID:meeting-181@rwbookclub.com
+DTSTAMP:20030418T000000Z
+DTSTART;TZID=America/Chicago:20030418T180000
+DTEND;TZID=America/Chicago:20030418T200000
+SUMMARY:Book Club: The Lexus and the Olive Tree
+DESCRIPTION:The Lexus and the Olive Tree by Thomas L. Friedman\nPicked by J
+ ohn.\nHosted by John.\nTopic: History & Economics.\nhttps://rwbookclub.com
+ /books/the-lexus-and-the-olive-tree/
+URL:https://rwbookclub.com/books/the-lexus-and-the-olive-tree/
+END:VEVENT
+END:VCALENDAR

@@ -1,0 +1,686 @@
+# R/W Book Club — Reading History
+
+> This file is designed for LLM consumption. Paste this URL into any AI
+> chatbot to give it full context about our book club's reading history.
+> Human-readable site: https://rwbookclub.com
+
+## How to use this archive
+
+- `https://rwbookclub.com/llms.txt` — this file. Compact index of every book, with
+  a URL to the detailed text file for each one.
+- `https://rwbookclub.com/books/<slug>.txt` — one plain-text file per book with
+  full metadata, subjects (thematic tags), synopsis, meeting notes, member
+  reviews, and a list of related books. Fetch these individually for the book
+  you care about.
+- `https://rwbookclub.com/oliver/` — about Oliver, the club's AI agent (it maintains this archive)
+- `https://rwbookclub.com/books.json` — structured JSON, one row per book (including
+  subjects and a related-books graph), for analytical or cross-book queries.
+- `https://rwbookclub.com/authors/<slug>/` — a page per author, with a short bio and
+  the books of theirs the club has read.
+- `https://rwbookclub.com/meetings/` — the full meeting timeline (book discussions
+  plus the occasional spouses' dinner, movie night, and book-picking session).
+
+## About the club
+
+The R/W Book Club has been meeting since April 2003. The "R/W"
+stands for Read / Write — the members are technically minded and many blog.
+The club reads about 8 books per year, mostly non-fiction (~88%). Members
+rotate picking the next book and hosting the discussion.
+
+As of this build there are 180 books across
+24 years of reading.
+
+## Meeting cadence
+
+- Meets roughly monthly (about 8 meetings per year)
+- Members rotate picking the next book
+- The picker usually hosts the discussion
+- Meetings are in-person in the Minneapolis–Saint Paul area
+
+## Current book
+
+
+- **Blindsight** by Peter Watts
+  https://rwbookclub.com/books/blindsight.txt
+  Meeting July 2026 · Picked by Loren
+
+
+
+
+## Current members
+
+- Erik (37 picks)
+- Jamie (33 picks)
+- Loren (18 picks)
+- Nick (20 picks)
+- Oliver
+- Tom (32 picks)
+
+## Topic distribution
+
+- History & Economics: 27 books
+- Science Fiction & Fiction: 25 books
+- Politics & Social Sciences: 25 books
+- Brain & Psychology: 24 books
+- Science and Math: 23 books
+- Technology: 22 books
+- Current Events & People: 12 books
+- Essays & Literature: 7 books
+- Health & Medicine: 6 books
+- Travel & Memoir: 5 books
+- Philosophy & Religion: 3 books
+
+## Reading history (compact)
+
+Books are listed newest-first, grouped by year. Follow the .txt URL under
+each entry for the full metadata, synopsis, and reviews for that book.
+
+
+### 2026
+
+- **A World Appears: A Journey into Consciousness** by Michael Pollan
+  https://rwbookclub.com/books/a-world-appears.txt
+  Essays & Literature · 320pp · Published 2026 · Picked by Jamie
+- **Patterns in Nature: Why the Natural World Looks the Way it Does** by Philip Ball
+  https://rwbookclub.com/books/patterns-in-nature.txt
+  Science and Math · 288pp · Published 2016 · Picked by Tom
+- **The Overstory** by Richard Powers
+  https://rwbookclub.com/books/the-overstory.txt
+  Science Fiction & Fiction · Fiction · 512pp · Published 2019 · Picked by Erik
+
+### 2025
+
+- **Enshittification** by Cory Doctorow
+  https://rwbookclub.com/books/enshittification.txt
+  Technology · 352pp · Published 2025 · Picked by Tom
+- **Heart of Darkness** by Joseph Conrad
+  https://rwbookclub.com/books/heart-of-darkness.txt
+  Science Fiction & Fiction · Fiction · 120pp · Published 1902 · Picked by Nick
+- **The Origins of Totalitarianism** by Hannah Arendt
+  https://rwbookclub.com/books/the-origins-of-totalitarianism.txt
+  Politics & Social Sciences · 440pp · Published 1951 · Picked by Loren
+- **Co-Intelligence: Living and Working with AI** by Ethan Mollick
+  https://rwbookclub.com/books/co-intelligence.txt
+  Technology · Published 2024 · Picked by Jamie
+- **How to Do Nothing: Resisting the Attention Economy** by Jenny Odell
+  https://rwbookclub.com/books/how-to-do-nothing.txt
+  Politics & Social Sciences · 256pp · Published 2019 · Picked by Erik
+
+### 2024
+
+- **Through the Language Glass: Why the World Looks Different in Other Languages** by Guy Deutscher
+  https://rwbookclub.com/books/through-the-language-glass.txt
+  Brain & Psychology · 296pp · Published 2010 · Picked by Erik
+- **Army of None: Autonomous Weapons and the Future of War** by Paul Scharre
+  https://rwbookclub.com/books/army-of-none.txt
+  Technology · 384pp · Published 2018 · Picked by Tom
+- **The Power Law: Venture Capital and the Making of a New Future** by Sebastian Mallaby
+  https://rwbookclub.com/books/the-power-law.txt
+  History & Economics · 496pp · Published 2022 · Picked by Nick
+- **Dictionary People** by Sarah Ogilvie
+  https://rwbookclub.com/books/dictionary-people.txt
+  Current Events & People · 384pp · Published 2023 · Picked by Loren
+- **Medici Money** by Tim Parks
+  https://rwbookclub.com/books/medici-money.txt
+  History & Economics · 288pp · Published 2006 · Picked by Jamie
+
+### 2023
+
+- **Dawn of Everything: A New History of Humanity** by David Graeber and David Wengrow
+  https://rwbookclub.com/books/dawn-of-everything.txt
+  History & Economics · 752pp · Published 2021 · Picked by Erik
+- **Otherlands: A Journey Through Earth's Extinct Worlds** by Thomas Halliday
+  https://rwbookclub.com/books/otherlands.txt
+  Science and Math · 112pp · Published 2022 · Picked by Tom
+- **Nation of Takers: America's Entitlement Epidemic** by Nicholas Eberstadt
+  https://rwbookclub.com/books/nation-of-takers.txt
+  Politics & Social Sciences · Published 2012 · Picked by Nick
+- **Men Without Work** by Nicholas Eberstadt
+  https://rwbookclub.com/books/men-without-work.txt
+  Politics & Social Sciences · 206pp · Published 2016 · Picked by Nick
+- **A Supposedly Fun Thing I'll Never Do Again: Essays and Arguments** by David Foster Wallace
+  https://rwbookclub.com/books/a-supposedly-fun-thing-i-ll-never-do-again.txt
+  Essays & Literature · 353pp · Published 1997 · Picked by Loren
+- **To Shake the Sleeping Self: A Journey from Oregon to Patagonia, and a Quest for a Life with No Regret** by Jedidiah Jenkins
+  https://rwbookclub.com/books/to-shake-the-sleeping-self.txt
+  Travel & Memoir · 352pp · Published 2018 · Picked by Jamie
+
+### 2022
+
+- **Mni Sota Makoce: The Land of the Dakota** by Gwen Westerman and Bruce White
+  https://rwbookclub.com/books/mni-sota-makoce.txt
+  History & Economics · 296pp · Published 2012 · Picked by Erik
+- **Addiction by Design: Machine Gambling in Las Vegas** by Natasha Dow Schüll
+  https://rwbookclub.com/books/addiction-by-design.txt
+  Brain & Psychology · 472pp · Published 2012 · Picked by Tom
+- **The Florentines: From Dante to Galileo: The Transformation of Western Civilization** by Paul Strathern
+  https://rwbookclub.com/books/the-florentines.txt
+  History & Economics · 400pp · Published 2021 · Picked by Nick
+- **Aeschylus I: The Persians, The Seven Against Thebes, The Suppliant Maidens, Prometheus Bound** by Aeschylus
+  https://rwbookclub.com/books/aeschylus-i.txt
+  History & Economics · 256pp · Published 2013 · Picked by Nick
+- **Empire of Pain: The Secret History of the Sackler Dynasty** by Patrick Radden Keefe
+  https://rwbookclub.com/books/empire-of-pain.txt
+  Current Events & People · 720pp · Published 2021 · Picked by Loren
+- **The Blocksize War: The battle over who controls Bitcoin’s protocol rules** by Jonathan Bier
+  https://rwbookclub.com/books/the-blocksize-war.txt
+  Technology · 228pp · Published 2021 · Picked by Jamie
+
+### 2021
+
+- **Caste** by Isabel Wilkerson
+  https://rwbookclub.com/books/caste.txt
+  Politics & Social Sciences · 496pp · Published 2020 · Picked by Erik
+- **Nature & Walking** by Henry David Thoreau and Ralph Waldo Emerson
+  https://rwbookclub.com/books/nature-walking.txt
+  Essays & Literature · 76pp · Published 2011 · Picked by Nick
+- **Evicted** by Matthew Desmond
+  https://rwbookclub.com/books/evicted.txt
+  Politics & Social Sciences · 464pp · Published 2016 · Picked by Loren
+- **A Man at Arms** by Steven Pressfield
+  https://rwbookclub.com/books/a-man-at-arms.txt
+  Science Fiction & Fiction · Fiction · 336pp · Published 2021 · Picked by Jamie
+- **Klara and the Sun** by Kazuo Ishiguro
+  https://rwbookclub.com/books/klara-and-the-sun.txt
+  Science Fiction & Fiction · Fiction · 419pp · Published 2019 · Picked by Tom
+- **The Horse, the Wheel, and Language: How Bronze-Age Riders from the Eurasian Steppes Shaped the Modern World** by David Anthony
+  https://rwbookclub.com/books/the-horse-the-wheel-and-language.txt
+  History & Economics · 568pp · Published 2010 · Picked by Loren
+- **Running with Sherman: The Donkey with the Heart of a Hero** by Christopher McDougall
+  https://rwbookclub.com/books/running-with-sherman.txt
+  Travel & Memoir · 496pp · Published 2019 · Picked by Jamie
+- **The WEIRDest People in the World: How the West Became Psychologically Peculiar and Particularly Prosperous** by Joseph Henrich
+  https://rwbookclub.com/books/the-weirdest-people-in-the-world.txt
+  Politics & Social Sciences · 704pp · Published 2020 · Picked by Erik
+- **Mama's Last Hug: Animal Emotions and What They Tell Us about Ourselves** by Frans De Waal
+  https://rwbookclub.com/books/mama-s-last-hug.txt
+  Science and Math · 396pp · Published 2019 · Picked by Tom
+
+### 2020
+
+- **Unflattening** by Nick Sousanis
+  https://rwbookclub.com/books/unflattening.txt
+  Essays & Literature · 208pp · Published 2015 · Picked by Nick
+- **Bending Adversity: Japan and the Art of Survival** by David Pilling
+  https://rwbookclub.com/books/bending-adversity.txt
+  Politics & Social Sciences · 382pp · Published 2014 · Picked by Loren
+- **The Rise of Big Data Policing: Surveillance, Race, and the Future of Law Enforcement** by Andrew Guthrie Ferguson
+  https://rwbookclub.com/books/the-rise-of-big-data-policing.txt
+  Politics & Social Sciences · 259pp · Published 2017 · Picked by Jamie
+- **Benjamin Franklin: An American Life** by Walter Isaacson
+  https://rwbookclub.com/books/benjamin-franklin.txt
+  History & Economics · 626pp · Published 2003 · Picked by Erik
+- **Replay** by Ken Grimwood
+  https://rwbookclub.com/books/replay.txt
+  Science Fiction & Fiction · 519pp · Published 1986 · Picked by Tom
+- **The Roman Republic: A Very Short Introduction** by David M. Gwynn
+  https://rwbookclub.com/books/the-roman-republic.txt
+  History & Economics · 144pp · Published 2012 · Picked by Nick
+- **The Hundred-Year Marathon: China's Secret Strategy to Replace America as the Global Superpower** by Michael Pillsbury
+  https://rwbookclub.com/books/the-hundred-year-marathon.txt
+  History & Economics · 352pp · Published 2015 · Picked by Nick
+- **The Master Algorithm: How the Quest for the Ultimate Learning Machine Will Remake Our World** by Pedro Domingos
+  https://rwbookclub.com/books/the-master-algorithm.txt
+  Technology · 333pp · Published 2015 · Picked by Loren
+- **The Nordic Theory of Everything: In Search of a Better Life** by Anu Partanen
+  https://rwbookclub.com/books/the-nordic-theory-of-everything.txt
+  Current Events & People · 448pp · Published 2016 · Picked by Loren
+
+### 2019
+
+- **Genesis: The Deep Origin of Societies** by Edward O. Wilson
+  https://rwbookclub.com/books/genesis.txt
+  Science and Math · 160pp · Published 2019 · Picked by Erik
+- **How to Read a Book: The Classic Guide to Intelligent Reading** by Mortimer J. Adler and Charles Van Doren
+  https://rwbookclub.com/books/how-to-read-a-book.txt
+  Brain & Psychology · 385pp · Published 1940 · Picked by Tom
+- **Zen and the Art of Motorcycle Maintenance** by Robert Pirsig
+  https://rwbookclub.com/books/zen-and-the-art-of-motorcycle-maintenance.txt
+  Science Fiction & Fiction · Fiction · 373pp · Published 1974 · Picked by Nick
+- **Educated: A Memoir** by Tara Westover
+  https://rwbookclub.com/books/educated.txt
+  Current Events & People · 464pp · Published 2018 · Picked by Loren
+- **Growing a Revolution: Bringing Our Soil Back to Life** by David R. Montgomery
+  https://rwbookclub.com/books/growing-a-revolution.txt
+  Science and Math · 320pp · Published 2017 · Picked by Jamie
+- **Cræft: An Inquiry Into the Origins and True Meaning of Traditional Crafts** by Alexander Langlands
+  https://rwbookclub.com/books/craeft.txt
+  Politics & Social Sciences · 352pp · Published 2017 · Picked by Jamie
+- **Scale: The Universal Laws of Growth, Innovation, Sustainability, and the Pace of Life in Organisms, Cities, Economies, and Companies** by Geoffrey West
+  https://rwbookclub.com/books/scale.txt
+  Science and Math · 479pp · Published 2015 · Picked by Tom
+
+### 2018
+
+- **Life After Google: The Fall of Big Data and the Rise of the Blockchain Economy** by George Gilder
+  https://rwbookclub.com/books/life-after-google.txt
+  Technology · 320pp · Published 2018 · Picked by Nick
+- **How to Change Your Mind: What the New Science of Psychedelics Teaches Us about Consciousness, Dying, Addiction, Depression, and Transcendence** by Michael Pollan
+  https://rwbookclub.com/books/how-to-change-your-mind.txt
+  Health & Medicine · 528pp · Published 2018 · Picked by Jamie
+- **Freedom™** by Daniel Suarez
+  https://rwbookclub.com/books/freedom-tm.txt
+  Science Fiction & Fiction · 499pp · Published 2010 · Picked by Loren
+- **Collapse: How Societies Choose to Fail or Succeed** by Jared Diamond
+  https://rwbookclub.com/books/collapse.txt
+  History & Economics · 515pp · Published 2004 · Picked by Erik
+- **Sapiens: A Brief History of Humankind** by Yuval Noah Harari
+  https://rwbookclub.com/books/sapiens.txt
+  History & Economics · 456pp · Published 2011 · Picked by Loren
+- **Why We Sleep: Unlocking the Power of Sleep and Dreams** by Matthew Walker
+  https://rwbookclub.com/books/why-we-sleep.txt
+  Health & Medicine · 485pp · Published 2017 · Picked by Nick
+- **Why Buddhism is True: The Science and Philosophy of Meditation and Enlightenment** by Robert Wright
+  https://rwbookclub.com/books/why-buddhism-is-true.txt
+  Philosophy & Religion · 336pp · Published 2017 · Picked by Tom
+- **Walkaway** by Cory Doctorow
+  https://rwbookclub.com/books/walkaway.txt
+  Science Fiction & Fiction · Fiction · 560pp · Published 2017 · Picked by Loren
+
+### 2017
+
+- **Daemon** by Daniel Suarez
+  https://rwbookclub.com/books/daemon.txt
+  Technology · Fiction · 640pp · Published 2009 · Picked by Jamie
+- **A Crack in Creation: Gene Editing and the Unthinkable Power to Control Evolution** by Jennifer A. Doudna and Samuel H. Sternberg
+  https://rwbookclub.com/books/a-crack-in-creation.txt
+  Science and Math · 248pp · Published 2017 · Picked by Erik
+- **How to Live: Or A Life of Montaigne in One Question and Twenty Attempts at an Answer** by Sarah Bakewell
+  https://rwbookclub.com/books/how-to-live.txt
+  Philosophy & Religion · 416pp · Published 2011 · Picked by Tom
+- **Peak: Secrets from the New Science of Expertise** by Anders Ericsson
+  https://rwbookclub.com/books/peak.txt
+  Brain & Psychology · 307pp · Published 2016 · Picked by Nick
+- **The Epigenetics Revolution: How Modern Biology Is Rewriting Our Understanding of Genetics, Disease, and Inheritance** by Nessa Carey
+  https://rwbookclub.com/books/the-epigenetics-revolution.txt
+  Science and Math · 352pp · Published 2011 · Picked by Loren
+- **Stuff Matters: Exploring the Marvelous Materials That Shape Our Man-Made World** by Mark Miodownik
+  https://rwbookclub.com/books/stuff-matters.txt
+  Science and Math · 272pp · Published 2013 · Picked by Jamie
+- **Norse Mythology** by Neil Gaiman
+  https://rwbookclub.com/books/norse-mythology.txt
+  History & Economics · 272pp · Published 2016 · Picked by Erik
+- **All Art Is Propaganda** by George Orwell
+  https://rwbookclub.com/books/all-art-is-propaganda.txt
+  Essays & Literature · 374pp · Published 2008 · Picked by Tom
+- **The Vital Question: Energy, Evolution, and the Origins of Complex Life** by Nick Lane
+  https://rwbookclub.com/books/the-vital-question.txt
+  Science and Math · 352pp · Published 2001 · Picked by Nick
+- **Shadow Elite: How the World's New Power Brokers Undermine Democracy, Government, and the Free Market** by Janine R. Wedel
+  https://rwbookclub.com/books/shadow-elite.txt
+  Politics & Social Sciences · 283pp · Published 2010 · Picked by Loren
+
+### 2016
+
+- **Hillbilly Eligy: A Memoir of a Family and Culture in Crisis** by J. D. Vance
+  https://rwbookclub.com/books/hillbilly-eligy.txt
+  Politics & Social Sciences · 256pp · Published 2016 · Picked by Jamie
+- **Ancillary Justice** by Ann Leckie
+  https://rwbookclub.com/books/ancillary-justice.txt
+  Science Fiction & Fiction · Fiction · 444pp · Published 2013 · Picked by Erik
+- **The Metaphysical Club: A Story of Ideas in America** by Louis Menand
+  https://rwbookclub.com/books/the-metaphysical-club.txt
+  History & Economics · 384pp · Published 2001 · Picked by Tom
+- **American Nations: A History of the Eleven Rival Regional Cultures of North America** by Colin Woodard
+  https://rwbookclub.com/books/american-nations.txt
+  Politics & Social Sciences · 384pp · Published 2011 · Picked by Nick
+- **The Rise and Fall of American Growth: The U.S. Standard of Living since the Civil War** by Robert J. Gordon
+  https://rwbookclub.com/books/the-rise-and-fall-of-american-growth.txt
+  History & Economics · 762pp · Published 2016 · Picked by Loren
+- **Elon Musk: Tesla, SpaceX, and the Quest for a Fantastic Future** by Ashlee Vance
+  https://rwbookclub.com/books/elon-musk.txt
+  Current Events & People · 402pp · Published 2013 · Picked by Jamie
+
+### 2015
+
+- **Superforecasting: The Art and Science of Prediction** by Philip E. Tetlock
+  https://rwbookclub.com/books/superforecasting.txt
+  Science and Math · 326pp · Published 2015 · Picked by Erik
+- **Being Mortal: Medicine and What Matters in the End** by Atul Gawande
+  https://rwbookclub.com/books/being-mortal.txt
+  Health & Medicine · 287pp · Published 2014
+- **The World Until Yesterday: What Can We Learn from Traditional Societies?** by Jared Diamond
+  https://rwbookclub.com/books/the-world-until-yesterday.txt
+  History & Economics · 592pp · Published 2012 · Picked by Nick
+- **Amusing Ourselves to Death: Public Discourse in the Age of Show Business** by Neil Postman
+  https://rwbookclub.com/books/amusing-ourselves-to-death.txt
+  Politics & Social Sciences · 214pp · Published 1985 · Picked by Tom
+- **Roadside Picnic** by Arkady Strugatsky and Boris Strugatsky
+  https://rwbookclub.com/books/roadside-picnic.txt
+  Science Fiction & Fiction · Fiction · 256pp · Published 1978 · Picked by Loren
+- **The Innovators: How a Group of Hackers, Geniuses, and Geeks Created the Digital Revolution** by Walter Isaacson
+  https://rwbookclub.com/books/the-innovators.txt
+  History & Economics · 608pp · Published 2014 · Picked by Jamie
+- **Complexity: A Very Short Introduction** by John H. Holland
+  https://rwbookclub.com/books/complexity.txt
+  Science and Math · 112pp · Published 2014
+- **No Place to Hide: Edward Snowden, the NSA, and the U.S. Surveillance State** by Glenn Greenwald
+  https://rwbookclub.com/books/no-place-to-hide.txt
+  Current Events & People · 333pp · Published 2013 · Picked by Erik
+- **The Age of Cryptocurrency: How Bitcoin and Digital Money Are Challenging the Global Economic Order** by Paul Vigna and Michael J. Casey
+  https://rwbookclub.com/books/the-age-of-cryptocurrency.txt
+  Current Events & People · 368pp · Published 2015 · Picked by Tom
+- **The Structure and Dynamics of Networks** by Mark Newman and Duncan J. Watts
+  https://rwbookclub.com/books/the-structure-and-dynamics-of-networks.txt
+  Science and Math · 592pp · Published 2006 · Picked by Nick
+
+### 2014
+
+- **Love Sense: The Revolutionary New Science of Romantic Relationships** by Sue Johnson
+  https://rwbookclub.com/books/love-sense.txt
+  Brain & Psychology · 352pp · Published 2013
+- **Far from the Tree** by Andrew Solomon
+  https://rwbookclub.com/books/far-from-the-tree.txt
+  Brain & Psychology · 464pp · Published 2012 · Picked by Erik
+- **Thinking in Systems** by Donella Meadows
+  https://rwbookclub.com/books/thinking-in-systems.txt
+  Science and Math · 256pp · Published 2008 · Picked by Tom
+- **The Everything Store: Jeff Bezos and the Age of Amazon** by Brad Stone
+  https://rwbookclub.com/books/the-everything-store.txt
+  Current Events & People · 416pp · Published 2013 · Picked by Nick
+- **Antifragile** by Nassim Nicholas Taleb
+  https://rwbookclub.com/books/antifragile.txt
+  Science and Math · 656pp · Published 2012 · Picked by Jamie
+- **The Martian: A Novel** by Andy Weir
+  https://rwbookclub.com/books/the-martian.txt
+  Science Fiction & Fiction · Fiction · 384pp · Published 2011 · Picked by Erik
+- **A History of God: The 4,000-Year Quest of Judaism, Christianity and Islam** by Karen Armstrong
+  https://rwbookclub.com/books/a-history-of-god.txt
+  History & Economics · 528pp · Published 1993 · Picked by Tom
+- **Quiet: The Power of Introverts in a World That Can't Stop Talking** by Susan Cain
+  https://rwbookclub.com/books/quiet.txt
+  Brain & Psychology · 368pp · Published 2012 · Picked by Nick
+
+### 2013
+
+- **Powering the Dream: The History and Promise of Green Technology** by Alexis Madrigal
+  https://rwbookclub.com/books/powering-the-dream.txt
+  Technology · Published 2011 · Picked by Jamie
+- **The Emperor of All Maladies** by Siddhartha Mukherjee
+  https://rwbookclub.com/books/the-emperor-of-all-maladies.txt
+  Health & Medicine · 712pp · Published 2010 · Picked by Dan
+- **Behind the Beautiful Forevers** by Katherine Boo
+  https://rwbookclub.com/books/behind-the-beautiful-forevers.txt
+  Current Events & People · 290pp · Published 2011 · Picked by Jamie
+- **This Machine Kills Secrets: How WikiLeakers, Cypherpunks, and Hacktivists Aim to Free the World's Information** by Andy Greenberg
+  https://rwbookclub.com/books/this-machine-kills-secrets.txt
+  Current Events & People · 384pp · Published 2012 · Picked by Erik
+- **The Real North Korea: Life and Politics in the Failed Stalinist Utopia** by Andrei Lankov
+  https://rwbookclub.com/books/the-real-north-korea.txt
+  Current Events & People · 283pp · Published 2013 · Picked by Tom
+- **The Joy of x: A Guided Tour of Math, from One to Infinity** by Steven Strogatz
+  https://rwbookclub.com/books/the-joy-of-x.txt
+  Science and Math · 336pp · Published 2012 · Picked by John
+- **The Willpower Instinct: How Self-Control Works, Why It Matters, and What You Can Do To Get More of It** by Kelly McGonigal
+  https://rwbookclub.com/books/the-willpower-instinct.txt
+  Brain & Psychology · 288pp · Published 2011 · Picked by Jamie
+- **The Signal and the Noise: Why So Many Predictions Fail-but Some Don't** by Nate Silver
+  https://rwbookclub.com/books/the-signal-and-the-noise.txt
+  Brain & Psychology · 656pp · Published 2012 · Picked by Erik
+- **To Say Nothing of the Dog** by Connie Willis
+  https://rwbookclub.com/books/to-say-nothing-of-the-dog.txt
+  Science Fiction & Fiction · Fiction · 512pp · Published 1997 · Picked by Dan
+
+### 2012
+
+- **Liars and Outliers: Enabling the Trust that Society Needs to Thrive** by Bruce Schneier
+  https://rwbookclub.com/books/liars-and-outliers.txt
+  Brain & Psychology · 366pp · Published 2012 · Picked by Dan
+- **Join the Club: How Peer Pressure Can Transform the World** by Tina Rosenberg
+  https://rwbookclub.com/books/join-the-club.txt
+  Brain & Psychology · 402pp · Published 2011 · Picked by Tom
+- **Flagrant Conduct: The Story of Lawrence v. Texas** by Dale Carpenter
+  https://rwbookclub.com/books/flagrant-conduct.txt
+  Politics & Social Sciences · 384pp · Published 2012 · Picked by John
+- **The Devil in the White City** by Erik Larson
+  https://rwbookclub.com/books/the-devil-in-the-white-city.txt
+  History & Economics · 362pp · Published 2003 · Picked by Jamie
+- **A Canticle for Leibowitz** by Walter M. Miller, Jr.
+  https://rwbookclub.com/books/a-canticle-for-leibowitz.txt
+  Science Fiction & Fiction · Fiction · 294pp · Published 1959 · Picked by Jamie
+- **The Mystery of Banking** by Murray N. Rothbard
+  https://rwbookclub.com/books/the-mystery-of-banking.txt
+  History & Economics · 168pp · Published 2012 · Picked by Dan
+- **Count Zero** by William Gibson
+  https://rwbookclub.com/books/count-zero.txt
+  Science Fiction & Fiction · Fiction · 320pp · Published 1986 · Picked by Tom
+- **Thinking Fast and Slow** by Daniel Kahneman
+  https://rwbookclub.com/books/thinking-fast-and-slow.txt
+  Brain & Psychology · 400pp · Published 2011 · Picked by John
+- **The Most Human Human: What Talking with Computers Teaches Us About What It Means to Be Alive** by Brian Christian
+  https://rwbookclub.com/books/the-most-human-human.txt
+  Brain & Psychology · 320pp · Published 2011 · Picked by Jamie
+- **Republic, Lost: How Money Corrupts Congress and a Plan to Stop It** by Lawrence Lessig
+  https://rwbookclub.com/books/republic-lost.txt
+  Politics & Social Sciences · 370pp · Published 2011 · Picked by Erik
+
+### 2011
+
+- **Darwin's Radio** by Greg Bear
+  https://rwbookclub.com/books/darwin-s-radio.txt
+  Science Fiction & Fiction · Fiction · 488pp · Published 1999 · Picked by Dan
+- **The Selfish Gene** by Richard Dawkins
+  https://rwbookclub.com/books/the-selfish-gene.txt
+  Science and Math · 352pp · Published 1976 · Picked by Tom
+- **The Checklist Manifesto: How to Get Things Right** by Atul Gawande
+  https://rwbookclub.com/books/the-checklist-manifesto.txt
+  Brain & Psychology · 209pp · Published 2010 · Picked by John
+- **Ant Encounters: Interaction Networks and Colony Behavior** by Deborah Gordon
+  https://rwbookclub.com/books/ant-encounters.txt
+  Science and Math · 167pp · Published 2010 · Picked by Jamie
+- **Never Let Me Go** by Kazuo Ishiguro
+  https://rwbookclub.com/books/never-let-me-go.txt
+  Science Fiction & Fiction · Fiction · 296pp · Published 2005 · Picked by Erik
+- **Triumph of the City: How Our Greatest Invention Makes Us Richer, Smarter, Greener, Healthier, and Happier** by Edward Glaeser
+  https://rwbookclub.com/books/triumph-of-the-city.txt
+  Politics & Social Sciences · 456pp · Published 2011 · Picked by Dan
+- **The Master Switch: The Rise and Fall of Information Empires** by Tim Wu
+  https://rwbookclub.com/books/the-master-switch.txt
+  Technology · 388pp · Published 2010 · Picked by Tom
+
+### 2010
+
+- **In a Sunburned Country** by Bill Bryson
+  https://rwbookclub.com/books/in-a-sunburned-country.txt
+  Travel & Memoir · 411pp · Published 2000 · Picked by John
+- **Hegemony or Survival: America's Quest for Global Dominance** by Noam Chomsky
+  https://rwbookclub.com/books/hegemony-or-survival.txt
+  Politics & Social Sciences · 319pp · Published 2003 · Picked by Jamie
+- **A Distant Mirror: The Calamitous 14th Century** by Barbara Tuchman
+  https://rwbookclub.com/books/a-distant-mirror.txt
+  History & Economics · 726pp · Published 1979 · Picked by Dan
+- **Wetware: A Computer in Every Living Cell** by Dennis Bray
+  https://rwbookclub.com/books/wetware.txt
+  Science and Math · 267pp · Published 2009 · Picked by Tom
+- **Team of Rivals: The Political Genius of Abraham Lincoln** by Doris Kearns Goodwin
+  https://rwbookclub.com/books/team-of-rivals.txt
+  History & Economics · 1308pp · Published 2003 · Picked by John
+- **The Golden Age** by John C. Wright
+  https://rwbookclub.com/books/the-golden-age.txt
+  Science Fiction & Fiction · Fiction · 320pp · Published 2002 · Picked by Jamie
+- **Don't Make Me Think: A Common Sense Approach to Web Usability** by Steve Krug
+  https://rwbookclub.com/books/don-t-make-me-think.txt
+  Technology · 200pp · Published 2000 · Picked by Erik
+- **Creating a World without Poverty: How Social Business Can Transform Our Lives** by Muhammad Yunus
+  https://rwbookclub.com/books/creating-a-world-without-poverty.txt
+  Politics & Social Sciences · 320pp · Published 1999 · Picked by Dan
+- **Influence: The Psychology of Persuasion** by Robert B. Cialdini
+  https://rwbookclub.com/books/influence.txt
+  Brain & Psychology · 272pp · Published 1983 · Picked by Tom
+
+### 2009
+
+- **Play: How It Shapes the Brain, Opens the Imagination, and Invigorates the Soul** by Stuart Brown and Christopher Vaughan
+  https://rwbookclub.com/books/play.txt
+  Brain & Psychology · 229pp · Published 2009 · Picked by John
+- **Creativity: Flow and the Psychology of Discovery and Invention** by Mihaly Csikszentmihalyi
+  https://rwbookclub.com/books/creativity.txt
+  Brain & Psychology · 464pp · Published 1996 · Picked by Jamie
+- **Sustainable Energy Without the Hot Air** by David MacKay
+  https://rwbookclub.com/books/sustainable-energy-without-the-hot-air.txt
+  Technology · 384pp · Published 2009 · Picked by Erik
+- **The China Study: Startling Implications for Diet, Weight Loss and Long-Term Health** by Thomas Campbell and T. Colin Campbell
+  https://rwbookclub.com/books/the-china-study.txt
+  Health & Medicine · 417pp · Published 2004 · Picked by Dan
+- **Honest Signals: How They Shape Our World** by Alexander (Sandy) Pentland
+  https://rwbookclub.com/books/honest-signals.txt
+  Science and Math · 184pp · Published 2008 · Picked by Tom
+- **Doomsday Book** by Connie Willis
+  https://rwbookclub.com/books/doomsday-book.txt
+  Science Fiction & Fiction · Fiction · 559pp · Published 1992 · Picked by John
+- **Money-Driven Medicine: The Real Reason Health Care Costs So Much** by Maggie Mahar
+  https://rwbookclub.com/books/money-driven-medicine.txt
+  Politics & Social Sciences · 480pp · Published 2006 · Picked by Jamie
+- **The Nine: Inside the Secret World of the Supreme Court** by Jeffrey Toobin
+  https://rwbookclub.com/books/the-nine.txt
+  Politics & Social Sciences · 369pp · Published 2007 · Picked by Erik
+
+### 2008
+
+- **The Looming Tower: Al-Qaeda and the Road to 9-11** by Lawrence Wright
+  https://rwbookclub.com/books/the-looming-tower.txt
+  Politics & Social Sciences · 502pp · Published 2006 · Picked by Dan
+- **Traffic: Why We Drive the Way We Do (and What It Says About Us)** by Tom Vanderbilt
+  https://rwbookclub.com/books/traffic.txt
+  Brain & Psychology · 402pp · Published 2008 · Picked by Tom
+- **Nudge: Improving Decisions About Health, Wealth, and Happiness** by Richard H. Thaler and Cass R. Sunstein
+  https://rwbookclub.com/books/nudge.txt
+  Brain & Psychology · 324pp · Published 2008 · Picked by John
+- **Animal, Vegetable, Miracle: A Year of Food Life** by Barbara Kingsolver
+  https://rwbookclub.com/books/animal-vegetable-miracle.txt
+  Travel & Memoir · 370pp · Published 2007 · Picked by Jamie
+- **Shaping Things** by Bruce Sterling
+  https://rwbookclub.com/books/shaping-things.txt
+  Technology · 149pp · Published 2005 · Picked by Erik
+- **The Black Swan: The Impact of the Highly Improbable** by Nassim Nicholas Taleb
+  https://rwbookclub.com/books/the-black-swan.txt
+  Science and Math · 475pp · Published 2005 · Picked by Dan
+- **Cheating: Gaining Advantage in Videogames** by Mia Consalvo
+  https://rwbookclub.com/books/cheating.txt
+  Technology · 240pp · Published 2007 · Picked by Tom
+- **How Doctors Think** by Jerome Groopman
+  https://rwbookclub.com/books/how-doctors-think.txt
+  Health & Medicine · 320pp · Published 2007 · Picked by John
+- **The World Without Us** by Alan Weisman
+  https://rwbookclub.com/books/the-world-without-us.txt
+  Politics & Social Sciences · 428pp · Published 2007 · Picked by Jamie
+
+### 2007
+
+- **Beautiful Evidence** by Edward Tufte
+  https://rwbookclub.com/books/beautiful-evidence.txt
+  Technology · 213pp · Published 2006 · Picked by Erik
+- **Musicophilia: Tales of Music and the Brain** by Oliver Sacks
+  https://rwbookclub.com/books/musicophilia.txt
+  Brain & Psychology · 382pp · Published 2007 · Picked by Dan
+- **The Box: How the Shipping Container Made the World Smaller and the World Economy Bigger** by Marc Levinson
+  https://rwbookclub.com/books/the-box.txt
+  Technology · 400pp · Published 2006 · Picked by Tom
+- **Beautiful Code: Leading Programmers Explain How They Think** by Marc Levinson
+  https://rwbookclub.com/books/beautiful-code.txt
+  Technology · 824pp · Published 2007 · Picked by John
+- **Understanding Comics: The Invisible Art** by David Gibbons
+  https://rwbookclub.com/books/understanding-comics.txt
+  Essays & Literature · 215pp · Published 1993 · Picked by Erik
+- **Watchmen** by Alan Moore
+  https://rwbookclub.com/books/watchmen.txt
+  Science Fiction & Fiction · Fiction · 416pp · Published 1987 · Picked by Erik
+- **The Mythical Man-Month** by Frederick P. Brooks Jr.
+  https://rwbookclub.com/books/the-mythical-man-month.txt
+  Technology · 195pp · Published 1975 · Picked by David
+- **Happiness: A Guide to Developing Life's Most Important Skill** by Matthieu Ricard
+  https://rwbookclub.com/books/happiness.txt
+  Philosophy & Religion · 304pp · Published 2007 · Picked by Dan
+- **The Long Tail: Why the Future of Business Is Selling Less of More** by Chris Anderson
+  https://rwbookclub.com/books/the-long-tail.txt
+  History & Economics · 224pp · Published 2006 · Picked by Tom
+- **The Road** by Cormac McCarthy
+  https://rwbookclub.com/books/the-road.txt
+  Science Fiction & Fiction · Fiction · 200pp · Published 2006 · Picked by John
+
+### 2006
+
+- **The Omnivore's Dilemma: A Natural History of Four Meals** by Michael Pollan
+  https://rwbookclub.com/books/the-omnivore-s-dilemma.txt
+  Travel & Memoir · 450pp · Published 2006 · Picked by Erik
+- **Stumbling on Happiness** by Daniel Gilbert
+  https://rwbookclub.com/books/stumbling-on-happiness.txt
+  Brain & Psychology · 336pp · Published 2006 · Picked by David
+- **Genghis Khan and the Making of the Modern World** by Jack Weatherford
+  https://rwbookclub.com/books/genghis-khan-and-the-making-of-the-modern-world.txt
+  History & Economics · 352pp · Published 2004 · Picked by Dan
+- **Bowling Alone: The Collapse and Revival of American Community** by Robert Putnam
+  https://rwbookclub.com/books/bowling-alone.txt
+  Politics & Social Sciences · 544pp · Published 2000 · Picked by Tom
+- **Across Realtime** by Vernor Vinge
+  https://rwbookclub.com/books/across-realtime.txt
+  Science Fiction & Fiction · Fiction · 534pp · Published 1986 · Picked by John
+- **The Success of Open Source** by Steve Weber
+  https://rwbookclub.com/books/the-success-of-open-source.txt
+  Technology · 312pp · Published 2004 · Picked by David
+- **Democratizing Innovation** by Eric von Hippel
+  https://rwbookclub.com/books/democratizing-innovation.txt
+  Technology · 216pp · Published 2005 · Picked by Erik
+
+### 2005
+
+- **Beyond Oil: The View from Hubbert's Peak** by Kenneth S. Deffeyes
+  https://rwbookclub.com/books/beyond-oil.txt
+  Current Events & People · 224pp · Published 2005 · Picked by Dan
+- **The Search: How Google and Its Rivals Rewrote the Rules of Business and Transformed Our Culture** by John Battelle
+  https://rwbookclub.com/books/the-search.txt
+  Technology · 311pp · Published 2005 · Picked by Tom
+- **The Complexity of Cooperation: Agent-Based Models of Competition and Collaboration** by Robert Axelrod
+  https://rwbookclub.com/books/the-complexity-of-cooperation.txt
+  Science and Math · 232pp · Published 1997 · Picked by John
+- **Freakonomics: A Rogue Economist Explores the Hidden Side of Everything** by Steven D. Levitt and Stephen J. Dubner
+  https://rwbookclub.com/books/freakonomics.txt
+  History & Economics · 336pp · Published 2005 · Picked by David
+- **The Plot Against America** by Philip Roth
+  https://rwbookclub.com/books/the-plot-against-america.txt
+  Science Fiction & Fiction · 415pp · Published 2004 · Picked by Erik
+- **Hackers and Painters: Big Ideas from the Computer Age** by Paul Graham
+  https://rwbookclub.com/books/hackers-and-painters.txt
+  Technology · Published 2004 · Picked by Dan
+- **Free Culture: The Nature and Future of Creativity** by Lawrence Lessig
+  https://rwbookclub.com/books/free-culture.txt
+  Politics & Social Sciences · 304pp · Published 2004 · Picked by John
+- **Divorce Among the Gulls: An Uncommon Look at Human Nature** by William Jordan
+  https://rwbookclub.com/books/divorce-among-the-gulls.txt
+  Science and Math · 205pp · Published 1991 · Picked by David
+
+### 2004
+
+- **Sailing Alone Around the Room: New and Selected Poems** by Billy Collins
+  https://rwbookclub.com/books/sailing-alone-around-the-room.txt
+  Essays & Literature · 171pp · Published 2001 · Picked by Erik
+- **The Paradox of Choice: Why More Is Less** by Barry Schwartz
+  https://rwbookclub.com/books/the-paradox-of-choice.txt
+  Brain & Psychology · 273pp · Published 2004 · Picked by John
+- **When We Were Orphans** by Kazuo Ishiguro
+  https://rwbookclub.com/books/when-we-were-orphans.txt
+  Science Fiction & Fiction · Fiction · 401pp · Published 2000 · Picked by Scott
+- **Wisdom of Crowds** by James Surowiecki
+  https://rwbookclub.com/books/wisdom-of-crowds.txt
+  Brain & Psychology · 336pp · Published 2004 · Picked by Dan
+- **Over the Edge of the World: Magellan's Terrifying Circumnavigation of the Globe** by Laurence Bergreen
+  https://rwbookclub.com/books/over-the-edge-of-the-world.txt
+  History & Economics · 512pp · Published 2003 · Picked by John
+- **Pompeii** by Robert Harris
+  https://rwbookclub.com/books/pompeii.txt
+  Science Fiction & Fiction · 368pp · Published 2003 · Picked by Brad
+
+### 2003
+
+- **Quicksilver** by Neal Stephenson
+  https://rwbookclub.com/books/quicksilver.txt
+  Science Fiction & Fiction · Fiction · 927pp · Published 2003 · Picked by Erik
+- **The Blank Slate: The Modern Denial of Human Nature** by Steven Pinker
+  https://rwbookclub.com/books/the-blank-slate.txt
+  Brain & Psychology · 550pp · Published 2002 · Picked by John
+- **My Tiny Life: Crime and Passion in a Virtual World** by Julian Dibbell
+  https://rwbookclub.com/books/my-tiny-life.txt
+  Technology · 352pp · Published 1998 · Picked by John
+- **The Lexus and the Olive Tree: Understanding Globalization** by Thomas L. Friedman
+  https://rwbookclub.com/books/the-lexus-and-the-olive-tree.txt
+  History & Economics · 496pp · Published 1999 · Picked by John

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://rwbookclub.com/sitemap.xml
+
+# LLMs: https://rwbookclub.com/llms.txt

@@ -1,0 +1,39 @@
+# Co-Intelligence: Living and Working with AI
+
+- **Author:** Ethan Mollick
+- **Read:** June 2025
+- **Topic:** Technology
+- **Subjects:** Science
+- **Published:** 2024
+- **Picked by:** Jamie
+- **ISBN-13:** 9780593716724
+- **Club rating:** 4.5/5 (from 2 members)
+- **Open Library:** https://openlibrary.org/works/OL37565105W
+- **Cover:** https://rwbookclub.com/assets/images/covers/co-intelligence-960.jpg
+- **Canonical page:** https://rwbookclub.com/books/co-intelligence/
+
+## Synopsis
+
+Something new entered our world in November 2022 — the first general purpose AI that could pass for a human and do the kinds of creative, innovative work that only humans could do previously. After millions of years on our own, humans had developed a kind of co-intelligence that could augment, or even replace, human thinking. Through his writing, speaking, and teaching, Mollick has become one of the most prominent and provocative explainers of AI, focusing on the practical aspects of how these new tools for thought can transform our world.
+
+## Reviews
+
+- Jamie — 5/5 — Would recommend
+  Co-Intelligence was a good read because it went through multiple institutions and scenarios and provided an optimistic view of how AI could transform and enable new things. Some of them really made me stop and think how different it could be. The school example stands out in my mind. I’ve recommended the book to multiple people as a way to expand thinking about how AI can benefit individuals and society.
+
+- Loren — 4/5
+
+## Related books
+
+- The Master Algorithm (Shared themes: Science)
+  https://rwbookclub.com/books/the-master-algorithm.txt
+- The Box (Technology)
+  https://rwbookclub.com/books/the-box.txt
+- Enshittification (Technology)
+  https://rwbookclub.com/books/enshittification.txt
+- Life After Google (Technology)
+  https://rwbookclub.com/books/life-after-google.txt
+- Army of None (Technology)
+  https://rwbookclub.com/books/army-of-none.txt
+- Beautiful Evidence (Technology)
+  https://rwbookclub.com/books/beautiful-evidence.txt

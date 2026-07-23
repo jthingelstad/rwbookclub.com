@@ -1,0 +1,32 @@
+# Life After Google: The Fall of Big Data and the Rise of the Blockchain Economy
+
+- **Author:** George Gilder
+- **Read:** November 2018
+- **Topic:** Technology
+- **Subjects:** Blockchains (Databases), Forecasting, Internet, Electronic commerce, High technology industries, Security measures, Internet advertising
+- **Published:** 2018
+- **Pages:** 320
+- **Picked by:** Nick
+- **ISBN-13:** 9781621575764
+- **Open Library:** https://openlibrary.org/works/OL19764274W
+- **Cover:** https://rwbookclub.com/assets/images/covers/life-after-google-960.jpg
+- **Canonical page:** https://rwbookclub.com/books/life-after-google/
+
+## Synopsis
+
+The Age of Google, built on big data and machine intelligence, has been an awesome era. But it's coming to an end. In Life after Google, George Gilder--the peerless visionary of technology and culture--explains why Silicon Valley is suffering a nervous breakdown and what to expect as the post-Google age dawns. Google's astonishing ability to 'search and sort' attracts the entire world to its search engine and countless other goodies--videos, maps, email, calendars.... And everything it offers is free, or so it seems. Instead of paying directly, users submit to advertising. The system of 'aggregate and advertise' works--for a while--if you control an empire of data centers, but a market without prices strangles entrepreneurship and turns the Internet into a wasteland of ads. The crisis is not just economic. Even as advances in artificial intelligence induce delusions of omnipotence and transcendence, Silicon Valley has pretty much given up on security. The Internet firewalls supposedly protecting all those passwords and personal information have proved hopelessly permeable. The crisis cannot be solved within the current computer and network architecture. The future lies with the 'cryptocosm'--The new architecture of the blockchain and its derivatives. Enabling cryptocurrencies such as bitcoin and ether, NEO and Hashgraph, it will provide the Internet a secure global payments system, ending the aggregate-and-advertise Age of Google. Silicon Valley, long dominated by a few giants, faces a 'great unbundling,' which will disperse computer power and commerce and transform the economy and the Internet
+
+## Related books
+
+- Army of None (Shared themes: Forecasting)
+  https://rwbookclub.com/books/army-of-none.txt
+- The Master Switch (Shared themes: Internet)
+  https://rwbookclub.com/books/the-master-switch.txt
+- The Search (Shared themes: Internet)
+  https://rwbookclub.com/books/the-search.txt
+- Enshittification (Technology)
+  https://rwbookclub.com/books/enshittification.txt
+- Don't Make Me Think (Shared themes: Internet)
+  https://rwbookclub.com/books/don-t-make-me-think.txt
+- Beautiful Evidence (Technology)
+  https://rwbookclub.com/books/beautiful-evidence.txt

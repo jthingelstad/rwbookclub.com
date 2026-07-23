@@ -1,0 +1,38 @@
+# Army of None: Autonomous Weapons and the Future of War
+
+- **Author:** Paul Scharre
+- **Read:** September 2024
+- **Topic:** Technology
+- **Subjects:** Moral and ethical aspects, Military weapons, Robotics, Forecasting, Military robots, Weapons systems, Military applications, Technological innovations, War, Robots, Uninhabited combat aerial vehicles, Drone aircraft
+- **Published:** 2018
+- **Pages:** 384
+- **Picked by:** Tom
+- **ISBN-13:** 9780393608991
+- **Club rating:** 5/5 (from 1 member)
+- **Open Library:** https://openlibrary.org/works/OL19746016W
+- **Cover:** https://rwbookclub.com/assets/images/covers/army-of-none-329.jpg
+- **Canonical page:** https://rwbookclub.com/books/army-of-none/
+
+## Synopsis
+
+What happens when a Predator drone has as much autonomy as a Google car? Although it sounds like science fiction, the technology to create weapons that could hunt and destroy targets on their own already exists. Paul Scharre, a leading expert in emerging weapons technologies, draws on incisive research and firsthand experience to explore how increasingly autonomous weapons are changing warfare. This far-ranging investigation examines the emergence of fully autonomous weapons, the movement to ban them, and the legal and ethical issues surrounding their use. Scharre spotlights the role of artificial intelligence in military technology, spanning decades of innovation from German noise-seeking Wren torpedoes in World War II--antecedents of today's armed drones--to autonomous cyber weapons. At the forefront of a game-changing debate, Army of None engages military history, global policy, and bleeding-edge science to explore what it would mean to give machines authority over the ultimate decision: life or death.
+
+## Reviews
+
+- Jamie — 5/5 — Would recommend — Discussion quality: 4/5
+  This book was a thought provoking read. Any public book about the use of AI in warfare you have to assume is outdated due to the sensitivity of the information, but I still found it very interesting and it framed up for me ways of thinking about how we are using AI today. The topics extend very easily into cybersecurity.
+
+## Related books
+
+- Life After Google (Shared themes: Forecasting)
+  https://rwbookclub.com/books/life-after-google.txt
+- Democratizing Innovation (Shared themes: Technological innovations)
+  https://rwbookclub.com/books/democratizing-innovation.txt
+- The Master Algorithm (Technology)
+  https://rwbookclub.com/books/the-master-algorithm.txt
+- The Master Switch (Technology)
+  https://rwbookclub.com/books/the-master-switch.txt
+- Cheating (Shared themes: Moral and ethical aspects)
+  https://rwbookclub.com/books/cheating.txt
+- Daemon (Technology)
+  https://rwbookclub.com/books/daemon.txt

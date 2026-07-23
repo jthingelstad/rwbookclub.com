@@ -1,0 +1,43 @@
+# The Master Algorithm: How the Quest for the Ultimate Learning Machine Will Remake Our World
+
+- **Author:** Pedro Domingos
+- **Read:** January 2020
+- **Topic:** Technology
+- **Subjects:** Information Theory, Cognitive Science, Algorithms, Mathematics, Philosophy, Artificial intelligence, Machine Learning, Knowledge representation (information theory), Social aspects, Information society, SCIENCE, System Theory
+- **Published:** 2015
+- **Pages:** 333
+- **Picked by:** Loren and Jamie
+- **ISBN-13:** 9780465065707
+- **Club rating:** 2.5/5 (from 2 members)
+- **Open Library:** https://openlibrary.org/works/OL19663805W
+- **Cover:** https://rwbookclub.com/assets/images/covers/the-master-algorithm-852.jpg
+- **Canonical page:** https://rwbookclub.com/books/the-master-algorithm/
+
+## Synopsis
+
+In the world's top research labs and universities, the race is on to invent the ultimate learning algorithm: one capable of discovering any knowledge from data, and doing anything we want, before we even ask. In The Master Algorithm, Pedro Domingos lifts the veil to give us a peek inside the learning machines that power Google, Amazon, and your smartphone. He assembles a blueprint for the future universal learner--the Master Algorithm--and discusses what it will mean for business, science, and society. If data-ism is today's philosophy, this book is its bible.
+
+## Meeting notes
+
+December meeting was cancelled at last minute and two books consolidated into January meeting.
+
+## Reviews
+
+- Jamie — 4/5
+
+- Loren — 1/5
+
+## Related books
+
+- The Search (Shared themes: Information society)
+  https://rwbookclub.com/books/the-search.txt
+- Army of None (Technology)
+  https://rwbookclub.com/books/army-of-none.txt
+- Co-Intelligence (Shared themes: SCIENCE)
+  https://rwbookclub.com/books/co-intelligence.txt
+- Enshittification (Technology)
+  https://rwbookclub.com/books/enshittification.txt
+- Life After Google (Technology)
+  https://rwbookclub.com/books/life-after-google.txt
+- The Master Switch (Technology)
+  https://rwbookclub.com/books/the-master-switch.txt

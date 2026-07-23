@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Statistics — R/W Book Club</title>
+    <meta name="description" content="Since April 2003, the R/W Book Club has been reading together — mostly non-fiction, with members rotating who picks the next book." />
+    <link rel="preload" href="/assets/fonts/fraunces-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/assets/css/styles.css" />
+    <link rel="canonical" href="https://rwbookclub.com/stats/" />
+    <link rel="alternate" type="application/rss+xml" title="R/W Book Club" href="/feed.xml" />
+    <link rel="alternate" type="text/plain" title="LLM archive" href="/llms.txt" />
+  </head>
+  <body class="stats-page">
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="page"><header class="masthead">
+        <a class="masthead-link" href="/">
+          <span class="wordmark">R/W Book Club</span>
+        </a>
+        <nav class="masthead-nav">
+          <a href="/books/" class="active" aria-current="true">Books</a>
+          <span aria-hidden="true">·</span>
+          <a href="/members/" >Members</a>
+          <span aria-hidden="true">·</span>
+          <a href="/oliver/" >Oliver</a>
+          <span aria-hidden="true">·</span>
+          <a href="/about/" >About</a>
+        </nav>
+      </header>
+      <nav class="section-nav" aria-label="Browse the library">
+        <span class="section-nav-label">Browse</span>
+        <a href="/books/" >All books</a>
+        <a href="/authors/" >Authors</a>
+        <a href="/meetings/" >Meetings</a>
+        <a href="/lists/" >Lists</a>
+        <a href="/stats/" class="active">Stats</a>
+      </nav>
+      <main id="main">
+        
+<article class="stats">
+  <a class="back" href="/">← Reading journey</a>
+
+  <h1>By the numbers</h1>
+  <p class="lede">
+    24 years of reading together — 179 books
+    and 67,173 pages since 2003.
+  </p>
+
+  
+  <div class="stat-cards">
+    <div class="stat-card">
+      <span class="stat-value">179</span>
+      <span class="stat-label">Books read</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">67,173</span>
+      <span class="stat-label">Total pages</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">384</span>
+      <span class="stat-label">Avg. pages</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">24</span>
+      <span class="stat-label">Years active</span>
+    </div>
+  </div>
+
+  
+  <section class="stats-section">
+    <h2>Books read per year</h2>
+    <p class="stats-desc">Number of books the club has read each year.</p>
+    <div class="chart-canvas-wrap chart-canvas-wrap--tall">
+      <canvas id="chart-books-by-year"></canvas>
+    </div>
+  </section>
+
+  
+  <section class="stats-section">
+    <h2>Pages read per year</h2>
+    <p class="stats-desc">Total pages across all books read in each year.</p>
+    <div class="chart-canvas-wrap chart-canvas-wrap--tall">
+      <canvas id="chart-pages-by-year"></canvas>
+    </div>
+  </section>
+
+  
+  <section class="stats-section">
+    <h2>What we read about</h2>
+    <p class="stats-desc">Topics sized by number of books read in each category.</p>
+    <div class="chart-canvas-wrap chart-canvas-wrap--tall">
+      <canvas id="chart-topics"></canvas>
+    </div>
+  </section>
+
+  <div class="stats-pair">
+    
+    <section class="stats-section">
+      <h2>When the books were written</h2>
+      <p class="stats-desc">Publication decade of every book the club has read.</p>
+      <div class="chart-canvas-wrap">
+        <canvas id="chart-pub-decade"></canvas>
+      </div>
+    </section>
+
+    
+    <section class="stats-section">
+      <h2>Fiction vs. non-fiction</h2>
+      <div class="split-bar-wrap">
+        <div class="split-bar">
+          <div class="split-bar-segment split-bar-nonfiction"
+               style="width: 87.7%">
+            <span class="split-bar-label">Non-fiction</span>
+            <span class="split-bar-pct">88%</span>
+          </div>
+          <div class="split-bar-segment split-bar-fiction"
+               style="width: 12.3%">
+            <span class="split-bar-label">Fiction</span>
+            <span class="split-bar-pct">12%</span>
+          </div>
+        </div>
+        <div class="split-bar-legend">
+          <span>157 non-fiction</span>
+          <span>22 fiction</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  
+  <section class="stats-section">
+    <h2>Most picks</h2>
+    <p class="stats-desc">Members ranked by how many books they've picked to host — a book brought back for a re-read counts each time.</p>
+    <div class="chart-canvas-wrap chart-canvas-wrap--pickers">
+      <canvas id="chart-pickers"></canvas>
+    </div>
+  </section>
+
+  
+  <section class="stats-section">
+    <h2>Superlatives</h2>
+    <dl class="fun-facts">
+      
+      <div class="fun-fact">
+        <dt>Longest book</dt>
+        <dd><a href="/books/team-of-rivals/">Team of Rivals</a> — 1308 pages</dd>
+      </div>
+      
+      
+      <div class="fun-fact">
+        <dt>Shortest book</dt>
+        <dd><a href="/books/nature-walking/">Nature &amp; Walking</a> — 76 pages</dd>
+      </div>
+      
+      
+      <div class="fun-fact">
+        <dt>Oldest publication</dt>
+        <dd><a href="/books/heart-of-darkness/">Heart of Darkness</a> — 1902</dd>
+      </div>
+      
+      
+      <div class="fun-fact">
+        <dt>Newest publication</dt>
+        <dd><a href="/books/a-world-appears/">A World Appears</a> — 2026</dd>
+      </div>
+      
+    </dl>
+  </section>
+</article>
+
+<script id="chart-data" type="application/json">{"totalBooks":179,"totalPages":67173,"avgPages":384,"yearsActive":24,"firstYear":2003,"lastYear":2026,"fictionCount":22,"nonfictionCount":157,"byYear":[{"year":2003,"count":4,"pages":2325},{"year":2004,"count":6,"pages":2061},{"year":2005,"count":8,"pages":2027},{"year":2006,"count":7,"pages":2744},{"year":2007,"count":10,"pages":3373},{"year":2008,"count":9,"pages":3210},{"year":2009,"count":8,"pages":3086},{"year":2010,"count":9,"pages":4143},{"year":2011,"count":7,"pages":2356},{"year":2012,"count":10,"pages":3386},{"year":2013,"count":9,"pages":3461},{"year":2014,"count":8,"pages":3424},{"year":2015,"count":10,"pages":3688},{"year":2016,"count":6,"pages":2632},{"year":2017,"count":10,"pages":3516},{"year":2018,"count":8,"pages":3699},{"year":2019,"count":7,"pages":2533},{"year":2020,"count":9,"pages":3271},{"year":2021,"count":9,"pages":3955},{"year":2022,"count":6,"pages":2372},{"year":2023,"count":6,"pages":1775},{"year":2024,"count":5,"pages":1848},{"year":2025,"count":5,"pages":1168},{"year":2026,"count":3,"pages":1120}],"topics":[{"name":"History & Economics","count":27},{"name":"Science Fiction & Fiction","count":25},{"name":"Politics & Social Sciences","count":25},{"name":"Brain & Psychology","count":24},{"name":"Science and Math","count":23},{"name":"Technology","count":22},{"name":"Current Events & People","count":12},{"name":"Essays & Literature","count":7},{"name":"Health & Medicine","count":6},{"name":"Travel & Memoir","count":5},{"name":"Philosophy & Religion","count":3}],"pubDecades":[{"decade":1900,"count":1},{"decade":1940,"count":1},{"decade":1950,"count":2},{"decade":1970,"count":5},{"decade":1980,"count":6},{"decade":1990,"count":12},{"decade":2000,"count":59},{"decade":2010,"count":80},{"decade":2020,"count":13}],"pubYears":[1902,1940,1951,1959,1974,1975,1976,1978,1979,1983,1985,1986,1986,1986,1987,1991,1992,1993,1993,1996,1997,1997,1997,1998,1999,1999,1999,2000,2000,2000,2000,2001,2001,2001,2002,2002,2003,2003,2003,2003,2003,2003,2003,2004,2004,2004,2004,2004,2004,2004,2004,2004,2005,2005,2005,2005,2005,2005,2005,2006,2006,2006,2006,2006,2006,2006,2006,2006,2006,2007,2007,2007,2007,2007,2007,2007,2007,2008,2008,2008,2008,2008,2009,2009,2009,2009,2010,2010,2010,2010,2010,2010,2010,2010,2011,2011,2011,2011,2011,2011,2011,2011,2011,2011,2011,2011,2011,2011,2012,2012,2012,2012,2012,2012,2012,2012,2012,2012,2012,2012,2012,2012,2013,2013,2013,2013,2013,2013,2013,2013,2014,2014,2014,2014,2015,2015,2015,2015,2015,2015,2016,2016,2016,2016,2016,2016,2016,2016,2017,2017,2017,2017,2017,2017,2017,2018,2018,2018,2018,2018,2019,2019,2019,2019,2019,2019,2020,2020,2021,2021,2021,2021,2021,2022,2022,2023,2024,2025,2026],"pickers":[{"name":"Erik","count":33,"pages":12915},{"name":"Tom","count":32,"pages":11271},{"name":"Jamie","count":30,"pages":10415},{"name":"Nick","count":20,"pages":6447},{"name":"John","count":20,"pages":8757},{"name":"Loren","count":17,"pages":7724},{"name":"Dan","count":17,"pages":6740},{"name":"David","count":5,"pages":1384},{"name":"Scott","count":1,"pages":401},{"name":"Brad","count":1,"pages":368}],"longest":{"title":"Team of Rivals","pages":1308,"slug":"team-of-rivals"},"shortest":{"title":"Nature & Walking","pages":76,"slug":"nature-walking"},"oldest":{"bookId":2,"title":"Heart of Darkness","subtitle":null,"authors":["Joseph Conrad"],"topic":"Science Fiction & Fiction","fiction":true,"publicationYear":1902,"pageCount":120,"isbn13":"9780613837712","olKey":"/works/OL38663W","synopsis":"Heart of Darkness (1899) is a novella by Polish-English novelist Joseph Conrad, about a voyage up the Congo River into the Congo Free State, in the heart of Africa, by the story's narrator Charles Marlow. Marlow tells his story to friends aboard a boat anchored on the River Thames. Joseph Conrad is one of the greatest English writers, and Heart of Darkness is considered his best. His readers are brought to face our psychological selves to answer, ‘Who is the true savage?’. Originally published in 1902, Heart of Darkness remains one of this century’s most enduring works of fiction. Written several years after Joseph Conrad’s grueling sojourn in the Belgian Congo, the novel is a complex meditation on colonialism, evil, and the thin line between civilization and barbarity.","subjects":["Romance","Degeneration","Description and travel","Diaries","Sailors","Short stories","English literature","Suffering","Trading posts","Classic Literature","Travel","Discovery and exploration"],"editionCount":553,"languages":["eng","spa"],"ratingsAverage":3.58,"ratingsCount":134,"awards":["20th Century's Greatest Hits: 100 English-Language Books of Fiction"],"wikidataId":"Q129778","wikipediaUrl":"https://en.wikipedia.org/wiki/Heart_of_Darkness","slug":"heart-of-darkness","authorSlugs":["joseph-conrad"],"subjectTags":["Romance","Degeneration","Description and travel","Diaries","Sailors","Short stories","English literature","Suffering","Trading posts","Classic Literature","Travel","Discovery and exploration"],"meetingDate":"2025-09-30","year":2025,"pickerName":"Nick","pickerSlug":"nick","pickerNames":["Nick"],"pickerSlugs":["nick"],"isUpcoming":false,"meetingNotes":null,"meetingLocation":"Waterbury Restaurant","hasCover":true,"reviewCount":2,"coverWidths":[240,480,938],"related":[{"slug":"zen-and-the-art-of-motorcycle-maintenance","reason":"Shared themes: Description and travel"},{"slug":"roadside-picnic","reason":"Science Fiction & Fiction"},{"slug":"the-martian","reason":"Science Fiction & Fiction"},{"slug":"watchmen","reason":"Science Fiction & Fiction"},{"slug":"quicksilver","reason":"Science Fiction & Fiction"},{"slug":"klara-and-the-sun","reason":"Science Fiction & Fiction"}]},"newest":{"bookId":179,"title":"A World Appears","subtitle":"A Journey into Consciousness","authors":["Michael Pollan"],"topic":"Essays & Literature","fiction":false,"publicationYear":2026,"pageCount":320,"isbn13":"978-1984881991","olKey":"/works/OL45011996W","synopsis":"When it comes to the phenomenon that is consciousness, there is one point on which scientists, philosophers, and artists all agree: it feels like something to be us. Yet the fact that we have subjective experience of the world remains one of nature’s greatest mysteries. How is it that our mental operations are accompanied by feelings, thoughts, and a sense of self? What would a scientific investigation of our inner life look like, when we have as little distance and perspective on it as fish do of the sea? In A World Appears, Michael Pollan traces the unmapped continent that is consciousness, bringing radically different perspectives—scientific, philosophical, literary, spiritual and psychedelic—to see what each can teach us about this central fact of life.\n\nWhen neuroscientists began studying consciousness in the early 1990s, they sought to explain how and why three pounds of spongy gray matter could generate a subjective point of view—assuming that the brain is the source of our perceived reality. Pollan takes us to the cutting edge of the field, where scientists are entertaining more radical (and less materialist) theories of consciousness. He introduces us to “plant neurobiologists” searching for the first flicker of consciousness in plants, scientists striving to engineer feelings into AI, and psychologists and novelists seeking to capture the felt experience of our slippery stream of consciousness.\n\nIn Pollan’s dazzling exploration of consciousness, he discovers a world far deeper and stranger than our everyday reality. Eye-opening and mind-expanding, A World Appears takes us into the laboratories of our own minds, ultimately showing us how we might make better use of the gift of awareness to more meaningfully connect with the world and our deepest selves.","editionCount":1,"wikidataId":"Q138543703","wikipediaUrl":"https://en.wikipedia.org/wiki/A_World_Appears","slug":"a-world-appears","authorSlugs":["michael-pollan"],"subjectTags":[],"meetingDate":"2026-06-30","year":2026,"pickerName":"Jamie","pickerSlug":"jamie","pickerNames":["Jamie"],"pickerSlugs":["jamie"],"isUpcoming":false,"meetingNotes":null,"meetingLocation":"Broder’s","hasCover":true,"reviewCount":3,"coverWidths":[240,480,683],"related":[{"slug":"how-to-change-your-mind","reason":"By the same author"},{"slug":"the-omnivore-s-dilemma","reason":"By the same author"},{"slug":"a-supposedly-fun-thing-i-ll-never-do-again","reason":"Essays & Literature"},{"slug":"unflattening","reason":"Essays & Literature"},{"slug":"nature-walking","reason":"Essays & Literature"},{"slug":"all-art-is-propaganda","reason":"Essays & Literature"}]}}</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap@3.1.0/dist/chartjs-chart-treemap.min.js"></script>
+<script src="/assets/js/stats.js"></script>
+
+      </main>
+      <footer class="site-footer">
+        <p>Reading together since 2003.</p><nav>
+          <a href="/">Journey</a>
+          <span aria-hidden="true">·</span>
+          <a href="/books/">All books</a>
+          <span aria-hidden="true">·</span>
+          <a href="/authors/">Authors</a>
+          <span aria-hidden="true">·</span>
+          <a href="/meetings/">Meetings</a>
+          <span aria-hidden="true">·</span>
+          <a href="/lists/">Lists</a>
+          <span aria-hidden="true">·</span>
+          <a href="/stats/">Stats</a>
+          <span aria-hidden="true">·</span>
+          <a href="/members/">Members</a>
+          <span aria-hidden="true">·</span>
+          <a href="/oliver/">Oliver</a>
+          <span aria-hidden="true">·</span>
+          <a href="/about/">About</a>
+          <span aria-hidden="true">·</span>
+          <a href="/feed.xml">Feed</a>
+        </nav>
+      </footer>
+    </div>
+    <script defer src="https://tinylytics.app/embed/g27c-eB9Dv7-Eze1XSSy.js?kudos=%F0%9F%93%9A"></script>
+  </body>
+</html>

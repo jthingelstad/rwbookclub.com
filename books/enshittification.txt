@@ -1,0 +1,45 @@
+# Enshittification
+
+- **Author:** Cory Doctorow
+- **Read:** November 2025
+- **Topic:** Technology
+- **Subjects:** enshittification
+- **Published:** 2025
+- **Pages:** 352
+- **Picked by:** Tom
+- **ISBN-13:** 9781836742227
+- **Club rating:** 4.3/5 (from 3 members)
+- **Open Library:** https://openlibrary.org/works/OL42455337W
+- **Cover:** https://rwbookclub.com/assets/images/covers/enshittification-500.jpg
+- **Canonical page:** https://rwbookclub.com/books/enshittification/
+
+## Synopsis
+
+It’s not your imagination. Life online really does get worse by the day, and that is by intent. Misogyny, conspiratorialism, surveillance, manipulation, fraud, and AI slop are drowning the internet. For the monopolists who dominate online – X, TikTok, Amazon, Meta, Apple – this is all part of the playbook. The process is what leading tech critic Cory Doctorow has dubbed ‘enshittification’. First, the platform attracts users with some bait, such as free access; then the activity is monetized, bringing in the business customers and degrading the user experience; then, once everyone is trapped and competitors eradicated, the platform wrings out all the value and transfers it to their executives and shareholders. As a result, online public squares have become places of torment, and online retailers are hellish dumpster fires. The virtual gathering places where we once imagined the world’s problems might be resolved are now a sewer of hatred and abuse – thoroughly enshittified. Doctorow enumerates the symptoms, lays out the diagnosis, and identifies the best responses to these diseased platforms: the monopolies online must be shattered. Companies too big to fail or to jail – and much too big to care – must be cut down to size. Only an attack on corporate power will permit effective regulation and real privacy. Tech unions must protect the workers who should, in turn, defend us against their bosses’ sadism and greed.
+
+## Reviews
+
+- Jamie — 4/5
+
+- Erik — 5/5 — Would recommend
+  I really liked this book. It has a very strong personal point-of-view and political bent, but if you know that going in you should not be too put off. The book is very applicable to my work, my hobbies, and my everyday use of software products.
+
+I also really learned a ton in this book about how to think of these issues, things like chikenization, reverse-centaur, and how to think of some of the economics of rent-seeking and profit-seeking behaviors. I’ve recommended this book to others and even conducted a discussion of its ideas at my job.
+
+- Tom — 4/5 — Would recommend
+  The book makes a fairly simple argument about why initially valuable applications go bad: high value attracts users; commodifying users attracts businesses; and then extracting value from businesses screws them too. What I particularly liked is that Doctorow walked through many, many examples of this. I’d forgotten that a lot of the prime exhibits were initially really good.
+
+## Related books
+
+- Walkaway (By the same author)
+  https://rwbookclub.com/books/walkaway.txt
+- Life After Google (Technology)
+  https://rwbookclub.com/books/life-after-google.txt
+- Co-Intelligence (Technology)
+  https://rwbookclub.com/books/co-intelligence.txt
+- Army of None (Technology)
+  https://rwbookclub.com/books/army-of-none.txt
+- The Master Algorithm (Technology)
+  https://rwbookclub.com/books/the-master-algorithm.txt
+- The Master Switch (Technology)
+  https://rwbookclub.com/books/the-master-switch.txt

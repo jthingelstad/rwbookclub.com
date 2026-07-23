@@ -1,0 +1,37 @@
+# Beautiful Evidence
+
+- **Author:** Edward Tufte
+- **Read:** December 2007
+- **Topic:** Technology
+- **Subjects:** Visual communication, Statistics, Nonverbal Communication, Visual Perception, Communication (human), Communication visuelle, Information, Gebrauchsgrafik, Illustration, Semiotik, Visualisierung, Visuelle Kommunikation
+- **Published:** 2006
+- **Pages:** 213
+- **Picked by:** Erik
+- **ISBN-13:** 9781930824164
+- **Club rating:** 4/5 (from 1 member)
+- **Open Library:** https://openlibrary.org/works/OL2824008W
+- **Cover:** https://rwbookclub.com/assets/images/covers/beautiful-evidence-408.jpg
+- **Canonical page:** https://rwbookclub.com/books/beautiful-evidence/
+
+## Synopsis
+
+Science and art have in common intense seeing, the wide-eyed observing that generates visual information. Beautiful Evidence is about how seeing turns into showing, how data and evidence turn into explanation. The book identifies excellent and effective methods for showing nearly every kind of information, suggests many new designs (including sparklines), and provides analytical tools for assessing the credibility of evidence presentations (which are seen from both sides: how to produce and how to consume presentations). For alert consumers of presentations, there are chapters on diagnosing evidence corruption and PowerPoint pitches. Beautiful Evidence concludes with two chapters that leave the world of pixel and paper flatland representations - and move onto seeing and thinking in space land, the real-land of three-space and time. Edward Rolf Tufte (born 1942 in Kansas City, Missouri to Virginia and Edward E. Tufte), a professor emeritus of statistics, graphic design, and political economy at Yale University has been described by The New York Times as "the Leonardo da Vinci of Data". He is an expert in the presentation of informational graphics such as charts and diagrams, and is a fellow of the American Statistical Association. Tufte has held fellowships from the Guggenheim Foundation and the Center for Advanced Studies in Behavioral Sciences. Tufte currently resides in Cheshire, Connecticut. He periodically travels around the United States to offer one-day workshops on data presentation and information graphics. http://www.edwardtufte.com
+
+## Reviews
+
+- Jamie — 4/5
+
+## Related books
+
+- Life After Google (Technology)
+  https://rwbookclub.com/books/life-after-google.txt
+- Don't Make Me Think (Technology)
+  https://rwbookclub.com/books/don-t-make-me-think.txt
+- Daemon (Technology)
+  https://rwbookclub.com/books/daemon.txt
+- The Master Switch (Technology)
+  https://rwbookclub.com/books/the-master-switch.txt
+- The Box (Technology)
+  https://rwbookclub.com/books/the-box.txt
+- Beautiful Code (Technology)
+  https://rwbookclub.com/books/beautiful-code.txt
