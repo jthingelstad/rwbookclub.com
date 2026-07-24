@@ -59,3 +59,7 @@ See [`CLAUDE.md`](CLAUDE.md) for the canonical architecture and operating guide,
 [`corpus/README.md`](corpus/README.md) for the generated data layer, and
 [`agent/README.md`](agent/README.md) for Oliver's current capabilities. GitHub Issues are the
 project roadmap; completed designs and migrations live in [`docs/archive/`](docs/archive/README.md).
+
+## Credits and licensing
+
+The project's own code is MIT-licensed (see [`LICENSE`](LICENSE)). Book cover images are fetched at build time from [Open Library](https://openlibrary.org/) and author portraits from [Wikimedia Commons](https://commons.wikimedia.org/); those images are the property of their respective rights holders, are gitignored (not committed to this repo), and are used to identify the books the club reads. The site footer credits both sources.
