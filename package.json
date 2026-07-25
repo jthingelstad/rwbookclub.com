@@ -9,6 +9,11 @@
   "workspaces": [
     "website"
   ],
+  "overrides": {
+    "@11ty/eleventy": {
+      "@11ty/recursive-copy": "5.0.2"
+    }
+  },
   "scripts": {
     "build": "npm run build -w website",
     "test": "npm run test -w website",
