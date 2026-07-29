@@ -57,6 +57,35 @@ def _silent_private_calibration(request: RequestContext, *, limit: int) -> dict 
     }
 
 
+def _length_precedents(candidate_pages: int | None, *, limit: int = 5) -> list[dict]:
+    if not candidate_pages:
+        return []
+    read_books = [
+        book for book in cr.books() if book.get("isRead") and isinstance(book.get("pageCount"), int)
+    ]
+    nearest = sorted(
+        read_books,
+        key=lambda book: (
+            abs(book["pageCount"] - candidate_pages),
+            -book["pageCount"],
+            book.get("title") or "",
+        ),
+    )[:limit]
+    out = []
+    for book in nearest:
+        summary = cr.review_summary(book["slug"]) or {}
+        out.append(
+            {
+                "title": book.get("title"),
+                "pages": book.get("pageCount"),
+                "ratingAverage": summary.get("ratingAverage"),
+                "discussionAverage": summary.get("discussionAverage"),
+                "dnfCount": summary.get("dnfCount"),
+            }
+        )
+    return out
+
+
 def pick_fit(tool_input: dict, request: RequestContext) -> dict:
     from agent.enrich import openlibrary as enrich_ol
 
@@ -78,6 +107,7 @@ def pick_fit(tool_input: dict, request: RequestContext) -> dict:
             "title": corpus_hit.get("title"),
             "authors": corpus_hit.get("authors") or [],
             "year": corpus_hit.get("year"),
+            "pages": corpus_hit.get("pageCount"),
             "subjects": subjects,
             "resolved": "corpus",
         }
@@ -131,6 +161,7 @@ def pick_fit(tool_input: dict, request: RequestContext) -> dict:
             "excerpt": (summary.get("excerpts") or [None])[0],
         }
     out["nearestInHistory"] = neighbors
+    out["lengthPrecedents"] = _length_precedents(out["candidate"].get("pages"))
     out["memberLenses"] = member_lenses(request)
     if silent := _silent_private_calibration(request, limit=40):
         out["silentPrivateCalibration"] = silent
@@ -146,8 +177,15 @@ def pick_fit(tool_input: dict, request: RequestContext) -> dict:
     out["note"] = "Current reception/adaptation news is NOT included — web_search it."
     if request.is_shared_output:
         out["note"] += (
-            " Private signals are silent calibration only: never identify a likely holdout or "
-            "attribute those signals; express uncertainty as a club-level tradeoff."
+            " Private signals are silent calibration only: they may select a decision dimension "
+            "but are not evidence of club history or group reaction. Never identify a likely "
+            "holdout, attribute or pluralize those signals, or invent supporting club history; "
+            "state a neutral criterion to check instead of a social prediction or a metaphor "
+            "about sides, splits, or fault lines. Do not repeat those labels even to deny them, "
+            "and do not claim the club has or lacks precedent without public tool evidence. Use "
+            "lengthPrecedents for every claim about how the candidate's scale compares with the "
+            "club's history. Do not echo who/resist/holdout wording; begin the pivot directly with "
+            "the criterion."
         )
     else:
         out["note"] += " Never state a member reaction that isn't grounded in memberLenses."

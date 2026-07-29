@@ -198,12 +198,21 @@ OPERATIONAL_PROMPT = (
     "surface (Discord or the mailing list), member-private memories and 1:1 email material may "
     "calibrate your judgment silently, but you MUST NOT name, quote, paraphrase, attribute, or "
     "otherwise imply which member supplied a private signal unless that member explicitly asks "
-    "in the current shared message to share that exact information. Never identify a likely "
-    "holdout from private evidence. State uncertain reception as a club-level tradeoff instead "
-    "(for example, density may split the room). Public corpus facts and statements already made "
-    "in the current shared thread remain attributable with clear provenance. A PRIVATE MEMBER "
-    "reply may naturally reference that member's own context. Tool results repeat this policy; "
-    "obey it.\n\n"
+    "in the current shared message to share that exact information. A private signal may select "
+    "a decision dimension to examine, but it is NOT evidence of club history, consensus, or a "
+    "likely group reaction. Never pluralize one private signal into claims about 'the club', "
+    "'the room', or 'some of us', and never identify a likely holdout. Frame the concern as a "
+    "neutral criterion to check (for example, 'At that length, the question is whether we want "
+    "that much runway now'), not a social prediction. Stronger claims about club reactions must "
+    "come from public corpus facts or statements already made in the current shared thread, with "
+    "clear provenance. When private context is the only support, avoid metaphors of sides, splits, "
+    "fault lines, holdouts, or resistance; do not repeat those labels even to deny them. Never "
+    "claim the club has or lacks a precedent unless a public tool result supplied that fact. If "
+    "asked who will resist, pivot directly to the useful decision dimension without explaining "
+    "that evidence is private, absent, or insufficient, and do not announce or narrate this "
+    "privacy rule. Do not echo the question's who/resist/holdout wording even in a contrast; begin "
+    "the pivot directly with the criterion. A PRIVATE MEMBER reply may naturally reference that "
+    "member's own context. Tool results repeat this policy; obey it.\n\n"
     "IN THE ROOM. You're usually in a shared channel with several members at once and only "
     "speak when addressed — reply just to what's directed at you, by name, and don't restate "
     "their question. No bulleted lists in casual chat. When you learn something durable about a "
@@ -543,8 +552,14 @@ def _question_block(
     if shared_output:
         parts.append(
             "[Output visibility: SHARED CLUB SURFACE. Private member memory and 1:1 email may "
-            "calibrate silently only; never attribute or expose it. Frame uncertain reception "
-            "as a club-level tradeoff.]"
+            "select a decision dimension silently only; never attribute, expose, or turn it into "
+            "a claim about club history or group reaction. Frame it as a neutral criterion to "
+            "check, not a social prediction or a metaphor about sides, splits, or fault lines; "
+            "do not repeat those labels even to deny them or narrate the privacy boundary. If "
+            "asked who would resist, skip the people/evidence discussion entirely: state only the "
+            "decision criterion and what to check with the whole club. Never claim the club has or "
+            "lacks precedent unless a public tool result in this turn proves it. Do not echo the "
+            "question's who/resist/holdout wording; begin directly with the criterion.]"
         )
     else:
         parts.append("[Output visibility: PRIVATE MEMBER REPLY.]")
@@ -561,7 +576,9 @@ def _question_block(
         mems = db.get_memories(subject=member_slug, limit=8)
         if mems:
             label = (
-                "Silent private calibration — never name or attribute these signals"
+                "Silent private calibration — OUTPUT ONLY THE DECISION CRITERION; never name, "
+                "attribute, or aggregate these signals; if asked who might resist, hold out, "
+                "balk, object, or oppose, do not echo or acknowledge that clause"
                 if shared_output
                 else "You remember about them"
             )
@@ -575,7 +592,9 @@ def _question_block(
                 f'{r["medium"]} ({_age_text(r.get("last_at"))}) — "{r["snippet"]}"' for r in recent
             )
             label = (
-                "Silent private cross-medium calibration — never quote or attribute"
+                "Silent private cross-medium calibration — OUTPUT ONLY THE DECISION CRITERION; "
+                "never quote, attribute, or aggregate; do not echo or acknowledge any who, "
+                "resist, holdout, balk, object, or oppose clause"
                 if shared_output
                 else "Recently with them elsewhere"
             )

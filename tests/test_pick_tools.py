@@ -72,6 +72,7 @@ def test_pick_fit_external_candidate(fresh_db, monkeypatch):
     assert out["candidate"]["resolved"] == "openlibrary"
     assert out["candidate"]["pages"] == 528
     assert out["nearestInHistory"], "shared-subject neighbors on the shelf"
+    assert out["lengthPrecedents"]
     assert "clubVerdict" in out["nearestInHistory"][0]  # ratings + discussionAverage carried
     assert out["memberLenses"]["loren"]["memories"] == []
     assert out["memberLenses"]["jamie"]["memories"] == []
@@ -79,11 +80,35 @@ def test_pick_fit_external_candidate(fresh_db, monkeypatch):
     assert "Likes systems books" in " ".join(calibration["signals"])
     assert calibration["output_visibility"] == "silent_private_context"
     assert "likely holdout" in out["note"]
+    assert "not evidence of club history or group reaction" in out["note"]
+    assert "neutral criterion to check" in out["note"]
     assert out["coverage"]["topics"] and "note" in out
     # The consideration was recorded into the cloud, attributed via ctx.
     row = db.recent_book_cloud()[0]
     assert row["title"] == "Nexus" and row["reason_kind"] == "pick_candidate"
     assert row["mentioned_by"] == "jamie"
+
+
+def test_pick_fit_long_candidate_surfaces_public_scale_precedent(fresh_db, monkeypatch):
+    from agent.enrich import openlibrary as enrich_ol
+
+    monkeypatch.setattr(
+        enrich_ol,
+        "search_best_match",
+        lambda t, a: _ol_doc(title="The Power Broker", number_of_pages_median=1263),
+    )
+    out = json.loads(
+        dispatch(
+            "pick_fit",
+            {"title": "The Power Broker", "author": "Robert Caro"},
+            {"member_slug": "jamie", "speaker": "Jamie", "channel_id": "123"},
+        )
+    )
+    team = next(row for row in out["lengthPrecedents"] if row["title"] == "Team of Rivals")
+    assert team["pages"] == 1308
+    assert team["ratingAverage"] == 5
+    assert team["discussionAverage"] == 5
+    assert "Use lengthPrecedents" in out["note"]
 
 
 def test_pick_fit_already_read_headline(fresh_db, monkeypatch):
@@ -205,6 +230,13 @@ def test_doctrines_present_in_system_prompt():
     assert "seasoning, not the meal" in p  # cloud/known-author leads demoted
     assert "would LEARN" in p and "never invent a reaction" in p
     assert "SHARED OUTPUT PRIVACY." in p
-    assert "likely holdout" in p and "club-level tradeoff" in p
+    assert "likely holdout" in p and "neutral criterion to check" in p
+    assert "NOT evidence of club history" in p
+    assert "Never pluralize one private signal" in p
+    assert "fault lines" in p
+    assert "do not repeat those labels even to deny them" in p
+    assert "has or lacks a precedent" in p
+    assert "Do not echo the question's who/resist/holdout wording" in p
+    assert "density may split the room" not in p
     names = {t.get("name") for t in tools.TOOLS}
     assert {"book_cloud_add", "book_cloud_recent", "pick_fit", "pick_prospects"} <= names

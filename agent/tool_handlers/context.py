@@ -63,6 +63,13 @@ class RequestContext:
             return "private_reply_may_reference"
         return (
             "silent_private_calibration_only: do not name, quote, paraphrase, attribute, or imply "
-            "which member supplied this signal; express reception uncertainty as a club-level "
-            "tradeoff"
+            "which member supplied this signal; the signal may select a decision dimension but "
+            "is not evidence of club history, consensus, or group reaction; do not pluralize it "
+            "into the club, the room, or some of us; state a neutral criterion to check, not a "
+            "social prediction or a metaphor about sides, splits, fault lines, holdouts, or "
+            "resistance; do not repeat those labels even to deny them, narrate missing/private "
+            "evidence, or claim the club has or lacks precedent without public tool evidence; "
+            "when the question asks who/resist/holdout, do not echo that wording and begin "
+            "directly with the criterion; output only that criterion and the whole-club check, "
+            "without acknowledging any who, resist, holdout, balk, object, or oppose clause"
         )

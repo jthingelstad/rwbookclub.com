@@ -69,6 +69,13 @@ def test_memory_recall_is_self_plus_club_and_admin_can_audit(fresh_db):
     private_row = next(row for row in visible if row["note"].startswith("Jamie private"))
     assert private_row["output_visibility"] == "silent_private_context"
     assert "subject" not in private_row
+    assert "not evidence of club history" in private_row["response_policy"]
+    assert "neutral criterion to check" in private_row["response_policy"]
+    assert "fault lines" in private_row["response_policy"]
+    assert "even to deny them" in private_row["response_policy"]
+    assert "public tool evidence" in private_row["response_policy"]
+    assert "do not echo that wording" in private_row["response_policy"]
+    assert "balk, object, or oppose" in private_row["response_policy"]
 
     denied = _call("recall", {"subject": "nick"}, JAMIE_CTX)
     assert denied == {"error": "another member's private memories are unavailable"}
@@ -117,6 +124,7 @@ def test_discussion_search_shares_club_channels_but_isolates_direct_email(fresh_
     private_row = next(row for row in visible if row["content"] == "lighthouse Jamie private")
     assert private_row["who"] is None and private_row["member"] is None
     assert private_row["output_visibility"] == "silent_private_context"
+    assert "not evidence of club history" in private_row["response_policy"]
     list_row = next(row for row in visible if row["content"] == "lighthouse shared mailing list")
     assert list_row["who"] == "Nick" and list_row["output_visibility"] == "shared_source"
     assert _call("search_discussion", {"query": "lighthouse", "member": "nick"}, JAMIE_CTX) == {

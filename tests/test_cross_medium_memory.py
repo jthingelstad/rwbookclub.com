@@ -54,7 +54,16 @@ def test_question_block_primes_cross_medium(fresh_db):
         "what were those books?", "Jamie", "jamie", None, channel_id="999"
     )
     assert "Output visibility: SHARED CLUB SURFACE" in block
+    assert "not a social prediction" in block
+    assert "claim about club history or group reaction" in block
+    assert "fault lines" in block
+    assert "even to deny them" in block
+    assert "skip the people/evidence discussion entirely" in block
+    assert "public tool result in this turn" in block
+    assert "Do not echo the question's who/resist/holdout wording" in block
     assert "Silent private calibration" in block
+    assert "OUTPUT ONLY THE DECISION CRITERION" in block
+    assert "balk, object, or oppose" in block
     assert "You remember about them" not in block
     assert "Silent private cross-medium calibration" in block and "email" in block
     assert "Recently with them elsewhere" not in block
