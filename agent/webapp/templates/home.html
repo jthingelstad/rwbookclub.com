@@ -4,11 +4,13 @@
 {% block content %}
   <h1>Hi {{ member_name }} 👋</h1>
 
-  {% if meeting and meeting.book %}
+  {% if meeting and meeting.meetingId %}
   <div class="card">
-    <strong>📅 Next meeting:</strong> <em>{{ meeting.book.title }}</em>
+    <strong>📅 Next meeting:</strong>
+    <em>{{ meeting.book.title if meeting.book else "Book not picked" }}</em>
     <span class="muted">— {{ meeting.date }}{% if meeting.pickerNames %},
-      picked by {{ meeting.pickerNames | join(' & ') }}{% endif %}</span>
+      {{ "picked" if meeting.book else "hosted" }} by
+      {{ meeting.pickerNames | join(' & ') }}{% endif %}</span>
   </div>
   {% endif %}
 

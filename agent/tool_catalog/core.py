@@ -102,7 +102,8 @@ TOOLS = [
     },
     {
         "name": "upcoming_meetings",
-        "description": "The club's upcoming/scheduled books (what we're reading next).",
+        "description": "Upcoming scheduled meetings with canonical IDs, dates, times, hosts, and "
+        "zero or more books. A meeting remains present when its book has not been picked.",
         "input_schema": {"type": "object", "properties": {}},
     },
     {

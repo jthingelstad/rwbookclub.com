@@ -29,6 +29,62 @@ def test_next_meeting_knows_current_scheduled_book():
     assert meeting["book"]["authors"] == ["Michael Pollan"]
 
 
+def test_bookless_scheduled_meeting_remains_canonical(fresh_db):
+    from agent import clubdb, context, corpus_gen, corpus_read, db
+    from agent.club import meeting_campaign, meeting_rules
+
+    meeting_id = clubdb.meeting_id_for_book_slug("a-world-appears")
+    with db.connect() as conn:
+        conn.execute("DELETE FROM club_meeting_books WHERE meeting_id = ?", (meeting_id,))
+    corpus_gen.generate()
+
+    upcoming = corpus_read.upcoming_meetings()
+    assert upcoming[0] == {
+        "meetingId": meeting_id,
+        "meetingDate": "2026-06-30",
+        "startTime": "18:30",
+        "location": "Broder’s",
+        "notes": None,
+        "type": ["Book"],
+        "hostSlugs": ["jamie"],
+        "hostNames": ["Jamie"],
+        "books": [],
+        "slug": None,
+        "title": None,
+        "authors": [],
+        "pickedBy": "Jamie",
+        "topic": None,
+    }
+
+    meeting = meeting_rules.next_meeting()
+    assert meeting["meetingId"] == meeting_id
+    assert meeting["date"] == "2026-06-30"
+    assert meeting["startTime"] == "18:30"
+    assert meeting["book"] is None
+    assert meeting["pickerSlugs"] == ["jamie"]
+
+    horizon = meeting_rules.horizon()
+    assert horizon["slots"][0]["meetingId"] == meeting_id
+    assert horizon["slots"][0]["meetingDate"] == "2026-06-30"
+    assert horizon["slots"][0]["status"] == "scheduled"
+    assert horizon["slots"][0]["dateStatus"] == "scheduled"
+    assert horizon["slots"][0]["bookStatus"] == "open"
+    assert horizon["slots"][0]["book"] is None
+    assert horizon["slots"][0]["picker"] == {"slug": "jamie", "name": "Jamie"}
+    assert horizon["scheduledCount"] == len(upcoming)
+    assert horizon["emptyCount"] == 5 - len(upcoming)
+
+    status = meeting_rules.meeting_status()
+    assert "book_not_picked" in status["risks"]
+    assert status["recommendation"] != "ready"
+    campaign = meeting_campaign.snapshot()
+    assert campaign["needsReading"] == []
+    assert any(action["kind"] == "book_pick" for action in campaign["recommendedActions"])
+    compact_context = context.club_context()
+    assert "Book not picked" in compact_context
+    assert "hosted by Jamie" in compact_context
+
+
 def test_horizon_current_fixture_matches_canonical_upcoming_books():
     from agent import corpus_read
     from agent.club import meeting_rules

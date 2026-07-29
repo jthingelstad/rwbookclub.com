@@ -50,6 +50,41 @@ class TestUpcomingMeetingsFilter:
         assert book["isRead"] is True
         assert "Patterns in Nature" in {b["title"] for b in cr.pending_reviews("tom")["books"]}
 
+    def test_multi_book_meeting_keeps_all_books_and_first_book_compatibility(self, monkeypatch):
+        from agent import corpus_read as cr
+
+        monkeypatch.setattr(
+            cr,
+            "meetings",
+            lambda: [
+                {
+                    "meetingId": 9,
+                    "date": "2026-07-28",
+                    "startTime": "18:30",
+                    "location": "Somewhere",
+                    "host": ["nick"],
+                    "books": ["first", "second"],
+                    "type": ["Book"],
+                }
+            ],
+        )
+        monkeypatch.setattr(
+            cr,
+            "books",
+            lambda: [
+                {"slug": "first", "title": "First", "authors": ["A"]},
+                {"slug": "second", "title": "Second", "authors": ["B"]},
+            ],
+        )
+        monkeypatch.setattr(cr, "members", lambda: [{"slug": "nick", "name": "Nick"}])
+        monkeypatch.setattr(cr.clock, "is_upcoming", lambda _date, _time: True)
+
+        meeting = cr.upcoming_meetings()[0]
+        assert [book["slug"] for book in meeting["books"]] == ["first", "second"]
+        assert meeting["slug"] == "first"
+        assert meeting["title"] == "First"
+        assert meeting["hostSlugs"] == ["nick"]
+
 
 # ── richer book relationships ───────────────────────────────────────────────
 class TestBookRelationships:

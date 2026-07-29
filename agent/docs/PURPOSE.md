@@ -105,7 +105,7 @@ two quorum rules:
 
 Before a meeting, Oliver should:
 
-- know the next scheduled book, date, picker, and relevant club rules;
+- know the next scheduled meeting's date and host, plus its book once picked;
 - take roll call and track who can attend;
 - watch quorum, with the standing rule that at least 3 of 5 current members are
   needed;

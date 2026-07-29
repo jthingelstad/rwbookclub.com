@@ -25,6 +25,7 @@ def _member(
     attendance_asks=0,
     reading_asks=0,
     progress=None,
+    book_assigned=True,
 ):
     last_asked = (
         None if last_asked_days is None else (TODAY - timedelta(days=last_asked_days)).isoformat()
@@ -40,6 +41,7 @@ def _member(
         "lastAskedAt": last_asked,
         "attendanceAsks": attendance_asks,
         "readingCheckinCount": reading_asks,
+        "bookAssigned": book_assigned,
     }
 
 
@@ -78,6 +80,22 @@ def test_reading_needed_until_finished_only():
     assert got["behind"]["kind"] == "reading"
     assert "done" not in got  # finished → nothing left to collect
     assert "declined" not in got  # not attending → nothing
+
+
+def test_bookless_meeting_never_starts_reading_outreach():
+    assert (
+        _plan(
+            10,
+            _member(
+                "host",
+                attendance="yes",
+                reading="unknown",
+                last_asked_days=4,
+                book_assigned=False,
+            ),
+        )
+        == []
+    )
 
 
 def test_email_only_skips_unlinked_members():

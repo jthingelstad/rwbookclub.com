@@ -10,7 +10,7 @@ from agent.tool_handlers import core, mail, meeting, memory, picking
 from agent.tool_handlers.context import RequestContext
 from agent.tools import TOOL_HANDLERS, TOOLS, dispatch
 
-SCHEMA_SHA256 = "6d6598ea539da0836f5ba0a7251f3cb5f9932d96c6a2e24bf6b9805cad694a59"
+SCHEMA_SHA256 = "6aac8228972b25717caf538ef1b4ed7080f24925e7100e6f7268b69a490cca78"
 
 
 def test_tool_schema_contract_is_unchanged():

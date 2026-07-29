@@ -37,7 +37,12 @@ def meeting_status_snapshot(actor: access.Actor, meeting_id: int | None = None) 
     if actor.is_admin:
         return status
     roll_call = status.get("rollCall")
-    shared_risks = {"quorum_not_confirmed", "quorum_impossible", "not_last_tuesday"}
+    shared_risks = {
+        "quorum_not_confirmed",
+        "quorum_impossible",
+        "book_not_picked",
+        "not_last_tuesday",
+    }
     return {
         "meeting": status["meeting"],
         "rollCall": ({"status": roll_call.get("status")} if roll_call else None),
@@ -50,7 +55,7 @@ def meeting_status_snapshot(actor: access.Actor, meeting_id: int | None = None) 
         "risks": [risk for risk in status["risks"] if risk in shared_risks],
         "recommendation": (
             "ready"
-            if status["hasQuorum"]
+            if status["hasQuorum"] and status["meeting"].get("book")
             else "needs_attention"
             if "quorum_impossible" in status["risks"]
             else "waiting"
@@ -118,7 +123,9 @@ def meeting_readiness_snapshot(actor: access.Actor) -> dict:
                 [
                     member
                     for member in campaign["members"]
-                    if member["attendance"] == "yes" and member["reading"] != "finished"
+                    if member["attendance"] == "yes"
+                    and member.get("bookAssigned", True)
+                    and member["reading"] != "finished"
                 ]
             ),
         },
@@ -261,6 +268,8 @@ def _record_reading_status(tool_input: dict, request: RequestContext):
     meeting_id = meeting["meetingId"]
     if meeting_id is None or member_id is None:
         return {"error": "no scheduled meeting to record reading status against"}
+    if not meeting.get("book"):
+        return {"error": "the next meeting is scheduled but its book has not been picked"}
     db.record_reading_report(
         meeting_id,
         member_id,
@@ -298,6 +307,8 @@ def _request_reading_update(tool_input: dict, request: RequestContext):
     member_id = clubdb.lookup_member_id(member["slug"])
     if meeting_id is None or member_id is None:
         return {"error": "no scheduled meeting to check in against"}
+    if not meeting.get("book"):
+        return {"error": "the next meeting is scheduled but its book has not been picked"}
     title = (meeting.get("book") or {}).get("title") or "the current book"
     existing = db.meeting_member_status(meeting_id, member_id)
     if existing and existing["reading"] == "finished":

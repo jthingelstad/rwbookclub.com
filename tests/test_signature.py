@@ -85,6 +85,31 @@ def test_signature_includes_time_and_location_when_set(monkeypatch):
     assert "Broder" in html  # location present (apostrophe is HTML-escaped in the html part)
 
 
+def test_signature_surfaces_bookless_scheduled_meeting(monkeypatch):
+    _setup(
+        monkeypatch,
+        upcoming=[
+            {
+                "meetingId": 186,
+                "meetingDate": "2026-09-15",
+                "startTime": "18:30",
+                "location": "Broder's",
+                "pickedBy": "Nick",
+                "title": None,
+                "slug": None,
+                "books": [],
+            }
+        ],
+        stats={"totalRead": 179},
+        books=[],
+    )
+    text, html = signature.email_signatures(today=date(2026, 7, 28), rng=random.Random(0))
+    assert "Next meeting, hosted by Nick on Tuesday, September 15 at 6:30 PM" in text
+    assert "book not picked" in text
+    assert "Next meeting, hosted by Nick" in html
+    assert "/books/" not in html
+
+
 def test_text_and_html_signatures_share_one_snapshot(monkeypatch):
     # Both MIME parts must show the same rotating fact (built from a single snapshot).
     import html as _html

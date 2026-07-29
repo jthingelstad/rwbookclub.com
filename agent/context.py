@@ -94,9 +94,11 @@ def club_context() -> str:
             bits = [when or "date TBD"]
             if u.get("location"):
                 bits.append(u["location"])
-            if u.get("pickedBy"):
+            if u.get("title") and u.get("pickedBy"):
                 bits.append(f"picked by {u['pickedBy']}")
-            parts.append(f"{u['title']} ({', '.join(bits)})")
+            elif u.get("pickedBy"):
+                bits.append(f"hosted by {u['pickedBy']}")
+            parts.append(f"{u.get('title') or 'Book not picked'} ({', '.join(bits)})")
         lines.append("Upcoming: " + "; ".join(parts) + ".")
     release = db.current_release()
     if release:

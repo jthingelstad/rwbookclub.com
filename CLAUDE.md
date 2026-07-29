@@ -122,9 +122,10 @@ migration normalized them to local, and the iCal feed (`DTSTART;TZID=America/Chi
 2026-06-30 — it was an Airtable-era "is this date real yet?" flag, obsoleted by the predictive
 last-Tuesday schedule). A meeting is *upcoming* until `start_time` (or a 6pm default) **plus a ~3h
 buffer** has passed — so the current meeting rolls to "past" the evening it happens, not at
-midnight — and the next meeting is simply the earliest one not yet past. Both `agent/clock.py` and
-`website/lib/clock.js` implement this identically. To move to the next meeting, just schedule it
-with a book; the old one rolls off on its own.
+midnight — and the next meeting is simply the earliest one not yet past, even if its book list is
+still empty. Both `agent/clock.py` and `website/lib/clock.js` implement this identically. Schedule
+the meeting record first; linking a book fills that meeting's open pick without determining whether
+the meeting itself exists. The old meeting rolls off on its own.
 
 ### Books-to-Meetings is many-to-many
 

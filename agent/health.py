@@ -80,7 +80,10 @@ def snapshot() -> dict:
             "failed": failed_jobs,
             "active": sum(bool(row["lease_owner"]) for row in job_rows),
         },
-        "nextMeeting": (meeting.get("book") or {}).get("title"),
+        "nextMeeting": (
+            (meeting.get("book") or {}).get("title")
+            or ("Book not picked" if meeting.get("meetingId") else None)
+        ),
         "daysToMeeting": days_out,
         "release": (db.current_release() or {}).get("name") or "unnamed",
     }

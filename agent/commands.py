@@ -120,6 +120,11 @@ def _linked_member_for_user(user_id: int) -> dict | None:
 
 def _reading_status_text() -> str:
     meeting = meeting_rules.next_meeting()
+    if meeting.get("meetingId") is None:
+        return "There's no scheduled meeting to show reading status for yet."
+    if not meeting.get("book"):
+        when = meeting_rules.friendly_when(meeting.get("date"), meeting.get("startTime"))
+        return f"No book has been picked yet for the next meeting on {when}."
     book = meeting.get("book") or {}
     title = book.get("title") or "the current book"
     meeting_id = meeting["meetingId"]
@@ -812,6 +817,12 @@ async def reading_status_cmd(
                 "There's no scheduled meeting to record reading status against yet.", ephemeral=True
             )
             return
+        if not meeting.get("book"):
+            await interaction.response.send_message(
+                "The next meeting is scheduled, but its book has not been picked yet.",
+                ephemeral=True,
+            )
+            return
         db.record_reading_report(
             meeting_id,
             member_id,
@@ -856,10 +867,20 @@ async def reading_checkin_cmd(
         await interaction.response.send_message("Email is not configured.", ephemeral=True)
         return
     meeting = meeting_rules.next_meeting()
-    book = meeting.get("book") or {}
-    title = book.get("title") or "the current book"
     meeting_id = meeting["meetingId"]
     member_id = clubdb.lookup_member_id(m["slug"])
+    if meeting_id is None or member_id is None:
+        await interaction.response.send_message(
+            "There's no scheduled meeting to check in against yet.", ephemeral=True
+        )
+        return
+    if not meeting.get("book"):
+        await interaction.response.send_message(
+            "The next meeting is scheduled, but its book has not been picked yet.", ephemeral=True
+        )
+        return
+    book = meeting.get("book") or {}
+    title = book.get("title") or "the current book"
     existing = (
         db.meeting_member_status(meeting_id, member_id)
         if (meeting_id is not None and member_id is not None)

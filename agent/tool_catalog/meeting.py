@@ -32,8 +32,9 @@ TOOLS = [
     },
     {
         "name": "current_meeting_status",
-        "description": "The source of truth for the NEXT meeting: its canonical date, the book, "
-        "and the picker, plus aggregate roll-call status under club rules. "
+        "description": "The source of truth for the NEXT meeting: its canonical date/time, host, "
+        "and book when picked, plus aggregate roll-call status under club rules. A scheduled "
+        "meeting remains present with book=null while its pick is open. "
         "A member sees only their own attendance row; admin sees the full roster. "
         "Call this to verify any meeting date/time/book a member states. Read-only.",
         "input_schema": {"type": "object", "properties": {}},

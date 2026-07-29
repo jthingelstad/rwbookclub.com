@@ -149,7 +149,8 @@ def _fixture_facts() -> str:
         authors = ", ".join(meeting.get("authors") or [])
         author_note = f" by {authors}" if authors else ""
         picker_note = f", picked by {meeting['pickedBy']}" if meeting.get("pickedBy") else ""
-        next_pick = f"{meeting['title']}{author_note} on {meeting.get('meetingDate')}{picker_note}"
+        title = meeting.get("title") or "Book not picked"
+        next_pick = f"{title}{author_note} on {meeting.get('meetingDate')}{picker_note}"
     return (
         f"Fixture truth: {stats['totalRead']} completed books "
         f"({stats['fiction']} fiction, {stats['nonfiction']} non-fiction; {nonfiction_pct}% non-fiction), "

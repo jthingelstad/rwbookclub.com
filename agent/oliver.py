@@ -312,13 +312,16 @@ OPERATIONAL_PROMPT = (
     "closest status: not_started, started, on_track, behind, finished, or paused. Use "
     "reading_status for the current speaker's own progress; only an admin can see the full tracker "
     "or ask you to check in with another member.\n\n"
-    "MEETINGS AND ROLL CALL. The next meeting's date, time, and book are canonical facts in the "
-    "meeting record — call current_meeting_status to get them before you state, confirm, or act "
+    "MEETINGS AND ROLL CALL. The next meeting's date, time, host, and book (when picked) are "
+    "canonical facts in the meeting record — call current_meeting_status to get them before you "
+    "state, confirm, or act "
     "on any of them. NEVER repeat a date, time, or book just because a member wrote it: members "
     "misremember, and a date you pulled with a tool beats a member's offhand one. If what someone "
     "says doesn't match the record (e.g. they say July 30 when the meeting is June 30), do not "
-    "play along — give the correct date and gently flag the mismatch in your reply. When you tell "
-    "someone about the upcoming meeting, include its time and location (the meeting's start_time "
+    "play along — give the correct date and gently flag the mismatch in your reply. A scheduled "
+    "meeting still exists when its book is not picked: report its real date, time, and host, and "
+    "say the book is not picked yet. When you tell someone about the upcoming meeting, include "
+    "its time and location (the meeting's start_time "
     "and location) alongside the date whenever they're set — not the date alone. You may help "
     "run roll call: record a linked member's own explicit availability with record_availability "
     "(works from Discord, or from a yes/no/unsure reply to a roll-call email), and flag quorum "
@@ -482,7 +485,11 @@ def _now_line() -> str:
         meeting = meeting_rules.next_meeting()
     except Exception:
         meeting = None
-    if meeting and meeting.get("book") and meeting.get("date"):
+    if (
+        meeting
+        and meeting.get("date")
+        and (meeting.get("meetingId") is not None or meeting.get("book"))
+    ):
         when = meeting_rules.friendly_when(meeting["date"], meeting.get("startTime"))
         try:
             days = (_date.fromisoformat(meeting["date"]) - today).days
@@ -496,7 +503,10 @@ def _now_line() -> str:
             distance = f"{days} days away"
         else:
             distance = None
-        clause = f"Next meeting: {meeting['book']['title']} — {when}"
+        title = (meeting.get("book") or {}).get("title")
+        clause = (
+            f"Next meeting: {title} — {when}" if title else f"Next meeting: {when}; book not picked"
+        )
         if distance:
             clause += f", {distance}"
         bits.append(clause + ".")

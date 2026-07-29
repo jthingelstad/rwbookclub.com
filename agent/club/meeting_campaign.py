@@ -31,6 +31,7 @@ def snapshot() -> dict:
     meeting_status = meeting_rules.meeting_status()
     meeting = meeting_status["meeting"]
     meeting_id = meeting["meetingId"]
+    has_book = bool(meeting.get("book"))
     status_rows = {
         r["member_id"]: r
         for r in (
@@ -70,12 +71,15 @@ def snapshot() -> dict:
             "readingLastAskedAt": srow.get("reading_last_asked_at") if srow else None,
             "attendanceAsks": (srow.get("attendance_asks") if srow else 0) or 0,
             "readingCheckinCount": (srow.get("reading_asks") if srow else 0) or 0,
+            "bookAssigned": has_book,
         }
         if row["status"] == "pending":
             combined["nextAction"] = "roll_call"
             needs_roll_call.append(combined)
         elif row["status"] == "yes":
-            if reading_ok:
+            if not has_book:
+                combined["nextAction"] = "none"
+            elif reading_ok:
                 combined["nextAction"] = "none"
                 attending_reading_ok += 1
             else:
@@ -162,7 +166,11 @@ def _outreach_kind(member: dict) -> str | None:
     attendance = member.get("attendance")
     if attendance in ("pending", "unsure"):
         return "attendance"
-    if attendance == "yes" and member.get("reading") != "finished":
+    if (
+        attendance == "yes"
+        and member.get("bookAssigned", True)
+        and member.get("reading") != "finished"
+    ):
         return "reading"
     return None
 
@@ -274,6 +282,15 @@ def _recommended_actions(
                 "kind": "picker_roll_call",
                 "label": f"Confirm picker attendance with {names}.",
                 "members": [m["memberSlug"] for m in pickers],
+            }
+        )
+
+    if "book_not_picked" in meeting_status["risks"]:
+        names = ", ".join(meeting_status["meeting"].get("pickerNames") or []) or "the host"
+        actions.append(
+            {
+                "kind": "book_pick",
+                "label": f"The meeting is scheduled, but {names} has not linked a book yet.",
             }
         )
 

@@ -540,6 +540,23 @@ class TestDispatchHappyPaths:
         assert result["sent"] is False
         assert "already marked finished" in result["reason"]
 
+    def test_bookless_meeting_rejects_reading_status_write(self, monkeypatch):
+        from agent.club import meeting_rules
+        from agent.tools import dispatch
+
+        monkeypatch.setattr(
+            meeting_rules,
+            "next_meeting",
+            lambda: {
+                "meetingKey": "186",
+                "meetingId": 186,
+                "date": "2026-09-15",
+                "book": None,
+            },
+        )
+        result = json.loads(dispatch("record_reading_status", {"status": "started"}, JAMIE_CTX))
+        assert result == {"error": "the next meeting is scheduled but its book has not been picked"}
+
     def test_meeting_readiness_combines_attendance_and_reading(self, fresh_db):
         from agent.club import meeting_rules
         from agent.tools import dispatch

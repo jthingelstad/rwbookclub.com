@@ -811,24 +811,63 @@ def member_history(name_or_slug: str) -> dict | None:
 
 
 def upcoming_meetings() -> list[dict]:
-    """Meetings that haven't happened yet, earliest first. "Upcoming" is derived from the
-    meeting's local date+time (see agent.clock): a meeting drops off once its start + buffer has
-    passed. The predictive last-Tuesday schedule sets the dates; there is no placeholder flag."""
-    future = [b for b in books() if b.get("isUpcoming")]
-    future.sort(key=lambda b: b.get("meetingDate") or "")
-    return [
-        {
-            "slug": b.get("slug"),
-            "title": b.get("title"),
-            "authors": b.get("authors") or [],
-            "meetingDate": b.get("meetingDate"),
-            "startTime": b.get("meetingStartTime"),
-            "location": b.get("meetingLocation"),
-            "pickedBy": b.get("pickerName"),
-            "topic": b.get("topic"),
-        }
-        for b in future
-    ]
+    """Scheduled meetings that haven't happened yet, earliest first.
+
+    Meetings are authoritative here, not books: a real date/time/host remains visible while its
+    book list is empty. The legacy top-level book fields describe the first linked book for
+    compatibility; ``books`` carries every linked book and is empty when the pick is still open.
+    "Upcoming" is derived from the meeting's local date/time (see :mod:`agent.clock`).
+    """
+    books_by_slug = {book["slug"]: book for book in books()}
+    members_by_slug = {member["slug"]: member for member in members()}
+    future = []
+    for meeting in meetings():
+        meeting_date = meeting.get("date")
+        start_time = meeting.get("startTime")
+        if not clock.is_upcoming(meeting_date, start_time):
+            continue
+        linked_books = [
+            books_by_slug[slug] for slug in meeting.get("books") or [] if slug in books_by_slug
+        ]
+        book_summaries = [
+            {
+                "slug": book.get("slug"),
+                "title": book.get("title"),
+                "authors": book.get("authors") or [],
+                "topic": book.get("topic"),
+            }
+            for book in linked_books
+        ]
+        first_book = linked_books[0] if linked_books else {}
+        host_slugs = [slug for slug in meeting.get("host") or [] if slug in members_by_slug]
+        host_names = [members_by_slug[slug].get("name") for slug in host_slugs]
+        future.append(
+            {
+                "meetingId": meeting.get("meetingId"),
+                "meetingDate": meeting_date,
+                "startTime": start_time,
+                "location": meeting.get("location"),
+                "notes": meeting.get("notes"),
+                "type": meeting.get("type") or [],
+                "hostSlugs": host_slugs,
+                "hostNames": host_names,
+                "books": book_summaries,
+                # Compatibility for consumers that display one "next book".
+                "slug": first_book.get("slug"),
+                "title": first_book.get("title"),
+                "authors": first_book.get("authors") or [],
+                "pickedBy": host_names[0] if host_names else None,
+                "topic": first_book.get("topic"),
+            }
+        )
+    future.sort(
+        key=lambda meeting: (
+            meeting.get("meetingDate") or "",
+            meeting.get("startTime") or "",
+            meeting.get("meetingId") or 0,
+        )
+    )
+    return future
 
 
 def club_stats() -> dict:

@@ -33,6 +33,35 @@ def test_now_line_counts_days(monkeypatch):
     assert "10 days away" in oliver._now_line()
 
 
+def test_now_line_names_bookless_scheduled_meeting(monkeypatch):
+    monkeypatch.setattr(
+        oliver.meeting_rules,
+        "next_meeting",
+        lambda: {
+            "meetingId": 186,
+            "date": "2026-09-15",
+            "startTime": "18:30",
+            "book": None,
+        },
+    )
+    line = oliver._now_line()
+    assert "Next meeting: Tuesday, September 15 at 6:30 PM; book not picked" in line
+
+
+def test_now_line_does_not_present_an_inferred_date_as_scheduled(monkeypatch):
+    monkeypatch.setattr(
+        oliver.meeting_rules,
+        "next_meeting",
+        lambda: {
+            "meetingId": None,
+            "date": "2026-09-29",
+            "startTime": None,
+            "book": None,
+        },
+    )
+    assert "Next meeting:" not in oliver._now_line()
+
+
 def test_now_line_holiday_today_and_eve(monkeypatch):
     _freeze(monkeypatch, 2026, 7, 4)
     assert "Today is Independence Day." in oliver._now_line()

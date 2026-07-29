@@ -74,11 +74,12 @@ def _current_members() -> list[dict]:
 
 
 def horizon(depth: int = 5) -> dict:
-    """Read-only scheduled-book runway plus fair-recency pickers for open slots.
+    """Read-only meeting/book runway plus fair-recency pickers for open slots.
 
-    Scheduled upcoming books stay authoritative. Empty slots are awareness only: current members
-    are ordered by their least-recently scheduled pick, excluding anyone already represented in
-    the scheduled portion before cycling into a second round for depths beyond membership size.
+    Scheduled upcoming meetings stay authoritative even when their book is still open. Other
+    empty slots are awareness only: current members are ordered by their least-recently scheduled
+    pick, excluding anyone already represented in the meeting portion before cycling into a second
+    round for depths beyond membership size.
     """
     depth = max(1, min(int(depth), 8))
     current = _current_members()
@@ -115,22 +116,31 @@ def horizon(depth: int = 5) -> dict:
     scheduled_pickers: set[str] = set()
     for upcoming in corpus_read.upcoming_meetings()[:depth]:
         book = corpus_read.find_book(upcoming.get("slug") or upcoming.get("title")) or {}
-        picker_slugs = [slug for slug in (book.get("pickerSlugs") or []) if slug]
+        picker_slugs = [
+            slug for slug in (upcoming.get("hostSlugs") or book.get("pickerSlugs") or []) if slug
+        ]
         scheduled_pickers.update(slug for slug in picker_slugs if slug in members_by_slug)
         pickers = [
             {"slug": slug, "name": members_by_slug.get(slug, {}).get("name")}
             for slug in picker_slugs
         ]
         placeholder = bool(upcoming.get("placeholder"))
+        book_summary = (
+            {
+                "slug": upcoming.get("slug"),
+                "title": upcoming.get("title"),
+                "authors": upcoming.get("authors") or [],
+            }
+            if upcoming.get("slug") or upcoming.get("title")
+            else None
+        )
         slots.append(
             {
                 "position": len(slots) + 1,
                 "status": "scheduled",
-                "book": {
-                    "slug": upcoming.get("slug"),
-                    "title": upcoming.get("title"),
-                    "authors": upcoming.get("authors") or [],
-                },
+                "meetingId": upcoming.get("meetingId"),
+                "book": book_summary,
+                "bookStatus": "picked" if book_summary else "open",
                 "meetingDate": upcoming.get("meetingDate"),
                 "placeholder": placeholder,
                 "dateStatus": "soft" if placeholder else "scheduled",
@@ -155,6 +165,7 @@ def horizon(depth: int = 5) -> dict:
                 "position": len(slots) + 1,
                 "status": "empty",
                 "book": None,
+                "bookStatus": "open",
                 "meetingDate": None,
                 "placeholder": False,
                 "dateStatus": "open",
@@ -177,26 +188,37 @@ def horizon(depth: int = 5) -> dict:
 
 def next_meeting() -> dict:
     upcoming = corpus_read.upcoming_meetings()
+    scheduled = upcoming[0] if upcoming else None
     book = None
-    if upcoming:
-        meeting_book = corpus_read.find_book(upcoming[0]["title"])
+    if scheduled and (scheduled.get("slug") or scheduled.get("title")):
+        meeting_book = corpus_read.find_book(scheduled.get("slug") or scheduled.get("title"))
         if meeting_book:
             book = meeting_book
 
     inferred_date = next_last_tuesday().isoformat()
-    meeting_date = (book or {}).get("meetingDate") or inferred_date
+    meeting_date = (scheduled or {}).get("meetingDate") or inferred_date
     book_slug = (book or {}).get("slug")
     meeting_key = book_slug or meeting_date[:10]
-    picker_slugs = [s for s in ((book or {}).get("pickerSlugs") or []) if s]
-    picker_names = (book or {}).get("pickerNames") or []
-    meeting_id = clubdb.meeting_id_for_book_slug(book_slug)
+    picker_slugs = [
+        s
+        for s in ((scheduled or {}).get("hostSlugs") or (book or {}).get("pickerSlugs") or [])
+        if s
+    ]
+    picker_names = (scheduled or {}).get("hostNames") or (book or {}).get("pickerNames") or []
+    meeting_id = (scheduled or {}).get("meetingId") or clubdb.meeting_id_for_book_slug(book_slug)
+    picker_ids = [
+        member_id
+        for slug in picker_slugs
+        if (member_id := clubdb.lookup_member_id(slug)) is not None
+    ]
     return {
         "meetingKey": meeting_key,
         "meetingId": meeting_id,
-        "pickerIds": clubdb.picker_ids_for_book_slug(book_slug),
+        "pickerIds": picker_ids or clubdb.picker_ids_for_book_slug(book_slug),
         "date": meeting_date[:10],
-        "startTime": clubdb.start_time_for_meeting(meeting_id),
-        "location": clubdb.location_for_meeting(meeting_id),
+        "startTime": (scheduled or {}).get("startTime")
+        or clubdb.start_time_for_meeting(meeting_id),
+        "location": (scheduled or {}).get("location") or clubdb.location_for_meeting(meeting_id),
         "expectedRuleDate": last_tuesday(int(meeting_date[:4]), int(meeting_date[5:7])).isoformat()
         if meeting_date
         else inferred_date,
@@ -207,6 +229,7 @@ def next_meeting() -> dict:
         }
         if book
         else None,
+        "books": (scheduled or {}).get("books") or [],
         "pickerSlugs": picker_slugs,
         "pickerNames": picker_names,
     }
@@ -266,10 +289,12 @@ def meeting_status(meeting_id: int | None = None) -> dict:
         risks.append("picker_unavailable")
     elif picker_pending:
         risks.append("picker_not_confirmed")
+    if meeting.get("meetingId") is not None and not meeting.get("book"):
+        risks.append("book_not_picked")
     if meeting["date"] != meeting["expectedRuleDate"]:
         risks.append("not_last_tuesday")
 
-    if has_quorum and picker_available:
+    if has_quorum and picker_available and meeting.get("book"):
         recommendation = "ready"
     elif quorum_impossible or picker_declined:
         recommendation = "needs_attention"
@@ -320,14 +345,15 @@ def format_status(status: dict) -> str:
         )
     if meeting.get("pickerNames"):
         picker = ", ".join(meeting["pickerNames"])
+        role = "picker" if meeting.get("book") else "host"
         if status["pickerAvailable"]:
-            lines.append(f"The picker ({picker}) is confirmed attending.")
+            lines.append(f"The {role} ({picker}) is confirmed attending.")
         elif "picker_unavailable" in status["risks"]:
-            lines.append(
-                f"The picker ({picker}) cannot attend, so reading order may need attention."
-            )
+            lines.append(f"The {role} ({picker}) cannot attend, so the meeting may need attention.")
         else:
-            lines.append(f"The picker ({picker}) is not confirmed yet.")
+            lines.append(f"The {role} ({picker}) is not confirmed yet.")
+    if "book_not_picked" in status["risks"]:
+        lines.append("No book has been picked for this meeting yet.")
     if "not_last_tuesday" in status["risks"]:
         lines.append(
             f"Note: the corpus date is {meeting['date']}, but the last Tuesday is "
