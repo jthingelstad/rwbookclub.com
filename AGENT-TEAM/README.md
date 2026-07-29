@@ -28,7 +28,7 @@ AGENT-TEAM/
 |------|------|------|----------|
 | Product Manager | `product-manager.md` | Discovers what's worth building (the approval gate) | No — issue-only |
 | Build Manager | `build-manager.md` | Works the backlog into tested changes | **Yes — owns feature/bug code** |
-| Evaluator | `evaluator.md` | Rubrics, golden conversations, regression tests | Yes — evals & tests only |
+| Evaluator | `evaluator.md` | Read-only Discord/email audits, rubrics, goldens, regressions | Yes — evals & tests only |
 | Operations Manager | `operations-manager.md` | Bot health + site publish/deploy | Yes — ops fixes + deploys |
 | Manager | `manager.md` | Weekly meta-review of the team itself | Own `summaries/` only |
 | Club Ethnographer | `club-ethnographer.md` | Club culture, member taste, tone, book-judgment | No — issue-only |
@@ -72,14 +72,15 @@ issues + `work/` + the Manager's `summaries/`; ephemeral = `notes/`.
 
 ## Suggested cadence
 
-Recommended defaults — the actual scheduling lives in Codex/Claude routines. All times
-America/Chicago.
+Recommended defaults are below. Active Codex activity settings that belong to this team are
+recorded in `automations.toml`; that registry is descriptive and must match the actual Codex
+activity. All times America/Chicago.
 
 | Role | Cadence |
 |------|---------|
 | Operations Manager | Hourly (or every few hours) — bot + site health |
 | Build Manager | Daily — backlog burn-down |
-| Evaluator | Weekly + after any behavior/prompt/workflow change |
+| Evaluator | Friday 14:30 + after any behavior/prompt/workflow change |
 | Product Manager | Weekly — discovery |
 | Club Ethnographer | Weekly (or when a change touches tone/memory/selection) |
 | Manager | Weekly — team-health review + notes digest |

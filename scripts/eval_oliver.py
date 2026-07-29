@@ -1,12 +1,15 @@
-"""End-to-end evaluation of Oliver: generate test questions via Sonnet, run them
-through the live agent loop with tool-call tracing, judge the results via Sonnet,
-and append a round to `agent/logs/oliver-eval-log.md` (gitignored — it's generated output).
+"""Synthetic end-to-end evaluation of Oliver under the external Evaluator role.
 
-    python -m tests.eval --round 1 --note "baseline"
+Generate test questions via Sonnet, run them through a scratch copy of Oliver's
+agent loop with tool-call tracing, judge the results via Sonnet, and write local
+JSON plus Markdown results under ``AGENT-TEAM/notes/evaluator``.
+
+    uv run --locked python scripts/eval_oliver.py --round 1 --note "baseline"
 
 Uses per-process scratch SQLite and corpus paths so live Oliver state isn't touched.
 Multi-turn conversations use a single channel_id across turns so the rolling
-summary + per-channel history exercise context retention.
+summary + per-channel history exercise context retention. Live delivery credentials
+and member-facing cadence switches are disabled before any agent module imports.
 """
 
 from __future__ import annotations
@@ -18,10 +21,15 @@ import json
 import os
 import pathlib
 import shutil
+import sys
 import tempfile
 import time
-import uuid
+from dataclasses import dataclass
 from datetime import datetime, timezone
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 # Use a unique scratch DB and corpus — set BEFORE importing any agent module so
 # db.py and corpus.paths pick them up. A unique directory makes concurrent eval
@@ -31,6 +39,11 @@ SCRATCH_DB = SCRATCH_ROOT / "oliver.db"
 SCRATCH_CORPUS = SCRATCH_ROOT / "corpus"
 os.environ["OLIVER_DB_PATH"] = str(SCRATCH_DB)
 os.environ["OLIVER_CORPUS_DIR"] = str(SCRATCH_CORPUS)
+os.environ["OLIVER_ENRICH_ON_WRITE"] = "0"
+os.environ["FASTMAIL_JMAP_TOKEN"] = ""
+os.environ["DISCORD_BOT_TOKEN"] = ""
+os.environ["CLUB_EMAIL_CADENCE_ENABLED"] = "0"
+os.environ["CLUB_POSTSCRIPT_ENABLED"] = "0"
 atexit.register(shutil.rmtree, SCRATCH_ROOT, ignore_errors=True)
 
 import anthropic  # noqa: E402
@@ -43,9 +56,26 @@ from agent import (  # noqa: E402
 )
 from agent import oliver as oliver_mod  # noqa: E402
 
+
+def _forbid_delivery(*args, **kwargs):
+    raise AssertionError("synthetic evaluator attempted to use a production delivery path")
+
+
+# Oliver's tool registry imports transport modules transitively. Replace their external actions
+# before any case runs so even a surprising model tool choice fails closed instead of sending.
+for _module_name, _actions in {
+    "agent.mail.outbound": ("send", "deliver_outbox_row"),
+    "agent.mail.email_jmap": ("send_email", "unread_oliver_email", "mark_seen"),
+}.items():
+    _module = sys.modules.get(_module_name)
+    if _module is not None:
+        for _action in _actions:
+            setattr(_module, _action, _forbid_delivery)
+
 CLIENT = anthropic.Anthropic()
 MODEL = "claude-sonnet-5"
-LOG_PATH = pathlib.Path("agent/logs/oliver-eval-log.md")  # gitignored (agent/logs/)
+RESULTS_ROOT = ROOT / "AGENT-TEAM" / "notes" / "evaluator" / "synthetic"
+LOG_PATH = RESULTS_ROOT / "oliver-eval-log.md"
 FAKE_MEMBER_IDS = {
     "Jamie": "eval-user-jamie",
     "Erik": "eval-user-erik",
@@ -55,17 +85,29 @@ FAKE_MEMBER_IDS = {
 }
 
 GOLDEN_SINGLE = [
-    {"category": "identity", "speaker": "Jamie", "question": "who do you think is asking?"},
+    {
+        "category": "identity",
+        "speaker": "Jamie",
+        "question": "who do you think is asking?",
+        "expected": "Recognize the trusted linked speaker as Jamie; no context lookup is needed.",
+    },
     {
         "category": "memory",
         "speaker": "Nick",
         "question": "remember that I like weird infrastructure books",
+        "expected": "Save this durable preference for Nick and acknowledge it briefly.",
     },
-    {"category": "grounding", "speaker": "Tom", "question": "what are we reading next?"},
+    {
+        "category": "grounding",
+        "speaker": "Tom",
+        "question": "what are we reading next?",
+        "expected": "Use club tools and report the actual next scheduled book or open pick.",
+    },
     {
         "category": "past_placeholder",
         "speaker": "Jamie",
         "question": "did we already read Patterns in Nature?",
+        "expected": "Distinguish a future scheduled title from a completed club read.",
     },
 ]
 
@@ -73,6 +115,11 @@ GOLDEN_MULTI = [
     {
         "category": "multi_turn_grounding",
         "speaker": "Loren",
+        "expected": [
+            "Identify the author's completed club reads; verify read status if the author result is ambiguous.",
+            "Use the prior turn and book facts to identify the most recent completed read.",
+            "Answer with the grounded picker, who is also the meeting host in this club.",
+        ],
         "turns": [
             "Have we read anything by Michael Pollan?",
             "Which one was most recent?",
@@ -82,12 +129,68 @@ GOLDEN_MULTI = [
     {
         "category": "memory_followup",
         "speaker": "Nick",
+        "expected": [
+            "Save Nick's durable aversion to generic business books.",
+            "Use that saved preference and ground any club-specific recommendation.",
+        ],
         "turns": [
             "remember that I bounce off business books unless they are really sharp",
             "based on that, what club read would you steer me away from?",
         ],
     },
 ]
+
+GOLDEN_EMAIL = [
+    {
+        "category": "direct_email_grounding",
+        "surface": "direct_email",
+        "speaker": "Tom",
+        "subject": "Next meeting",
+        "body": "What are we reading next, and when do we meet?",
+        "expected_reply": True,
+        "expected": "Reply privately with the grounded next meeting and book/open-pick state.",
+    },
+    {
+        "category": "mailing_list_direct_question",
+        "surface": "mailing_list",
+        "speaker": "Tom",
+        "subject": "Re: next meeting",
+        "body": "Oliver, what are we reading next?",
+        "expected_reply": True,
+        "expected": "Reply publicly because Oliver is directly addressed; ground the answer.",
+    },
+    {
+        "category": "mailing_list_restraint",
+        "surface": "mailing_list",
+        "speaker": "Nick",
+        "subject": "Re: next meeting",
+        "body": "Does anyone know when the next meeting is?",
+        "expected_reply": False,
+        "expected": "Stay silent because the group, not Oliver, was asked.",
+    },
+]
+
+
+@dataclass(frozen=True)
+class SyntheticInboundEmail:
+    """The structural subset mailing-list evaluation needs, with no mail-client import."""
+
+    id: str
+    thread_id: str
+    message_id: str
+    from_name: str
+    from_email: str
+    to: list[str]
+    cc: list[str]
+    reply_to: list[str]
+    subject: str
+    text: str
+    received_at: str
+    references: list[str]
+
+    @property
+    def speaker(self) -> str:
+        return self.from_name
 
 
 # ── Tool-call tracing ────────────────────────────────────────────────────────
@@ -144,6 +247,7 @@ def _fixture_facts() -> str:
         round(100 * stats["nonfiction"] / stats["totalRead"]) if stats["totalRead"] else 0
     )
     next_pick = "none scheduled"
+    upcoming_schedule = "none scheduled"
     if upcoming:
         meeting = upcoming[0]
         authors = ", ".join(meeting.get("authors") or [])
@@ -151,12 +255,19 @@ def _fixture_facts() -> str:
         picker_note = f", picked by {meeting['pickedBy']}" if meeting.get("pickedBy") else ""
         title = meeting.get("title") or "Book not picked"
         next_pick = f"{title}{author_note} on {meeting.get('meetingDate')}{picker_note}"
+        upcoming_schedule = "; ".join(
+            f"{item.get('meetingDate')} {item.get('startTime') or 'time TBD'} — "
+            f"{item.get('title') or 'Book not picked'}"
+            + (f", hosted/picked by {item['pickedBy']}" if item.get("pickedBy") else "")
+            for item in upcoming[:4]
+        )
     return (
         f"Fixture truth: {stats['totalRead']} completed books "
         f"({stats['fiction']} fiction, {stats['nonfiction']} non-fiction; {nonfiction_pct}% non-fiction), "
         f"{len(corpus_read.meetings())} meetings, {len(members)} current human members "
         f"({', '.join(m['name'] for m in members)}), {review_count} reviews, "
-        f"lists: {', '.join(list_names) or 'none'}. Next scheduled pick: {next_pick}."
+        f"lists: {', '.join(list_names) or 'none'}. Next scheduled pick: {next_pick}. "
+        f"Upcoming schedule carried in Oliver's cache: {upcoming_schedule}."
     )
 
 
@@ -244,10 +355,15 @@ JUDGE_SYSTEM = (
     "carries the club's top-line totals and a per-member picks/meetings-hosted line (e.g. "
     '"Tom: 32 picks, 35 hosted"), so Oliver stating a member\'s pick or host count, or the '
     "club total, WITHOUT a visible tool call can be grounded in that cache — don't auto-flag "
-    "those numbers as fabricated. (2) web_search is an Anthropic "
+    "those numbers as fabricated. That same cached system context carries up to four upcoming "
+    "meetings with exact local date/time, location when known, title or open-pick state, and "
+    "picker/host; no tool call is required to state those cached facts. (2) Every interaction also "
+    "carries a hidden [Now] line with the exact club-local date and time, so natural current-time "
+    "phrasing is grounded even though it is absent from the tool trace. (3) web_search is an "
+    "Anthropic "
     "SERVER-SIDE tool whose calls do NOT appear in the tool trace above — so when Oliver leads "
     "with 'from a quick search…' and states a world fact, assume it MAY have searched; judge "
-    "whether the claim is plausibly TRUE, not whether you see a search call. (3) Your own "
+    "whether the claim is plausibly TRUE, not whether you see a search call. (4) Your own "
     "training has a cutoff: do NOT mark a specific recent book (2024–2025 titles), author work, "
     "or fact as 'fabricated' just because you don't recognize it — if you cannot verify it, call "
     "it 'unverified' at most, and do not tank accuracy over it.\n\n"
@@ -261,8 +377,12 @@ JUDGE_SYSTEM = (
     "public history) he may speak from general knowledge but must lead with an explicit "
     'off-corpus marker ("outside our reading list…" / "not in our corpus, but…"). '
     "Persona: warm, opinionated, brief (≤3 sentences usually), no markdown headings, "
-    "no help-desk tone, no sign-offs. Italics around book titles in Discord are fine. "
-    "Identity/memory: should use linked member identity when supplied, remember durable "
+    "no help-desk tone, no sign-offs. A brief greeting is natural in direct email; the runtime "
+    "adds Oliver's signature. Italics around book titles in Discord or email are fine. On the "
+    "mailing list, replying to an unaddressed group discussion is itself a critical failure. "
+    "In this club's canonical data model, the meeting host is the picker; a grounded picker name "
+    "may therefore be described as the host without a second lookup. Identity/memory: should use "
+    "linked member identity when supplied, remember durable "
     "member preferences when explicitly useful, and not invent personal facts."
 )
 
@@ -273,7 +393,9 @@ def _judge_system() -> str:
 
 JUDGE_USER = """Evaluate this interaction.
 
+Surface: {surface}
 Speaker: {speaker}
+Committed scenario expectation: {expected}
 Question: {question}
 {prior_block}
 Tool calls (in order):
@@ -295,7 +417,9 @@ Return ONLY valid JSON:
 {{"tool_choice": int, "accuracy": int, "relevance": int, "tone": int, "identity_memory": int{context_field}, "critical_issues": [strings], "notes": "1–2 sentence assessment"}}"""
 
 
-def judge_interaction(question, speaker, tools, reply, prior_turns=None):
+def judge_interaction(
+    question, speaker, tools, reply, prior_turns=None, *, surface="discord", expected=None
+):
     if prior_turns:
         prior_lines = "\nPrior turns in this conversation:\n"
         for i, t in enumerate(prior_turns, 1):
@@ -315,27 +439,34 @@ def judge_interaction(question, speaker, tools, reply, prior_turns=None):
         )
         or "  (none)"
     )
-    msg = CLIENT.messages.create(
-        model=MODEL,
-        max_tokens=1024,
-        system=_judge_system(),
-        messages=[
-            {
-                "role": "user",
-                "content": JUDGE_USER.format(
-                    speaker=speaker,
-                    question=question,
-                    prior_block=prior_block,
-                    tools_block=tools_block,
-                    response=reply,
-                    context_axis=context_axis,
-                    context_field=context_field,
-                ),
-            }
-        ],
+    prompt = JUDGE_USER.format(
+        surface=surface,
+        speaker=speaker,
+        expected=expected or "No extra expectation; apply the general rubric.",
+        question=question,
+        prior_block=prior_block,
+        tools_block=tools_block,
+        response=reply,
+        context_axis=context_axis,
+        context_field=context_field,
     )
-    text = "".join(b.text for b in msg.content if getattr(b, "type", None) == "text")
-    return _parse_json(text)
+    failures = []
+    for _ in range(2):
+        msg = CLIENT.messages.create(
+            model=MODEL,
+            max_tokens=2048,
+            system=_judge_system(),
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = "".join(b.text for b in msg.content if getattr(b, "type", None) == "text")
+        try:
+            return _parse_json(text)
+        except (json.JSONDecodeError, ValueError) as exc:
+            failures.append(
+                f"stop={msg.stop_reason} blocks={[getattr(b, 'type', None) for b in msg.content]} "
+                f"parse={type(exc).__name__}"
+            )
+    raise RuntimeError("judge did not return valid JSON after two attempts: " + "; ".join(failures))
 
 
 # ── Running interactions ─────────────────────────────────────────────────────
@@ -362,6 +493,95 @@ def run_multi(conv: dict, channel_id: str) -> list[dict]:
             )
         out.append({"question": turn, "speaker": conv["speaker"], "tools": tools, "reply": reply})
     return out
+
+
+def _email_fixture(case: dict, case_id: str) -> SyntheticInboundEmail:
+    speaker = case["speaker"]
+    return SyntheticInboundEmail(
+        id=f"eval-{case_id}",
+        thread_id=f"eval-thread-{case_id}",
+        message_id=f"eval-{case_id}@example.invalid",
+        from_name=speaker,
+        from_email=f"{speaker.lower()}@example.invalid",
+        to=["rwbookclub@example.invalid"],
+        cc=[],
+        reply_to=["rwbookclub@example.invalid"],
+        subject=case["subject"],
+        text=case["body"],
+        received_at="2026-06-29T12:00:00Z",
+        references=[],
+    )
+
+
+def run_email(case: dict, case_id: str) -> dict:
+    msg = _email_fixture(case, case_id)
+    with trace_dispatch() as tools:
+        if case["surface"] == "mailing_list":
+            result = oliver_mod.answer_mailing_list_email(
+                msg,
+                channel_id=f"email:list:{msg.thread_id}",
+                speaker=case["speaker"],
+                speaker_user_id=f"member:{case['speaker'].lower()}",
+                source_message_id=msg.id,
+            )
+            reply = result.body
+            replied = result.reply
+            reason = result.reason
+        else:
+            prompt = (
+                f"[Email from {case['speaker']} <{msg.from_email}>]\n"
+                f"Subject: {case['subject']}\n\n{case['body']}"
+            )
+            reply = oliver_mod.answer(
+                prompt,
+                channel_id=f"email:{msg.thread_id}",
+                speaker=case["speaker"],
+                speaker_user_id=f"member:{case['speaker'].lower()}",
+                source_message_id=msg.id,
+                medium="email",
+                max_tokens=oliver_mod.EMAIL_MAX_TOKENS,
+                persist=False,
+            )
+            replied = True
+            reason = None
+    return {**case, "tools": tools, "reply": reply, "replied": replied, "reason": reason}
+
+
+def judge_email(result: dict) -> dict:
+    expected = bool(result["expected_reply"])
+    if bool(result["replied"]) != expected:
+        wanted = "reply" if expected else "stay silent"
+        actual = "replied" if result["replied"] else "stayed silent"
+        return {
+            "tool_choice": 1,
+            "accuracy": 1,
+            "relevance": 1,
+            "tone": 1,
+            "identity_memory": 1,
+            "critical_issues": [
+                f"Reply decision failed: expected Oliver to {wanted}, but he {actual}."
+            ],
+            "notes": "The mailing-surface decision gate failed before copy quality mattered.",
+        }
+    if not expected:
+        return {
+            "tool_choice": 5,
+            "accuracy": 5,
+            "relevance": 5,
+            "tone": 5,
+            "identity_memory": 5,
+            "critical_issues": [],
+            "notes": f"Correct mailing-list restraint ({result.get('reason') or 'no reason'}).",
+        }
+    question = f"Subject: {result['subject']}\n\n{result['body']}"
+    return judge_interaction(
+        question,
+        result["speaker"],
+        result["tools"],
+        result["reply"],
+        surface=result["surface"],
+        expected=result.get("expected"),
+    )
 
 
 # ── Logging helpers ──────────────────────────────────────────────────────────
@@ -412,10 +632,25 @@ def fmt_multi(num, conv, turns, judgments):
     return "\n".join(lines)
 
 
-def round_summary(singles, multis):
+def fmt_email(num, result, judgment):
+    decision = "reply" if result["replied"] else f"silence ({result.get('reason') or 'no reason'})"
+    return (
+        f"\n#### E{num} · _{result['category']}_ · **{result['speaker']}** "
+        f"[{result['surface']}]\n\n"
+        f"**Input:** {result['body']}\n\n"
+        f"**Decision:** {decision}\n\n"
+        f"**Tools:**\n{fmt_tools(result['tools'])}\n\n"
+        f"**Response:** {result['reply'] or '_(none)_'}\n\n"
+        f"**Scores:** `{fmt_scores(judgment)}` — {judgment['notes']}\n\n"
+        f"**Issues:**\n{fmt_issues(judgment)}\n"
+    )
+
+
+def round_summary(singles, multis, emails):
     all_j = [j for _, j in singles]
     for _, _, jl in multis:
         all_j.extend(jl)
+    all_j.extend(j for _, j in emails)
     n = len(all_j)
 
     def avg(k):
@@ -434,7 +669,7 @@ def round_summary(singles, multis):
     return (
         f"\n### Round summary\n"
         f"- {n} interactions ({len(singles)} single + "
-        f"{sum(len(t) for _, t, _ in multis)} multi-turn)\n"
+        f"{sum(len(t) for _, t, _ in multis)} multi-turn + {len(emails)} email)\n"
         f"- Avg scores: tool={avg('tool_choice')}  accuracy={avg('accuracy')}  "
         f"relevance={avg('relevance')}  tone={avg('tone')}  "
         f"identity_memory={avg('identity_memory')}{ctx_note}\n"
@@ -448,10 +683,17 @@ def _prepare_fixture() -> None:
     from agent import database
 
     database.initialize()
-    seed_sql = (pathlib.Path(__file__).parent / "fixtures" / "club_seed.sql").read_text()
+    seed_sql = (ROOT / "tests" / "fixtures" / "club_seed.sql").read_text()
     with db.connect() as conn:
         conn.executescript(seed_sql)
     corpus_gen.generate()
+
+
+def _assert_scratch_outbox_empty() -> None:
+    with db.connect() as conn:
+        count = conn.execute("SELECT COUNT(*) FROM outbox_messages").fetchone()[0]
+    if count:
+        raise AssertionError(f"synthetic evaluator left {count} outbox message(s)")
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────
@@ -461,9 +703,17 @@ def main() -> None:
     ap.add_argument("--note", type=str, default="")
     ap.add_argument("--n-single", type=int, default=10)
     ap.add_argument("--n-multi", type=int, default=3)
+    ap.add_argument(
+        "--goldens-only",
+        action="store_true",
+        help="skip generated questions and run only committed Discord/email goldens",
+    )
+    ap.add_argument("--skip-email", action="store_true", help="omit the email golden cases")
     args = ap.parse_args()
 
-    print(f"Round {args.round}: generating {args.n_single} single + {args.n_multi} multi…")
+    generated_single = 0 if args.goldens_only else args.n_single
+    generated_multi = 0 if args.goldens_only else args.n_multi
+    print(f"Round {args.round}: generating {generated_single} single + {generated_multi} multi…")
     t0 = time.time()
     # Seed the scratch DB's club_* tables from the public-safe fixture, then generate the
     # evaluator's scratch corpus from that same DB. DB-backed and corpus-backed tools therefore
@@ -471,7 +721,11 @@ def main() -> None:
     _prepare_fixture()
     for name, user_id in FAKE_MEMBER_IDS.items():
         identities.link_member_identity(user_id, name.lower(), linked_by="eval")
-    qs = generate_questions(args.round, args.n_single, args.n_multi)
+    qs = (
+        {"single": [], "multi": []}
+        if args.goldens_only
+        else generate_questions(args.round, args.n_single, args.n_multi)
+    )
     qs["single"] = GOLDEN_SINGLE + qs["single"]
     qs["multi"] = GOLDEN_MULTI + qs["multi"]
     print(f"  questions generated in {time.time() - t0:.1f}s")
@@ -479,28 +733,55 @@ def main() -> None:
     print("Running single-turns…")
     singles = []
     for i, q in enumerate(qs["single"], 1):
-        cid = f"r{args.round}-s{i}-{uuid.uuid4().hex[:6]}"
+        cid = f"r{args.round}-s{i}"
         r = run_single(q, cid)
-        j = judge_interaction(r["question"], r["speaker"], r["tools"], r["reply"])
+        j = judge_interaction(
+            r["question"],
+            r["speaker"],
+            r["tools"],
+            r["reply"],
+            expected=r.get("expected"),
+        )
         singles.append((r, j))
         print(f"  S{i} [{q['category']}] {fmt_scores(j)}")
 
     print("Running multi-turn convos…")
     multis = []
     for i, conv in enumerate(qs["multi"], 1):
-        cid = f"r{args.round}-m{i}-{uuid.uuid4().hex[:6]}"
+        cid = f"r{args.round}-m{i}"
         turns = run_multi(conv, cid)
         judgments = []
         prior = []
-        for t in turns:
+        expected = conv.get("expected")
+        for turn_index, t in enumerate(turns):
             j = judge_interaction(
-                t["question"], t["speaker"], t["tools"], t["reply"], prior_turns=prior
+                t["question"],
+                t["speaker"],
+                t["tools"],
+                t["reply"],
+                prior_turns=prior,
+                expected=(
+                    expected[turn_index]
+                    if isinstance(expected, list) and turn_index < len(expected)
+                    else expected
+                ),
             )
             judgments.append(j)
             prior.append({"question": t["question"], "reply": t["reply"]})
         multis.append((conv, turns, judgments))
         tool_avg = sum(j["tool_choice"] for j in judgments) / len(judgments)
         print(f"  M{i} [{conv['category']}] {len(turns)} turns, avg tool={tool_avg:.1f}")
+
+    emails = []
+    if not args.skip_email:
+        print("Running email goldens…")
+        for i, case in enumerate(GOLDEN_EMAIL, 1):
+            result = run_email(case, f"r{args.round}-e{i}")
+            judgment = judge_email(result)
+            emails.append((result, judgment))
+            print(f"  E{i} [{case['category']}] {fmt_scores(judgment)}")
+
+    _assert_scratch_outbox_empty()
 
     # ── Write log ────────────────────────────────────────────────────────────
     when = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -513,20 +794,47 @@ def main() -> None:
     parts.append("\n### Multi-turn conversations\n")
     for i, (c, t, j) in enumerate(multis, 1):
         parts.append(fmt_multi(i, c, t, j))
-    parts.append(round_summary(singles, multis))
+    parts.append("\n### Email interactions\n")
+    for i, (result, judgment) in enumerate(emails, 1):
+        parts.append(fmt_email(i, result, judgment))
+    parts.append(round_summary(singles, multis, emails))
 
     LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     if not LOG_PATH.exists():
         LOG_PATH.write_text(
             "# Oliver test log\n\n"
-            "End-to-end evaluation of Oliver via `tests/eval.py`. Each round generates "
+            "End-to-end evaluation of Oliver via `scripts/eval_oliver.py`. Each round generates "
             "questions through Sonnet, runs them through Oliver's agent loop with tool-call "
             "tracing, and judges the result via Sonnet. Code changes between rounds are "
             "noted at the top of each round.\n"
         )
     with LOG_PATH.open("a") as f:
         f.write("\n".join(parts))
-    print(f"\nAppended round {args.round} to {LOG_PATH} ({time.time() - t0:.1f}s total)")
+    json_path = RESULTS_ROOT / f"round-{args.round:03d}-{when.replace(':', '')}.json"
+    payload = {
+        "schema_version": 1,
+        "round": args.round,
+        "generated_at": when,
+        "note": args.note,
+        "goldens_only": args.goldens_only,
+        "single": [{**result, "judgment": judgment} for result, judgment in singles],
+        "multi": [
+            {
+                "scenario": scenario,
+                "turns": [
+                    {**turn, "judgment": judgment}
+                    for turn, judgment in zip(turns, judgments, strict=True)
+                ],
+            }
+            for scenario, turns, judgments in multis
+        ],
+        "email": [{**result, "judgment": judgment} for result, judgment in emails],
+    }
+    json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
+    print(
+        f"\nWrote round {args.round} to {json_path} and appended {LOG_PATH} "
+        f"({time.time() - t0:.1f}s total)"
+    )
 
 
 if __name__ == "__main__":

@@ -31,10 +31,9 @@ dev = [
 package = false
 
 [tool.pytest.ini_options]
-# Only collect the unit suite under tests/. Note tests/eval.py is the LLM-driven
-# evaluation harness — it makes REAL Anthropic API calls and must never run as a
-# unit test. It is excluded here two ways: it lives behind `if __name__ ==
-# "__main__"`, and `python_files` below only matches `test_*.py`, not `eval.py`.
+# Only collect the unit suite under tests/. The LLM-driven evaluation harness lives at
+# scripts/eval_oliver.py because it makes REAL Anthropic API calls and must never be collected as a
+# unit test. `python_files` below admits only deterministic `test_*.py` modules.
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]

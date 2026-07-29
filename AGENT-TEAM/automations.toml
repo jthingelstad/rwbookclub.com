@@ -1,0 +1,15 @@
+version = 1
+timezone = "America/Chicago"
+
+# This entry may say ACTIVE only while the corresponding local Codex scheduled activity exists,
+# is enabled, and matches the role, schedule, model, reasoning effort, project, and working path.
+[[activities]]
+id = "oliver-evaluator"
+name = "Oliver Evaluator"
+role = "AGENT-TEAM/evaluator.md"
+status = "ACTIVE"
+rrule = "RRULE:FREQ=WEEKLY;BYHOUR=14;BYMINUTE=30;BYDAY=FR"
+model = "gpt-5.6-sol"
+reasoning_effort = "xhigh"
+execution_environment = "local"
+cwd = "/Users/otto/Projects/rwbookclub.com"

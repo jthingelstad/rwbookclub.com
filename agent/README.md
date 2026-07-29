@@ -241,9 +241,12 @@ coverage excludes only archived one-time scripts and cannot fall below 75%. Mypy
 starts at the configuration/security/bootstrap, publishing, repository, identity, tool-contract,
 and enrichment-validation seams; expand its `files` list as neighboring modules gain useful types.
 
-For behavioral quality, `uv run --locked python -m tests.eval --round N --note "..."` runs Oliver through
-generated plus golden Discord-style conversations and judges tool choice, grounding, tone,
-identity, memory use, and multi-turn context. It writes rounds to `agent/logs/oliver-eval-log.md` (gitignored).
+For behavioral quality, `uv run --locked python scripts/eval_oliver.py --round N --note "..."`
+runs Oliver through generated plus golden Discord, direct-email, and mailing-list conversations and
+judges tool choice, grounding, tone, identity, memory use, and multi-turn context. It uses a scratch
+database with delivery disabled and writes private rounds below `AGENT-TEAM/notes/evaluator/`
+(gitignored). The scheduled external Evaluator first collects live Discord and two-way email
+evidence through the read-only `scripts/evaluator_evidence.py` boundary.
 
 ## Discord setup
 
