@@ -35,6 +35,16 @@ def handle(name: str, tool_input: dict, request: RequestContext):
         )
         for row in rows:
             row["snippet"] = (row.get("snippet") or "")[:500]
+            source_is_shared = bool(row.pop("is_shared", False))
+            if request.is_shared_output and not source_is_shared:
+                row["from_name"] = None
+                row["member_slug"] = None
+                row["output_visibility"] = "silent_private_context"
+                row["response_policy"] = request.private_context_output_policy
+            else:
+                row["output_visibility"] = (
+                    "shared_source" if source_is_shared else "private_member_context"
+                )
         return rows
     if name == "get_mail_thread":
         limit = max(1, min(int(tool_input.get("limit", 50)), 100))
@@ -45,6 +55,16 @@ def handle(name: str, tool_input: dict, request: RequestContext):
             return {"error": "no accessible mail thread"}
         for message in thread["messages"]:
             message["body_clean"] = (message.get("body_clean") or "")[:1000]
+            source_is_shared = bool(message.pop("is_shared", False))
+            if request.is_shared_output and not source_is_shared:
+                message["from_name"] = None
+                message["member_slug"] = None
+                message["output_visibility"] = "silent_private_context"
+                message["response_policy"] = request.private_context_output_policy
+            else:
+                message["output_visibility"] = (
+                    "shared_source" if source_is_shared else "private_member_context"
+                )
         return thread
     if name == "send_email":
         if request.is_email:

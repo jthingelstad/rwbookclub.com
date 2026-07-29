@@ -19,7 +19,7 @@ from pathlib import Path
 import anthropic
 from dotenv import load_dotenv
 
-from agent import clock, db, identities, persona
+from agent import access, clock, db, identities, persona
 from agent import context as kb
 from agent import corpus_read as cr
 from agent.club import meeting_rules
@@ -194,6 +194,16 @@ OPERATIONAL_PROMPT = (
     "your pronouns, answer briefly and normally. NEVER infer pronouns from a name, voice, "
     "appearance, gender, or other clues. When a member has no listed value, use their name or "
     "singular they/them.\n\n"
+    "SHARED OUTPUT PRIVACY. Every turn carries an OUTPUT VISIBILITY line. On a SHARED CLUB "
+    "surface (Discord or the mailing list), member-private memories and 1:1 email material may "
+    "calibrate your judgment silently, but you MUST NOT name, quote, paraphrase, attribute, or "
+    "otherwise imply which member supplied a private signal unless that member explicitly asks "
+    "in the current shared message to share that exact information. Never identify a likely "
+    "holdout from private evidence. State uncertain reception as a club-level tradeoff instead "
+    "(for example, density may split the room). Public corpus facts and statements already made "
+    "in the current shared thread remain attributable with clear provenance. A PRIVATE MEMBER "
+    "reply may naturally reference that member's own context. Tool results repeat this policy; "
+    "obey it.\n\n"
     "IN THE ROOM. You're usually in a shared channel with several members at once and only "
     "speak when addressed — reply just to what's directed at you, by name, and don't restate "
     "their question. No bulleted lists in casual chat. When you learn something durable about a "
@@ -529,6 +539,15 @@ def _question_block(
     channel_id: str | None = None,
 ) -> str:
     parts: list[str] = [_now_line()]
+    shared_output = access.is_shared_conversation(channel_id)
+    if shared_output:
+        parts.append(
+            "[Output visibility: SHARED CLUB SURFACE. Private member memory and 1:1 email may "
+            "calibrate silently only; never attribute or expose it. Frame uncertain reception "
+            "as a club-level tradeoff.]"
+        )
+    else:
+        parts.append("[Output visibility: PRIVATE MEMBER REPLY.]")
     if speaker:
         who = (
             f"{speaker} (member: {member_slug})"
@@ -541,7 +560,12 @@ def _question_block(
         # could starve stable facts.
         mems = db.get_memories(subject=member_slug, limit=8)
         if mems:
-            parts.append("[You remember about them: " + "; ".join(m["note"] for m in mems) + "]")
+            label = (
+                "Silent private calibration — never name or attribute these signals"
+                if shared_output
+                else "You remember about them"
+            )
+            parts.append(f"[{label}: " + "; ".join(m["note"] for m in mems) + "]")
         # Proactively surface this member's recent threads on OTHER mediums so you're not blindsided
         # when they carry an email conversation into Discord (or vice versa). Use search_discussion
         # (member=<slug>) to pull the full thread if they reference it.
@@ -550,7 +574,12 @@ def _question_block(
             bits = "; ".join(
                 f'{r["medium"]} ({_age_text(r.get("last_at"))}) — "{r["snippet"]}"' for r in recent
             )
-            parts.append(f"[Recently with them elsewhere: {bits}]")
+            label = (
+                "Silent private cross-medium calibration — never quote or attribute"
+                if shared_output
+                else "Recently with them elsewhere"
+            )
+            parts.append(f"[{label}: {bits}]")
     club = db.get_memories(
         scope="club", limit=6
     )  # 6 (was 3): archive-mined lore + weekly club lane

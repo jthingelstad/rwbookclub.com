@@ -22,6 +22,55 @@ def _member_slug(value: str | None) -> str | None:
     return member.get("slug") if member else None
 
 
+def _discussion_rows_for_output(rows: list[dict], request: RequestContext) -> list[dict]:
+    out = []
+    for row in rows:
+        medium = db.conversation_medium(row["channel_id"])
+        silent_private = request.is_shared_output and medium == "email"
+        try:
+            channel_key = int(row["channel_id"])
+        except TypeError, ValueError:
+            channel_key = row["channel_id"]
+        out.append(
+            {
+                "medium": medium,
+                "channel": config.CHANNEL_NAMES.get(channel_key, row["channel_id"]),
+                "who": None if silent_private else row.get("speaker"),
+                "member": None if silent_private else row.get("member_slug"),
+                "role": row["role"],
+                "when": row.get("created_at"),
+                "content": (row["content"] or "")[:300],
+                "output_visibility": (
+                    "silent_private_context" if silent_private else "shared_source"
+                ),
+                "response_policy": (
+                    request.private_context_output_policy if silent_private else None
+                ),
+            }
+        )
+    return out
+
+
+def _memories_for_output(rows: list[dict], request: RequestContext) -> list[dict]:
+    if not request.is_shared_output:
+        return rows
+    out = []
+    for row in rows:
+        if row.get("scope") != "member":
+            out.append({**row, "output_visibility": "shared_club_context"})
+            continue
+        out.append(
+            {
+                "note": row["note"],
+                "scope": "member",
+                "confidence": row.get("confidence"),
+                "output_visibility": "silent_private_context",
+                "response_policy": request.private_context_output_policy,
+            }
+        )
+    return out
+
+
 def handle(name: str, tool_input: dict, request: RequestContext):
     actor = request.actor
     if name == "recent_channel_context":
@@ -40,24 +89,7 @@ def handle(name: str, tool_input: dict, request: RequestContext):
         rows = model_readers.search_discussion(
             actor=actor, query=tool_input["query"], member_slug=target, limit=limit
         )
-        out = []
-        for row in rows:
-            try:
-                channel_key = int(row["channel_id"])
-            except TypeError, ValueError:
-                channel_key = row["channel_id"]
-            out.append(
-                {
-                    "medium": db.conversation_medium(row["channel_id"]),
-                    "channel": config.CHANNEL_NAMES.get(channel_key, row["channel_id"]),
-                    "who": row.get("speaker"),
-                    "member": row.get("member_slug"),
-                    "role": row["role"],
-                    "when": row.get("created_at"),
-                    "content": (row["content"] or "")[:300],
-                }
-            )
-        return out
+        return _discussion_rows_for_output(rows, request)
     if name == "remember":
         scope = tool_input.get("scope") or "member"
         subject = tool_input.get("subject")
@@ -89,7 +121,8 @@ def handle(name: str, tool_input: dict, request: RequestContext):
                 return {"error": f"no such member: {subject}"}
             if not access.can_access_member(actor, target):
                 return {"error": "another member's private memories are unavailable"}
-        return model_readers.memories(actor=actor, subject=target, query=tool_input.get("query"))
+        rows = model_readers.memories(actor=actor, subject=target, query=tool_input.get("query"))
+        return _memories_for_output(rows, request)
     if name == "set_reminder":
         reminder_id = db.add_reminder(
             tool_input["due"],

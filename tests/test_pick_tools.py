@@ -74,7 +74,11 @@ def test_pick_fit_external_candidate(fresh_db, monkeypatch):
     assert out["nearestInHistory"], "shared-subject neighbors on the shelf"
     assert "clubVerdict" in out["nearestInHistory"][0]  # ratings + discussionAverage carried
     assert out["memberLenses"]["loren"]["memories"] == []
-    assert "Likes systems books" in " ".join(out["memberLenses"]["jamie"]["memories"])
+    assert out["memberLenses"]["jamie"]["memories"] == []
+    calibration = out["silentPrivateCalibration"]
+    assert "Likes systems books" in " ".join(calibration["signals"])
+    assert calibration["output_visibility"] == "silent_private_context"
+    assert "likely holdout" in out["note"]
     assert out["coverage"]["topics"] and "note" in out
     # The consideration was recorded into the cloud, attributed via ctx.
     row = db.recent_book_cloud()[0]
@@ -157,13 +161,29 @@ def test_pick_prospects_defaults_to_asker_and_splits_cloud(fresh_db):
     )
     out = json.loads(dispatch("pick_prospects", {}, {"member_slug": "jamie", "channel_id": "123"}))
     assert out["member"] == "jamie"  # ctx default, no input needed
-    assert "Prefers translated fiction" in out["memberTaste"]["memories"]
+    assert out["memberTaste"]["memories"] == []
+    assert "Prefers translated fiction" in out["silentPrivateCalibration"]["signals"]
     yours = [r["title"] for r in out["cloudProspects"]["yours"]]
     orbit = [r["title"] for r in out["cloudProspects"]["clubOrbit"]]
     assert yours == ["The Power Broker"] and "Piranesi" in orbit
     assert "Watchmen" not in yours + orbit  # read books filtered from prospects
     assert out["lovedAuthorsUnread"] and out["searchAngles"]
     assert any("new book by" in a for a in out["searchAngles"])
+
+
+def test_pick_prospects_private_reply_may_reference_own_taste(fresh_db):
+    db.add_memory(
+        "Prefers translated fiction", scope="member", subject="jamie", source="reflection"
+    )
+    out = json.loads(
+        dispatch(
+            "pick_prospects",
+            {},
+            {"member_slug": "jamie", "channel_id": "email:private-thread"},
+        )
+    )
+    assert out["memberTaste"]["memories"] == ["Prefers translated fiction"]
+    assert "silentPrivateCalibration" not in out
 
 
 def test_pick_prospects_direction_angles_lead(fresh_db):
@@ -184,5 +204,7 @@ def test_doctrines_present_in_system_prompt():
     assert "2-7 days old" in p and "older than a week, start fresh" in p  # thread staleness ladder
     assert "seasoning, not the meal" in p  # cloud/known-author leads demoted
     assert "would LEARN" in p and "never invent a reaction" in p
+    assert "SHARED OUTPUT PRIVACY." in p
+    assert "likely holdout" in p and "club-level tradeoff" in p
     names = {t.get("name") for t in tools.TOOLS}
     assert {"book_cloud_add", "book_cloud_recent", "pick_fit", "pick_prospects"} <= names

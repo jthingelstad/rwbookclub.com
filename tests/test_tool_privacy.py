@@ -66,6 +66,9 @@ def test_memory_recall_is_self_plus_club_and_admin_can_audit(fresh_db):
     visible = _call("recall", {"query": "lighthouse"}, JAMIE_CTX)
     notes = {row["note"] for row in visible}
     assert notes == {"Jamie private lighthouse note", "Shared lighthouse lore"}
+    private_row = next(row for row in visible if row["note"].startswith("Jamie private"))
+    assert private_row["output_visibility"] == "silent_private_context"
+    assert "subject" not in private_row
 
     denied = _call("recall", {"subject": "nick"}, JAMIE_CTX)
     assert denied == {"error": "another member's private memories are unavailable"}
@@ -111,6 +114,11 @@ def test_discussion_search_shares_club_channels_but_isolates_direct_email(fresh_
         "lighthouse shared mailing list",
         "lighthouse Jamie private",
     }
+    private_row = next(row for row in visible if row["content"] == "lighthouse Jamie private")
+    assert private_row["who"] is None and private_row["member"] is None
+    assert private_row["output_visibility"] == "silent_private_context"
+    list_row = next(row for row in visible if row["content"] == "lighthouse shared mailing list")
+    assert list_row["who"] == "Nick" and list_row["output_visibility"] == "shared_source"
     assert _call("search_discussion", {"query": "lighthouse", "member": "nick"}, JAMIE_CTX) == {
         "error": "another member's private conversation history is unavailable",
     }
@@ -135,9 +143,17 @@ def test_mail_search_and_thread_reads_are_row_scoped_and_pii_minimized(fresh_db)
     visible = _call("search_mail_archive", {"query": "lighthouse"}, JAMIE_CTX)
     assert {row["thread_id"] for row in visible} == {"shared-thread", "jamie-thread"}
     assert all("from_email" not in row for row in visible)
+    direct_row = next(row for row in visible if row["thread_id"] == "jamie-thread")
+    assert direct_row["from_name"] is None and direct_row["member_slug"] is None
+    assert direct_row["output_visibility"] == "silent_private_context"
+    shared_row = next(row for row in visible if row["thread_id"] == "shared-thread")
+    assert shared_row["from_name"] == "Nick"
+    assert shared_row["output_visibility"] == "shared_source"
 
     own_thread = _call("get_mail_thread", {"thread_id": "jamie-thread"}, JAMIE_CTX)
     assert own_thread["messages"][0]["body_clean"] == "lighthouse Jamie direct message"
+    assert own_thread["messages"][0]["from_name"] is None
+    assert own_thread["messages"][0]["output_visibility"] == "silent_private_context"
     assert "from_email" not in own_thread["messages"][0]
     assert "participants_json" not in own_thread["thread"]
     assert _call("get_mail_thread", {"thread_id": "nick-thread"}, JAMIE_CTX) == {

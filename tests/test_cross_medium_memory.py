@@ -47,13 +47,29 @@ def test_recent_threads_for_member_surfaces_other_medium(fresh_db):
 
 
 def test_question_block_primes_cross_medium(fresh_db):
+    db.add_memory("Jamie privately avoids long books", scope="member", subject="jamie")
     db.log_message("email:t1", "user", "book ideas", speaker="Jamie", member_slug="jamie")
     db.log_message("email:t1", "assistant", "Blindsight and Nexus", member_slug="jamie")
     block = oliver._question_block(
         "what were those books?", "Jamie", "jamie", None, channel_id="999"
     )
-    assert "Recently with them elsewhere" in block and "email" in block
+    assert "Output visibility: SHARED CLUB SURFACE" in block
+    assert "Silent private calibration" in block
+    assert "You remember about them" not in block
+    assert "Silent private cross-medium calibration" in block and "email" in block
+    assert "Recently with them elsewhere" not in block
     assert "(today)" in block  # thread age surfaces for staleness rules
+
+
+def test_question_block_private_reply_may_reference_member_context(fresh_db):
+    db.add_memory("Jamie privately avoids long books", scope="member", subject="jamie")
+    db.log_message("123", "user", "book ideas", speaker="Jamie", member_slug="jamie")
+    block = oliver._question_block(
+        "what were those books?", "Jamie", "jamie", None, channel_id="email:private-thread"
+    )
+    assert "Output visibility: PRIVATE MEMBER REPLY" in block
+    assert "You remember about them" in block
+    assert "Recently with them elsewhere" in block
 
 
 def test_question_block_priming_shows_stale_age(fresh_db):

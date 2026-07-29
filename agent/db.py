@@ -1487,6 +1487,7 @@ def search_mail_archive_visible(
     sql = (
         "SELECT m.message_id, m.thread_id, m.subject, m.from_name, "
         "cm.slug AS member_slug, m.sent_at, m.received_at, "
+        "m.list_id IS NOT NULL AS is_shared, "
         "snippet(mail_message_fts, 4, '[', ']', ' ... ', 18) AS snippet "
         "FROM mail_message_fts JOIN mail_messages m "
         "ON m.message_id = mail_message_fts.message_id "
@@ -1615,7 +1616,7 @@ def get_mail_thread_visible(
             return None
         sql = (
             "SELECT m.message_id, m.from_name, cm.slug AS member_slug, m.subject, "
-            "m.sent_at, m.body_clean FROM mail_messages m "
+            "m.sent_at, m.body_clean, m.list_id IS NOT NULL AS is_shared FROM mail_messages m "
             "LEFT JOIN club_members cm ON cm.id = m.member_id WHERE m.thread_id = ?"
         )
         args: list = [thread_id]

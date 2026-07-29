@@ -20,22 +20,41 @@ def member_lenses(request: RequestContext) -> dict:
     for member in cr.human_current_members():
         slug = member["slug"]
         history = cr.member_history(slug) or {}
+        private_memories = (
+            [
+                row["note"]
+                for row in model_readers.memories(actor=request.actor, subject=slug, limit=40)
+            ]
+            if access.can_access_member(request.actor, slug)
+            else []
+        )
         lenses[slug] = {
             "name": member.get("name"),
-            "memories": (
-                [
-                    row["note"]
-                    for row in model_readers.memories(actor=request.actor, subject=slug, limit=40)
-                ]
-                if access.can_access_member(request.actor, slug)
-                else []
-            ),
+            "memories": [] if request.is_shared_output else private_memories,
             "recentPicks": [
                 {"title": pick.get("title"), "year": pick.get("year")}
                 for pick in (history.get("picks") or [])[:3]
             ],
         }
     return lenses
+
+
+def _silent_private_calibration(request: RequestContext, *, limit: int) -> dict | None:
+    if not request.is_shared_output or not request.member_slug:
+        return None
+    signals = [
+        row["note"]
+        for row in model_readers.memories(
+            actor=request.actor, subject=request.member_slug, limit=limit
+        )
+    ]
+    if not signals:
+        return None
+    return {
+        "signals": signals,
+        "output_visibility": "silent_private_context",
+        "response_policy": request.private_context_output_policy,
+    }
 
 
 def pick_fit(tool_input: dict, request: RequestContext) -> dict:
@@ -113,6 +132,8 @@ def pick_fit(tool_input: dict, request: RequestContext) -> dict:
         }
     out["nearestInHistory"] = neighbors
     out["memberLenses"] = member_lenses(request)
+    if silent := _silent_private_calibration(request, limit=40):
+        out["silentPrivateCalibration"] = silent
     stats = cr.club_stats()
     out["coverage"] = {
         "topics": stats.get("topics"),
@@ -122,10 +143,14 @@ def pick_fit(tool_input: dict, request: RequestContext) -> dict:
     out["clubLore"] = [
         row["note"] for row in model_readers.memories(actor=request.actor, subject="club", limit=17)
     ]
-    out["note"] = (
-        "Current reception/adaptation news is NOT included — web_search it. Never "
-        "state a member reaction that isn't grounded in memberLenses."
-    )
+    out["note"] = "Current reception/adaptation news is NOT included — web_search it."
+    if request.is_shared_output:
+        out["note"] += (
+            " Private signals are silent calibration only: never identify a likely holdout or "
+            "attribute those signals; express uncertainty as a club-level tradeoff."
+        )
+    else:
+        out["note"] += " Never state a member reaction that isn't grounded in memberLenses."
     if "alreadyRead" not in out:
         db.add_book_cloud_entry(
             title=out["candidate"].get("title") or title,
@@ -157,11 +182,12 @@ def pick_prospects(tool_input: dict, request: RequestContext) -> dict:
 
     if member:
         history = cr.member_history(member) or {}
+        private_memories = [
+            row["note"]
+            for row in model_readers.memories(actor=request.actor, subject=member, limit=12)
+        ]
         out["memberTaste"] = {
-            "memories": [
-                row["note"]
-                for row in model_readers.memories(actor=request.actor, subject=member, limit=12)
-            ],
+            "memories": [] if request.is_shared_output else private_memories,
             "reviews": [
                 {
                     "book": row.get("book"),
@@ -176,6 +202,12 @@ def pick_prospects(tool_input: dict, request: RequestContext) -> dict:
                 for row in (history.get("picks") or [])[:5]
             ],
         }
+        if request.is_shared_output and private_memories:
+            out["silentPrivateCalibration"] = {
+                "signals": private_memories,
+                "output_visibility": "silent_private_context",
+                "response_policy": request.private_context_output_policy,
+            }
 
     read_slugs = {book["slug"] for book in cr.books() if book.get("isRead")}
     unread = [
