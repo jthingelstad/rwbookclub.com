@@ -15,8 +15,9 @@ from __future__ import annotations
 import argparse
 import json
 import re
+from datetime import datetime
 
-from agent import config, db, oliver
+from agent import clock, config, db, oliver
 from agent import corpus_read as cr
 from agent.club import meeting_rules
 from agent.club.meeting_rules import friendly_date as _friendly_date
@@ -326,12 +327,39 @@ def _names(status: dict, *want: str) -> list[str]:
     ]
 
 
-def week_reminder(meeting: dict | None = None, status: dict | None = None) -> dict:
-    """The 1-week reminder: meeting + the full attendance picture. Subject + body (with signature)."""
+def _meeting_distance(meeting: dict, now: datetime | None = None) -> str:
+    meeting_dt = clock.meeting_start(meeting.get("date"), meeting.get("startTime"))
+    current = now or clock.club_now()
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=clock.tz())
+    else:
+        current = current.astimezone(clock.tz())
+    if meeting_dt is None:
+        return "coming up soon"
+    days = (meeting_dt.date() - current.date()).days
+    if days == 7:
+        return "one week away"
+    if days == 1:
+        return "tomorrow"
+    if days == 0:
+        return "later today"
+    if days > 1:
+        return f"{days} days away"
+    return "already past"
+
+
+def week_reminder(
+    meeting: dict | None = None,
+    status: dict | None = None,
+    *,
+    now: datetime | None = None,
+) -> dict:
+    """The bounded weekly reminder, voiced from its actual club-local delivery date."""
     meeting = meeting or meeting_rules.next_meeting()
     status = status or meeting_rules.meeting_status(meeting["meetingKey"])
     title = (meeting.get("book") or {}).get("title") or "our next book"
     when = _friendly_date(meeting.get("date"))
+    distance = _meeting_distance(meeting, now)
     coming = _names(status, "yes")
     not_coming = _names(status, "no")
     waiting_on = _names(status, "pending", "unsure")
@@ -346,11 +374,11 @@ def week_reminder(meeting: dict | None = None, status: dict | None = None) -> di
         )
     )
     body = oliver.compose(
-        "one-week-out reminder email to the whole club mailing list",
+        "meeting reminder email to the whole club mailing list",
         {
-            "occasion": "the monthly meeting is about a week away",
+            "occasion": f"the monthly meeting is {distance}",
             "book": title,
-            "meeting date": f"{when} (about a week out — say it naturally, like 'next Tuesday')",
+            "meeting date": f"{when} ({distance}; state this timing accurately)",
             "confirmed coming": ", ".join(coming) or "no one yet",
             "not able to make it": ", ".join(not_coming) or None,
             "still waiting to hear from": ", ".join(waiting_on) or "everyone has responded",

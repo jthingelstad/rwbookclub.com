@@ -1,6 +1,7 @@
 """The hourly provider worker drains persisted email and Discord intents."""
 
 import asyncio
+from datetime import datetime, timedelta, timezone
 
 from agent import delivery, outbox
 from agent.mail import outbound
@@ -61,3 +62,42 @@ def test_drain_delivers_persisted_email_and_discord_once(fresh_db, monkeypatch):
     assert channel.posts == ["Hello Discord"]
     assert fresh_db.outbox_by_key("email:drain")["status"] == "delivered"
     assert fresh_db.outbox_by_key("discord:drain")["status"] == "delivered"
+
+
+def test_drain_suppresses_expired_email_and_discord_without_delivery(fresh_db, monkeypatch):
+    expired = (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat()
+    email_payload = {
+        "to": ["person@example.test"],
+        "subject": "Stale reminder",
+        "body": "Body",
+        "html_body": None,
+        "cc": None,
+        "in_reply_to": None,
+        "references": None,
+        "policy": "trusted",
+        "_deliver_before": expired,
+    }
+    outbox.enqueue(kind="email", payload=email_payload, idempotency_key="email:expired")
+    outbox.enqueue(
+        kind="discord",
+        payload={
+            "channel_id": "123",
+            "content": "Stale reminder",
+            "_deliver_before": expired,
+        },
+        idempotency_key="discord:expired",
+    )
+    emails = []
+    monkeypatch.setattr(
+        outbound.email_jmap,
+        "send_email",
+        lambda **kwargs: emails.append(kwargs) or {"emailId": "must-not-send"},
+    )
+    channel = _Channel()
+
+    assert asyncio.run(delivery.drain(_Client(channel))) == 0
+    assert asyncio.run(delivery.drain(_Client(channel))) == 0
+    assert emails == []
+    assert channel.posts == []
+    assert fresh_db.outbox_by_key("email:expired")["status"] == "suppressed"
+    assert fresh_db.outbox_by_key("discord:expired")["status"] == "suppressed"

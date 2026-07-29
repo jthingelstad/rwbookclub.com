@@ -10,6 +10,7 @@ this module no longer logs per-member contacts.
 from __future__ import annotations
 
 import json
+from datetime import datetime
 
 from agent import config, outbox
 from agent.mail import email_jmap, email_policy, email_render, signature
@@ -66,6 +67,7 @@ def send(
     references=None,
     idempotency_key: str | None = None,
     policy: str = "trusted",
+    deliver_before: datetime | None = None,
 ) -> dict:
     """Send as multipart: a plain-text part (body + plain signature) and an HTML part (the markdown
     body rendered, with the signature's own HTML footer injected). Building the two parts here —
@@ -89,6 +91,8 @@ def send(
         "references": references,
         "policy": policy,
     }
+    if deliver_before is not None:
+        payload["_deliver_before"] = deliver_before.isoformat()
     _validate(payload)  # enqueue boundary
     row = outbox.enqueue(
         kind="email",
@@ -105,7 +109,9 @@ def deliver_outbox_row(row: dict) -> dict:
 
     def _deliver() -> dict:
         _validate(payload)  # delivery boundary; links/config may have changed since enqueue
-        provider_payload = {k: v for k, v in payload.items() if k != "policy"}
+        provider_payload = {
+            k: v for k, v in payload.items() if k != "policy" and not k.startswith("_")
+        }
         return email_jmap.send_email(**provider_payload)
 
     return outbox.deliver_sync(

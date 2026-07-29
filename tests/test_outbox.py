@@ -37,6 +37,26 @@ def test_idempotency_key_rejects_a_different_payload(fresh_db):
         outbox.enqueue(kind="discord", payload={"content": "two"}, idempotency_key="same")
 
 
+def test_expired_intent_is_suppressed_before_provider_and_stays_idempotent(fresh_db):
+    row = outbox.enqueue(
+        kind="discord",
+        payload={"content": "stale reminder", "_deliver_before": _time(-1)},
+        idempotency_key="discord:expired",
+    )
+    calls = []
+
+    with pytest.raises(outbox.DeliverySuppressed):
+        outbox.deliver_sync(row, lambda: calls.append(1) or {"messageId": "too-late"})
+    with pytest.raises(outbox.DeliverySuppressed):
+        outbox.deliver_sync(row, lambda: calls.append(2) or {"messageId": "duplicate"})
+
+    assert calls == []
+    stored = fresh_db.outbox_by_key("discord:expired")
+    assert stored["status"] == "suppressed"
+    assert stored["attempts"] == 0
+    assert "delivery window expired" in stored["last_error"]
+
+
 def test_retryable_failure_uses_backoff_then_delivers(fresh_db):
     row = outbox.enqueue(
         kind="email",

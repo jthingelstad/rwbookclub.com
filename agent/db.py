@@ -255,7 +255,7 @@ CREATE TABLE IF NOT EXISTS outbox_messages (
     kind            TEXT NOT NULL,                 -- email | discord
     payload_json    TEXT NOT NULL,
     status          TEXT NOT NULL DEFAULT 'pending',
-                    -- pending | claimed | delivering | retry | delivered | uncertain | dead
+                    -- pending | claimed | delivering | retry | delivered | suppressed | uncertain | dead
     attempts        INTEGER NOT NULL DEFAULT 0,
     max_attempts    INTEGER NOT NULL DEFAULT 5,
     available_at    TEXT NOT NULL,
@@ -2771,6 +2771,22 @@ def mark_outbox_retry(
         worker_id=worker_id,
         error=error,
         available_at=available_at,
+        now=now or _now(),
+    )
+
+
+def mark_outbox_suppressed(
+    outbox_id: int,
+    *,
+    reason: str,
+    worker_id: str | None = None,
+    now: str | None = None,
+) -> bool:
+    return _outbox_repo.mark_suppressed(
+        connect,
+        outbox_id,
+        reason=reason,
+        worker_id=worker_id,
         now=now or _now(),
     )
 

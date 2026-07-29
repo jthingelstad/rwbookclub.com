@@ -57,6 +57,9 @@ async def drain(client, *, limit: int = 20) -> int:
                 continue
         except outbox.DeliveryDeferred:
             continue
+        except outbox.DeliverySuppressed:
+            log.info("suppressed expired outbox delivery %s (%s)", row["id"], row["kind"])
+            continue
         except Exception:
             # The state machine has already recorded retry/uncertain/dead where appropriate.
             log.exception("outbox delivery failed for %s (%s)", row["id"], row["kind"])

@@ -1,6 +1,12 @@
 """The 2-day topic email and 1-week reminder builders."""
 
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from agent import config
 from agent.club import meeting_emails
+
+_TZ = ZoneInfo(config.CLUB_TIMEZONE)
 
 MEETING = {
     "meetingKey": "a-world-appears",
@@ -80,9 +86,31 @@ def test_week_reminder_separates_yes_no_and_pending(monkeypatch):
         ],
         "counts": {},
     }
-    out = meeting_emails.week_reminder(MEETING, status)
+    out = meeting_emails.week_reminder(
+        MEETING, status, now=datetime(2026, 6, 23, 12, 0, tzinfo=_TZ)
+    )
     assert out["body"] == "WEEK BODY"
     assert "A World Appears" in out["subject"]
     assert captured["confirmed coming"] == "Erik, Loren"
     assert captured["not able to make it"] == "Tom"  # Tom is a 'no', not pending
     assert captured["still waiting to hear from"] == "Nick"  # only Nick gets nudged
+
+
+def test_week_reminder_wording_uses_actual_local_delivery_date(monkeypatch):
+    captured = []
+
+    def fake_compose(kind, facts, **kwargs):
+        captured.append((kind, facts))
+        return "BODY"
+
+    monkeypatch.setattr(meeting_emails.oliver, "compose", fake_compose)
+    status = {"attendance": [], "counts": {}}
+
+    meeting_emails.week_reminder(MEETING, status, now=datetime(2026, 6, 23, 23, 0, tzinfo=_TZ))
+    meeting_emails.week_reminder(MEETING, status, now=datetime(2026, 6, 27, 0, 0, tzinfo=_TZ))
+
+    assert captured[0][0] == "meeting reminder email to the whole club mailing list"
+    assert captured[0][1]["occasion"] == "the monthly meeting is one week away"
+    assert "one week away" in captured[0][1]["meeting date"]
+    assert captured[1][1]["occasion"] == "the monthly meeting is 3 days away"
+    assert "3 days away" in captured[1][1]["meeting date"]

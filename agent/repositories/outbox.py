@@ -123,6 +123,33 @@ def mark_retry(
     return status
 
 
+def mark_suppressed(
+    connect: Connect,
+    outbox_id: int,
+    *,
+    reason: str,
+    now: str,
+    worker_id: str | None = None,
+) -> bool:
+    """Retire an expired intent before its provider boundary."""
+    with connect() as conn:
+        if worker_id is None:
+            cur = conn.execute(
+                "UPDATE outbox_messages SET status='suppressed', last_error=?, updated_at=?, "
+                "lease_owner=NULL, lease_expires_at=NULL "
+                "WHERE id=? AND status IN ('pending', 'retry')",
+                (reason[:500], now, outbox_id),
+            )
+        else:
+            cur = conn.execute(
+                "UPDATE outbox_messages SET status='suppressed', last_error=?, updated_at=?, "
+                "lease_owner=NULL, lease_expires_at=NULL "
+                "WHERE id=? AND status='claimed' AND lease_owner=?",
+                (reason[:500], now, outbox_id, worker_id),
+            )
+    return cur.rowcount > 0
+
+
 def mark_uncertain(
     connect: Connect, outbox_id: int, *, worker_id: str, error: str, now: str
 ) -> bool:

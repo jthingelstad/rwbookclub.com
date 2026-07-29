@@ -38,8 +38,41 @@ class DeliveryDead(OutboxError):
     pass
 
 
+class DeliverySuppressed(OutboxError):
+    pass
+
+
 def canonical_payload(payload: dict) -> str:
     return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def _delivery_deadline(row_or_payload: dict) -> datetime | None:
+    payload = (
+        json.loads(row_or_payload["payload_json"])
+        if "payload_json" in row_or_payload
+        else row_or_payload
+    )
+    raw = payload.get("_deliver_before")
+    if not raw:
+        return None
+    deadline = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    if deadline.tzinfo is None:
+        raise ValueError("outbox _deliver_before must include a timezone")
+    return deadline.astimezone(timezone.utc)
+
+
+def _suppress_if_expired(row: dict, *, now: datetime, worker_id: str | None = None) -> bool:
+    deadline = _delivery_deadline(row)
+    if deadline is None or now < deadline:
+        return False
+    reason = f"delivery window expired at {deadline.isoformat()}"
+    marked = db.mark_outbox_suppressed(
+        row["id"], reason=reason, worker_id=worker_id, now=now.isoformat()
+    )
+    if marked:
+        return True
+    current = db.outbox_by_key(row["idempotency_key"])
+    return bool(current and current["status"] == "suppressed")
 
 
 def stable_key(kind: str, payload: dict, explicit: str | None = None) -> str:
@@ -55,6 +88,7 @@ def stable_key(kind: str, payload: dict, explicit: str | None = None) -> str:
 def enqueue(
     *, kind: str, payload: dict, idempotency_key: str | None = None, max_attempts: int = 5
 ) -> dict:
+    _delivery_deadline(payload)
     key = stable_key(kind, payload, idempotency_key)
     return db.enqueue_outbox(
         idempotency_key=key,
@@ -86,6 +120,8 @@ def _existing_result(row: dict) -> dict | None:
         )
     if status == "dead":
         raise DeliveryDead(f"delivery exhausted retries for {row['idempotency_key']}")
+    if status == "suppressed":
+        raise DeliverySuppressed(f"delivery window expired for {row['idempotency_key']}")
     return None
 
 
@@ -131,11 +167,15 @@ def deliver_sync(
     existing = _existing_result(row)
     if existing is not None:
         return existing
+    if _suppress_if_expired(row, now=_now()):
+        raise DeliverySuppressed(f"delivery window expired for {row['idempotency_key']}")
     db.recover_expired_outbox()
     worker_id = _worker_id()
     claimed = _claim(row, worker_id=worker_id, now=_now())
     if "_already_delivered" in claimed:
         return claimed["_already_delivered"]
+    if _suppress_if_expired(claimed, now=_now(), worker_id=worker_id):
+        raise DeliverySuppressed(f"delivery window expired for {row['idempotency_key']}")
     if not db.mark_outbox_delivering(claimed["id"], worker_id=worker_id):
         raise DeliveryDeferred(f"lost outbox claim for {claimed['idempotency_key']}")
     try:
@@ -172,11 +212,15 @@ async def deliver_async(
     existing = _existing_result(row)
     if existing is not None:
         return existing
+    if await asyncio.to_thread(_suppress_if_expired, row, now=_now()):
+        raise DeliverySuppressed(f"delivery window expired for {row['idempotency_key']}")
     await asyncio.to_thread(db.recover_expired_outbox)
     worker_id = _worker_id()
     claimed = await asyncio.to_thread(_claim, row, worker_id=worker_id, now=_now())
     if "_already_delivered" in claimed:
         return claimed["_already_delivered"]
+    if await asyncio.to_thread(_suppress_if_expired, claimed, now=_now(), worker_id=worker_id):
+        raise DeliverySuppressed(f"delivery window expired for {row['idempotency_key']}")
     marked = await asyncio.to_thread(db.mark_outbox_delivering, claimed["id"], worker_id=worker_id)
     if not marked:
         raise DeliveryDeferred(f"lost outbox claim for {claimed['idempotency_key']}")

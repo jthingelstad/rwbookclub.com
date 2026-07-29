@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 
 import discord
 from discord.ext import tasks
@@ -40,6 +40,26 @@ log = logging.getLogger("oliver.proactive")
 _client: discord.Client | None = None
 REFLECTION_WEEKDAY = 6
 REFLECTION_HOUR = 5
+# The nominal reminder day is seven club-local calendar days before the meeting. The hourly job
+# may miss that day during an outage, so one additional local day is an explicit late tolerance;
+# after that, the reminder is suppressed instead of pretending the meeting is still a week away.
+WEEK_REMINDER_LEAD_DAYS = 7
+WEEK_REMINDER_LATE_TOLERANCE_DAYS = 1
+
+
+def _week_reminder_window(meeting_dt: datetime) -> tuple[datetime, datetime]:
+    meeting_day = meeting_dt.astimezone(clock.tz()).date()
+    opens = datetime.combine(
+        meeting_day - timedelta(days=WEEK_REMINDER_LEAD_DAYS), time.min, tzinfo=clock.tz()
+    )
+    closes = opens + timedelta(days=1 + WEEK_REMINDER_LATE_TOLERANCE_DAYS)
+    return opens, closes
+
+
+def _week_reminder_due(meeting_dt: datetime, now: datetime) -> bool:
+    opens, closes = _week_reminder_window(meeting_dt)
+    local_now = now.astimezone(clock.tz())
+    return opens <= local_now < closes
 
 
 def _chunk(text: str, limit: int) -> list[str]:
@@ -56,14 +76,28 @@ def _chunk(text: str, limit: int) -> list[str]:
     return out
 
 
-async def _send_discord(channel, content: str, *, idempotency_key: str) -> dict:
+async def _send_discord(
+    channel,
+    content: str,
+    *,
+    idempotency_key: str,
+    deliver_before: datetime | None = None,
+) -> dict:
     """Persist one proactive Discord post before crossing Discord's API boundary."""
     payload = {"channel_id": str(channel.id), "content": content}
+    if deliver_before is not None:
+        payload["_deliver_before"] = deliver_before.isoformat()
     row = outbox.enqueue(kind="discord", payload=payload, idempotency_key=idempotency_key)
     return await delivery.deliver_discord_row(row, channel)
 
 
-async def send_club_email(subject: str, body: str, *, idempotency_key: str | None = None) -> None:
+async def send_club_email(
+    subject: str,
+    body: str,
+    *,
+    idempotency_key: str | None = None,
+    deliver_before: datetime | None = None,
+) -> None:
     """Send a club-wide cadence email to the mailing list and mirror it to Discord.
 
     This is the charter's "approved cadence path" — a direct send to the whole list,
@@ -84,6 +118,7 @@ async def send_club_email(subject: str, body: str, *, idempotency_key: str | Non
         sign=False,  # already finalized above
         idempotency_key=f"{base_key}:email",
         policy="cadence",
+        deliver_before=deliver_before,
     )
     main = _client.get_channel(config.MAIN_CHANNEL_ID) if config.MAIN_CHANNEL_ID else None
     if main is not None:
@@ -92,6 +127,7 @@ async def send_club_email(subject: str, body: str, *, idempotency_key: str | Non
                 main,
                 chunk,
                 idempotency_key=f"{base_key}:discord:{index}",
+                deliver_before=deliver_before,
             )
 
 
@@ -260,14 +296,16 @@ async def _maybe_send_club_cadence(
     ):
         return 0
     posted = 0
-    if meeting_dt - timedelta(days=7) <= now <= meeting_dt and not db.has_group_event(
+    week_window_closes = _week_reminder_window(meeting_dt)[1]
+    if _week_reminder_due(meeting_dt, now) and not db.has_group_event(
         meeting_id, "week_reminder_sent"
     ):
-        email = await asyncio.to_thread(meeting_emails.week_reminder, meeting, status)
+        email = await asyncio.to_thread(meeting_emails.week_reminder, meeting, status, now=now)
         await send_club_email(
             email["subject"],
             email["body"],
             idempotency_key=f"club-email:week-reminder:{meeting_id}",
+            deliver_before=week_window_closes,
         )
         db.record_group_event(meeting_id, "week_reminder_sent", actor="oliver", surface="email")
         db.add_activity(
