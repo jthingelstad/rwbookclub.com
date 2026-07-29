@@ -11,6 +11,36 @@ from agent import config, identities
 from agent import corpus_read as cr
 
 EMAIL_QUOTE_RE = re.compile(r"^(>|on .+wrote:|from:|sent:|to:|subject:|--\s*$)", re.IGNORECASE)
+OLIVER_LEADING_ADDRESS_RE = re.compile(
+    r"^(?:(?:hi|hey|hello)\s+)?(?P<name>oliver)\b(?P<tail>.*)$", re.IGNORECASE
+)
+OLIVER_TRAILING_ADDRESS_RE = re.compile(
+    r"^(?P<request>.+?)[,;:\u2014\u2013-]\s*oliver\s*[.!?]*$", re.IGNORECASE
+)
+OLIVER_MODAL_REQUEST_RE = re.compile(
+    r"^(?:can|could|would|will)\s+oliver\s+"
+    r"(?:please\s+)?(?:be\s+able\s+to\s+)?(?P<action>[a-z][a-z-]*)\b",
+    re.IGNORECASE,
+)
+REQUEST_START_RE = re.compile(
+    r"^(?:"
+    r"please\b|"
+    r"(?:who|what|when|where|why|how|which)\b|"
+    r"(?:can|could|would|will|should|do|does|did|is|are|was|were|have|has|may|might)\b|"
+    r"(?:i\s+(?:need|want|would\s+like)\s+you\s+to)\b|"
+    r"(?:any\s+)?(?:thoughts?|ideas?|recommendations?)\b|"
+    r"(?:answer|decide|check|remember|summarize|tell|find|look|confirm|explain|compare|"
+    r"recommend|help|record|update|send|remind|show|give|research|save|note|track|list|"
+    r"report|weigh|add|remove|create|schedule|draft|verify|calculate)\b"
+    r")",
+    re.IGNORECASE,
+)
+ACTION_REQUEST_RE = re.compile(
+    r"^(?:answer|decide|check|remember|summarize|tell|find|look|confirm|explain|compare|"
+    r"recommend|help|record|update|send|remind|show|give|research|save|note|track|list|"
+    r"report|weigh|add|remove|create|schedule|draft|verify|calculate)$",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -99,6 +129,40 @@ def current_message_text(text: str) -> str:
             break
         lines.append(line)
     return "\n".join(lines).strip()
+
+
+def mailing_list_reply_requested(text: str) -> bool:
+    """Whether the current, unquoted message explicitly asks Oliver for something.
+
+    This is deliberately a narrow, fail-closed gate before model generation. A model may still
+    choose silence after this returns true, but a passing name mention, quoted request, or signature
+    never gets as far as the model.
+    """
+    current = re.sub(r"\s+", " ", current_message_text(text)).strip()
+    if not current:
+        return False
+
+    clauses = [part.strip() for part in re.split(r"(?<=[.!?])\s+", current) if part.strip()]
+    for clause in clauses:
+        leading = OLIVER_LEADING_ADDRESS_RE.match(clause)
+        if leading:
+            raw_tail = leading.group("tail")
+            has_vocative_punctuation = bool(re.match(r"^\s*[,;:!\u2014\u2013-]", raw_tail))
+            request = re.sub(r"^\s*[,;:!\u2014\u2013-]+\s*", "", raw_tail).strip()
+            if REQUEST_START_RE.match(request) or (has_vocative_punctuation and "?" in request):
+                return True
+
+        trailing = OLIVER_TRAILING_ADDRESS_RE.match(clause)
+        if trailing:
+            request = trailing.group("request").strip()
+            if REQUEST_START_RE.match(request) or clause.rstrip().endswith("?"):
+                return True
+
+        modal = OLIVER_MODAL_REQUEST_RE.match(clause)
+        if modal and ACTION_REQUEST_RE.match(modal.group("action")):
+            return True
+
+    return False
 
 
 def inbound_decision(msg) -> InboundDecision:

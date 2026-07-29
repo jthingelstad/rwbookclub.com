@@ -576,6 +576,19 @@ def answer_mailing_list_email(
 ) -> MailingListEmailResult:
     """One Oliver turn: either return a public mailing-list reply or a no-reply decision."""
     current_text = email_policy.current_message_text(getattr(msg, "text", ""))
+    if not email_policy.mailing_list_reply_requested(getattr(msg, "text", "")):
+        return MailingListEmailResult(False, "", "not_explicitly_addressed")
+
+    member_slug = _resolve_member(speaker, speaker_user_id)
+    linked_member = cr.find_member(member_slug) if member_slug else None
+    trusted_speaker = (linked_member or {}).get("name") or speaker
+    identity_note = (
+        f"Trusted linked sender: {trusted_speaker} (member: {member_slug}). Treat this runtime "
+        "identity as authoritative: the sender is speaking for themself, so never ask them to "
+        "obtain their own confirmation.\n\n"
+        if member_slug
+        else ""
+    )
     prompt = (
         "[Mailing-list email]\n"
         "Decide whether Oliver should reply publicly to this R/W Book Club mailing-list email, "
@@ -587,6 +600,7 @@ def answer_mailing_list_email(
         "where silence would be socially appropriate. Err on silence.\n\n"
         "If it is asking Oliver for something, write only the public mailing-list reply. Use your "
         "normal club tools when the answer needs club facts. Keep it brief and list-appropriate.\n\n"
+        f"{identity_note}"
         f"From: {getattr(msg, 'speaker', speaker) or speaker or 'unknown'} <{getattr(msg, 'from_email', '')}>\n"
         f"Subject: {getattr(msg, 'subject', '') or '(no subject)'}\n\n"
         f"Current unquoted message:\n{current_text or '(empty)'}"
@@ -594,7 +608,7 @@ def answer_mailing_list_email(
     body = answer(
         prompt,
         channel_id=channel_id,
-        speaker=speaker,
+        speaker=trusted_speaker,
         speaker_user_id=speaker_user_id,
         source_message_id=source_message_id,
         medium="email",

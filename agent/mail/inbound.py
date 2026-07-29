@@ -202,7 +202,7 @@ async def _mailing_list_result(msg: email_jmap.InboundEmail, decision, member_sl
     if result.reply:
         return True, result
     await asyncio.to_thread(email_jmap.mark_seen, msg.id)
-    reason = f"mailing_list_model_no_reply:{result.reason or 'no_reason'}"
+    reason = f"mailing_list_no_reply:{result.reason or 'no_reason'}"
     db.mark_email_processed(msg.id, status="ignored", error=reason)
     record_ignored_email(msg, reason)
     return False, None
