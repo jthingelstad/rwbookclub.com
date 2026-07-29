@@ -65,9 +65,6 @@ FASTMAIL_JMAP_SESSION_URL = os.environ.get(
     "FASTMAIL_JMAP_SESSION_URL", "https://api.fastmail.com/jmap/session"
 )
 OLIVER_EMAIL_ADDRESS = os.environ.get("OLIVER_EMAIL_ADDRESS", "oliver@rwbookclub.com")
-# Review drive: member-slug allowlist for the weekly review-request emails ("all" = every
-# current member; empty = feature off). Member-facing automation is opt-in in every environment.
-REVIEW_DRIVE_MEMBERS = os.environ.get("OLIVER_REVIEW_DRIVE_MEMBERS", "")
 
 # Daily enrichment sweep: enrich new books/authors, retry incomplete ones (capped, flagged).
 ENRICH_SWEEP_ENABLED = os.environ.get("OLIVER_ENRICH_SWEEP_ENABLED", "1") not in {

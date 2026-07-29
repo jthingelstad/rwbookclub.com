@@ -1,8 +1,8 @@
 """Review drive: Oliver collects written reviews by email.
 
 The club record has ratings but almost no written reviews. Once a week (Wednesday morning,
-club time), Oliver emails each allowlisted member about ONE book they rated but never wrote
-up: "just reply in your own words." The reply comes back through a small state machine:
+club time), Oliver emails each current member about ONE book they rated but never wrote up:
+"just reply in your own words." The reply comes back through a small state machine:
 
     awaiting_reply --(member email)--> extract --> confirmation email --> awaiting_confirm
     awaiting_confirm --YES--> reviews.write_review + publish + thanks --> written
@@ -16,9 +16,8 @@ Safety contract (the whole point):
   from tone. Absent → left empty; a body-only review is a fine review.
 - Nothing is written to the club record without the member's explicit YES.
 
-Gating: config.REVIEW_DRIVE_MEMBERS (env OLIVER_REVIEW_DRIVE_MEMBERS) — a member-slug
-allowlist; "all" opens it to every current member; empty disables the feature. Cadence and
-caps below are product decisions, not knobs (meeting_campaign precedent).
+The review drive is part of Oliver's normal member cadence, not a feature-flagged rollout.
+Cadence and caps below are product decisions, not deployment knobs (meeting_campaign precedent).
 """
 
 from __future__ import annotations
@@ -27,7 +26,7 @@ import json
 import logging
 import re
 
-from agent import clubdb, config, db, identities, oliver
+from agent import clubdb, db, identities, oliver
 from agent import corpus_read as cr
 from agent.club import meeting_rules, reviews
 from agent.mail import email_policy, outbound
@@ -65,17 +64,6 @@ _EXTRACT_SYSTEM = (
     '{"body": "...", "rating": 4, "recommend": null, "discussion": null, "quote": null, '
     '"declined": false, "stop_asking": false}'
 )
-
-
-def allowlisted_slugs() -> set[str]:
-    raw = (config.REVIEW_DRIVE_MEMBERS or "").strip()
-    if not raw:
-        return set()
-    if raw.lower() == "all":
-        return {m["slug"] for m in cr.human_current_members()}
-    return {s.strip() for s in raw.split(",") if s.strip()} & {
-        m["slug"] for m in cr.human_current_members()
-    }
 
 
 def _ask_counts(conn, member_id: int) -> tuple[dict[str, int], str | None]:
@@ -223,8 +211,8 @@ def send_ask(
 
 
 def run(now) -> int:
-    """Weekly gate + one ask per eligible allowlisted member. Called from the hourly tick."""
-    slugs = allowlisted_slugs()
+    """Weekly gate + one ask per eligible current member. Called from the hourly tick."""
+    slugs = {m["slug"] for m in cr.human_current_members()}
     if not slugs:
         return 0
     if now.weekday() != ASK_WEEKDAY or now.hour != ASK_HOUR:

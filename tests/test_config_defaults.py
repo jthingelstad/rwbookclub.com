@@ -21,7 +21,6 @@ import types
 
 for key in (
     "WEBAPP_SECRET",
-    "OLIVER_REVIEW_DRIVE_MEMBERS",
     "CLUB_EMAIL_CADENCE_ENABLED",
     "CLUB_POSTSCRIPT_ENABLED",
 ):
@@ -38,7 +37,6 @@ print(json.dumps({
     "webapp_secret": config.WEBAPP_SECRET,
     "webapp_dev_secret": config.WEBAPP_DEV_SECRET,
     "discord_token": config.TOKEN,
-    "review_drive_members": config.REVIEW_DRIVE_MEMBERS,
     "club_email_cadence": config.CLUB_EMAIL_CADENCE_ENABLED,
     "club_postscript": config.CLUB_POSTSCRIPT_ENABLED,
 }))
@@ -46,7 +44,6 @@ print(json.dumps({
     env = os.environ.copy()
     for key in (
         "WEBAPP_SECRET",
-        "OLIVER_REVIEW_DRIVE_MEMBERS",
         "CLUB_EMAIL_CADENCE_ENABLED",
         "CLUB_POSTSCRIPT_ENABLED",
     ):
@@ -66,12 +63,11 @@ def test_member_facing_features_are_safe_by_default():
     values = _load_without_dotenv()
     assert values["webapp_secret"] == values["webapp_dev_secret"]
     assert values["webapp_secret"] != values["discord_token"]
-    assert values["review_drive_members"] == ""
     assert values["club_email_cadence"] is False
     assert values["club_postscript"] is False
 
 
-def test_env_example_keeps_member_communications_off():
+def test_env_example_keeps_optional_member_communications_off():
     settings = {}
     for raw_line in (ROOT / ".env.example").read_text().splitlines():
         line = raw_line.strip()
@@ -82,5 +78,5 @@ def test_env_example_keeps_member_communications_off():
 
     assert settings["CLUB_EMAIL_CADENCE_ENABLED"] == "0"
     assert settings["CLUB_POSTSCRIPT_ENABLED"] == "0"
-    assert settings["OLIVER_REVIEW_DRIVE_MEMBERS"] == ""
+    assert "OLIVER_REVIEW_DRIVE_MEMBERS" not in settings
     assert settings["WEBAPP_SECRET"] == ""

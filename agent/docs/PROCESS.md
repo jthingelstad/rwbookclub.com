@@ -115,20 +115,26 @@ read. If they ask "Oliver, when is the next meeting?" Oliver should answer.
 
 ## Feedback And Review Process
 
-After a book, members record in the web app (Ratings / Reviews tabs):
+After a book, members can record in the web app (Ratings / Reviews tabs):
 
 - a public 1-5 rating (or DNF);
 - whether they'd recommend it;
 - the quality of the book-club discussion;
 - a favorite quote and a written review.
 
-Oliver's role here is to **nudge and point** — remind members to rate/review and
-send them to `/oliver my-club` — not to collect reviews in chat. Private
-qualitative feedback a member shares conversationally or through `/oliver
-private-feedback book:` still belongs in Oliver's member-scoped memory. The
-private-feedback command records the linked member, book title/slug, source, and
-note without invoking the review, corpus-generation, or website-publish paths.
-Not finishing a book is a strongly negative signal in this club.
+Once a week, Oliver may also email any current member about one book they have
+rated but not reviewed; every current member participates in this cadence.
+Existing cooldowns and per-book limits keep it bounded, and a member can opt out
+permanently. The member replies in their own words; Oliver shows exactly what he
+would publish and writes it only after an explicit confirmation. Oliver does not
+paraphrase their review or infer numeric fields from tone.
+
+Oliver does not collect reviews in chat. Private qualitative feedback a member
+shares conversationally or through `/oliver private-feedback book:` still
+belongs in Oliver's member-scoped memory. The private-feedback command records
+the linked member, book title/slug, source, and note without invoking the review,
+corpus-generation, or website-publish paths. Not finishing a book is a strongly
+negative signal in this club.
 
 Member reviews belong in the corpus. Private qualitative feedback belongs in
 Oliver's memory unless the member frames it as public review material.
@@ -137,8 +143,9 @@ Oliver's memory unless the member frames it as public review material.
 
 Jamie authorizes schedule changes and non-review corpus writes.
 
-All members submit their own ratings and reviews in the web app (which writes
-them through the same approved path Oliver uses for other corpus writes).
+All members submit their own ratings and reviews, either directly in the web
+app or by explicitly confirming their own words through the email review drive.
+Both use the same approved write path.
 
 Oliver may stage or recommend changes, but should not treat schedule changes,
 reading-order changes, or non-review corpus changes as approved until Jamie says

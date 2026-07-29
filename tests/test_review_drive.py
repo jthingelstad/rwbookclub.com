@@ -1,9 +1,10 @@
-"""Review drive: candidate selection, allowlist gating, and the reply state machine."""
+"""Review drive: member-wide scheduling, candidate selection, and the reply state machine."""
 
 import asyncio
 import json
+from datetime import datetime
 
-from agent import bot, clubdb, config, db, identities, publish, publishing
+from agent import bot, clubdb, db, identities, publish, publishing
 from agent.club import review_drive as rd
 from agent.mail.email_jmap import InboundEmail
 
@@ -81,15 +82,25 @@ def test_candidate_honors_caps_optout_and_inflight(fresh_db):
     assert rd.next_candidate("jamie") is None
 
 
-def test_allowlist_gates_everything(fresh_db, monkeypatch):
-    _rated_unreviewed(slug="erik", book_slug="enshittification")
-    monkeypatch.setattr(config, "REVIEW_DRIVE_MEMBERS", "jamie")
-    assert "erik" not in rd.allowlisted_slugs()  # eligible but not allowlisted
-    monkeypatch.setattr(config, "REVIEW_DRIVE_MEMBERS", "all")
-    assert {"jamie", "erik"} <= rd.allowlisted_slugs()
-    assert "oliver" not in rd.allowlisted_slugs()  # the agent never asks himself
-    monkeypatch.setattr(config, "REVIEW_DRIVE_MEMBERS", "")
-    assert rd.allowlisted_slugs() == set()  # empty = off
+def test_weekly_run_considers_every_current_human_member(fresh_db, monkeypatch):
+    monkeypatch.setattr(
+        rd.cr,
+        "human_current_members",
+        lambda: [{"slug": "jamie"}, {"slug": "erik"}, {"slug": "tom"}],
+    )
+    asked = []
+    monkeypatch.setattr(
+        rd,
+        "send_ask",
+        lambda slug, **kwargs: asked.append((slug, kwargs["idempotency_key"])) or {"book": "x"},
+    )
+
+    assert rd.run(datetime(2026, 7, 29, rd.ASK_HOUR)) == 3  # Wednesday
+    assert asked == [
+        ("erik", "email:review-ask:2026-W31:erik"),
+        ("jamie", "email:review-ask:2026-W31:jamie"),
+        ("tom", "email:review-ask:2026-W31:tom"),
+    ]
 
 
 # ── State machine ────────────────────────────────────────────────────────────
