@@ -251,7 +251,13 @@ def test_selfheal_skips_when_publish_already_pending(monkeypatch):
     assert published == []
 
 
-def test_selfheal_noop_when_no_upcoming_book(monkeypatch):
+def test_selfheal_publishes_to_clear_stale_marker_when_no_upcoming_book(monkeypatch):
+    published = _selfheal_env(monkeypatch, deployed=(True, "blindsight"), expected=None)
+    assert asyncio.run(publishing.reconcile()) is True
+    assert published == [True]
+
+
+def test_selfheal_noop_when_expected_and_deployed_markers_are_empty(monkeypatch):
     published = _selfheal_env(monkeypatch, deployed=(True, None), expected=None)
     assert asyncio.run(publishing.reconcile()) is False
     assert published == []

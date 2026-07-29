@@ -81,8 +81,6 @@ def _deployed_next_book_slug() -> tuple[bool, str | None]:
 async def reconcile() -> bool:
     """Publish when the deployed next-book marker is stale; otherwise do nothing."""
     expected = await asyncio.to_thread(_expected_next_book_slug)
-    if expected is None:
-        return False
     if _publish_dirty or (_publisher_task is not None and not _publisher_task.done()):
         return False
     reachable, deployed = await asyncio.to_thread(_deployed_next_book_slug)
@@ -91,6 +89,7 @@ async def reconcile() -> bool:
         return False
     if deployed == expected:
         return False
+    expected_label = f"“{expected}”" if expected else "(none)"
     log.info(
         "site self-heal: deployed next book %r != expected %r — publishing",
         deployed,
@@ -100,7 +99,7 @@ async def reconcile() -> bool:
         "site_selfheal",
         "Auto-publishing to fix a stale site",
         f"The live site's next book is {deployed or '(none — old build)'} but it should be "
-        f"“{expected}”. Rebuilding and deploying so the site reflects the current meeting — "
+        f"{expected_label}. Rebuilding and deploying so the site reflects the current meeting — "
         "no action needed.",
     )
     schedule()
