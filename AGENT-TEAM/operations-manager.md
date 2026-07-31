@@ -8,8 +8,8 @@ Read `AGENTS.md`, `AGENT-TEAM/WORKFLOW.md`, and `AGENT-TEAM/README.md` before ac
 
 Cadence: **event-driven** via `dispatch:operations`. Oliver's own deterministic health/scheduler
 loops remain continuous; this role runs when a deploy or operational decision actually exists. Run
-as a normal visible Codex project thread. Follow `AGENT-TEAM/README.md` → Live thread titles, using
-`#<issue> Ops` with short phase suffixes and a final `✓` or `!`.
+as a normal visible Codex project thread. Follow `AGENT-TEAM/README.md` → Visible role sessions,
+using `#<issue> Ops` with short phase suffixes and a final `✓` or `!`.
 
 ## Healthy-run rule
 
@@ -18,8 +18,9 @@ If production is healthy, do not opportunistically change code. Either work one 
 ## Every run
 
 1. Run the git preflight (`AGENT-TEAM/scripts/preflight.sh`).
-2. **`needs-deploy` first — before anything else.** A dispatcher invocation names and preclaims
-   the issue; accept its `wip` as yours. Deploy committed code **now**, atomically: restart the bot
+2. **`needs-deploy` first — before anything else.** A dispatcher-created project thread names the
+   issue and arrives with the dispatcher's `wip` claim; accept it as yours. Deploy committed code
+   **now**, atomically: restart the bot
    (and run `uv run --locked python -m agent.publish` if schema/corpus/site changed) so code and any
    migration go live together. Then clear `needs-deploy`.
 3. **Check the bot:** is `com.rwbookclub.oliver` running? Scan recent `agent/logs/oliver.log` / `oliver.err` for errors, crash loops (ThrottleInterval restarts), scheduler failures, or JMAP/Discord/Anthropic errors.

@@ -8,7 +8,7 @@ Read `AGENTS.md`, `AGENT-TEAM/WORKFLOW.md`, and `AGENT-TEAM/README.md` before ac
 
 Cadence: **event-driven** via `dispatch:culture` when behavior touches tone, memory, book
 selection, prompts, reviews, or the book cloud. Run as a normal visible Codex project thread.
-Follow `AGENT-TEAM/README.md` → Live thread titles, using `#<issue> Culture` for issue work or
+Follow `AGENT-TEAM/README.md` → Visible role sessions, using `#<issue> Culture` for issue work or
 `Culture Scan` before an issue exists.
 
 ## Cultural principles
@@ -22,9 +22,9 @@ Follow `AGENT-TEAM/README.md` → Live thread titles, using `#<issue> Culture` f
 ## Every run
 
 1. Run the git preflight (`AGENT-TEAM/scripts/preflight.sh`).
-2. Identify the cultural question, member signal, or conversation norm at stake. A dispatcher
-   invocation names the issue and has already applied `wip`; accept that claim as yours. Otherwise
-   skip existing `wip` and claim what you take.
+2. Identify the cultural question, member signal, or conversation norm at stake. A
+   dispatcher-created project thread names the issue and arrives with the dispatcher's `wip` claim;
+   accept that claim as yours. Otherwise skip existing `wip` and claim what you take.
 3. Study the sources: `corpus/data/{books,meetings,reviews,members}/`, Discord + mailing-list history Oliver has, and the book cloud. Preserve the privacy boundary between public corpus/reviews and private taste signals.
 4. Produce **Observation → Evidence → Why It Matters → Oliver Should → Oliver Should Avoid** (the note format below). Ground every claim in the corpus or tools.
 5. Route the work: file a `culture` issue (or comment on an existing one) with the finding + `generated`; when it implies a product change, hand it to the Product Manager with the specific behavior at stake; when it should shape an eval, hand realistic scenarios to the Evaluator. You **flag**; you don't build.

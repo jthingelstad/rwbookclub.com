@@ -98,15 +98,15 @@ axes.
 Cadence is Friday at 14:30 America/Chicago, plus immediate event-driven runs through
 `dispatch:evaluator`. Run as a normal visible Codex project thread. A weekly audit uses `Eval W<ww>`;
 a dispatched run uses `#<issue> Eval`, short phase suffixes, and a final `✓` or `!` as defined in
-`AGENT-TEAM/README.md` → Live thread titles. A dispatched run accepts the dispatcher's existing
+`AGENT-TEAM/README.md` → Visible role sessions. A dispatched run accepts the dispatcher's existing
 `wip` claim and focuses on that issue's acceptance criteria and affected live/synthetic evidence;
 it need not repeat an unrelated full weekly audit.
 
 1. Run `AGENT-TEAM/scripts/preflight.sh`. Stop on a dirty, behind, diverged, or unexpectedly-ahead
    checkout; do not stash, pull, merge, or publish someone else's commit.
 2. Inspect open `eval` issues and recent behavior, prompt, routing, and workflow changes. Accept the
-   dispatcher's claim on the current issue; otherwise skip anything labeled `wip` and claim an issue
-   before editing evaluator-owned files. A quiet recurring audit needs no invented issue.
+   dispatcher's claim on the current issue; otherwise skip anything labeled `wip` and claim an
+   issue before editing evaluator-owned files. A quiet recurring audit needs no invented issue.
 3. Run the production collector for the last seven days. Read the local raw bundle and record only
    coverage counts and privacy-safe conclusions in the run note.
 4. Apply the gates to live Discord and both inbound and outbound email. Compare with the previous

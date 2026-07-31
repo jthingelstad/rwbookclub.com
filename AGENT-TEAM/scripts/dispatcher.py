@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Event-driven AGENT-TEAM dispatcher for Oliver.
+"""Deterministic queue selector for the app-owned Oliver Dispatcher heartbeat.
 
-The process is intentionally deterministic until an issue has an actionable route. Idle polls
-query GitHub and exit without invoking Codex. A real handoff asks the Codex app to create one
-project-visible role thread, then verifies issue state instead of trusting final prose.
+Selection is read-only and creates no Codex session. The dedicated app-visible dispatcher thread
+uses the selected route to claim one issue and create one normal app-visible role thread.
 """
 
 from __future__ import annotations
@@ -12,17 +11,11 @@ import argparse
 import fcntl
 import json
 import os
-import plistlib
-import socket
-import sqlite3
-import stat
-import struct
 import subprocess
 import sys
 import tempfile
 import time
 import tomllib
-import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -30,8 +23,14 @@ from pathlib import Path
 from typing import Any, Iterator, Sequence
 
 DEFAULT_CONFIG = Path(__file__).resolve().parents[1] / "dispatch.toml"
-LAUNCH_AGENT = Path.home() / "Library/LaunchAgents/com.rwbookclub.agent-team-dispatcher.plist"
-EXPECTED_LAUNCH_LABEL = "com.rwbookclub.agent-team-dispatcher"
+ROLE_SESSION_LABELS = {
+    "operations-manager": "Ops",
+    "club-ethnographer": "Culture",
+    "evaluator": "Eval",
+    "build-manager": "Build",
+    "product-manager": "Product",
+    "manager": "Team",
+}
 
 
 class DispatchError(RuntimeError):
@@ -43,7 +42,6 @@ class Route:
     label: str
     role: str
     role_file: Path
-    session_label: str
     model: str
     reasoning_effort: str
     priority: int
@@ -70,14 +68,7 @@ class Config:
     max_attempts: int
     retry_delays_seconds: tuple[int, ...]
     log_retention_days: int
-    codex_home: Path
-    codex_project_id: str
-    codex_state_db: Path
-    codex_ipc_socket: Path
-    relay_model: str
-    relay_reasoning_effort: str
-    session_start_timeout_seconds: int
-    session_poll_seconds: int
+    codex_bin: Path
     gh_bin: Path
     git_bin: Path
     preflight: Path
@@ -133,7 +124,6 @@ def load_config(path: Path = DEFAULT_CONFIG) -> Config:
             label=item["label"],
             role=item["role"],
             role_file=_absolute_path(item["role_file"], cwd),
-            session_label=item["session_label"],
             model=item["model"],
             reasoning_effort=item["reasoning_effort"],
             priority=int(item["priority"]),
@@ -174,14 +164,7 @@ def load_config(path: Path = DEFAULT_CONFIG) -> Config:
         max_attempts=max_attempts,
         retry_delays_seconds=retry_delays,
         log_retention_days=int(raw["log_retention_days"]),
-        codex_home=Path(raw["codex_home"]).expanduser().resolve(),
-        codex_project_id=raw["codex_project_id"],
-        codex_state_db=Path(raw["codex_state_db"]).expanduser().resolve(),
-        codex_ipc_socket=Path(raw["codex_ipc_socket"]).expanduser().resolve(),
-        relay_model=raw["relay_model"],
-        relay_reasoning_effort=raw["relay_reasoning_effort"],
-        session_start_timeout_seconds=int(raw["session_start_timeout_seconds"]),
-        session_poll_seconds=int(raw["session_poll_seconds"]),
+        codex_bin=Path(raw["codex_bin"]).expanduser().resolve(),
         gh_bin=Path(raw["gh_bin"]).expanduser().resolve(),
         git_bin=Path(raw["git_bin"]).expanduser().resolve(),
         preflight=Path(raw["preflight"]).expanduser().resolve(),
@@ -269,7 +252,8 @@ def assess_transition(before_route: str, after: Issue, config: Config) -> Transi
 def build_prompt(selection: Selection, config: Config) -> str:
     issue = selection.issue
     route = selection.route
-    session_title = f"#{issue.number} {route.session_label}"
+    session_label = ROLE_SESSION_LABELS[route.role]
+    session_title = f"#{issue.number} {session_label}"
     return f"""Oliver AGENT-TEAM event dispatch
 
 You are the {route.role} for `/Users/otto/Projects/rwbookclub.com`.
@@ -299,32 +283,8 @@ GitHub state—not your final prose—is the completion protocol. Before finishi
    stops at `proposal`; blocked or ambiguous work stops with `blocked` or `needs-design`.
 5. End with a clean repository. Never push a pre-existing commit.
 
-Do not invoke another role directly. The dispatcher will re-read the authoritative issue state and
-launch the next app-visible project thread when appropriate.
-"""
-
-
-def build_relay_prompt(selection: Selection, config: Config) -> str:
-    """Build the short-lived automation prompt that opens a normal project thread."""
-
-    session_title = f"#{selection.issue.number} {selection.route.session_label}"
-    role_prompt = build_prompt(selection, config)
-    return f"""Open exactly one normal Codex project thread for an Oliver AGENT-TEAM handoff.
-
-Do not inspect the repository, GitHub, email, Discord, or production state. Do not do the role's
-work yourself. Use the Codex app project list to confirm project
-`{config.codex_project_id}`, then create one local project thread in that project with:
-
-- model: `{selection.route.model}`
-- reasoning effort: `{selection.route.reasoning_effort}`
-- prompt: the complete text between ROLE PROMPT START and ROLE PROMPT END below
-
-After creation, set the child thread title to `{session_title}`. Then archive this relay thread and
-finish. If thread creation fails, do not create a substitute CLI session and do not do role work.
-
-ROLE PROMPT START
-{role_prompt}
-ROLE PROMPT END
+Do not invoke another role directly. Leave any next-route label on the issue for a later normal,
+app-visible Codex project session.
 """
 
 
@@ -522,302 +482,89 @@ def run_preflight(config: Config) -> tuple[bool, str]:
     return result.returncode == 0, output
 
 
-class CodexAppIpc:
-    """Small owner-only client for the Codex app's local automation bridge."""
-
-    def __init__(self, path: Path, *, timeout_seconds: float = 40) -> None:
-        self.path = path
-        self.timeout_seconds = timeout_seconds
-
-    def validate(self) -> None:
-        try:
-            parent = self.path.parent.stat()
-            endpoint = self.path.stat()
-        except FileNotFoundError as exc:
-            raise DispatchError(
-                "Codex app IPC is unavailable; open Codex before the dispatcher retries"
-            ) from exc
-        uid = os.geteuid()
-        if parent.st_uid != uid or not stat.S_ISDIR(parent.st_mode):
-            raise DispatchError("Codex IPC directory is not an owner-controlled directory")
-        if stat.S_IMODE(parent.st_mode) & 0o077:
-            raise DispatchError("Codex IPC directory is accessible by another user")
-        if endpoint.st_uid != uid or not stat.S_ISSOCK(endpoint.st_mode):
-            raise DispatchError("Codex IPC endpoint is not an owner-controlled socket")
-        if stat.S_IMODE(endpoint.st_mode) & 0o077:
-            raise DispatchError("Codex IPC socket is accessible by another user")
-
-    @staticmethod
-    def _send(sock: socket.socket, message: dict[str, Any]) -> None:
-        payload = json.dumps(message, separators=(",", ":")).encode("utf-8")
-        sock.sendall(struct.pack("<I", len(payload)) + payload)
-
-    @staticmethod
-    def _receive(sock: socket.socket) -> dict[str, Any]:
-        header = CodexAppIpc._receive_exact(sock, 4)
-        length = struct.unpack("<I", header)[0]
-        if length <= 0 or length > 16 * 1024 * 1024:
-            raise DispatchError(f"invalid Codex IPC frame length: {length}")
-        try:
-            message = json.loads(CodexAppIpc._receive_exact(sock, length))
-        except json.JSONDecodeError as exc:
-            raise DispatchError("Codex IPC returned invalid JSON") from exc
-        if not isinstance(message, dict):
-            raise DispatchError("Codex IPC returned a non-object message")
-        return message
-
-    @staticmethod
-    def _receive_exact(sock: socket.socket, size: int) -> bytes:
-        chunks: list[bytes] = []
-        remaining = size
-        while remaining:
-            chunk = sock.recv(remaining)
-            if not chunk:
-                raise DispatchError("Codex IPC connection closed unexpectedly")
-            chunks.append(chunk)
-            remaining -= len(chunk)
-        return b"".join(chunks)
-
-    def _wait_response(self, sock: socket.socket, request_id: str) -> dict[str, Any]:
-        while True:
-            message = self._receive(sock)
-            if message.get("type") == "response" and message.get("requestId") == request_id:
-                return message
-
-    def request(self, method: str, params: dict[str, Any]) -> Any:
-        self.validate()
-        try:
-            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
-                sock.settimeout(self.timeout_seconds)
-                sock.connect(str(self.path))
-                initialize_id = str(uuid.uuid4())
-                self._send(
-                    sock,
-                    {
-                        "type": "request",
-                        "requestId": initialize_id,
-                        "version": 0,
-                        "method": "initialize",
-                        "params": {"clientType": "oliver-agent-team-dispatcher"},
-                    },
-                )
-                initialized = self._wait_response(sock, initialize_id)
-                if initialized.get("resultType") != "success":
-                    raise DispatchError(
-                        f"Codex IPC initialize failed: {initialized.get('error', 'unknown error')}"
-                    )
-                client_id = initialized.get("result", {}).get("clientId")
-                if not isinstance(client_id, str) or not client_id:
-                    raise DispatchError("Codex IPC initialize returned no client id")
-
-                request_id = str(uuid.uuid4())
-                self._send(
-                    sock,
-                    {
-                        "type": "request",
-                        "requestId": request_id,
-                        "sourceClientId": client_id,
-                        "version": 0,
-                        "method": method,
-                        "params": params,
-                        "timeoutMs": int(self.timeout_seconds * 1000),
-                    },
-                )
-                response = self._wait_response(sock, request_id)
-        except (OSError, socket.timeout) as exc:
-            raise DispatchError(f"Codex app IPC request failed: {exc}") from exc
-        if response.get("resultType") != "success":
-            raise DispatchError(
-                f"Codex app rejected {method}: {response.get('error', 'unknown error')}"
-            )
-        return response.get("result")
-
-
-def _toml_string(value: str) -> str:
-    return json.dumps(value, ensure_ascii=False)
-
-
-def _write_transient_automation(selection: Selection, config: Config, automation_id: str) -> Path:
-    root = config.codex_home / "automations"
-    root.mkdir(mode=0o700, parents=True, exist_ok=True)
-    automation_dir = root / automation_id
-    automation_dir.mkdir(mode=0o700)
-    now_ms = int(time.time() * 1000)
-    session_title = f"#{selection.issue.number} {selection.route.session_label}"
-    content = "\n".join(
-        [
-            "version = 1",
-            f"id = {_toml_string(automation_id)}",
-            'kind = "cron"',
-            f"name = {_toml_string(session_title + ' relay')}",
-            f"prompt = {_toml_string(build_relay_prompt(selection, config))}",
-            'status = "PAUSED"',
-            'rrule = "RRULE:FREQ=WEEKLY;BYHOUR=3;BYMINUTE=17;BYDAY=SU"',
-            f"model = {_toml_string(config.relay_model)}",
-            f"reasoning_effort = {_toml_string(config.relay_reasoning_effort)}",
-            'execution_environment = "local"',
-            'target = { type = "project", project_id = '
-            f"{_toml_string(config.codex_project_id)} }}",
-            f"cwds = [{_toml_string(str(config.cwd))}]",
-            f"created_at = {now_ms}",
-            f"updated_at = {now_ms}",
-            "",
-        ]
-    )
-    path = automation_dir / "automation.toml"
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    with os.fdopen(fd, "w", encoding="utf-8") as handle:
-        handle.write(content)
-        handle.flush()
-        os.fsync(handle.fileno())
-    return automation_dir
-
-
-def _cleanup_transient_automation(
-    automation_id: str, automation_dir: Path, ipc: CodexAppIpc
-) -> None:
-    deleted = False
+def _extract_thread_id(log_path: Path) -> str | None:
     try:
-        result = ipc.request("automation-delete", {"id": automation_id})
-        deleted = isinstance(result, dict) and result.get("success") is True
-    except DispatchError:
-        pass
-    if deleted or not automation_dir.exists():
-        return
-    # The exact directory was created by this run and contains no durable role evidence.
-    for name in ("automation.toml", "memory.md"):
-        path = automation_dir / name
-        if path.is_file():
-            path.unlink()
-    try:
-        automation_dir.rmdir()
+        for line in log_path.read_text(encoding="utf-8", errors="replace").splitlines():
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            for key in ("thread_id", "threadId"):
+                value = event.get(key)
+                if isinstance(value, str):
+                    return value
+            thread = event.get("thread")
+            if isinstance(thread, dict):
+                value = thread.get("id") or thread.get("thread_id")
+                if isinstance(value, str):
+                    return value
     except OSError:
-        pass
-
-
-def _find_role_thread(
-    selection: Selection, config: Config, *, created_after_ms: int
-) -> tuple[str, Path] | None:
-    uri = f"file:{config.codex_state_db}?mode=ro"
-    try:
-        with sqlite3.connect(uri, uri=True, timeout=2) as conn:
-            row = conn.execute(
-                """
-                SELECT id, rollout_path
-                FROM threads
-                WHERE cwd = ?
-                  AND thread_source = 'subagent'
-                  AND created_at_ms >= ?
-                  AND first_user_message LIKE ?
-                  AND first_user_message LIKE ?
-                ORDER BY created_at_ms DESC, id DESC
-                LIMIT 1
-                """,
-                (
-                    str(config.cwd),
-                    created_after_ms,
-                    f"%Work exactly one issue: #{selection.issue.number} %",
-                    f"%Current handoff: `{selection.route.label}`%",
-                ),
-            ).fetchone()
-    except sqlite3.Error as exc:
-        raise DispatchError(f"could not read Codex thread index: {exc}") from exc
-    if row is None:
         return None
-    rollout_path = Path(row[1]).expanduser().resolve()
-    try:
-        rollout_path.relative_to(config.codex_home)
-    except ValueError as exc:
-        raise DispatchError("Codex returned a rollout path outside its owner directory") from exc
-    return str(row[0]), rollout_path
-
-
-def _rollout_complete(path: Path) -> bool:
-    try:
-        with path.open("rb") as handle:
-            size = handle.seek(0, os.SEEK_END)
-            handle.seek(max(0, size - 512 * 1024))
-            data = handle.read()
-    except OSError:
-        return False
-    for raw_line in data.splitlines():
-        try:
-            event = json.loads(raw_line)
-        except json.JSONDecodeError:
-            continue
-        if event.get("type") != "event_msg":
-            continue
-        payload = event.get("payload")
-        if isinstance(payload, dict) and payload.get("type") == "task_complete":
-            return True
-    return False
+    return None
 
 
 def run_role(
     selection: Selection, config: Config, store: StateStore, state: dict[str, Any]
 ) -> tuple[int, str | None, Path, Path, bool]:
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    automation_id = (
-        f"oliver-dispatch-{selection.issue.number}-{selection.route.session_label.lower()}-"
-        f"{uuid.uuid4().hex[:8]}"
-    )
-    stem = (
-        f"{stamp}-issue-{selection.issue.number}-{selection.route.role}-"
-        f"{automation_id.rsplit('-', 1)[-1]}"
-    )
+    stem = f"{stamp}-issue-{selection.issue.number}-{selection.route.role}"
+    log_path = store.runs_dir / f"{stem}.jsonl"
     summary_path = store.runs_dir / f"{stem}.summary.md"
+    prompt = build_prompt(selection, config)
+    command = [
+        str(config.codex_bin),
+        "exec",
+        "--json",
+        "--cd",
+        str(config.cwd),
+        "--model",
+        selection.route.model,
+        "--config",
+        f'model_reasoning_effort="{selection.route.reasoning_effort}"',
+        "--config",
+        'approval_policy="never"',
+        "--sandbox",
+        "danger-full-access",
+        "--output-last-message",
+        str(summary_path),
+        prompt,
+    ]
     state["current"] = {
         "issue": selection.issue.number,
         "title": selection.issue.title,
         "role": selection.route.role,
         "route": selection.route.label,
         "started_at": now_iso(),
-        "log": None,
+        "log": str(log_path),
         "summary": str(summary_path),
         "thread_id": None,
     }
     store.save(state)
 
-    ipc = CodexAppIpc(config.codex_ipc_socket)
-    automation_dir: Path | None = None
-    started_ms = int(time.time() * 1000) - 1000
+    timed_out = False
+    fd = os.open(log_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     try:
-        automation_dir = _write_transient_automation(selection, config, automation_id)
-        ipc.request(
-            "automation-run-now",
-            {"id": automation_id, "collaborationMode": None, "permissions": None},
-        )
-        start_deadline = time.monotonic() + config.session_start_timeout_seconds
-        thread: tuple[str, Path] | None = None
-        while time.monotonic() < start_deadline:
-            thread = _find_role_thread(selection, config, created_after_ms=started_ms)
-            if thread is not None:
-                break
-            time.sleep(config.session_poll_seconds)
-        if thread is None:
-            raise DispatchError("Codex relay did not create an app-visible role thread")
-
-        thread_id, log_path = thread
-        state["current"].update({"thread_id": thread_id, "log": str(log_path)})
-        store.save(state)
-        summary_path.write_text(
-            f"App-visible Codex thread: {thread_id}\nRollout: {log_path}\n",
-            encoding="utf-8",
-        )
-        os.chmod(summary_path, 0o600)
-
-        _cleanup_transient_automation(automation_id, automation_dir, ipc)
-        automation_dir = None
-
-        deadline = time.monotonic() + config.role_timeout_seconds
-        while time.monotonic() < deadline:
-            if _rollout_complete(log_path):
-                return 0, thread_id, log_path, summary_path, False
-            time.sleep(config.session_poll_seconds)
-        return 124, thread_id, log_path, summary_path, True
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            try:
+                result = subprocess.run(
+                    command,
+                    cwd=config.cwd,
+                    text=True,
+                    stdout=handle,
+                    stderr=subprocess.STDOUT,
+                    timeout=config.role_timeout_seconds,
+                    check=False,
+                    env=os.environ.copy(),
+                )
+                exit_code = result.returncode
+            except subprocess.TimeoutExpired:
+                exit_code = 124
+                timed_out = True
     finally:
-        if automation_dir is not None:
-            _cleanup_transient_automation(automation_id, automation_dir, ipc)
+        if summary_path.exists():
+            os.chmod(summary_path, 0o600)
+    thread_id = _extract_thread_id(log_path)
+    return exit_code, thread_id, log_path, summary_path, timed_out
 
 
 def _record_recent(state: dict[str, Any], record: dict[str, Any]) -> None:
@@ -979,7 +726,7 @@ def dispatch_once(config: Config, *, shadow: bool = False, show_all: bool = Fals
                 current.number,
                 f"Dispatcher claimed this issue for `{selection.route.role}` at "
                 f"{datetime.now().astimezone().strftime('%Y-%m-%d %H:%M %Z')}. Starting one "
-                "app-visible Codex project thread from the current handoff state.",
+                "persisted Codex role session from the current handoff state.",
             )
             current = github.view(current.number)
             selection = Selection(current, selection.route, "explicit")
@@ -1000,7 +747,7 @@ def dispatch_once(config: Config, *, shadow: bool = False, show_all: bool = Fals
                 if timed_out:
                     reason = f"role timed out; {reason}"
                 elif exit_code != 0:
-                    reason = f"Codex app thread ended with status {exit_code}; {reason}"
+                    reason = f"codex exited {exit_code}; {reason}"
                 _mark_failure(
                     selection,
                     reason,
@@ -1037,7 +784,7 @@ def dispatch_once(config: Config, *, shadow: bool = False, show_all: bool = Fals
                 f"Dispatcher verified the `{selection.route.role}` transition from authoritative "
                 f"GitHub state. Result: `{transition.outcome}`"
                 + (f" → `{transition.next_route}`." if transition.next_route else ".")
-                + (f" App-visible Codex thread: `{thread_id}`." if thread_id else ""),
+                + (f" Persisted Codex thread: `{thread_id}`." if thread_id else ""),
             )
             return 0
         except DispatchError as exc:
@@ -1051,13 +798,14 @@ def dispatch_once(config: Config, *, shadow: bool = False, show_all: bool = Fals
 
 def _static_config_problems(config: Config) -> list[str]:
     problems: list[str] = []
+    if config.poll_interval_seconds != 15 * 60:
+        problems.append(
+            f"dispatcher heartbeat must be 900 seconds, got {config.poll_interval_seconds}"
+        )
     for path, executable in (
         (config.cwd, False),
         (config.state_dir.parent, False),
-        (config.codex_home, False),
-        (config.codex_home / "automations", False),
-        (config.codex_state_db, False),
-        (config.codex_ipc_socket.parent, False),
+        (config.codex_bin, True),
         (config.gh_bin, True),
         (config.git_bin, True),
         (config.preflight, True),
@@ -1072,15 +820,12 @@ def _static_config_problems(config: Config) -> list[str]:
             problems.append(f"missing role file: {route.role_file}")
         if not route.label.startswith(config.dispatch_prefix):
             problems.append(f"route outside dispatch prefix: {route.label}")
-        if not route.session_label or len(route.session_label) > 10:
-            problems.append(f"invalid compact session label: {route.session_label!r}")
     if len({route.priority for route in config.routes.values()}) != len(config.routes):
         problems.append("route priorities must be unique")
     return problems
 
 
 def _live_config_problems(config: Config) -> list[str]:
-    problems: list[str] = []
     try:
         raw = _run_json(
             [
@@ -1099,42 +844,15 @@ def _live_config_problems(config: Config) -> list[str]:
         actual = {item["name"] for item in raw}
         expected = set(config.routes) | set(config.pending_labels)
         missing = sorted(expected - actual)
-        if missing:
-            problems.append(f"missing GitHub labels: {', '.join(missing)}")
+        return [f"missing GitHub labels: {', '.join(missing)}"] if missing else []
     except (DispatchError, json.JSONDecodeError) as exc:
-        problems.append(f"live label check failed: {exc}")
-    try:
-        CodexAppIpc(config.codex_ipc_socket).validate()
-    except DispatchError as exc:
-        problems.append(f"Codex app bridge unavailable: {exc}")
-    return problems
+        return [f"live label check failed: {exc}"]
 
 
-def _installation_problems(config: Config) -> list[str]:
-    if not LAUNCH_AGENT.is_file():
-        return [f"launch agent is not installed: {LAUNCH_AGENT}"]
-    with LAUNCH_AGENT.open("rb") as handle:
-        plist = plistlib.load(handle)
-    problems = []
-    if plist.get("Label") != EXPECTED_LAUNCH_LABEL:
-        problems.append(f"unexpected launch agent label: {plist.get('Label')}")
-    if plist.get("StartInterval") != config.poll_interval_seconds:
-        problems.append(
-            "launch agent interval does not match dispatcher config: "
-            f"{plist.get('StartInterval')} != {config.poll_interval_seconds}"
-        )
-    mode = stat.S_IMODE(LAUNCH_AGENT.stat().st_mode)
-    if mode & 0o022:
-        problems.append(f"launch agent is group/world writable: {oct(mode)}")
-    return problems
-
-
-def check_config(config: Config, *, live: bool = False, installed: bool = False) -> int:
+def check_config(config: Config, *, live: bool = False) -> int:
     problems = _static_config_problems(config)
     if live:
         problems.extend(_live_config_problems(config))
-    if installed:
-        problems.extend(_installation_problems(config))
 
     if problems:
         for problem in problems:
@@ -1143,8 +861,6 @@ def check_config(config: Config, *, live: bool = False, installed: bool = False)
     print(f"PASS dispatcher config: {len(config.routes)} routes, {len(config.inference)} rules")
     if live:
         print("PASS GitHub dispatch labels")
-    if installed:
-        print("PASS launch agent installation")
     return 0
 
 
@@ -1183,7 +899,6 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--all", action="store_true", help="show all shadow candidates")
     parser.add_argument("--check", action="store_true", help="validate local configuration")
     parser.add_argument("--live", action="store_true", help="include GitHub labels in --check")
-    parser.add_argument("--installed", action="store_true", help="include LaunchAgent in --check")
     parser.add_argument("--status", action="store_true", help="show active and recent runs")
     parser.add_argument("--json-status", action="store_true", help="emit status as JSON")
     return parser.parse_args(argv)
@@ -1193,10 +908,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
     config = load_config(args.config)
     if args.check:
-        return check_config(config, live=args.live, installed=args.installed)
+        return check_config(config, live=args.live)
     if args.status or args.json_status:
         return print_status(config, as_json=args.json_status)
-    return dispatch_once(config, shadow=args.shadow, show_all=args.all)
+    if args.shadow:
+        return dispatch_once(config, shadow=True, show_all=args.all)
+    print(
+        "Direct role launch is disabled: use --shadow from the app-owned Oliver Dispatcher "
+        "heartbeat, which creates normal app-visible project threads.",
+        file=sys.stderr,
+    )
+    return 2
 
 
 if __name__ == "__main__":

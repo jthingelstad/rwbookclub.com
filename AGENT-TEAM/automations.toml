@@ -3,10 +3,21 @@ timezone = "America/Chicago"
 
 # An entry may say ACTIVE only while the corresponding local Codex scheduled activity exists,
 # is enabled, and matches the role, schedule, model, reasoning effort, project, and working path.
-# PAUSED entries are historical schedule definitions, not a dormant queue to reactivate. Those
-# roles are launched as normal app-visible project threads by the GitHub-driven dispatcher.
-# Every ACTIVE calendar execution must also create a normal visible project thread and follow the
-# compact title protocol in AGENT-TEAM/README.md.
+# PAUSED entries are historical schedule definitions, not a dormant queue to reactivate. The
+# dedicated Oliver Dispatcher heartbeat launches those roles as normal app-visible project threads.
+# Every ACTIVE execution must also create a normal visible project thread and follow the compact
+# title protocol in AGENT-TEAM/README.md.
+[[activities]]
+id = "oliver-dispatcher"
+name = "Oliver Dispatcher"
+role = "AGENT-TEAM/dispatcher.md"
+status = "ACTIVE"
+rrule = "FREQ=MINUTELY;INTERVAL=15"
+model = "gpt-5.6-sol"
+reasoning_effort = "xhigh"
+execution_environment = "local"
+cwd = "/Users/otto/Projects/rwbookclub.com"
+
 [[activities]]
 id = "oliver-operations-manager"
 name = "Oliver Operations Manager"
