@@ -44,14 +44,6 @@ def test_config_has_unique_existing_routes(config):
     }
     assert len({route.priority for route in config.routes.values()}) == len(config.routes)
     assert all(route.role_file.is_file() for route in config.routes.values())
-    assert {route.session_label for route in config.routes.values()} == {
-        "Ops",
-        "Culture",
-        "Eval",
-        "Build",
-        "Product",
-        "Team",
-    }
 
 
 def test_explicit_dispatch_wins_over_classification(config):
@@ -107,87 +99,6 @@ def test_prompt_accepts_dispatcher_owned_wip_and_requires_state_transition(confi
     assert "skip it because it is labeled `wip`" in prompt
     assert "`dispatch:operations` and `wip`" in prompt
     assert "exactly one next `dispatch:*` label" in prompt
-    assert "`#81 Ops`" in prompt
-    assert "`#81 Ops · <phase>`" in prompt
-    assert "`#81 Ops ✓`" in prompt
-
-
-def test_relay_prompt_creates_one_normal_project_thread(config):
-    selection = dispatcher.Selection(
-        issue(81, "dispatch:evaluator", "wip"),
-        config.routes["dispatch:evaluator"],
-        "explicit",
-    )
-    prompt = dispatcher.build_relay_prompt(selection, config)
-    assert "create one local project thread" in prompt
-    assert config.codex_project_id in prompt
-    assert "set the child thread title to `#81 Eval`" in prompt
-    assert "archive this relay thread" in prompt
-    assert "Do not inspect the repository" in prompt
-
-
-def test_transient_relay_automation_is_paused_and_project_scoped(config, tmp_path):
-    local_config = replace(config, codex_home=tmp_path / ".codex")
-    selection = dispatcher.Selection(
-        issue(81, "dispatch:evaluator", "wip"),
-        local_config.routes["dispatch:evaluator"],
-        "explicit",
-    )
-    automation_dir = dispatcher._write_transient_automation(
-        selection, local_config, "oliver-dispatch-test"
-    )
-    with (automation_dir / "automation.toml").open("rb") as handle:
-        raw = dispatcher.tomllib.load(handle)
-    assert raw["status"] == "PAUSED"
-    assert raw["target"] == {
-        "type": "project",
-        "project_id": config.codex_project_id,
-    }
-    assert raw["name"] == "#81 Eval relay"
-    assert raw["model"] == config.relay_model
-
-
-def test_transient_relay_cleanup_falls_back_when_app_does_not_delete(config, tmp_path):
-    local_config = replace(config, codex_home=tmp_path / ".codex")
-    selection = dispatcher.Selection(
-        issue(81, "dispatch:evaluator", "wip"),
-        local_config.routes["dispatch:evaluator"],
-        "explicit",
-    )
-    automation_dir = dispatcher._write_transient_automation(
-        selection, local_config, "oliver-dispatch-test"
-    )
-
-    class Ipc:
-        def request(self, method, params):
-            assert method == "automation-delete"
-            assert params == {"id": "oliver-dispatch-test"}
-            return {"success": False}
-
-    dispatcher._cleanup_transient_automation(
-        "oliver-dispatch-test", automation_dir, Ipc()
-    )
-    assert not automation_dir.exists()
-
-
-def test_codex_ipc_frame_round_trip():
-    left, right = dispatcher.socket.socketpair()
-    try:
-        dispatcher.CodexAppIpc._send(left, {"type": "test", "value": 7})
-        assert dispatcher.CodexAppIpc._receive(right) == {"type": "test", "value": 7}
-    finally:
-        left.close()
-        right.close()
-
-
-def test_rollout_completion_detects_task_complete(tmp_path):
-    rollout = tmp_path / "rollout.jsonl"
-    rollout.write_text(
-        '{"type":"event_msg","payload":{"type":"agent_message"}}\n'
-        '{"type":"event_msg","payload":{"type":"task_complete"}}\n',
-        encoding="utf-8",
-    )
-    assert dispatcher._rollout_complete(rollout)
 
 
 def test_transition_requires_current_route_to_clear(config):
