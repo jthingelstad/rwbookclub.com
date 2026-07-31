@@ -99,6 +99,23 @@ def test_prompt_accepts_dispatcher_owned_wip_and_requires_state_transition(confi
     assert "skip it because it is labeled `wip`" in prompt
     assert "`dispatch:operations` and `wip`" in prompt
     assert "exactly one next `dispatch:*` label" in prompt
+    assert "`#81 Ops`" in prompt
+    assert "`#81 Ops · <phase>`" in prompt
+    assert "`#81 Ops ✓`" in prompt
+
+
+def test_cli_refuses_non_visible_automatic_launch(monkeypatch, capsys):
+    called = False
+
+    def unexpected_dispatch(*_args, **_kwargs):
+        nonlocal called
+        called = True
+        raise AssertionError("automatic dispatch should be unreachable")
+
+    monkeypatch.setattr(dispatcher, "dispatch_once", unexpected_dispatch)
+    assert dispatcher.main(["--config", str(ROOT / "AGENT-TEAM/dispatch.toml")]) == 2
+    assert not called
+    assert "Automatic role launch is disabled" in capsys.readouterr().err
 
 
 def test_transition_requires_current_route_to_clear(config):

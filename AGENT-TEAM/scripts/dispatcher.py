@@ -28,6 +28,14 @@ from typing import Any, Iterator, Sequence
 DEFAULT_CONFIG = Path(__file__).resolve().parents[1] / "dispatch.toml"
 LAUNCH_AGENT = Path.home() / "Library/LaunchAgents/com.rwbookclub.agent-team-dispatcher.plist"
 EXPECTED_LAUNCH_LABEL = "com.rwbookclub.agent-team-dispatcher"
+ROLE_SESSION_LABELS = {
+    "operations-manager": "Ops",
+    "club-ethnographer": "Culture",
+    "evaluator": "Eval",
+    "build-manager": "Build",
+    "product-manager": "Product",
+    "manager": "Team",
+}
 
 
 class DispatchError(RuntimeError):
@@ -249,6 +257,8 @@ def assess_transition(before_route: str, after: Issue, config: Config) -> Transi
 def build_prompt(selection: Selection, config: Config) -> str:
     issue = selection.issue
     route = selection.route
+    session_label = ROLE_SESSION_LABELS[route.role]
+    session_title = f"#{issue.number} {session_label}"
     return f"""Oliver AGENT-TEAM event dispatch
 
 You are the {route.role} for `/Users/otto/Projects/rwbookclub.com`.
@@ -262,6 +272,12 @@ skip it because it is labeled `wip`; treat that claim as yours. Read `AGENTS.md`
 that role's current contract. Run preflight again before acting and preserve every approval,
 privacy, database, deployment, and commit-lane boundary.
 
+Keep this Codex project thread easy to scan in the sidebar. At the start, use the Codex app title
+tool on the current thread to set `{session_title}`. Update it only at meaningful checkpoints,
+using `{session_title} · <phase>` and keeping the entire title at 24 characters or fewer. Before
+your final response, use `{session_title} ✓` after a valid GitHub transition or
+`{session_title} !` if the role is blocked or cannot complete the transition.
+
 GitHub state—not your final prose—is the completion protocol. Before finishing:
 
 1. Update issue #{issue.number} with evidence and the result.
@@ -272,8 +288,8 @@ GitHub state—not your final prose—is the completion protocol. Before finishi
    stops at `proposal`; blocked or ambiguous work stops with `blocked` or `needs-design`.
 5. End with a clean repository. Never push a pre-existing commit.
 
-Do not invoke another role directly. The dispatcher will re-read the authoritative issue state and
-launch the next persisted role session when appropriate.
+Do not invoke another role directly. Leave any next-route label on the issue for a later normal,
+app-visible Codex project session.
 """
 
 
@@ -915,7 +931,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         return check_config(config, live=args.live, installed=args.installed)
     if args.status or args.json_status:
         return print_status(config, as_json=args.json_status)
-    return dispatch_once(config, shadow=args.shadow, show_all=args.all)
+    if args.shadow:
+        return dispatch_once(config, shadow=True, show_all=args.all)
+    print(
+        "Automatic role launch is disabled: shell-launched Codex runs are not visible as normal "
+        "project threads. Use --shadow to select the next handoff, then start it from an active "
+        "Codex app conversation.",
+        file=sys.stderr,
+    )
+    return 2
 
 
 if __name__ == "__main__":

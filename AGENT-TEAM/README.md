@@ -1,9 +1,9 @@
 # AGENT-TEAM/ — Oliver build team
 
-Role-prompts, each meant to run as a **scheduled Codex/Claude agent** that maintains and
-improves Oliver (the R/W Book Club's resident agent — librarian, memory keeper, meeting aide,
-de facto sixth member). Each file is a self-contained job: a lane, a boundary, an "Every run"
-runbook, and a success definition. Point a scheduled agent at one file and let it run.
+Role prompts for the agents that maintain and improve Oliver (the R/W Book Club's resident agent —
+librarian, memory keeper, meeting aide, de facto sixth member). Run them in a **normal Codex project
+session**, except for the few activities whose inputs are inherently calendar-based. Each file is a
+self-contained job: a lane, a boundary, an "Every run" runbook, and a success definition.
 
 **The workflow these roles share** — the GitHub-Issues spine, the approval gate, the label
 taxonomy, `wip` claiming, commit lanes, the `notes/` convention, and the operating rules — is
@@ -39,11 +39,12 @@ counterpart to Elixir's Data Analyst. Commit lanes and the approval gate are in 
 
 ## Activity-driven dispatch
 
-GitHub issue state, not a role's calendar, drives executable handoffs. A deterministic local
-launchd watcher (`com.rwbookclub.agent-team-dispatcher`) polls the open queue every two minutes.
-An idle poll invokes no model and creates no Codex session. When exactly one `dispatch:*` label is
-actionable, it claims the issue with `wip`, starts one **persisted** Codex role session, and then
-re-reads GitHub plus the checkout rather than trusting the agent's final prose.
+GitHub issue state, not a role's calendar, drives executable handoffs. Run the deterministic
+selector with `AGENT-TEAM/scripts/dispatcher-admin.sh shadow`, claim the selected issue, then start
+the role from an active Codex conversation as a normal local thread in the `rwbookclub.com`
+project. The local launchd watcher is intentionally uninstalled: shell-launched `codex exec` runs
+are persisted on disk but do not appear as normal project threads, and the app-owned thread
+creation tool is not available to launchd.
 
 | Handoff label | Worker |
 |---------------|--------|
@@ -61,10 +62,12 @@ closes the issue, puts it in an explicit human stop state (`proposal`, `blocked`
 or adds exactly one next handoff. Product proposals still wait for Jamie; defects and approved work
 may flow autonomously.
 
-The watcher serializes the shared checkout, runs preflight before every hop, backs off failures,
-and stops a chain after four role hops in 90 minutes. Full run JSONL and summaries are owner-only
-under `~/Library/Application Support/com.rwbookclub.agent-team-dispatcher/`; GitHub remains the
-durable work ledger. Inspect it with:
+Each on-demand role runs preflight, owns the shared checkout for its turn, and leaves the next
+handoff in GitHub. Threads use compact live titles such as `#79 Eval · evidence` and
+`#79 Eval · tests`, then settle at `#79 Eval ✓` after a valid transition or `#79 Eval !` when
+blocked. A checkmark means the role completed its workflow; the evaluation itself may still fail
+and route the issue onward. GitHub remains the durable work ledger. Inspect routing and the retired
+launcher's historical state with:
 
 ```bash
 AGENT-TEAM/scripts/dispatcher-admin.sh status

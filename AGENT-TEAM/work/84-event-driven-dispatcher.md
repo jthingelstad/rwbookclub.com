@@ -2,13 +2,15 @@
 
 **Issue:** [#84](https://github.com/jthingelstad/rwbookclub.com/issues/84)
 **Decision:** approved directly by Jamie on 2026-07-31
+**Status:** blocked on supported non-interactive creation of app-visible Codex project threads;
+read-only selection plus on-demand project sessions is the active fallback
 
-## Outcome
+## Intended outcome
 
-Replace independent role polling with one deterministic queue watcher. GitHub remains the durable
-ledger and approval boundary; Codex runs only when issue state names executable work. Idle polls
-produce no model call, Codex session, issue comment, or run note. Real work uses normal persisted
-Codex sessions so Jamie can inspect and resume them.
+Replace independent role polling with one deterministic queue selector. GitHub remains the durable
+ledger and approval boundary; Codex runs only when issue state names executable work. An idle scan
+produces no model call, Codex session, issue comment, or run note. Real work uses normal persisted
+Codex project sessions so Jamie can inspect and resume them.
 
 The only calendar-driven agent activities are the Friday 14:30 performance evaluation and the
 four-week Team Manager review. Build, Operations, Product, and Club Ethnographer are event-driven.
@@ -21,11 +23,11 @@ One `dispatch:*` label names the next worker. `needs-eval`, `needs-culture`, and
 ```text
 issue transition
       ↓
-launchd poll (deterministic, silent when idle)
+read-only shadow selector
       ↓
-preflight → wip claim → one persisted Codex role
+active Codex conversation claims the issue and creates a project thread
       ↓
-authoritative GitHub/repository re-read
+preflight → one role → authoritative GitHub/repository transition
       ↓
 closed | explicit human stop | exactly one next dispatch label
 ```
@@ -45,38 +47,41 @@ review, defect, approved+ready); explicit dispatch always wins.
 
 ## Execution and visibility
 
-`AGENT-TEAM/scripts/dispatcher.py` is invoked by
-`com.rwbookclub.agent-team-dispatcher` every two minutes. It holds an advisory file lock for the
-entire role run, so the shared checkout has one mutating owner. It invokes:
+The first implementation invoked roles with:
 
 ```text
 codex exec --json --cd <repo> --model <role-model> ...
 ```
 
-It deliberately omits `--ephemeral`. Codex persists the session; the dispatcher additionally
-stores owner-only JSONL and final summaries under
-`~/Library/Application Support/com.rwbookclub.agent-team-dispatcher/runs/`. GitHub receives a
-claim comment and an authoritative transition result. `dispatcher-admin.sh status` shows the
-active and ten most recent roles with thread IDs.
+Those runs persist rollout files, but live acceptance on 2026-07-31 proved that `source=exec`
+threads are absent from the Codex app's normal project-thread inventory. A second attempt through
+the owner's local IPC router was also rejected with `no-client-found`: app-owned automation and
+project-thread operations are not exposed to an arbitrary launchd client.
 
-Raw JSONL can contain private evaluator evidence or tool output. It never enters Git, GitHub, or a
-shared log and is retained for 30 days. The state/log directory and files are mode 0700/0600.
+Automatic launch is therefore disabled and the LaunchAgent is uninstalled. The selector remains
+available in read-only shadow mode. A person or an active Codex app conversation uses its supported
+project-thread tool to start the chosen role. That thread uses a compact live title such as
+`#79 Eval · evidence` and ends in `#79 Eval ✓` or `#79 Eval !`.
+
+Historical launcher JSONL can contain private evaluator evidence or tool output. It never enters
+Git, GitHub, or a shared log; the owner-only state/log directory and files are mode 0700/0600.
 
 ## Failure boundaries
 
 - Shared preflight runs before every claim; dirty, behind, diverged, or unexpectedly-ahead state
   prevents mutation.
-- The dispatcher trusts issue state, not final prose. Success requires closure, an explicit human
-  stop, or exactly one different next dispatch label.
-- Failed/invalid runs release dispatcher-owned `wip` and retry with 5-minute, 30-minute, and
-  2-hour backoff. Three failures add `blocked`.
-- Four role hops within 90 minutes stop the chain and add `blocked`.
+- The role trusts issue state, not final prose. Success requires closure, an explicit human stop,
+  or exactly one different next dispatch label.
+- Failed or invalid on-demand runs release `wip` and leave the issue in an explicit recoverable
+  state; they do not create invisible retry sessions.
+- The active conversation starts at most one role. A new visible session is required for the next
+  handoff, preventing an unbounded hidden role chain.
 - Product proposals never cross Jamie's gate automatically.
 - Build and Operations remain serialized. Roles never invoke each other directly.
 
 ## Deployment and rollback
 
-Run the dispatcher in `--shadow --all` first. After label and routing verification, install the
-checked-in plist with `AGENT-TEAM/scripts/dispatcher-admin.sh install`. Rollback is bounded: stop
-that one LaunchAgent and reactivate the paused sparse Codex schedules. GitHub retains every issue,
-claim, transition, and pending acceptance state.
+Run the dispatcher only in `--shadow --all` mode. `dispatcher-admin.sh install` and `restart` fail
+closed until Codex exposes a supported non-interactive way to create normal app-visible project
+threads. `dispatcher-admin.sh uninstall` removes the retired LaunchAgent. GitHub retains every
+issue and pending acceptance state.
