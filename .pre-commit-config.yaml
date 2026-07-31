@@ -1,5 +1,5 @@
-# Pre-commit hooks for Oliver. Runs `ruff check` on every commit — the same gate
-# CI enforces on push (see .github/workflows/tests.yml).
+# Pre-commit hooks for Oliver. Runs Ruff lint and format checks on every commit —
+# the same gates CI enforces on push (see .github/workflows/tests.yml).
 #
 # Activate once per clone:
 #   uv sync --locked && uv run pre-commit install
@@ -8,3 +8,4 @@ repos:
     rev: v0.15.22
     hooks:
       - id: ruff-check
+      - id: ruff-format

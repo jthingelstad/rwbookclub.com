@@ -912,8 +912,7 @@ def pending_reviews(name_or_slug: str) -> dict | None:
     reviewed = {
         r.get("book")
         for r in reviews()
-        if r.get("member") == m["slug"]
-        and (r.get("dnf") or (r.get("review") or "").strip())
+        if r.get("member") == m["slug"] and (r.get("dnf") or (r.get("review") or "").strip())
     }
     read = [b for b in books() if b.get("isRead")]
     joined = m.get("joined")

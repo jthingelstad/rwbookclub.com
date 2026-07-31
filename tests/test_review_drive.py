@@ -254,9 +254,7 @@ def test_confirmation_yes_writes_review(fresh_db, monkeypatch):
     draft = _draft(
         fresh_db,
         state="awaiting_confirm",
-        draft_json=json.dumps(
-            {"body": "A dark, riveting read.", "rating": 4, "recommend": False}
-        ),
+        draft_json=json.dumps({"body": "A dark, riveting read.", "rating": 4, "recommend": False}),
     )
     assert rd.handle_reply(draft, _msg("Yes, looks good!")) is True
     assert written and written[0][0] == ("heart-of-darkness", "Jamie")

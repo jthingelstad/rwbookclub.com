@@ -110,7 +110,7 @@ def _passed_books(conn, member_id: int) -> set[str]:
     for row in rows:
         try:
             book_slug = json.loads(row["detail"] or "{}").get("book_slug")
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             book_slug = None
         if book_slug:
             out.add(book_slug)
