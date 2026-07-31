@@ -907,7 +907,14 @@ def pending_reviews(name_or_slug: str) -> dict | None:
     m = find_member(name_or_slug)
     if not m:
         return None
-    reviewed = {r.get("book") for r in reviews() if r.get("member") == m["slug"]}
+    # A rating or recommendation alone is not a written review. DNF is a complete, explicit
+    # response, while otherwise the member remains pending until they add review text.
+    reviewed = {
+        r.get("book")
+        for r in reviews()
+        if r.get("member") == m["slug"]
+        and (r.get("dnf") or (r.get("review") or "").strip())
+    }
     read = [b for b in books() if b.get("isRead")]
     joined = m.get("joined")
     if joined:  # a member owes nothing for books read before they joined (fail open on NULLs)

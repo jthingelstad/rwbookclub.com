@@ -50,6 +50,13 @@ class TestUpcomingMeetingsFilter:
         assert book["isRead"] is True
         assert "Patterns in Nature" in {b["title"] for b in cr.pending_reviews("tom")["books"]}
 
+    def test_pending_review_means_missing_text_or_dnf(self):
+        from agent import corpus_read as cr
+
+        pending = {b["slug"] for b in cr.pending_reviews("jamie")["books"]}
+        assert "a-canticle-for-leibowitz" in pending  # rating only
+        assert "the-origins-of-totalitarianism" not in pending  # explicit DNF
+
     def test_multi_book_meeting_keeps_all_books_and_first_book_compatibility(self, monkeypatch):
         from agent import corpus_read as cr
 

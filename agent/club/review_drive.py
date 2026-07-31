@@ -1,12 +1,14 @@
-"""Review drive: Oliver collects written reviews by email.
+"""Review drive: Oliver collects complete reading responses by email.
 
-The club record has ratings but almost no written reviews. Once a week (Wednesday morning,
-club time), Oliver emails each current member about ONE book they rated but never wrote up:
-"just reply in your own words." The reply comes back through a small state machine:
+Once a week (Wednesday morning, club time), Oliver emails each current member about ONE past
+club book from their tenure that has no written review from them. An existing rating is useful
+context, not a prerequisite. The member may supply a rating, DNF, recommendation, and their own
+review words. The reply comes back through a small state machine:
 
     awaiting_reply --(member email)--> extract --> confirmation email --> awaiting_confirm
     awaiting_confirm --YES--> reviews.write_review + publish + thanks --> written
     awaiting_confirm --corrections--> re-extract --> confirmation (max 2 rounds) --> parked
+    any open state --PASS--> declined for this book permanently
     any state --"stop asking"--> review_optout event + durable memory --> declined
 
 Safety contract (the whole point):
@@ -26,7 +28,7 @@ import json
 import logging
 import re
 
-from agent import clubdb, db, identities, oliver
+from agent import clock, clubdb, db, identities, oliver
 from agent import corpus_read as cr
 from agent.club import meeting_rules, reviews
 from agent.mail import email_policy, outbound
@@ -43,6 +45,10 @@ ASK_EXPIRY_DAYS = 21  # an unanswered ask expires; the member is free for future
 JOB_KEY = "review_drive"
 YES_RE = re.compile(
     r"^\s*(yes|yep|yeah|yup|looks good|perfect|that works|correct|👍|do it)\b", re.IGNORECASE
+)
+PASS_RE = re.compile(
+    r"^\s*(pass|skip|no thanks)(?:\s+(?:on\s+)?(?:this|this one|it))?\s*[.!]?\s*$",
+    re.IGNORECASE,
 )
 NO_RE = re.compile(r"^\s*(no thanks|no\b|nope|skip|pass|not now)", re.IGNORECASE)
 
@@ -94,10 +100,31 @@ def _opted_out(conn, member_id: int) -> bool:
     )
 
 
+def _passed_books(conn, member_id: int) -> set[str]:
+    """Books this member explicitly chose not to review."""
+    rows = conn.execute(
+        "SELECT detail FROM events WHERE kind = 'review_passed' AND member_id = ?",
+        (member_id,),
+    ).fetchall()
+    out: set[str] = set()
+    for row in rows:
+        try:
+            book_slug = json.loads(row["detail"] or "{}").get("book_slug")
+        except (ValueError, TypeError):
+            book_slug = None
+        if book_slug:
+            out.add(book_slug)
+    return out
+
+
 def next_candidate(slug: str) -> dict | None:
-    """The best book to ask `slug` about, or None. Rated (not DNF) but never written up,
-    best-rated first then most recently read; honors the per-book ask cap, the weekly
-    cooldown, opt-out, and any in-flight draft."""
+    """The best book to ask `slug` about, or None.
+
+    Any past club book on or after the member's join date is eligible until that member has
+    either supplied a written review or explicitly recorded a DNF. Existing ratings are
+    considered first (best-rated, then most recent); otherwise the most recent eligible book
+    wins. The per-book ask cap, weekly cooldown, opt-out, and in-flight draft still apply.
+    """
     member_id = clubdb.lookup_member_id(slug)
     if member_id is None or db.open_draft_for_member(member_id):
         return None
@@ -105,6 +132,7 @@ def next_candidate(slug: str) -> dict | None:
         if _opted_out(conn, member_id):
             return None
         counts, last_ask = _ask_counts(conn, member_id)
+        passed_books = _passed_books(conn, member_id)
         if (
             last_ask
             and conn.execute(
@@ -113,29 +141,53 @@ def next_candidate(slug: str) -> dict | None:
         ):
             return None
         rows = conn.execute(
-            "SELECT b.slug, b.title, r.rating, MAX(m.date) AS read_date "
-            "FROM club_reviews r "
-            "JOIN club_books b ON b.id = r.book_id "
-            "JOIN club_members mem ON mem.id = r.member_id "
-            "LEFT JOIN club_meeting_books mb ON mb.book_id = b.id "
-            "LEFT JOIN club_meetings m ON m.id = mb.meeting_id "
-            "WHERE mem.slug = ? AND r.rating IS NOT NULL AND COALESCE(r.dnf, 0) = 0 "
-            "AND COALESCE(r.body, '') = '' "
-            "GROUP BY b.id "
-            # never ask about a book the club read before this member joined (fail open on NULLs)
-            "HAVING (mem.joined IS NULL OR MAX(m.date) IS NULL OR MAX(m.date) >= mem.joined) "
-            "ORDER BY r.rating DESC, read_date DESC",
-            (slug,),
+            "SELECT b.slug, b.title, r.id AS review_id, r.rating, "
+            "r.discussion_quality, r.would_recommend, r.favorite_quote, "
+            "m.date AS read_date, m.start_time, mem.joined "
+            "FROM club_members mem "
+            "CROSS JOIN club_meetings m "
+            "JOIN club_meeting_books mb ON mb.meeting_id = m.id "
+            "JOIN club_books b ON b.id = mb.book_id "
+            "LEFT JOIN club_reviews r ON r.book_id = b.id AND r.member_id = mem.id "
+            "WHERE mem.id = ? AND COALESCE(TRIM(r.body), '') = '' "
+            "AND COALESCE(r.dnf, 0) = 0",
+            (member_id,),
         ).fetchall()
+
+    # A book may have multiple meeting links. Establish eligibility from any past meeting
+    # during this member's tenure, and keep the most recent such read date for the email.
+    candidates: dict[str, dict] = {}
     for r in rows:
-        if counts.get(r["slug"], 0) < MAX_ASKS_PER_BOOK:
-            return {
-                "slug": r["slug"],
-                "title": r["title"],
-                "rating": r["rating"],
-                "readDate": r["read_date"],
-                "memberId": member_id,
-            }
+        read_date = r["read_date"]
+        if not read_date or clock.is_upcoming(read_date, r["start_time"]):
+            continue
+        if r["joined"] and read_date < r["joined"]:
+            continue
+        candidate = candidates.get(r["slug"])
+        if candidate and candidate["readDate"] >= read_date:
+            continue
+        candidates[r["slug"]] = {
+            "slug": r["slug"],
+            "title": r["title"],
+            "rating": r["rating"],
+            "recommend": bool(r["would_recommend"]) if r["review_id"] is not None else None,
+            "discussion": r["discussion_quality"],
+            "quote": r["favorite_quote"],
+            "readDate": read_date,
+            "memberId": member_id,
+        }
+
+    ordered = sorted(
+        candidates.values(),
+        key=lambda c: (c["rating"] is not None, c["rating"] or 0, c["readDate"]),
+        reverse=True,
+    )
+    for candidate in ordered:
+        if (
+            candidate["slug"] not in passed_books
+            and counts.get(candidate["slug"], 0) < MAX_ASKS_PER_BOOK
+        ):
+            return candidate
     return None
 
 
@@ -151,24 +203,34 @@ def send_ask(
         return None
     first = (member.get("name") or slug).split()[0]
     when = meeting_rules.friendly_date(cand.get("readDate")) if cand.get("readDate") else None
-    body = oliver.compose(
-        "a short, warm email asking this member to write a few sentences of review for one "
-        "book they rated but never reviewed — reference their own rating and when the club "
-        "read it, and make clear they can just REPLY to this email in their own words; a few "
-        "sentences is a great review, and you'll handle recording it",
+    existing_rating = cand.get("rating")
+    request_detail = (
+        f"you gave *{cand['title']}* {existing_rating} stars"
+        if existing_rating is not None
+        else f"the club read *{cand['title']}*"
+    )
+    opening = oliver.compose(
+        "a one-or-two sentence warm opening for an email asking this member to complete their "
+        "public reading response for one past club book with no written review — reference an "
+        "existing rating only when one is supplied; otherwise never invent one. Do not explain "
+        "the reply mechanics; a fixed instruction block follows this opening",
         {
             "member": first,
             "book": cand["title"],
-            "theirRating": cand["rating"],
+            "theirRating": existing_rating,
             "whenRead": when or "a while back",
         },
         fallback=(
-            f"Hi {first} — you gave *{cand['title']}* {cand['rating']} stars"
+            f"Hi {first} — {request_detail}"
             + (f" back when we read it ({when})" if when else "")
-            + ", but the club record has no written review from you. Would you write one? "
-            "Just reply to this email in your own words — a few sentences is a great "
-            "review, and I'll take care of recording it."
+            + ", but the club record has no written review from you."
         ),
+    )
+    body = (
+        opening.strip()
+        + "\n\nJust reply with a **1–5 rating or DNF**, whether you'd recommend it, and a few "
+        "sentences in your own words.\n\nReply **PASS** if you'd rather not review this one. "
+        "I'll show you exactly what I would record before anything is published."
     )
     sent = outbound.send(
         to=[rec["email"]],
@@ -182,10 +244,10 @@ def send_ask(
     # with prose rather than repeating a number Oliver just quoted back to them.
     initial = {
         "body": "",
-        "rating": cand["rating"],
-        "recommend": None,
-        "discussion": None,
-        "quote": None,
+        "rating": existing_rating,
+        "recommend": cand.get("recommend"),
+        "discussion": cand.get("discussion"),
+        "quote": cand.get("quote"),
     }
     draft_id = db.create_review_draft(
         member_id=cand["memberId"],
@@ -285,9 +347,9 @@ def _confirmation_body(first: str, book_title: str, d: dict) -> str:
         bits.append(f"- **Discussion quality**: {d['discussion']}/5")
     if d.get("quote"):
         bits.append(f"- **Favorite quote**: “{d['quote']}”")
+    if d.get("body"):
+        bits += ["", "> " + d["body"].replace("\n", "\n> ")]
     bits += [
-        "",
-        "> " + (d.get("body") or "").replace("\n", "\n> "),
         "",
         "Reply **YES** and it's recorded (your words, verbatim) — or just tell me what to change.",
     ]
@@ -328,12 +390,13 @@ def _write(draft: dict, d: dict) -> dict:
     if quote is None:
         quote = existing.get("favorite_quote")
     body = d.get("body") or existing.get("body")
+    recommend_value = "yes" if recommend is True else "no" if recommend is False else None
     return reviews.write_review(
         draft["book_slug"],
         member_name,
         rating=str(rating) if rating else None,
         review=body or None,
-        recommend="yes" if recommend else None,
+        recommend=recommend_value,
         discussion=str(discussion) if discussion else None,
         quote=quote or None,
     )
@@ -376,6 +439,26 @@ def handle_reply(draft: dict, msg) -> bool:
             f"Review draft {state}",
             f"{(member or {}).get('slug', draft['member_id'])} / {book['title']}: {note}",
         )
+
+    def _record_pass() -> None:
+        db.record_event(
+            actor="member",
+            kind="review_passed",
+            member_id=draft["member_id"],
+            surface="email",
+            source=f"email:{source_id}",
+            category="reading",
+            detail=json.dumps({"book_slug": draft["book_slug"]}),
+        )
+
+    if PASS_RE.fullmatch(text):
+        _record_pass()
+        _reply(
+            f"No problem, {first} — I won't ask you to review *{book['title']}* again.",
+            "passed",
+        )
+        _finish("declined", "member passed on reviewing this book")
+        return False
 
     if draft["state"] == "awaiting_confirm" and YES_RE.search(text):
         d = json.loads(draft["draft_json"] or "{}")
@@ -455,8 +538,12 @@ def handle_reply(draft: dict, msg) -> bool:
         return False
 
     if d.get("declined"):
-        _reply(f"Fair enough, {first} — skipping that one.", "declined")
-        _finish("declined", "member declined this book")
+        _record_pass()
+        _reply(
+            f"Fair enough, {first} — I won't ask you to review *{book['title']}* again.",
+            "declined",
+        )
+        _finish("declined", "member passed on reviewing this book")
         return False
 
     rounds = draft["rounds"] + (1 if draft["state"] == "awaiting_confirm" else 0)

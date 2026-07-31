@@ -15,8 +15,8 @@ Oliver helps the club:
 - prepare for meetings with attendance and reading status in view;
 - carry club history into new conversations;
 - after a meeting, nudge members to rate and review the book in the web app, and
-  use the weekly email review drive to help every current member add written
-  reviews in their own words;
+  use the weekly email review drive to help every current member complete their
+  rating or DNF, recommendation, and written review in their own words;
 - preserve canonical knowledge in the corpus and private operating memory in
   SQLite.
 

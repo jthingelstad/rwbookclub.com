@@ -32,20 +32,20 @@ def test_create_member_stamps_today():
 
 
 def test_review_drive_never_asks_about_prejoin_books(fresh_db):
-    # nick joined 2014; rate him a 2003-era book — it must never become a candidate.
+    # Nick joined in 2014. A rated 2003-era book must not outrank the valid post-join pool.
     with db.connect() as conn:
         mid = clubdb.lookup_member_id("nick")
         conn.execute("DELETE FROM club_reviews WHERE member_id=?", (mid,))
-        bid = conn.execute(
-            "SELECT b.id FROM club_books b JOIN club_meeting_books mb ON mb.book_id=b.id "
+        old = conn.execute(
+            "SELECT b.id, b.slug FROM club_books b JOIN club_meeting_books mb ON mb.book_id=b.id "
             "JOIN club_meetings m ON m.id=mb.meeting_id WHERE m.date < '2014-01-01' "
             "LIMIT 1"
-        ).fetchone()[0]
-        clubdb.upsert_review(conn, book_id=bid, member_id=mid, rating=5, body=None)
-    assert rd.next_candidate("nick") is None
+        ).fetchone()
+        clubdb.upsert_review(conn, book_id=old["id"], member_id=mid, rating=5, body=None)
+    assert rd.next_candidate("nick")["slug"] != old["slug"]
     with db.connect() as conn:  # clear joined → the same book becomes fair game (fail open)
         conn.execute("UPDATE club_members SET joined=NULL WHERE id=?", (mid,))
-    assert rd.next_candidate("nick") is not None
+    assert rd.next_candidate("nick")["slug"] == old["slug"]
 
 
 def test_pending_reviews_respects_tenure(reset_books_cache):

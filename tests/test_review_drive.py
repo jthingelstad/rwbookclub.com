@@ -29,6 +29,7 @@ def _msg(text, thread_id="T1", from_email="jamie@example.test"):
 def _rated_unreviewed(slug="jamie", book_slug="heart-of-darkness", rating=5):
     with db.connect() as conn:
         mid = clubdb.lookup_member_id(slug)
+        conn.execute("DELETE FROM club_reviews WHERE member_id=?", (mid,))
         bid = conn.execute("SELECT id FROM club_books WHERE slug=?", (book_slug,)).fetchone()[0]
         clubdb.upsert_review(conn, book_id=bid, member_id=mid, rating=rating, body=None)
     return mid
@@ -42,6 +43,18 @@ def test_candidate_prefers_high_rating_and_skips_reviewed(fresh_db, monkeypatch)
         clubdb.upsert_review(conn, book_id=bid2, member_id=mid, rating=3, body=None)
     cand = rd.next_candidate("jamie")
     assert cand and cand["slug"] == "heart-of-darkness" and cand["rating"] == 5
+
+
+def test_unrated_postjoin_past_book_is_a_candidate(fresh_db):
+    with db.connect() as conn:
+        mid = clubdb.lookup_member_id("nick")
+        conn.execute("DELETE FROM club_reviews WHERE member_id=?", (mid,))
+        conn.execute("UPDATE club_members SET joined='2026-05-26' WHERE id=?", (mid,))
+
+    cand = rd.next_candidate("nick")
+
+    assert cand and cand["slug"] == "patterns-in-nature"
+    assert cand["rating"] is None
 
 
 def test_candidate_honors_caps_optout_and_inflight(fresh_db):
@@ -113,7 +126,11 @@ def _draft(fresh_db, state="awaiting_reply", draft_json=None, rounds=0):
 
 def _mute_mail(monkeypatch):
     sent = []
-    monkeypatch.setattr(rd.outbound, "send", lambda **kw: sent.append(kw) or {"emailId": "e"})
+    monkeypatch.setattr(
+        rd.outbound,
+        "send",
+        lambda **kw: sent.append(kw) or {"emailId": "e", "threadId": "T1"},
+    )
     monkeypatch.setattr(rd.oliver, "compose", lambda kind, facts, fallback="": fallback)
     return sent
 
@@ -145,7 +162,19 @@ def test_reply_extracts_and_asks_for_confirmation(fresh_db, monkeypatch):
 
 
 def test_first_reply_keeps_the_rating_quoted_in_the_ask(fresh_db, monkeypatch):
-    _rated_unreviewed(rating=5)
+    mid = _rated_unreviewed(rating=5)
+    with db.connect() as conn:
+        bid = conn.execute("SELECT id FROM club_books WHERE slug='heart-of-darkness'").fetchone()[0]
+        clubdb.upsert_review(
+            conn,
+            book_id=bid,
+            member_id=mid,
+            rating=5,
+            discussion_quality=4,
+            would_recommend=True,
+            favorite_quote="The horror!",
+            body=None,
+        )
     identities.link_member_email("jamie@example.test", "jamie")
     sent = []
 
@@ -175,12 +204,45 @@ def test_first_reply_keeps_the_rating_quoted_in_the_ask(fresh_db, monkeypatch):
     assert cand and cand["rating"] == 5
     rd.send_ask("jamie", cand)
     draft = db.draft_for_thread("T1")
-    assert json.loads(draft["draft_json"])["rating"] == 5
+    seeded = json.loads(draft["draft_json"])
+    assert seeded == {
+        "body": "",
+        "rating": 5,
+        "recommend": True,
+        "discussion": 4,
+        "quote": "The horror!",
+    }
 
     assert rd.handle_reply(draft, _msg("A dark, riveting read.")) is False
     updated = db.draft_for_thread("T1")
     assert json.loads(updated["draft_json"])["rating"] == 5
     assert "★★★★★" in sent[-1]["body"]
+
+
+def test_unrated_ask_requests_complete_response_without_inventing_rating(fresh_db, monkeypatch):
+    identities.link_member_email("nick@example.test", "nick")
+    sent = _mute_mail(monkeypatch)
+    member_id = clubdb.lookup_member_id("nick")
+
+    rd.send_ask(
+        "nick",
+        {
+            "slug": "patterns-in-nature",
+            "title": "Patterns in Nature",
+            "rating": None,
+            "recommend": None,
+            "discussion": None,
+            "quote": None,
+            "readDate": "2026-05-26",
+            "memberId": member_id,
+        },
+    )
+
+    assert "None stars" not in sent[0]["body"]
+    assert "1–5 rating or DNF" in sent[0]["body"]
+    assert "whether you'd recommend it" in sent[0]["body"]
+    assert "Reply **PASS**" in sent[0]["body"]
+    assert json.loads(db.draft_for_thread("T1")["draft_json"])["rating"] is None
 
 
 def test_confirmation_yes_writes_review(fresh_db, monkeypatch):
@@ -192,15 +254,103 @@ def test_confirmation_yes_writes_review(fresh_db, monkeypatch):
     draft = _draft(
         fresh_db,
         state="awaiting_confirm",
-        draft_json=json.dumps({"body": "A dark, riveting read.", "rating": 4, "recommend": True}),
+        draft_json=json.dumps(
+            {"body": "A dark, riveting read.", "rating": 4, "recommend": False}
+        ),
     )
     assert rd.handle_reply(draft, _msg("Yes, looks good!")) is True
     assert written and written[0][0] == ("heart-of-darkness", "Jamie")
     assert written[0][1]["rating"] == "4" and written[0][1]["review"] == "A dark, riveting read."
+    assert written[0][1]["recommend"] == "no"
     assert db.draft_for_thread("T1") is None  # state=written → no longer open
     with db.connect() as conn:
         assert conn.execute("SELECT 1 FROM events WHERE kind='review_recorded'").fetchone()
     assert "Recorded" in sent[0]["body"]
+
+
+def test_confirmed_dnf_completes_book_and_prevents_reselection(fresh_db, monkeypatch):
+    with db.connect() as conn:
+        mid = clubdb.lookup_member_id("nick")
+        conn.execute("DELETE FROM club_reviews WHERE member_id=?", (mid,))
+        conn.execute("UPDATE club_members SET joined='2026-05-26' WHERE id=?", (mid,))
+    candidate = rd.next_candidate("nick")
+    assert candidate and candidate["slug"] == "patterns-in-nature"
+
+    sent = _mute_mail(monkeypatch)
+    monkeypatch.setattr(
+        rd.oliver,
+        "complete",
+        lambda *a, **kw: json.dumps(
+            {
+                "body": "",
+                "rating": "DNF",
+                "recommend": False,
+                "discussion": None,
+                "quote": None,
+                "declined": False,
+                "stop_asking": False,
+            }
+        ),
+    )
+    db.create_review_draft(
+        member_id=mid,
+        book_slug=candidate["slug"],
+        thread_id="T-DNF",
+        draft_json=json.dumps(
+            {"body": "", "rating": None, "recommend": None, "discussion": None, "quote": None}
+        ),
+    )
+    draft = db.draft_for_thread("T-DNF")
+
+    assert rd.handle_reply(draft, _msg("DNF, would not recommend", thread_id="T-DNF")) is False
+    assert "**Rating**: DNF" in sent[-1]["body"]
+    assert "> " not in sent[-1]["body"]
+    assert rd.handle_reply(db.draft_for_thread("T-DNF"), _msg("YES", thread_id="T-DNF")) is True
+
+    with db.connect() as conn:
+        row = conn.execute(
+            "SELECT rating, dnf, would_recommend, body FROM club_reviews "
+            "WHERE member_id=? AND book_id=(SELECT id FROM club_books WHERE slug=?)",
+            (mid, candidate["slug"]),
+        ).fetchone()
+    assert dict(row) == {"rating": None, "dnf": 1, "would_recommend": 0, "body": None}
+    assert rd.next_candidate("nick") is None
+
+
+def test_pass_closes_request_and_permanently_excludes_book(fresh_db, monkeypatch):
+    with db.connect() as conn:
+        mid = clubdb.lookup_member_id("nick")
+        conn.execute("DELETE FROM club_reviews WHERE member_id=?", (mid,))
+        conn.execute("UPDATE club_members SET joined='2026-05-26' WHERE id=?", (mid,))
+    candidate = rd.next_candidate("nick")
+    assert candidate and candidate["slug"] == "patterns-in-nature"
+    db.create_review_draft(
+        member_id=mid,
+        book_slug=candidate["slug"],
+        thread_id="T-PASS",
+        draft_json=json.dumps(
+            {"body": "", "rating": None, "recommend": None, "discussion": None, "quote": None}
+        ),
+    )
+    sent = _mute_mail(monkeypatch)
+    monkeypatch.setattr(
+        rd.oliver,
+        "complete",
+        lambda *a, **kw: (_ for _ in ()).throw(AssertionError("PASS must not use the model")),
+    )
+
+    assert rd.handle_reply(db.draft_for_thread("T-PASS"), _msg("PASS", "T-PASS")) is False
+
+    assert db.draft_for_thread("T-PASS") is None
+    assert "won't ask you to review" in sent[-1]["body"]
+    with db.connect() as conn:
+        draft = conn.execute("SELECT state FROM review_drafts WHERE thread_id='T-PASS'").fetchone()
+        passed = conn.execute(
+            "SELECT detail FROM events WHERE kind='review_passed' AND member_id=?", (mid,)
+        ).fetchone()
+    assert draft["state"] == "declined"
+    assert json.loads(passed["detail"])["book_slug"] == candidate["slug"]
+    assert rd.next_candidate("nick") is None
 
 
 def test_confirmation_preserves_canonical_fields_missing_from_old_draft(fresh_db, monkeypatch):
