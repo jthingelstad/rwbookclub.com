@@ -72,18 +72,20 @@ issues + `work/` + the Manager's `summaries/`; ephemeral = `notes/`.
 
 ## Suggested cadence
 
-Recommended defaults are below. Active Codex activity settings that belong to this team are
-recorded in `automations.toml`; that registry is descriptive and must match the actual Codex
-activity. All times America/Chicago.
+Oliver is a low-volume hobby project. Scheduled roles are quiet discovery and recovery backstops,
+not continuous queue pollers; run a role manually when Jamie is actively working on Oliver or a
+behavior change needs immediate evaluation/deployment. Active Codex activity settings that belong
+to this team are recorded in `automations.toml`; that registry is descriptive and must match the
+actual Codex activity. All times America/Chicago.
 
 | Role | Cadence |
 |------|---------|
-| Operations Manager | Hourly (or every few hours) — bot + site health |
-| Build Manager | Daily — backlog burn-down |
-| Evaluator | Friday 14:30 + after any behavior/prompt/workflow change |
-| Product Manager | Weekly — discovery |
-| Club Ethnographer | Weekly (or when a change touches tone/memory/selection) |
-| Manager | Weekly — team-health review + notes digest |
+| Operations Manager | Weekly — deploy/health recovery backstop; run manually after a build |
+| Build Manager | Every two weeks — queue discovery; run manually for active work |
+| Evaluator | Every four weeks + manually after a behavior/prompt/workflow change |
+| Product Manager | Every eight weeks — product discovery at roughly the club's pace |
+| Club Ethnographer | Every eight weeks, or manually for tone/memory/selection work |
+| Manager | Every four weeks — team-health review + notes digest |
 
 ## North star
 
