@@ -93,18 +93,20 @@ duplicate member communication, or review publication before explicit confirmati
 failure. A run passes only with zero critical failures and an average of at least 4.5 across scored
 axes.
 
-## Every scheduled run
+## Every run
 
 Cadence is Friday at 14:30 America/Chicago, plus immediate event-driven runs through
-`dispatch:evaluator`. A dispatched run accepts the dispatcher's existing `wip` claim and focuses
-on that issue's acceptance criteria and affected live/synthetic evidence; it need not repeat an
-unrelated full weekly audit.
+`dispatch:evaluator`. Run as a normal visible Codex project thread. A weekly audit uses `Eval W<ww>`;
+an issue-driven run uses `#<issue> Eval`, short phase suffixes, and a final `✓` or `!` as defined in
+`AGENT-TEAM/README.md` → Visible role sessions. An issue-driven run accepts the initiating
+conversation's existing `wip` claim and focuses on that issue's acceptance criteria and affected
+live/synthetic evidence; it need not repeat an unrelated full weekly audit.
 
 1. Run `AGENT-TEAM/scripts/preflight.sh`. Stop on a dirty, behind, diverged, or unexpectedly-ahead
    checkout; do not stash, pull, merge, or publish someone else's commit.
-2. Inspect open `eval` issues and recent behavior, prompt, routing, and workflow changes. Skip
-   anything labeled `wip`; claim an issue before editing evaluator-owned files. A quiet recurring
-   audit needs no invented issue.
+2. Inspect open `eval` issues and recent behavior, prompt, routing, and workflow changes. Accept the
+   current issue's initiating-conversation claim; otherwise skip anything labeled `wip` and claim
+   an issue before editing evaluator-owned files. A quiet recurring audit needs no invented issue.
 3. Run the production collector for the last seven days. Read the local raw bundle and record only
    coverage counts and privacy-safe conclusions in the run note.
 4. Apply the gates to live Discord and both inbound and outbound email. Compare with the previous
@@ -119,7 +121,7 @@ unrelated full weekly audit.
    file no more than a few focused issues. New direction still stops at `proposal`.
 7. Commit only evaluator-owned scripts, synthetic cases, scoring rules, and tests, against a claimed
    issue. Never edit product code or prompts to move a score. Push only work created in this run.
-8. On a dispatched acceptance run, clear `dispatch:evaluator`, `needs-eval`, and `wip` on pass,
+8. On an issue-scoped acceptance run, clear `dispatch:evaluator`, `needs-eval`, and `wip` on pass,
    then close the issue if no other pending lane remains. On a reproducible failure, retain
    `needs-eval`, replace the current handoff with `dispatch:build`, and leave the issue open. Leave
    exactly one next `dispatch:*` label.

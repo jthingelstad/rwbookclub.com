@@ -37,14 +37,58 @@ Product Manager, Build Manager, Evaluator, Operations Manager, and Manager are t
 **core** (shared across projects). **Club Ethnographer** is Oliver's domain role — the club's
 counterpart to Elixir's Data Analyst. Commit lanes and the approval gate are in `WORKFLOW.md`.
 
-## Activity-driven dispatch
+## Visible role sessions
 
-GitHub issue state, not a role's calendar, drives executable handoffs. Run the deterministic
-selector with `AGENT-TEAM/scripts/dispatcher-admin.sh shadow`, claim the selected issue, then start
-the role from an active Codex conversation as a normal local thread in the `rwbookclub.com`
-project. The local launchd watcher is intentionally uninstalled: shell-launched `codex exec` runs
-are persisted on disk but do not appear as normal project threads, and the app-owned thread
-creation tool is not available to launchd.
+Most Oliver team work runs as **one normal, app-visible Codex project thread per role**, not as a
+background schedule. GitHub chooses the work and records the handoff; the Codex thread is the
+visible, resumable execution record. This keeps the sidebar useful and prevents invisible role
+runs from piling up.
+
+### Start a role
+
+1. From an active Codex conversation in the `rwbookclub.com` project, run
+   `AGENT-TEAM/scripts/dispatcher-admin.sh shadow`. The selector is read-only: it names the next
+   actionable issue and role but does not claim anything or start a session. A human may also name
+   a specific issue or role directly.
+2. Re-read the issue and run `AGENT-TEAM/scripts/preflight.sh`. If the checkout is safe, add `wip`
+   and a role + America/Chicago timestamp claim comment. Do not create the role thread if preflight
+   fails or the issue is already claimed.
+3. Create a **normal local project thread** from the active Codex conversation, passing the issue,
+   role, claim, and role file. Never substitute `codex exec`, launchd, or an ephemeral/background
+   shell run: those do not produce the normal project thread Jamie expects to see.
+4. The role does exactly one focused run, updates its title at meaningful phases, and completes the
+   authoritative GitHub transition before its final response.
+5. The role removes `wip` and its current `dispatch:*` label, then closes the issue, stops at an
+   explicit human state, or leaves exactly one next `dispatch:*` label. It does not invoke the next
+   role itself. A later active conversation starts that handoff as another visible thread.
+
+### Live thread titles
+
+Titles are compact status, not decoration. Set the base title immediately, change only the phase
+suffix when the work materially advances, and keep the whole title at 24 characters or fewer.
+
+| Role | Issue title base | Examples |
+|------|------------------|----------|
+| Build Manager | `#85 Build` | `#85 Build · code`, `#85 Build · tests` |
+| Operations Manager | `#85 Ops` | `#85 Ops · deploy`, `#85 Ops · verify` |
+| Evaluator | `#85 Eval` | `#85 Eval · evidence`, `#85 Eval · golden` |
+| Club Ethnographer | `#85 Culture` | `#85 Culture · sources`, `#85 Culture · finding` |
+| Product Manager | `#85 Product` | `#85 Product · signal`, `#85 Product · brief` |
+| Manager | `#85 Team` | `#85 Team · queue`, `#85 Team · digest` |
+
+For a calendar run with no issue, use `Eval W31` or `Team W31`. For manual discovery before an
+issue exists, use `Product Scan` or `Culture Scan`; rename it to the issue form once work is
+claimed.
+
+Finish with `✓` only after the role has made a valid GitHub/repository transition, or `!` when it
+is blocked or cannot complete safely: `#85 Eval ✓`, `#85 Build !`. A checkmark means **the role run
+completed correctly**. It does not mean an evaluation passed or that the issue is necessarily
+closed; for example, an Evaluator can correctly finish a failing evaluation and route the issue to
+Build.
+
+### GitHub handoffs
+
+GitHub issue state, not a role's calendar or final prose, drives executable handoffs.
 
 | Handoff label | Worker |
 |---------------|--------|
@@ -56,21 +100,19 @@ creation tool is not available to launchd.
 | `dispatch:manager` | Manager |
 
 Exactly one handoff label is active at a time. `needs-eval` and `needs-culture` remember downstream
-acceptance still owed while `needs-deploy` retains its existing operational meaning. A dispatched
-role accepts the dispatcher's `wip` claim, removes its current handoff before finishing, and either
+acceptance still owed while `needs-deploy` retains its existing operational meaning. The role owns
+the initiating conversation's `wip` claim, removes its current handoff before finishing, and either
 closes the issue, puts it in an explicit human stop state (`proposal`, `blocked`, `needs-design`),
 or adds exactly one next handoff. Product proposals still wait for Jamie; defects and approved work
 may flow autonomously.
 
-Each on-demand role runs preflight, owns the shared checkout for its turn, and leaves the next
-handoff in GitHub. Threads use compact live titles such as `#79 Eval · evidence` and
-`#79 Eval · tests`, then settle at `#79 Eval ✓` after a valid transition or `#79 Eval !` when
-blocked. A checkmark means the role completed its workflow; the evaluation itself may still fail
-and route the issue onward. GitHub remains the durable work ledger. Inspect routing and the retired
-launcher's historical state with:
+The old launchd watcher is intentionally uninstalled. Shell-launched `codex exec` runs persist on
+disk but do not appear as normal project threads, and the app-owned thread creation tool is not
+available to launchd. Automatic dispatch therefore fails closed. Inspect the live labels and
+read-only routing with:
 
 ```bash
-AGENT-TEAM/scripts/dispatcher-admin.sh status
+AGENT-TEAM/scripts/dispatcher-admin.sh check
 AGENT-TEAM/scripts/dispatcher-admin.sh shadow
 ```
 
@@ -113,7 +155,9 @@ Oliver is a low-volume hobby project. Build, deploy, evaluation follow-up, cultu
 product clarification are event-driven through the queue. Calendar schedules exist only for work
 whose input is inherently a time window. Active Codex activity settings that belong to this team
 are recorded in `automations.toml`; that registry is descriptive and must match the actual Codex
-activity. All times America/Chicago.
+activity. Do not create recurring activities for the event-driven roles and do not reinstall the
+retired launchd dispatcher. Every scheduled execution must still create a normal visible project
+thread and follow the title protocol above. All times America/Chicago.
 
 | Role | Cadence |
 |------|---------|
@@ -123,6 +167,10 @@ activity. All times America/Chicago.
 | Product Manager | Event-driven or manual discovery; proposals still require Jamie |
 | Club Ethnographer | Event-driven for tone/memory/selection work |
 | Manager | Every four weeks — team-health review + notes digest |
+
+For Oliver, the four-week Manager cadence in `automations.toml` and this table overrides the generic
+weekly cadence in the byte-identical shared `manager.md` role. Keep the shared role file unchanged;
+the project README owns project-specific cadence.
 
 ## North star
 

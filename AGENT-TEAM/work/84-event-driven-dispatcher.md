@@ -2,8 +2,8 @@
 
 **Issue:** [#84](https://github.com/jthingelstad/rwbookclub.com/issues/84)
 **Decision:** approved directly by Jamie on 2026-07-31
-**Status:** blocked on supported non-interactive creation of app-visible Codex project threads;
-read-only selection plus on-demand project sessions is the active fallback
+**Status:** automatic app-visible thread creation is blocked on a supported non-interactive Codex
+API; read-only selection plus on-demand visible project sessions is the current operating model
 
 ## Intended outcome
 
@@ -62,6 +62,10 @@ Automatic launch is therefore disabled and the LaunchAgent is uninstalled. The s
 available in read-only shadow mode. A person or an active Codex app conversation uses its supported
 project-thread tool to start the chosen role. That thread uses a compact live title such as
 `#79 Eval · evidence` and ends in `#79 Eval ✓` or `#79 Eval !`.
+
+The current operator runbook, including claim order, title vocabulary, final-state meanings, and
+handoffs, lives in `AGENT-TEAM/README.md` → Visible role sessions. This design record explains why
+the automatic launcher remains unavailable; it does not supersede that runbook.
 
 Historical launcher JSONL can contain private evaluator evidence or tool output. It never enters
 Git, GitHub, or a shared log; the owner-only state/log directory and files are mode 0700/0600.
