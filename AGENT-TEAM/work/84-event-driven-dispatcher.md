@@ -7,8 +7,8 @@
 
 Replace independent role polling with one deterministic queue watcher. GitHub remains the durable
 ledger and approval boundary; Codex runs only when issue state names executable work. Idle polls
-produce no model call, Codex session, issue comment, or run note. Real work uses normal persisted
-Codex sessions so Jamie can inspect and resume them.
+produce no model call, Codex session, issue comment, or run note. Real work uses normal
+project-visible Codex threads so Jamie can inspect and resume them.
 
 The only calendar-driven agent activities are the Friday 14:30 performance evaluation and the
 four-week Team Manager review. Build, Operations, Product, and Club Ethnographer are event-driven.
@@ -23,7 +23,7 @@ issue transition
       ↓
 launchd poll (deterministic, silent when idle)
       ↓
-preflight → wip claim → one persisted Codex role
+preflight → wip claim → one project-visible Codex role thread
       ↓
 authoritative GitHub/repository re-read
       ↓
@@ -47,20 +47,20 @@ review, defect, approved+ready); explicit dispatch always wins.
 
 `AGENT-TEAM/scripts/dispatcher.py` is invoked by
 `com.rwbookclub.agent-team-dispatcher` every two minutes. It holds an advisory file lock for the
-entire role run, so the shared checkout has one mutating owner. It invokes:
+entire role run, so the shared checkout has one mutating owner. For a real handoff it uses a
+short-lived, paused Codex activity only as an app bridge. That bridge calls the supported project
+thread creation capability, gives the child the exact role prompt/model/effort, titles it compactly,
+and archives itself. The transient activity is then deleted; it has no calendar cadence.
 
-```text
-codex exec --json --cd <repo> --model <role-model> ...
-```
-
-It deliberately omits `--ephemeral`. Codex persists the session; the dispatcher additionally
-stores owner-only JSONL and final summaries under
-`~/Library/Application Support/com.rwbookclub.agent-team-dispatcher/runs/`. GitHub receives a
+The durable artifact is therefore a normal thread in the `rwbookclub.com` Codex project, not a
+hidden `codex exec` rollout and not a standing role schedule. Titles start compactly (`#81 Eval`),
+may expose a useful current phase (`#81 Eval · tests`), and end with `✓` or `!`. GitHub receives a
 claim comment and an authoritative transition result. `dispatcher-admin.sh status` shows the
-active and ten most recent roles with thread IDs.
+active and ten most recent roles with their app-visible thread IDs.
 
-Raw JSONL can contain private evaluator evidence or tool output. It never enters Git, GitHub, or a
-shared log and is retained for 30 days. The state/log directory and files are mode 0700/0600.
+Codex owns the full private transcript and rollout. The dispatcher keeps only owner-only state,
+events, and small thread/rollout pointers; none enters Git, GitHub, or a shared log. The local
+state directory and files are mode 0700/0600 and old pointers are retained for 30 days.
 
 ## Failure boundaries
 

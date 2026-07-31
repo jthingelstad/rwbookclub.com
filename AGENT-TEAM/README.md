@@ -42,8 +42,10 @@ counterpart to Elixir's Data Analyst. Commit lanes and the approval gate are in 
 GitHub issue state, not a role's calendar, drives executable handoffs. A deterministic local
 launchd watcher (`com.rwbookclub.agent-team-dispatcher`) polls the open queue every two minutes.
 An idle poll invokes no model and creates no Codex session. When exactly one `dispatch:*` label is
-actionable, it claims the issue with `wip`, starts one **persisted** Codex role session, and then
-re-reads GitHub plus the checkout rather than trusting the agent's final prose.
+actionable, it claims the issue with `wip` and asks the Codex app to open one normal project thread
+for the role. The short-lived bridge archives itself, so the durable UI artifact is the role thread
+under the `rwbookclub.com` project. The watcher then re-reads GitHub plus the checkout rather than
+trusting the agent's final prose.
 
 | Handoff label | Worker |
 |---------------|--------|
@@ -62,9 +64,11 @@ or adds exactly one next handoff. Product proposals still wait for Jamie; defect
 may flow autonomously.
 
 The watcher serializes the shared checkout, runs preflight before every hop, backs off failures,
-and stops a chain after four role hops in 90 minutes. Full run JSONL and summaries are owner-only
-under `~/Library/Application Support/com.rwbookclub.agent-team-dispatcher/`; GitHub remains the
-durable work ledger. Inspect it with:
+and stops a chain after four role hops in 90 minutes. Threads use compact live titles such as
+`#81 Eval · tests` and end as `#81 Eval ✓` or `#81 Eval !`. The full transcript is visible and
+resumable in Codex; dispatcher state and small owner-only run pointers live under
+`~/Library/Application Support/com.rwbookclub.agent-team-dispatcher/`. GitHub remains the durable
+work ledger. Inspect the local dispatcher with:
 
 ```bash
 AGENT-TEAM/scripts/dispatcher-admin.sh status
