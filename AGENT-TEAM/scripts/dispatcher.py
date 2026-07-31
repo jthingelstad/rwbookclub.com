@@ -112,6 +112,7 @@ def _absolute_path(value: str, base: Path) -> Path:
 
 def load_config(path: Path = DEFAULT_CONFIG) -> Config:
     path = path.expanduser().resolve()
+    checkout_root = path.parent.parent
     with path.open("rb") as handle:
         raw = tomllib.load(handle)
     if raw.get("version") != 1:
@@ -123,7 +124,7 @@ def load_config(path: Path = DEFAULT_CONFIG) -> Config:
         route = Route(
             label=item["label"],
             role=item["role"],
-            role_file=_absolute_path(item["role_file"], cwd),
+            role_file=_absolute_path(item["role_file"], checkout_root),
             model=item["model"],
             reasoning_effort=item["reasoning_effort"],
             priority=int(item["priority"]),

@@ -47,6 +47,33 @@ def test_config_has_unique_existing_routes(config):
     assert all(route.role_file.is_file() for route in config.routes.values())
 
 
+def test_relative_role_files_resolve_from_config_checkout(tmp_path):
+    checkout = tmp_path / "checkout"
+    config_dir = checkout / "AGENT-TEAM"
+    config_dir.mkdir(parents=True)
+    runtime_cwd = tmp_path / "runtime"
+    runtime_cwd.mkdir()
+
+    source = (ROOT / "AGENT-TEAM/dispatch.toml").read_text(encoding="utf-8")
+    source = "\n".join(
+        f'cwd = "{runtime_cwd}"' if line.startswith("cwd = ") else line
+        for line in source.splitlines()
+    )
+    config_path = config_dir / "dispatch.toml"
+    config_path.write_text(source + "\n", encoding="utf-8")
+
+    raw = tomllib.loads(source)
+    expected_role_files = {checkout / route["role_file"] for route in raw["routes"]}
+    for role_file in expected_role_files:
+        role_file.touch()
+
+    loaded = dispatcher.load_config(config_path)
+
+    assert loaded.cwd == runtime_cwd
+    assert {route.role_file for route in loaded.routes.values()} == expected_role_files
+    assert all(route.role_file.is_file() for route in loaded.routes.values())
+
+
 def test_app_dispatcher_heartbeat_is_the_only_queue_poller(config):
     with (ROOT / "AGENT-TEAM/automations.toml").open("rb") as handle:
         registry = tomllib.load(handle)
