@@ -37,6 +37,40 @@ Product Manager, Build Manager, Evaluator, Operations Manager, and Manager are t
 **core** (shared across projects). **Club Ethnographer** is Oliver's domain role — the club's
 counterpart to Elixir's Data Analyst. Commit lanes and the approval gate are in `WORKFLOW.md`.
 
+## Activity-driven dispatch
+
+GitHub issue state, not a role's calendar, drives executable handoffs. A deterministic local
+launchd watcher (`com.rwbookclub.agent-team-dispatcher`) polls the open queue every two minutes.
+An idle poll invokes no model and creates no Codex session. When exactly one `dispatch:*` label is
+actionable, it claims the issue with `wip`, starts one **persisted** Codex role session, and then
+re-reads GitHub plus the checkout rather than trusting the agent's final prose.
+
+| Handoff label | Worker |
+|---------------|--------|
+| `dispatch:build` | Build Manager |
+| `dispatch:operations` | Operations Manager |
+| `dispatch:evaluator` | Evaluator |
+| `dispatch:culture` | Club Ethnographer |
+| `dispatch:product` | Product Manager |
+| `dispatch:manager` | Manager |
+
+Exactly one handoff label is active at a time. `needs-eval` and `needs-culture` remember downstream
+acceptance still owed while `needs-deploy` retains its existing operational meaning. A dispatched
+role accepts the dispatcher's `wip` claim, removes its current handoff before finishing, and either
+closes the issue, puts it in an explicit human stop state (`proposal`, `blocked`, `needs-design`),
+or adds exactly one next handoff. Product proposals still wait for Jamie; defects and approved work
+may flow autonomously.
+
+The watcher serializes the shared checkout, runs preflight before every hop, backs off failures,
+and stops a chain after four role hops in 90 minutes. Full run JSONL and summaries are owner-only
+under `~/Library/Application Support/com.rwbookclub.agent-team-dispatcher/`; GitHub remains the
+durable work ledger. Inspect it with:
+
+```bash
+AGENT-TEAM/scripts/dispatcher-admin.sh status
+AGENT-TEAM/scripts/dispatcher-admin.sh shadow
+```
+
 ## Shared context (read first, every run)
 
 Before role-specific work, every agent reads: `agent/docs/SOUL.md` (who Oliver is),
@@ -72,19 +106,19 @@ issues + `work/` + the Manager's `summaries/`; ephemeral = `notes/`.
 
 ## Suggested cadence
 
-Oliver is a low-volume hobby project. Scheduled roles are quiet discovery and recovery backstops,
-not continuous queue pollers; run a role manually when Jamie is actively working on Oliver or a
-behavior change needs immediate evaluation/deployment. Active Codex activity settings that belong
-to this team are recorded in `automations.toml`; that registry is descriptive and must match the
-actual Codex activity. All times America/Chicago.
+Oliver is a low-volume hobby project. Build, deploy, evaluation follow-up, culture review, and
+product clarification are event-driven through the queue. Calendar schedules exist only for work
+whose input is inherently a time window. Active Codex activity settings that belong to this team
+are recorded in `automations.toml`; that registry is descriptive and must match the actual Codex
+activity. All times America/Chicago.
 
 | Role | Cadence |
 |------|---------|
-| Operations Manager | Weekly — deploy/health recovery backstop; run manually after a build |
-| Build Manager | Every two weeks — queue discovery; run manually for active work |
-| Evaluator | Every four weeks + manually after a behavior/prompt/workflow change |
-| Product Manager | Every eight weeks — product discovery at roughly the club's pace |
-| Club Ethnographer | Every eight weeks, or manually for tone/memory/selection work |
+| Operations Manager | Event-driven by `dispatch:operations` |
+| Build Manager | Event-driven by `dispatch:build` |
+| Evaluator | Friday 14:30 production audit + event-driven acceptance/follow-up |
+| Product Manager | Event-driven or manual discovery; proposals still require Jamie |
+| Club Ethnographer | Event-driven for tone/memory/selection work |
 | Manager | Every four weeks — team-health review + notes digest |
 
 ## North star

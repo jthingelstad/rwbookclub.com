@@ -41,14 +41,27 @@ worst case — the old Mac is gone and all you have is GitHub + iCloud + your pa
    # Edit paths inside if the username/checkout path differs, then:
    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.rwbookclub.oliver.plist
    ```
+
+6. **AGENT-TEAM dispatcher** — after Codex and `gh` are authenticated on the restored Mac:
+
+   ```bash
+   AGENT-TEAM/scripts/setup-labels.sh
+   AGENT-TEAM/scripts/dispatcher-admin.sh install
+   AGENT-TEAM/scripts/dispatcher-admin.sh check
+   ```
+
+   This installs `com.rwbookclub.agent-team-dispatcher`, which polls GitHub silently and starts a
+   persisted Codex role only for actionable `dispatch:*` handoffs. Its private state and 30-day run
+   logs live outside the repository under
+   `~/Library/Application Support/com.rwbookclub.agent-team-dispatcher/`.
    Verify: `tail -f agent/logs/oliver.log` → "Oliver connected as RWBC - Oliver".
-6. **Tailscale Funnel** (member web app) — install Tailscale, sign in, then the one-time bits:
+7. **Tailscale Funnel** (member web app) — install Tailscale, sign in, then the one-time bits:
    the tailnet ACL must grant the `funnel` nodeAttr, and HTTPS certs must be enabled
    (Tailscale admin console). Then `tailscale funnel <WEBAPP_PORT>` per the value in `.env`.
    The webapp works on localhost without this; only remote member access needs Funnel.
-7. **GitHub auth for publish + releases** — `gh auth login`; confirm `git push` works
+8. **GitHub auth for publish + releases** — `gh auth login`; confirm `git push` works
    (Oliver deploys the site by pushing `gh-pages` and cuts releases via `gh`).
-8. **Smoke** — in Discord: `/oliver ping`, `/oliver admin status` (expect the current release
+9. **Smoke** — in Discord: `/oliver ping`, `/oliver admin status` (expect the current release
    name), and ask Oliver something in #ask-oliver. On Monday you'll get the health digest;
    its arrival is the "all clear."
 

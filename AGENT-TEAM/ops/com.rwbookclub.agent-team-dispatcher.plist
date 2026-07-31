@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.rwbookclub.agent-team-dispatcher</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/otto/Projects/rwbookclub.com/.venv/bin/python</string>
+        <string>/Users/otto/Projects/rwbookclub.com/AGENT-TEAM/scripts/dispatcher.py</string>
+        <string>--config</string>
+        <string>/Users/otto/Projects/rwbookclub.com/AGENT-TEAM/dispatch.toml</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/otto/Projects/rwbookclub.com</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>/Users/otto</string>
+        <key>CODEX_HOME</key>
+        <string>/Users/otto/.codex</string>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StartInterval</key>
+    <integer>120</integer>
+    <key>ProcessType</key>
+    <string>Background</string>
+    <key>LowPriorityIO</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/otto/Library/Logs/com.rwbookclub.agent-team-dispatcher.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/otto/Library/Logs/com.rwbookclub.agent-team-dispatcher.err</string>
+</dict>
+</plist>

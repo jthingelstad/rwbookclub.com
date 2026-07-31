@@ -74,6 +74,16 @@ upsert "generated"    "FEF2C0" "Filed by an automated agent (not a human)"
 echo "==> PROJECT: Oliver domain labels"
 upsert "culture"  "D4A5FF" "Club culture / tone / member taste / book-selection judgment — Club Ethnographer"
 
+echo "==> PROJECT: event-driven handoffs"
+upsert "dispatch:build"      "1D76DB" "Next executable lane: Build Manager"
+upsert "dispatch:operations" "D93F0B" "Next executable lane: Operations Manager"
+upsert "dispatch:evaluator"  "5319E7" "Next executable lane: Evaluator"
+upsert "dispatch:culture"    "D4A5FF" "Next executable lane: Club Ethnographer"
+upsert "dispatch:product"    "A2EEEF" "Next executable lane: Product Manager"
+upsert "dispatch:manager"    "6F42C1" "Next executable lane: Team Manager"
+upsert "needs-eval"          "BFD4F2" "Pending Evaluator acceptance before the issue is complete"
+upsert "needs-culture"       "E6D5FF" "Pending Club Ethnographer acceptance before the issue is complete"
+
 echo "==> PROJECT: remove noise defaults"
 remove "good first issue"   # irrelevant to a solo/automated repo
 remove "help wanted"        # irrelevant to a solo/automated repo

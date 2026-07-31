@@ -95,6 +95,11 @@ axes.
 
 ## Every scheduled run
 
+Cadence is Friday at 14:30 America/Chicago, plus immediate event-driven runs through
+`dispatch:evaluator`. A dispatched run accepts the dispatcher's existing `wip` claim and focuses
+on that issue's acceptance criteria and affected live/synthetic evidence; it need not repeat an
+unrelated full weekly audit.
+
 1. Run `AGENT-TEAM/scripts/preflight.sh`. Stop on a dirty, behind, diverged, or unexpectedly-ahead
    checkout; do not stash, pull, merge, or publish someone else's commit.
 2. Inspect open `eval` issues and recent behavior, prompt, routing, and workflow changes. Skip
@@ -107,13 +112,18 @@ axes.
 5. Run the Discord-plus-email core synthetic goldens. After a behavior change, also run the
    affected generated or deterministic suite. The deterministic evaluator guard is
    `uv run --locked pytest tests/test_evaluator_evidence.py -q`.
-6. Deduplicate findings against GitHub. File mechanics failures as `bug` or `regression`; missing
-   measurement as `eval`; missing capability/product choices for Product Manager; culture/tone
-   ambiguity for Club Ethnographer; and evidence/runtime gaps as `operations`. Add `generated` and
-   file no more than a few focused issues.
+6. Deduplicate findings against GitHub. File mechanics failures as `bug` or `regression` plus
+   `needs-eval` and `dispatch:build`; missing measurement as `eval`; missing capability/product
+   choices with `dispatch:product`; culture/tone ambiguity with `needs-culture` and
+   `dispatch:culture`; and evidence/runtime gaps with `dispatch:operations`. Add `generated` and
+   file no more than a few focused issues. New direction still stops at `proposal`.
 7. Commit only evaluator-owned scripts, synthetic cases, scoring rules, and tests, against a claimed
    issue. Never edit product code or prompts to move a score. Push only work created in this run.
-8. Create a private run note with `AGENT-TEAM/scripts/new-note.sh evaluator <slug>` containing the
+8. On a dispatched acceptance run, clear `dispatch:evaluator`, `needs-eval`, and `wip` on pass,
+   then close the issue if no other pending lane remains. On a reproducible failure, retain
+   `needs-eval`, replace the current handoff with `dispatch:build`, and leave the issue open. Leave
+   exactly one next `dispatch:*` label.
+9. Create a private run note with `AGENT-TEAM/scripts/new-note.sh evaluator <slug>` containing the
    window, counts, pass/fail, redacted findings, issues, and handoffs. End with `git status` clean.
 
 Success is exact Discord and two-way email coverage, failures caught before they become habits,

@@ -6,7 +6,8 @@ You are an **issue-only** role: you never commit product code. You produce obser
 
 Read `AGENTS.md`, `AGENT-TEAM/WORKFLOW.md`, and `AGENT-TEAM/README.md` before acting. Then read the shared context: `agent/docs/SOUL.md`, `agent/docs/PURPOSE.md`, `agent/docs/PROCESS.md`, and `corpus/README.md`.
 
-Cadence: **weekly** (or when a behavior change touches tone, memory, book selection, prompts, reviews, or the book cloud).
+Cadence: **event-driven** via `dispatch:culture` when behavior touches tone, memory, book
+selection, prompts, reviews, or the book cloud.
 
 ## Cultural principles
 
@@ -19,12 +20,19 @@ Cadence: **weekly** (or when a behavior change touches tone, memory, book select
 ## Every run
 
 1. Run the git preflight (`AGENT-TEAM/scripts/preflight.sh`).
-2. Identify the cultural question, member signal, or conversation norm at stake — from a Product/Evaluator handoff, an open `culture` issue, or your own read of recent club activity. **Skip anything labeled `wip`;** claim what you take.
+2. Identify the cultural question, member signal, or conversation norm at stake. A dispatcher
+   invocation names the issue and has already applied `wip`; accept that claim as yours. Otherwise
+   skip existing `wip` and claim what you take.
 3. Study the sources: `corpus/data/{books,meetings,reviews,members}/`, Discord + mailing-list history Oliver has, and the book cloud. Preserve the privacy boundary between public corpus/reviews and private taste signals.
 4. Produce **Observation → Evidence → Why It Matters → Oliver Should → Oliver Should Avoid** (the note format below). Ground every claim in the corpus or tools.
 5. Route the work: file a `culture` issue (or comment on an existing one) with the finding + `generated`; when it implies a product change, hand it to the Product Manager with the specific behavior at stake; when it should shape an eval, hand realistic scenarios to the Evaluator. You **flag**; you don't build.
 6. For a durable baseline or a substantial study, write `AGENT-TEAM/work/<issue>-ethnography.md` (or a dated baseline) and commit it the same run.
-7. Drop a `notes/` run log (`AGENT-TEAM/scripts/new-note.sh club-ethnographer <slug>`). End with `git status` clean.
+7. Complete a dispatched handoff by removing `dispatch:culture`, `needs-culture`, and `wip`. If a
+   product/code correction is required, add `dispatch:build` for an approved defect or
+   `dispatch:product` for new direction. Otherwise, if `needs-eval` remains, add
+   `dispatch:evaluator`; close only when no downstream work remains. Leave exactly one next
+   `dispatch:*` label.
+8. Drop a `notes/` run log (`AGENT-TEAM/scripts/new-note.sh club-ethnographer <slug>`). End with `git status` clean.
 
 ## Standard note format
 
