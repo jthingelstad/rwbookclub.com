@@ -137,6 +137,83 @@ def test_normal_answer_returns_in_one_call(monkeypatch):
     assert dispatched == []
 
 
+def test_targeted_shared_pick_reception_forces_public_fit_first(monkeypatch):
+    client = _ScriptedClient(
+        [
+            _Resp(
+                "tool_use",
+                [_ToolUse(name="pick_fit", tool_input={"title": "The Power Broker"})],
+            )
+        ]
+    )
+    dispatched = []
+    _isolate(monkeypatch, client, dispatched)
+    monkeypatch.setattr(
+        oliver,
+        "dispatch",
+        lambda name, tool_input, ctx: (
+            dispatched.append(name)
+            or '{"candidate":{"pages":1263},"lengthPrecedents":['
+            '{"title":"Team of Rivals","pages":1308,"ratingAverage":5,'
+            '"discussionAverage":5}],"silentPrivateCalibration":{"signals":["secret"]}}'
+        ),
+    )
+
+    reply = oliver.answer(
+        "The Power Broker is enormous. Who here would resist it as a pick?",
+        channel_id="shared-discord",
+        use_history=False,
+        persist=False,
+    )
+
+    assert reply == (
+        "*Team of Rivals* was 1,308 pages and scored 5/5 overall with 5/5 discussion. "
+        "At 1,263 pages, the question is whether we want that much reading runway; that's worth "
+        "checking with everyone before committing."
+    )
+    assert "secret" not in reply
+    assert dispatched == ["pick_fit"]
+    assert len(client.calls) == 1
+    assert client.calls[0]["tool_choice"] == {
+        "type": "tool",
+        "name": "pick_fit",
+        "disable_parallel_tool_use": True,
+    }
+    assert client.calls[0]["thinking"] == {"type": "disabled"}
+    assert "output_config" not in client.calls[0]
+
+
+def test_targeted_private_pick_reception_keeps_normal_tool_choice(monkeypatch):
+    client = _ScriptedClient([_Resp("end_turn", [_Text("I think you'd enjoy that one.")])])
+    _isolate(monkeypatch, client, [])
+
+    reply = oliver.answer(
+        "Would I resist The Power Broker as a pick?",
+        channel_id="email:direct-thread",
+        use_history=False,
+        persist=False,
+    )
+
+    assert reply == "I think you'd enjoy that one."
+    assert "tool_choice" not in client.calls[0]
+    assert client.calls[0]["thinking"] == {"type": "adaptive"}
+
+
+def test_non_length_shared_reception_keeps_normal_tool_choice(monkeypatch):
+    client = _ScriptedClient([_Resp("end_turn", [_Text("Ask the club about the political lane.")])])
+    _isolate(monkeypatch, client, [])
+
+    reply = oliver.answer(
+        "Who would object to this book's politics as a pick?",
+        channel_id="shared-discord",
+        use_history=False,
+        persist=False,
+    )
+
+    assert reply == "Ask the club about the political lane."
+    assert "tool_choice" not in client.calls[0]
+
+
 def test_medium_threads_to_every_create_call(monkeypatch):
     """The `medium` must reach _system_blocks on every model call in the loop — including the
     forced-final and nudge retries — so email replies never fall back to the Discord voice."""

@@ -11,7 +11,9 @@ than the SDK tool runner so write tools can be gated behind confirmation.
 
 from __future__ import annotations
 
+import json
 import logging
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -58,6 +60,16 @@ PASSING_MENTION_NOTE = (
     "silence. Only answer if the message genuinely addresses you.]\n\n"
 )
 COMPOSE_MAX_TOKENS = 400  # proactive/voiced surfaces are short
+
+_TARGETED_RECEPTION_LANGUAGE = re.compile(
+    r"\b(?:resist(?:s|ed|ing|ance)?|holdouts?|balk(?:s|ed|ing)?|"
+    r"object(?:s|ed|ing|ion)?|oppos(?:e|es|ed|ing|ition))\b",
+    re.IGNORECASE,
+)
+_PICK_CANDIDATE_LANGUAGE = re.compile(r"\b(?:book|candidate|pick)\b", re.IGNORECASE)
+_LENGTH_CONCERN_LANGUAGE = re.compile(
+    r"\b(?:enormous|long|length|pages?|doorstop|runway)\b", re.IGNORECASE
+)
 
 log = logging.getLogger("oliver")
 
@@ -686,6 +698,66 @@ def _tools_for(web_search_max_uses: int | None) -> list[dict]:
     ]
 
 
+def _requires_shared_pick_fit(question: str, channel_id: str) -> bool:
+    """Whether public length evidence must precede a socially targeted shared reply.
+
+    Prompt policy still shapes the answer, but it cannot guarantee the model will retrieve the
+    public evidence it needs. Force only this narrow high-trust case through ``pick_fit`` first;
+    private replies and ordinary shared pick questions retain normal model-selected tools.
+    """
+    return bool(
+        access.is_shared_conversation(channel_id)
+        and _TARGETED_RECEPTION_LANGUAGE.search(question)
+        and _PICK_CANDIDATE_LANGUAGE.search(question)
+        and _LENGTH_CONCERN_LANGUAGE.search(question)
+    )
+
+
+def _shared_pick_reception_reply(tool_output: str) -> str:
+    """Compose the safe shared reply from public pick evidence only.
+
+    This path deliberately excludes the original socially targeted wording and
+    ``silentPrivateCalibration`` payload. The useful answer is the public precedent plus a neutral
+    whole-club decision criterion; no second model pass is needed or permitted to reintroduce the
+    framing that this boundary removes.
+    """
+    try:
+        evidence = json.loads(tool_output)
+    except json.JSONDecodeError, TypeError:
+        evidence = {}
+    candidate = evidence.get("candidate") or {}
+    precedents = evidence.get("lengthPrecedents") or []
+    parts: list[str] = []
+    if precedents:
+        precedent = precedents[0]
+        title = precedent.get("title")
+        pages = precedent.get("pages")
+        if title and isinstance(pages, int):
+            fact = f"*{title}* was {pages:,} pages"
+            rating = precedent.get("ratingAverage")
+            discussion = precedent.get("discussionAverage")
+            if rating is not None and discussion is not None:
+                fact += f" and scored {rating:g}/5 overall with {discussion:g}/5 discussion"
+            elif discussion is not None:
+                fact += f" and scored {discussion:g}/5 for discussion"
+            elif rating is not None:
+                fact += f" and scored {rating:g}/5 overall"
+            parts.append(fact + ".")
+
+    candidate_pages = candidate.get("pages")
+    if isinstance(candidate_pages, int):
+        criterion = (
+            f"At {candidate_pages:,} pages, the question is whether we want that much reading "
+            "runway"
+        )
+    else:
+        title = candidate.get("title")
+        subject = f"*{title}*" if title else "this book"
+        criterion = f"The question is whether {subject} fits the commitment we want from this slot"
+    parts.append(criterion + "; that's worth checking with everyone before committing.")
+    return " ".join(parts)
+
+
 def answer(
     question: str,
     channel_id: str = "default",
@@ -725,19 +797,32 @@ def answer(
     ]
 
     tools = _tools_for(web_search_max_uses)
+    require_shared_pick_fit = _requires_shared_pick_fit(question, channel_id)
     usage = {"in": 0, "out": 0, "cr": 0, "cc": 0}
     rounds = 0
     while True:
         rounds += 1
-        resp = client.messages.create(
-            model=model,
-            max_tokens=max_tokens,
-            system=_system_blocks(medium),
-            tools=tools,
-            thinking={"type": "adaptive"},
-            output_config={"effort": effort},
-            messages=messages,
-        )
+        request: dict = {
+            "model": model,
+            "max_tokens": max_tokens,
+            "system": _system_blocks(medium),
+            "tools": tools,
+            "messages": messages,
+        }
+        if require_shared_pick_fit and rounds == 1:
+            # Forced tool choice and adaptive thinking cannot be combined. This first call only
+            # extracts the candidate into pick_fit's schema; normal adaptive reasoning resumes as
+            # soon as its public evidence is in the conversation.
+            request["thinking"] = {"type": "disabled"}
+            request["tool_choice"] = {
+                "type": "tool",
+                "name": "pick_fit",
+                "disable_parallel_tool_use": True,
+            }
+        else:
+            request["thinking"] = {"type": "adaptive"}
+            request["output_config"] = {"effort": effort}
+        resp = client.messages.create(**request)
         u = resp.usage
         usage["in"] += u.input_tokens
         usage["out"] += u.output_tokens
@@ -851,6 +936,11 @@ def answer(
             for b in resp.content
             if getattr(b, "type", None) == "tool_use"
         ]
+        if require_shared_pick_fit and rounds == 1:
+            # The forced tool choice above disables parallel calls, so this is exactly pick_fit.
+            pick_result = results[0]["content"] if results else "{}"
+            reply = _shared_pick_reception_reply(pick_result)
+            break
         messages.append({"role": "user", "content": results})
 
     # Persist the visible turn, usage, and maybe fold older history into the summary.
