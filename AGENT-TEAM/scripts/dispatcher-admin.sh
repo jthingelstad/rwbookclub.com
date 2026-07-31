@@ -4,50 +4,51 @@ set -euo pipefail
 
 LABEL="com.rwbookclub.agent-team-dispatcher"
 ROOT="/Users/otto/Projects/rwbookclub.com"
+SOURCE="$ROOT/AGENT-TEAM/ops/$LABEL.plist"
 DESTINATION="/Users/otto/Library/LaunchAgents/$LABEL.plist"
 DOMAIN="gui/$(id -u)"
 PYTHON="$ROOT/.venv/bin/python"
 DISPATCHER="$ROOT/AGENT-TEAM/scripts/dispatcher.py"
 CONFIG="$ROOT/AGENT-TEAM/dispatch.toml"
+STDOUT_LOG="/Users/otto/Library/Logs/$LABEL.log"
+STDERR_LOG="/Users/otto/Library/Logs/$LABEL.err"
 
-uninstall_agent() {
+install_agent() {
+  mkdir -p "/Users/otto/Library/LaunchAgents"
+  mkdir -p "/Users/otto/Library/Logs"
+  mkdir -p "/Users/otto/Library/Application Support/$LABEL/runs"
+  chmod 700 "/Users/otto/Library/Application Support/$LABEL"
+  chmod 700 "/Users/otto/Library/Application Support/$LABEL/runs"
+  touch "$STDOUT_LOG" "$STDERR_LOG"
+  chmod 600 "$STDOUT_LOG" "$STDERR_LOG"
+  install -m 600 "$SOURCE" "$DESTINATION"
   launchctl bootout "$DOMAIN/$LABEL" >/dev/null 2>&1 || true
-  rm -f "$DESTINATION"
-  echo "Stopped and uninstalled $LABEL"
-}
-
-disabled() {
-  echo "Automatic dispatcher launch is disabled because shell-launched Codex runs are not normal app-visible project threads." >&2
-  echo "Use '$0 shadow', then start the selected role from an active Codex app conversation." >&2
-  exit 2
+  launchctl bootstrap "$DOMAIN" "$DESTINATION"
+  echo "Installed and started $LABEL"
 }
 
 case "${1:-status}" in
   install)
-    disabled
+    install_agent
     ;;
   restart)
-    disabled
+    launchctl kickstart -k "$DOMAIN/$LABEL"
     ;;
   stop)
-    launchctl bootout "$DOMAIN/$LABEL" >/dev/null 2>&1 || true
-    echo "Stopped $LABEL"
-    ;;
-  uninstall)
-    uninstall_agent
+    launchctl bootout "$DOMAIN/$LABEL"
     ;;
   status)
-    launchctl print "$DOMAIN/$LABEL" || echo "$LABEL is not loaded"
+    launchctl print "$DOMAIN/$LABEL"
     "$PYTHON" "$DISPATCHER" --config "$CONFIG" --status
     ;;
   check)
-    "$PYTHON" "$DISPATCHER" --config "$CONFIG" --check --live
+    "$PYTHON" "$DISPATCHER" --config "$CONFIG" --check --live --installed
     ;;
   shadow)
     "$PYTHON" "$DISPATCHER" --config "$CONFIG" --shadow --all
     ;;
   *)
-    echo "Usage: $0 {install|restart|stop|uninstall|status|check|shadow}" >&2
+    echo "Usage: $0 {install|restart|stop|status|check|shadow}" >&2
     exit 2
     ;;
 esac

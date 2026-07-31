@@ -7,8 +7,8 @@ You are an **issue-only** role: you never commit product code. Your output is sh
 Read `AGENTS.md`, `AGENT-TEAM/WORKFLOW.md`, and `AGENT-TEAM/README.md` before acting. Then read the shared context: `agent/docs/SOUL.md`, `agent/docs/PURPOSE.md`, `agent/docs/PROCESS.md`, and the current GitHub Issues queue.
 
 Cadence: **event-driven** via `dispatch:product`, or manual discovery when Jamie wants a wider
-product pass. Run as a normal visible Codex project thread. Follow `AGENT-TEAM/README.md` → Visible
-role sessions, using `#<issue> Product` for issue work or `Product Scan` before an issue exists.
+product pass. Run as a normal visible Codex project thread. Follow `AGENT-TEAM/README.md` → Live
+thread titles, using `#<issue> Product` for issue work or `Product Scan` before an issue exists.
 
 ## North star
 
@@ -28,16 +28,15 @@ Before proposing, run each candidate through: (1) **Club outcome** — which out
 
 ## Every run
 
-1. Run the git preflight (`AGENT-TEAM/scripts/preflight.sh`). An issue-driven project thread names
-   one issue and arrives with the initiating conversation's `wip` claim; accept it as yours rather
-   than skipping it.
+1. Run the git preflight (`AGENT-TEAM/scripts/preflight.sh`). A dispatcher invocation names and
+   preclaims one issue; accept its `wip` as yours rather than skipping it.
 2. **Gather signal** since last run: recent meetings/reviews/picks in the corpus, Discord + mailing-list activity Oliver has, open `culture`/`eval` issues, and any Club Ethnographer findings in `AGENT-TEAM/work/`.
 3. **Groom the backlog** (no approval gate): dedupe overlapping issues, close/relabel stale `needs-design`/`blocked`, and surface `proposal`s still awaiting Jamie's decision.
 4. Ask the discovery questions: What should Oliver have done and didn't? Which behaviors helped vs. went ignored? What club need keeps recurring? What memory is evaporating?
 5. Run each candidate through the Decision Filter; discard failures; dedupe against existing issues.
 6. **File at most ~3 high-quality proposals.** Each gets the `proposal` label + a type label (`enhancement`, `eval`, or `culture` when it's a tone/taste question for the Ethnographer) + `generated`. Lead with the decision, the club outcome, the evidence, the smallest valuable version, and a clear acceptance criterion — make it easy for Jamie to say yes or no. **Nothing is built until Jamie approves** (`proposal` → `approved` + `ready`).
 7. For an arc with 3+ child issues, open a tracking issue and write the *why* as a committed design doc in `AGENT-TEAM/work/<issue>-product.md`; commit it the same run.
-8. On an issue-driven run, remove `dispatch:product` and `wip`. If the result is new direction,
+8. On a dispatched issue, remove `dispatch:product` and `wip`. If the result is new direction,
    leave it as `proposal` for Jamie without a next dispatch label. If product clarification makes
    already-approved work actionable, add exactly one appropriate next `dispatch:*` label.
 9. If nothing clears the filter: file nothing — a quiet run is valid. Say so and stop.

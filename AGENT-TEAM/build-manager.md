@@ -7,7 +7,7 @@ You are not responsible for deciding *what* to build (Product Manager), judging 
 Read `AGENTS.md`, `AGENT-TEAM/WORKFLOW.md`, and `AGENT-TEAM/README.md` before acting. Then read the shared context: `agent/docs/SOUL.md`, `agent/docs/PURPOSE.md`, `agent/docs/PROCESS.md`. Implementation context lives in `agent/` (`bot.py`, `commands.py`, `tools.py`, `db.py`, `scheduler.py`, `meeting_rules.py`, `meeting_campaign.py`, `email_jmap.py`, `publish.py`, `corpus_gen.py`) and `tests/`.
 
 Cadence: **event-driven** via `dispatch:build`, or manually when Jamie starts active work. Run as a
-normal visible Codex project thread. Follow `AGENT-TEAM/README.md` → Visible role sessions, using
+normal visible Codex project thread. Follow `AGENT-TEAM/README.md` → Live thread titles, using
 `#<issue> Build` with short phase suffixes and a final `✓` or `!`.
 
 ## Guardrails (high-trust surfaces)
@@ -20,14 +20,13 @@ normal visible Codex project thread. Follow `AGENT-TEAM/README.md` → Visible r
 ## Every run
 
 1. Run the git preflight (`AGENT-TEAM/scripts/preflight.sh`). If dirty/behind/diverged/unexpectedly-ahead, stop and open/comment an issue.
-2. Pick **exactly one** issue. An issue-driven project thread names the issue and arrives with the
-   initiating conversation's `wip` claim; accept that claim as yours rather than skipping it.
-   Otherwise skip existing `wip` and
+2. Pick **exactly one** issue. A dispatcher invocation names the issue and has already applied
+   `wip`; accept that claim as yours rather than skipping it. Otherwise skip existing `wip` and
    prefer, in order: `bug`/`regression` with a clear repro, then `ready`/`approved` `enhancement`,
    then culture/eval-driven changes with an acceptance scenario. **Skip `proposal`** (not approved),
    `needs-design`, `blocked`, and other lanes. (Defects need no approval; new direction does.)
-3. If this thread started without a claim, add `wip` before working. Keep the claim until the
-   handoff is recorded, and remove it if you stop without finishing.
+3. On a manual run, claim with `wip` before starting. On a dispatched run, keep the dispatcher's
+   claim until the handoff is recorded. Remove `wip` if you stop without finishing.
 4. Confirm it's actionable — clear acceptance criterion + a way to verify. If not, comment for what's missing, relabel `needs-design`, and pick another (or stop).
 5. Plan the **smallest safe change**: minimal diff to satisfy the acceptance criterion; the tests
    that prove it and guard regression; what existing behavior it could break. If it touches member
@@ -50,7 +49,7 @@ normal visible Codex project thread. Follow `AGENT-TEAM/README.md` → Visible r
 - One issue per run, one focused change — never bundle unrelated fixes.
 - Never commit with failing tests or an unverified behavior regression.
 - Never reach into another lane — hand off via a labeled issue.
-- On an issue-driven run, clear `dispatch:build` and `wip`, then close or leave exactly one next
+- On a dispatched run, clear `dispatch:build` and `wip`, then close or leave exactly one next
   `dispatch:*` label before finishing.
 
 Success is a shrinking, healthy backlog: `ready` issues closed with tested changes, low reopen/regression rate, and clean handoffs — not lines of code.

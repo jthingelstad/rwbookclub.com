@@ -8,8 +8,8 @@ Read `AGENTS.md`, `AGENT-TEAM/WORKFLOW.md`, and `AGENT-TEAM/README.md` before ac
 
 Cadence: **event-driven** via `dispatch:operations`. Oliver's own deterministic health/scheduler
 loops remain continuous; this role runs when a deploy or operational decision actually exists. Run
-as a normal visible Codex project thread. Follow `AGENT-TEAM/README.md` → Visible role sessions,
-using `#<issue> Ops` with short phase suffixes and a final `✓` or `!`.
+as a normal visible Codex project thread. Follow `AGENT-TEAM/README.md` → Live thread titles, using
+`#<issue> Ops` with short phase suffixes and a final `✓` or `!`.
 
 ## Healthy-run rule
 
@@ -18,16 +18,15 @@ If production is healthy, do not opportunistically change code. Either work one 
 ## Every run
 
 1. Run the git preflight (`AGENT-TEAM/scripts/preflight.sh`).
-2. **`needs-deploy` first — before anything else.** An issue-driven project thread names the issue
-   and arrives with the initiating conversation's `wip` claim; accept it as yours. Deploy committed
-   code **now**, atomically: restart the bot
+2. **`needs-deploy` first — before anything else.** A dispatcher invocation names and preclaims
+   the issue; accept its `wip` as yours. Deploy committed code **now**, atomically: restart the bot
    (and run `uv run --locked python -m agent.publish` if schema/corpus/site changed) so code and any
    migration go live together. Then clear `needs-deploy`.
 3. **Check the bot:** is `com.rwbookclub.oliver` running? Scan recent `agent/logs/oliver.log` / `oliver.err` for errors, crash loops (ThrottleInterval restarts), scheduler failures, or JMAP/Discord/Anthropic errors.
 4. **Check the site:** is `gh-pages` current with the DB? Look for a failed/empty publish, a stale deploy, or a broken build. The deploy **refuses an empty site** (guards on `_site/index.html` + `_site/CNAME`) — a refused publish is a signal, not a no-op.
 5. Review operational signals: error/latency spikes, cost/usage drift, retry rates, publish duration.
 6. Review open issues labeled `operations`/`reliability`/`bug`/`regression`. **Skip `wip`.** A `bug`/`regression` defaults to the Build Manager; take one only if it's genuinely operational, and relabel it `operations` so ownership is unambiguous.
-7. If you find an operational problem: claim it (`wip`) unless the initiating conversation did,
+7. If you find an operational problem: claim it (`wip`) unless the dispatcher already did,
    diagnose, implement one focused fix, test (`uv run --locked python -m pytest tests/ -q`),
    **deploy/restart/publish** as needed (`launchctl kickstart -k gui/$(id -u)/com.rwbookclub.oliver`
    for the bot; `uv run --locked python -m agent.publish` for the site), and update the issue.

@@ -2,15 +2,13 @@
 
 **Issue:** [#84](https://github.com/jthingelstad/rwbookclub.com/issues/84)
 **Decision:** approved directly by Jamie on 2026-07-31
-**Status:** automatic app-visible thread creation is blocked on a supported non-interactive Codex
-API; read-only selection plus on-demand visible project sessions is the current operating model
 
-## Intended outcome
+## Outcome
 
-Replace independent role polling with one deterministic queue selector. GitHub remains the durable
-ledger and approval boundary; Codex runs only when issue state names executable work. An idle scan
-produces no model call, Codex session, issue comment, or run note. Real work uses normal persisted
-Codex project sessions so Jamie can inspect and resume them.
+Replace independent role polling with one deterministic queue watcher. GitHub remains the durable
+ledger and approval boundary; Codex runs only when issue state names executable work. Idle polls
+produce no model call, Codex session, issue comment, or run note. Real work uses normal
+project-visible Codex threads so Jamie can inspect and resume them.
 
 The only calendar-driven agent activities are the Friday 14:30 performance evaluation and the
 four-week Team Manager review. Build, Operations, Product, and Club Ethnographer are event-driven.
@@ -23,11 +21,11 @@ One `dispatch:*` label names the next worker. `needs-eval`, `needs-culture`, and
 ```text
 issue transition
       ↓
-read-only shadow selector
+launchd poll (deterministic, silent when idle)
       ↓
-active Codex conversation claims the issue and creates a project thread
+preflight → wip claim → one project-visible Codex role thread
       ↓
-preflight → one role → authoritative GitHub/repository transition
+authoritative GitHub/repository re-read
       ↓
 closed | explicit human stop | exactly one next dispatch label
 ```
@@ -47,45 +45,38 @@ review, defect, approved+ready); explicit dispatch always wins.
 
 ## Execution and visibility
 
-The first implementation invoked roles with:
+`AGENT-TEAM/scripts/dispatcher.py` is invoked by
+`com.rwbookclub.agent-team-dispatcher` every fifteen minutes. It holds an advisory file lock for the
+entire role run, so the shared checkout has one mutating owner. For a real handoff it uses a
+short-lived, paused Codex activity only as an app bridge. That bridge calls the supported project
+thread creation capability, gives the child the exact role prompt/model/effort, titles it compactly,
+and archives itself. The transient activity is then deleted; it has no calendar cadence.
 
-```text
-codex exec --json --cd <repo> --model <role-model> ...
-```
+The durable artifact is therefore a normal thread in the `rwbookclub.com` Codex project, not a
+hidden `codex exec` rollout and not a standing role schedule. Titles start compactly (`#81 Eval`),
+may expose a useful current phase (`#81 Eval · tests`), and end with `✓` or `!`. GitHub receives a
+claim comment and an authoritative transition result. `dispatcher-admin.sh status` shows the
+active and ten most recent roles with their app-visible thread IDs.
 
-Those runs persist rollout files, but live acceptance on 2026-07-31 proved that `source=exec`
-threads are absent from the Codex app's normal project-thread inventory. A second attempt through
-the owner's local IPC router was also rejected with `no-client-found`: app-owned automation and
-project-thread operations are not exposed to an arbitrary launchd client.
-
-Automatic launch is therefore disabled and the LaunchAgent is uninstalled. The selector remains
-available in read-only shadow mode. A person or an active Codex app conversation uses its supported
-project-thread tool to start the chosen role. That thread uses a compact live title such as
-`#79 Eval · evidence` and ends in `#79 Eval ✓` or `#79 Eval !`.
-
-The current operator runbook, including claim order, title vocabulary, final-state meanings, and
-handoffs, lives in `AGENT-TEAM/README.md` → Visible role sessions. This design record explains why
-the automatic launcher remains unavailable; it does not supersede that runbook.
-
-Historical launcher JSONL can contain private evaluator evidence or tool output. It never enters
-Git, GitHub, or a shared log; the owner-only state/log directory and files are mode 0700/0600.
+Codex owns the full private transcript and rollout. The dispatcher keeps only owner-only state,
+events, and small thread/rollout pointers; none enters Git, GitHub, or a shared log. The local
+state directory and files are mode 0700/0600 and old pointers are retained for 30 days.
 
 ## Failure boundaries
 
 - Shared preflight runs before every claim; dirty, behind, diverged, or unexpectedly-ahead state
   prevents mutation.
-- The role trusts issue state, not final prose. Success requires closure, an explicit human stop,
-  or exactly one different next dispatch label.
-- Failed or invalid on-demand runs release `wip` and leave the issue in an explicit recoverable
-  state; they do not create invisible retry sessions.
-- The active conversation starts at most one role. A new visible session is required for the next
-  handoff, preventing an unbounded hidden role chain.
+- The dispatcher trusts issue state, not final prose. Success requires closure, an explicit human
+  stop, or exactly one different next dispatch label.
+- Failed/invalid runs release dispatcher-owned `wip` and retry with 5-minute, 30-minute, and
+  2-hour backoff. Three failures add `blocked`.
+- Four role hops within 90 minutes stop the chain and add `blocked`.
 - Product proposals never cross Jamie's gate automatically.
 - Build and Operations remain serialized. Roles never invoke each other directly.
 
 ## Deployment and rollback
 
-Run the dispatcher only in `--shadow --all` mode. `dispatcher-admin.sh install` and `restart` fail
-closed until Codex exposes a supported non-interactive way to create normal app-visible project
-threads. `dispatcher-admin.sh uninstall` removes the retired LaunchAgent. GitHub retains every
-issue and pending acceptance state.
+Run the dispatcher in `--shadow --all` first. After label and routing verification, install the
+checked-in plist with `AGENT-TEAM/scripts/dispatcher-admin.sh install`. Rollback is bounded: stop
+that one LaunchAgent and reactivate the paused sparse Codex schedules. GitHub retains every issue,
+claim, transition, and pending acceptance state.

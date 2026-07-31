@@ -4,9 +4,9 @@ timezone = "America/Chicago"
 # An entry may say ACTIVE only while the corresponding local Codex scheduled activity exists,
 # is enabled, and matches the role, schedule, model, reasoning effort, project, and working path.
 # PAUSED entries are historical schedule definitions, not a dormant queue to reactivate. Those
-# roles run on demand as normal app-visible project threads selected from GitHub issue state.
-# Every ACTIVE execution must also create a normal visible project thread and follow the compact
-# title protocol in AGENT-TEAM/README.md.
+# roles are launched as normal app-visible project threads by the GitHub-driven dispatcher.
+# Every ACTIVE calendar execution must also create a normal visible project thread and follow the
+# compact title protocol in AGENT-TEAM/README.md.
 [[activities]]
 id = "oliver-operations-manager"
 name = "Oliver Operations Manager"
