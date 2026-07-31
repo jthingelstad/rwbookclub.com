@@ -10,6 +10,8 @@ DOMAIN="gui/$(id -u)"
 PYTHON="$ROOT/.venv/bin/python"
 DISPATCHER="$ROOT/AGENT-TEAM/scripts/dispatcher.py"
 CONFIG="$ROOT/AGENT-TEAM/dispatch.toml"
+STDOUT_LOG="/Users/otto/Library/Logs/$LABEL.log"
+STDERR_LOG="/Users/otto/Library/Logs/$LABEL.err"
 
 install_agent() {
   mkdir -p "/Users/otto/Library/LaunchAgents"
@@ -17,6 +19,8 @@ install_agent() {
   mkdir -p "/Users/otto/Library/Application Support/$LABEL/runs"
   chmod 700 "/Users/otto/Library/Application Support/$LABEL"
   chmod 700 "/Users/otto/Library/Application Support/$LABEL/runs"
+  touch "$STDOUT_LOG" "$STDERR_LOG"
+  chmod 600 "$STDOUT_LOG" "$STDERR_LOG"
   install -m 600 "$SOURCE" "$DESTINATION"
   launchctl bootout "$DOMAIN/$LABEL" >/dev/null 2>&1 || true
   launchctl bootstrap "$DOMAIN" "$DESTINATION"
