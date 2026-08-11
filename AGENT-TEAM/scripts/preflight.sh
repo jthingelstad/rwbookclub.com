@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
 #
-# Shared git preflight for AGENT-TEAM roles. Run from the repo root at the start
+# Git preflight for AGENT-TEAM objective owners. Run from the repo root at the start
 # of every run. Prints the working-tree state and a verdict; exits non-zero when
 # the tree is in a state an automated run should NOT act on (dirty / behind /
-# diverged). An automated agent should stop and report (file an issue) on a
+# diverged). An automated owner should stop and report on a
 # non-zero exit rather than pull/merge/rebase/stash.
-#
-# This file is byte-identical across every project's AGENT-TEAM/scripts/.
 
 set -euo pipefail
 
@@ -37,7 +35,7 @@ if upstream="$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/nul
     echo "  ✗ BEHIND $upstream by $behind — stop and report (do not pull from an automated run)."
     verdict=1
   elif [ "$ahead" -gt 0 ]; then
-    echo "  ! AHEAD of $upstream by $ahead — you may only push if your role is expected to publish these existing commits."
+    echo "  ! AHEAD of $upstream by $ahead — remain read-only; never push pre-existing commits."
   fi
 else
   echo "  (no upstream configured for $branch)"

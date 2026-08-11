@@ -42,19 +42,16 @@ worst case — the old Mac is gone and all you have is GitHub + iCloud + your pa
    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.rwbookclub.oliver.plist
    ```
 
-6. **AGENT-TEAM dispatcher** — after Codex and `gh` are authenticated on the restored Mac:
+6. **AGENT-TEAM objective owners** — after Codex and `gh` are authenticated on the restored Mac:
 
    ```bash
    AGENT-TEAM/scripts/setup-labels.sh
-   AGENT-TEAM/scripts/dispatcher-admin.sh check
-   AGENT-TEAM/scripts/dispatcher-admin.sh shadow
+   AGENT-TEAM/scripts/queue-audit.sh
    ```
 
-   Create one normal Codex project thread named `Oliver Dispatcher` using
-   `AGENT-TEAM/dispatcher.md`, then create the ACTIVE `oliver-dispatcher` heartbeat described in
-   `AGENT-TEAM/automations.toml` and target that thread. Its cadence is every 15 minutes. Do not
-   reinstall the retired `com.rwbookclub.agent-team-dispatcher` LaunchAgent: shell-launched agents
-   cannot create normal app-visible role threads.
+   `AGENT-TEAM/automations.toml` records the three objective definitions and their paused state.
+   Do not reactivate them merely because a machine was restored, and do not reinstall the retired
+   dispatcher. Restore an objective activity only after Jamie intentionally enables it.
    Verify: `tail -f agent/logs/oliver.log` → "Oliver connected as RWBC - Oliver".
 7. **Tailscale Funnel** (member web app) — install Tailscale, sign in, then the one-time bits:
    the tailnet ACL must grant the `funnel` nodeAttr, and HTTPS certs must be enabled

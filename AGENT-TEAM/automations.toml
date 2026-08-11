@@ -1,27 +1,14 @@
 version = 1
 timezone = "America/Chicago"
 
-# An entry may say ACTIVE only while the corresponding local Codex scheduled activity exists,
-# is enabled, and matches the role, schedule, model, reasoning effort, project, and working path.
-# PAUSED entries are historical schedule definitions, not a dormant queue to reactivate. The
-# dedicated Oliver Dispatcher heartbeat launches those roles as normal app-visible project threads.
-# Every ACTIVE execution must also create a normal visible project thread and follow the compact
-# title protocol in AGENT-TEAM/README.md.
-[[activities]]
-id = "oliver-dispatcher"
-name = "Oliver Dispatcher"
-role = "AGENT-TEAM/dispatcher.md"
-status = "ACTIVE"
-rrule = "FREQ=MINUTELY;INTERVAL=15"
-model = "gpt-5.6-sol"
-reasoning_effort = "xhigh"
-execution_environment = "local"
-cwd = "/Users/otto/Projects/rwbookclub.com"
+# These definitions preserve the existing Codex automation ids and current paused state.
+# PAUSED is descriptive history, not permission to reactivate an activity.
 
 [[activities]]
 id = "oliver-operations-manager"
-name = "Oliver Operations Manager"
-role = "AGENT-TEAM/operations-manager.md"
+name = "Run Oliver"
+objective = "run"
+role = "AGENT-TEAM/run-oliver.md"
 status = "PAUSED"
 rrule = "RRULE:FREQ=WEEKLY;BYHOUR=10;BYMINUTE=20;BYDAY=SA"
 model = "gpt-5.6-terra"
@@ -30,42 +17,10 @@ execution_environment = "local"
 cwd = "/Users/otto/Projects/rwbookclub.com"
 
 [[activities]]
-id = "oliver-build-manager"
-name = "Oliver Build Manager"
-role = "AGENT-TEAM/build-manager.md"
-status = "PAUSED"
-rrule = "RRULE:FREQ=WEEKLY;INTERVAL=2;BYHOUR=9;BYMINUTE=0;BYDAY=SU"
-model = "gpt-5.6-sol"
-reasoning_effort = "xhigh"
-execution_environment = "local"
-cwd = "/Users/otto/Projects/rwbookclub.com"
-
-[[activities]]
-id = "oliver-evaluator"
-name = "Oliver Evaluator"
-role = "AGENT-TEAM/evaluator.md"
-status = "ACTIVE"
-rrule = "RRULE:FREQ=WEEKLY;BYHOUR=14;BYMINUTE=30;BYDAY=FR"
-model = "gpt-5.6-sol"
-reasoning_effort = "xhigh"
-execution_environment = "local"
-cwd = "/Users/otto/Projects/rwbookclub.com"
-
-[[activities]]
-id = "oliver-product-manager"
-name = "Oliver Product Manager"
-role = "AGENT-TEAM/product-manager.md"
-status = "PAUSED"
-rrule = "RRULE:FREQ=WEEKLY;INTERVAL=8;BYHOUR=9;BYMINUTE=0;BYDAY=MO"
-model = "gpt-5.6-sol"
-reasoning_effort = "xhigh"
-execution_environment = "local"
-cwd = "/Users/otto/Projects/rwbookclub.com"
-
-[[activities]]
 id = "oliver-club-ethnographer"
-name = "Oliver Club Ethnographer"
-role = "AGENT-TEAM/club-ethnographer.md"
+name = "Understand the Club"
+objective = "club"
+role = "AGENT-TEAM/understand-club.md"
 status = "PAUSED"
 rrule = "RRULE:FREQ=WEEKLY;INTERVAL=8;BYHOUR=19;BYMINUTE=0;BYDAY=TH"
 model = "gpt-5.6-terra"
@@ -74,12 +29,13 @@ execution_environment = "local"
 cwd = "/Users/otto/Projects/rwbookclub.com"
 
 [[activities]]
-id = "oliver-team-manager"
-name = "Oliver Team Manager"
-role = "AGENT-TEAM/manager.md"
-status = "ACTIVE"
-rrule = "RRULE:FREQ=WEEKLY;INTERVAL=4;BYHOUR=18;BYMINUTE=30;BYDAY=WE"
+id = "oliver-evaluator"
+name = "Improve Oliver"
+objective = "agent"
+role = "AGENT-TEAM/improve-oliver.md"
+status = "PAUSED"
+rrule = "RRULE:FREQ=WEEKLY;BYHOUR=14;BYMINUTE=30;BYDAY=FR"
 model = "gpt-5.6-sol"
-reasoning_effort = "high"
+reasoning_effort = "xhigh"
 execution_environment = "local"
 cwd = "/Users/otto/Projects/rwbookclub.com"

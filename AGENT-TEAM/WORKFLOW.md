@@ -1,184 +1,73 @@
-<!-- Workflow-Version: 1.1 -->
-<!-- CANONICAL SHARED CONTRACT. This file is byte-identical across every project's
-     AGENT-TEAM/ directory. Do not add project-specific content here — that lives in
-     AGENT-TEAM/README.md and the role files. The Manager diffs this against the
-     canonical version each week and files a `meta` issue on drift. -->
+# AGENT-TEAM operating model
 
-# AGENT-TEAM workflow (shared contract)
+Oliver is maintained by three objective owners. An owner is accountable for an
+outcome, not a job type or directory. It follows evidence through diagnosis, code,
+tests, deployment, and natural acceptance instead of handing each step to another
+role.
 
-This is the **common operating contract** for every agent team, identical across all of
-Jamie's projects, so the workflow is the same wherever you run. Each project's
-`AGENT-TEAM/README.md` names the roster, north star, deploy commands, and domain labels;
-this file defines *how the team works* regardless of project.
+Read `AGENTS.md` -> `CLAUDE.md` -> this file -> `AGENT-TEAM/README.md` -> the
+selected objective file before acting. Read `agent/docs/SOUL.md`, `PURPOSE.md`, and
+`PROCESS.md` whenever behavior or member context is in scope.
 
-**Read order, every run:** `AGENTS.md` (repo source of truth) → this `WORKFLOW.md` →
-`AGENT-TEAM/README.md` → your role file. Then act.
+## Operating loop
 
-## The spine: GitHub Issues
+1. Run `AGENT-TEAM/scripts/preflight.sh`. A dirty, behind, diverged, detached, or
+   unexpectedly ahead checkout makes the run read-only. Never publish a pre-existing
+   commit.
+2. Measure current state from exact logs, launchd state, SQLite, JMAP/Discord evidence,
+   the public site, CI, or the active issue as appropriate.
+3. Decide whether a real objective gap exists. Healthy is a complete result.
+4. If the gap is safe and authorized, fix it at the source in the same run. Add the
+   business-rule regression; do not substitute a warning, prompt rule, or ticket chain.
+5. Recheck branch, upstream, worktree, and other active work immediately before the
+   first edit and before push. Stop if the state changed.
+6. Run focused checks while iterating and the repository's complete local gates before
+   commit. Commit and push only current-run work directly to `main`.
+7. Run Oliver owns restart/publish and technical-health acceptance. The originating
+   objective retains semantic acceptance from natural club evidence.
+8. Never send Discord, email, DM, meeting, corpus, or site activity merely to validate
+   a change.
 
-GitHub Issues on this repository are the **canonical work queue** — the single place work
-is proposed, claimed, handed off, and closed. Roles do not talk to each other directly;
-every handoff is a labeled issue. Discovery/insight roles *produce* issues; build/eval/ops
-roles *consume* them. Default: **open an issue before non-trivial work.**
+## Ownership and acceptance
 
-Work commits directly to `main` — no PRs — with the issue referenced (`Closes #N`) so
-GitHub auto-closes on push. Cross-role findings are handed off by label, never by editing
-another lane's code.
+- Run Oliver owns deployment, restart, and technical-health acceptance for every
+  shipped change.
+- The originating objective owns semantic acceptance. Understand the Club proves the
+  source model is faithful; Improve Oliver proves behavior or usefulness improved.
+- A clean deploy never substitutes for natural semantic evidence.
+- Safe, compatible schema evolution ships with its code and is rehearsed on a copy.
+  Never point a new-code process or migration rehearsal at the live SQLite database.
 
-## The approval gate (the one human gate)
+## Issues are the exception ledger
 
-New product direction passes through Jamie; defects do not.
+Do not open an issue to authorize, claim, route, deploy, evaluate, or close same-run
+work. Retain one only when work spans runs, an external dependency blocks it, Jamie
+must decide, or the arc needs a durable record. Give it exactly one objective label.
 
-```
-Product Manager files `proposal` (+ a type label)
-        │
-        ▼
-   Jamie reviews  ──decline──▶  close with `wontfix`
-        │
-     approve  →  swap `proposal` → `approved` + `ready`
-        │
-        ▼
-   Build Manager / Operations Manager / Evaluator pick it up → build AND deploy
-```
+There are no dispatch labels, handoff labels, `wip` claims, commit lanes, or manager
+digests. Descriptive labels do not transfer ownership. An objective keeps the issue
+until its acceptance condition is met.
 
-- **Build/Operations only work `ready`/`approved` issues.** They **skip `proposal`** — an
-  un-reviewed idea is never built by accident.
-- **Defects skip the gate.** `bug`, `regression`, and `operations` issues flow straight to
-  the Build/Operations Managers — no approval needed.
-- Once approved, execution is **autonomous**: the Build Manager (and Operations Manager)
-  create *and deploy* the change. There is no second gate after Jamie's approval.
+## Human boundary
 
-## Label taxonomy (identical everywhere)
+Jamie decides new member-facing behavior, communication cadence, schedule/order
+changes, non-review corpus writes, privacy-affecting collection, and other significant
+product direction. Ask one concrete yes/no question with evidence and the smallest
+useful version.
 
-The core set below is the same in every project (created by
-`AGENT-TEAM/scripts/setup-labels.sh`). Projects layer on **domain** work-type labels in the
-project-extensions block of that script; the core stays fixed.
+Ordinary defects, reliability, observability, documentation, eval tooling, generated
+corpus correctness, and narrow behavior-quality fixes are autonomous when they
+preserve that boundary.
 
-| Label | Meaning | Filed by | Worked by |
-|-------|---------|----------|-----------|
-| `proposal` | New direction **awaiting Jamie's approval — do not build** | Product Manager | Jamie reviews |
-| `approved` | Approved by Jamie — cleared to build | Jamie | Build / Ops / Evaluator |
-| `ready` | Triaged, actionable now | Jamie / any | Build Manager picks first |
-| `needs-design` | Not actionable until the approach is settled | any | (blocks Build) |
-| `blocked` | Waiting on an external dependency | any | — |
-| `wip` | Claimed — an agent is working this now; others skip it | the working agent | self (released on stop) |
-| `needs-deploy` | Committed but **not live** until deployed — e.g. a DB migration; deploy promptly & atomically | Build Manager | Operations Manager (top priority) |
-| `bug` | Reproducible defect | any (usually Quality) | Build Manager |
-| `regression` | Worked before, now broken — high priority | any | Build Manager (+ Evaluator guard) |
-| `enhancement` | New feature or capability | Product Manager | Build Manager |
-| `eval` | Missing measurement | any | Evaluator |
-| `operations` | Prod health, deploy, runtime | any | Operations Manager |
-| `meta` | **Change to the team itself** — a role definition, the workflow, labels, or scripts | Manager (mostly) | Jamie reviews → Build applies |
-| `generated` | Filed by an automated agent (not a human) | every agent, on each issue it files | — |
+## Automation memory
 
-`meta` rides the same gate as `proposal`: the Manager recommends team changes; Jamie
-approves; only then are the role files / workflow / scripts edited.
+Automation memory contains only `Current state`, `Active watches`, and one
+replace-in-place `Latest run`. Remove resolved watches. Git, issues, logs, SQLite, CI,
+and evaluation artifacts hold history.
 
-## Commit lanes (who commits what)
+## Reporting
 
-Strict lanes stop two agents colliding on the same files:
-
-- **Build Manager** — the only role that commits feature and bug-fix code to `main`.
-- **Operations Manager** — commits operational/reliability fixes only; owns deploys/restarts.
-- **Evaluator** — commits eval harnesses, datasets, scoring rules, regression tests only.
-- **Manager** — commits only its own `AGENT-TEAM/summaries/` digests.
-- **Discovery / product / domain-insight roles** (Product Manager, and project roles like
-  Data Analyst / Quality Manager / Club Ethnographer) — **never commit product code.** They
-  produce GitHub issues and, for durable arcs, committed design docs. They commit those docs
-  themselves so the worktree is never left dirty for the Build Manager.
-
-If a role finds work outside its lane, it does **not** reach in — it files a labeled issue.
-
-## Database migrations (never break the live process)
-
-A migration is the one change that touches **shared persistent state a running process is
-using**. The hazard: the schema changes while the live process is still on the old code — there
-is always an interim between commit and deploy — and *old code + new schema* (or *new code + old
-schema*) is a broken service. That is exactly how a split Build→Ops deploy has broken production:
-the DB was migrated hours before the matching code was deployed. Three rules keep the window safe:
-
-1. **Additive / backward-compatible only.** A migration must be safe with BOTH the old running
-   code and the new code. Add tables, add nullable/defaulted columns, add indexes — old code
-   ignores them. A rename / drop / retype / new `NOT NULL` that code depends on is a **breaking**
-   change, split across releases: *expand* (add the new, keep writing the old) → *backfill* → cut
-   reads over to the new → *contract* (drop the old) only after all old code is gone. Every step
-   is safe whichever version is running.
-2. **The migration ships with its code and is applied by the deploy — never run against the live
-   DB out-of-band.** The Build Manager writes the migration and the code that needs it in the
-   **same commit**, and tests it against a throwaway/scratch database. It must never point a
-   new-code process — the service, a test run, or a script — at the **live** database, because
-   that applies the migration early (many frameworks migrate on first connect). Production is
-   migrated exactly once, at the deploy/restart, by the Operations Manager, so schema and running
-   code change together.
-3. **The migration is committed *inert* and made live by the deploy — coordinated through the
-   queue, not a live call.** Roles are independent task-runs; they coordinate only via labeled
-   issues (there is no inline "Build calls Ops"). That's fine, and it's why rule 2 matters:
-   because the live schema doesn't change until a restart applies it, a committed-but-undeployed
-   migration is **inert and safe** — the running old code keeps using the old schema until the
-   Operations Manager's next run restarts into the new code, applying the migration atomically
-   with it. So the Build Manager labels the issue `needs-deploy` and leaves it open; that is the
-   Operations Manager's **top priority every run**, bounding the gap to one Ops cycle. Never
-   "resolve" the wait by applying the migration to the live DB early — that is the original break.
-
-Each project's migration framework — how migrations are declared and applied — is documented in
-its `AGENTS.md` / `CLAUDE.md`.
-
-## Concurrency: claim before you work
-
-Many agents reading one queue can pick up the same issue. The `wip` label is the claim:
-
-1. **Skip anything already labeled `wip`** — another agent has it.
-2. Claim it: add `wip` and comment with role + timestamp (e.g. "Build Manager claiming at
-   2026-07-01 09:00 CT") **before** starting.
-3. When done, remove `wip` (closing with `Closes #N` clears it automatically). If you stop
-   without finishing, remove `wip` so it returns to the queue.
-4. **Stale-claim rule:** if a `wip` issue has had no update for 24 hours, another agent may
-   take it by commenting with the stale evidence, replacing the claim, and continuing. If the
-   stale issue is risky or ambiguous, comment and stop instead of taking over.
-
-## notes/ — per-run scratch (gitignored)
-
-`AGENT-TEAM/notes/` is **gitignored** working memory. At the end of a run, drop a short file
-(`AGENT-TEAM/scripts/new-note.sh <role> <slug>` scaffolds one) recording: what you did, the
-evidence you used, the issues you filed/claimed/closed, and any handoff. Notes are how the
-team (and the weekly Manager) sees recent activity **without polluting git** with per-run noise.
-
-**Signal stays committed; noise does not.** Committed = GitHub issues (the ledger), the
-Manager's `AGENT-TEAM/summaries/` digests, and design docs for multi-issue arcs. Ephemeral =
-`notes/` run logs.
-
-## Operating rules (all roles)
-
-1. **Start with the git preflight** (`AGENT-TEAM/scripts/preflight.sh`): fetch, check status;
-   if the worktree is dirty / behind / diverged / unexpectedly ahead, **stop and report** via
-   an issue — do not pull, merge, rebase, or stash from an automated run. **End every run with
-   `git status` clean**; commit any doc you wrote before finishing; push only when doing so
-   won't publish unrelated pre-existing commits.
-2. Do **one** focused thing per run. Never bundle unrelated work.
-3. **Claim before you work** (`wip`); skip anything already claimed.
-4. Tag every issue you file with `generated` so agent-filed work is distinguishable.
-5. **Stay in your lane.** Hand off across lanes via labeled issues, never by editing another
-   role's code.
-6. Don't flood the queue: file **at most ~3 new issues per run**. More than that is a pattern
-   worth one summary issue, not ten.
-7. **A quiet run is a valid run.** If there's nothing safe and in-lane to do, say so and stop —
-   don't manufacture work.
-8. All times **America/Chicago**.
-
-## The Manager (weekly meta-review)
-
-One role stands outside the lanes and keeps the team healthy. Weekly, the **Manager**:
-reviews how each role is performing and files any role-definition changes as `meta` proposals
-(Jamie approves — never self-applied); writes a committed weekly digest of `notes/` to
-`AGENT-TEAM/summaries/`; audits the queue for work slipping through the cracks (unclaimed/aging
-issues, stale `wip`, `proposal`s awaiting Jamie, stale `needs-design`/`blocked`); and checks
-this `WORKFLOW.md` against the canonical `Workflow-Version`, filing a `meta` issue on drift.
-See `AGENT-TEAM/manager.md`.
-
-## Backlog hygiene
-
-The Product Manager grooms the queue weekly (dedupe across roles, close/relabel stale
-`needs-design`/`blocked`, surface `proposal`s awaiting Jamie). This is maintenance, not new
-direction — no approval gate. The Manager audits that this is happening.
-
-<!-- End of canonical contract — Workflow-Version: 1.1 -->
+End as `Healthy`, `Changed`, or `Needs decision`. Report the measured outcome and
+remaining risk, not workflow ceremony. A monthly Improve Oliver pass may recommend one
+specific contract correction when evidence shows duplicate work, collisions,
+manufactured findings, or stalled acceptance; there is no separate Team Manager.

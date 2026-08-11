@@ -25,13 +25,9 @@ History of the SQLite inversion lives in `docs/archive/MIGRATION-*`.
 
 ## Work Tracking
 
-**GitHub Issues on this repository are the canonical work queue** for the agent team. Default:
-open an issue before non-trivial work. Commit directly to `main` — PRs are not required —
-referencing the issue (`Closes #N`) so GitHub auto-closes on push. All times **America/Chicago**.
-
-The agent team, its roles, and the full workflow live in **[`AGENT-TEAM/`](AGENT-TEAM/)**:
-[`AGENT-TEAM/WORKFLOW.md`](AGENT-TEAM/WORKFLOW.md) is the shared contract (label taxonomy, the
-`proposal → approved → build+deploy` gate, `wip` claiming, commit lanes, the gitignored `notes/`
-convention); [`AGENT-TEAM/README.md`](AGENT-TEAM/README.md) is the Oliver-specific overview. New
-direction is gated on Jamie's approval; defects (`bug`/`regression`/`operations`) flow straight
-through. Run `AGENT-TEAM/scripts/setup-labels.sh` once to create the labels.
+The objective owners and operating contract live in **[`AGENT-TEAM/`](AGENT-TEAM/)**.
+Issues are an exception ledger for multi-run work, external blockers, and Jamie decisions, not a
+handoff queue. Same-run defects are measured, fixed, verified, and accepted by the owning
+objective. Give each open issue exactly one `objective:*` label. Commit current-run work directly
+to `main`; never publish a pre-existing commit. New member-facing direction remains gated on
+Jamie's approval. All times are **America/Chicago**.
