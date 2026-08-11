@@ -7,9 +7,7 @@ gh auth status >/dev/null 2>&1 || { echo "gh is not authenticated"; exit 1; }
 
 upsert() {
   local name="$1" color="$2" description="$3"
-  if gh label list --limit 300 --json name --jq '.[].name' | grep -Fxq "$name"; then
-    gh label edit "$name" --color "$color" --description "$description"
-  else
+  if ! gh label edit "$name" --color "$color" --description "$description" >/dev/null 2>&1; then
     gh label create "$name" --color "$color" --description "$description"
   fi
 }
