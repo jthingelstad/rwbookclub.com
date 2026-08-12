@@ -73,7 +73,7 @@ def test_registry_has_three_paused_objective_owners():
     entries = plan["automation"]
 
     assert plan["version"] == 2
-    assert plan["repo"] == str(ROOT)
+    assert plan["repo"] == "."
     assert len(entries) == 3
     assert {entry["objective"] for entry in entries} == {"run", "club", "agent"}
     assert all(entry["status"] == "PAUSED" for entry in entries)
