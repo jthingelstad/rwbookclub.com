@@ -63,7 +63,7 @@ def test_registry_has_three_paused_objective_owners():
     assert all((ROOT / entry["role"]).is_file() for entry in entries)
     assert len({entry["id"] for entry in entries}) == 3
     assert all(entry["execution_environment"] == "local" for entry in entries)
-    assert all(entry["cwd"] == str(ROOT) for entry in entries)
+    assert all(entry["cwd"] == "/Users/otto/Projects/rwbookclub.com" for entry in entries)
     assert all(entry["rrule"].startswith("RRULE:FREQ=") for entry in entries)
 
 
