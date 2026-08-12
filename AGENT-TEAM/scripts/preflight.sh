@@ -27,6 +27,11 @@ if [ "$branch" = "HEAD" ]; then
   verdict=1
 fi
 
+if [ "$branch" != "HEAD" ] && [ "$branch" != "main" ]; then
+  echo "  ✗ automated publication is allowed only from main — remain read-only."
+  verdict=1
+fi
+
 # Dirty worktree?
 if [ -n "$(git status --porcelain)" ]; then
   echo "  ✗ worktree is DIRTY — stop and report (do not act on unexpected local changes)."

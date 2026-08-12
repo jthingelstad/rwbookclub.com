@@ -17,19 +17,28 @@ selected objective file before acting. Read `agent/docs/SOUL.md`, `PURPOSE.md`, 
 2. Measure current state from exact logs, launchd state, SQLite, JMAP/Discord evidence,
    the public site, CI, or the active issue as appropriate.
 3. Decide whether a real objective gap exists. Healthy is a complete result.
-4. If the gap is safe and authorized, fix it at the source in the same run. Add the
+4. Only when a safe authorized gap requires mutation, claim the checkout with
+   `uv run --locked python AGENT-TEAM/scripts/objective_lease.py claim <run|club|agent>`.
+   Retain the returned `lease_id`; a held lease leaves the run read-only. Never clear a
+   lease merely because it looks old. Automatic clearing also requires the same host,
+   a dead recorded process, an unchanged starting commit, and a clean worktree.
+5. Fix the gap at the source in the same run. Add the
    business-rule regression; do not substitute a warning, prompt rule, or ticket chain.
-5. Recheck branch, upstream, worktree, and other active work immediately before the
-   first edit and before push. Stop if the state changed.
-6. Run focused checks while iterating and
+6. Recheck the lease with `objective_lease.py check <objective> --lease-id <lease_id>`,
+   then recheck branch, upstream, worktree, and other active work immediately before
+   the first edit and before push. Stop if the state changed.
+7. Run focused checks while iterating and
    `AGENT-TEAM/scripts/verify.sh` before commit. Commit and push only current-run work
    directly to `main`.
-7. Complete the Run Oliver technical-acceptance phase in the same run: restart or publish
+8. Complete the Run Oliver technical-acceptance phase in the same run: restart or publish
    only when the affected surface requires it, verify the intended revision and health,
    and do not manufacture member activity. Run Oliver owns this standard; the current
    objective owner executes it without changing owners or creating a handoff.
-8. Never send Discord, email, DM, meeting, corpus, or site activity merely to validate
+9. Never send Discord, email, DM, meeting, corpus, or site activity merely to validate
    a change.
+10. Release only this run's token with `objective_lease.py release <objective>
+    --lease-id <lease_id>` after the repository is clean. If safe cleanup is impossible,
+    leave the lease in place and report it.
 
 ## Ownership and acceptance
 
@@ -81,7 +90,18 @@ run history or duplicate an issue narrative.
 
 ## Reporting
 
-End as `Healthy`, `Changed`, or `Needs decision`. Report the measured outcome and
-remaining risk, not workflow ceremony. A monthly Improve Oliver pass may recommend one
-specific contract correction when evidence shows duplicate work, collisions,
-manufactured findings, or stalled acceptance; there is no separate Team Manager.
+End as `HEALTHY`, `CHANGED`, `WATCHING`, `BLOCKED`, or `NEEDS JAMIE`:
+
+```text
+Outcome: HEALTHY | CHANGED | WATCHING | BLOCKED | NEEDS JAMIE
+Objective: <objective name>
+Evidence: <most decision-relevant facts>
+Action: <what changed, or None>
+Next check: <natural event/date, or None>
+Jamie: <one yes/no question, or None>
+```
+
+Report the measured outcome and remaining risk, not workflow ceremony. A monthly Improve
+Oliver pass may recommend one specific contract correction when evidence shows duplicate
+work, collisions, manufactured findings, or stalled acceptance; there is no separate Team
+Manager.

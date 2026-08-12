@@ -1,15 +1,31 @@
 from __future__ import annotations
 
+import importlib.util
 import os
 import stat
 import subprocess
+import sys
 import tomllib
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 PREFLIGHT = ROOT / "AGENT-TEAM/scripts/preflight.sh"
+
+
+def load_module(name: str, relative: str):
+    spec = importlib.util.spec_from_file_location(name, ROOT / relative)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+automation_audit = load_module("oliver_automation_audit", "AGENT-TEAM/scripts/automation_audit.py")
+objective_lease = load_module("oliver_objective_lease", "AGENT-TEAM/scripts/objective_lease.py")
 
 
 def run(command: list[str], cwd: Path, *, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -54,17 +70,28 @@ def preflight(checkout: Path) -> subprocess.CompletedProcess[str]:
 
 def test_registry_has_three_paused_objective_owners():
     plan = tomllib.loads((ROOT / "AGENT-TEAM/automations.toml").read_text())
-    entries = plan["activities"]
+    entries = plan["automation"]
 
-    assert plan["version"] == 1
+    assert plan["version"] == 2
+    assert plan["repo"] == str(ROOT)
     assert len(entries) == 3
     assert {entry["objective"] for entry in entries} == {"run", "club", "agent"}
     assert all(entry["status"] == "PAUSED" for entry in entries)
-    assert all((ROOT / entry["role"]).is_file() for entry in entries)
+    assert all((ROOT / entry["objective_file"]).is_file() for entry in entries)
     assert len({entry["id"] for entry in entries}) == 3
-    assert all(entry["execution_environment"] == "local" for entry in entries)
-    assert all(entry["cwd"] == "/Users/otto/Projects/rwbookclub.com" for entry in entries)
     assert all(entry["rrule"].startswith("RRULE:FREQ=") for entry in entries)
+
+
+def test_automation_prompt_uses_the_common_objective_contract():
+    plan = tomllib.loads((ROOT / "AGENT-TEAM/automations.toml").read_text())
+    for entry in plan["automation"]:
+        prompt = automation_audit.prompt(entry)
+        assert entry["objective"] in prompt
+        assert "Measure current evidence" in prompt
+        assert "source fix" in prompt
+        assert "objective lease only before mutation" in prompt
+        assert "human and privacy boundaries" in prompt
+        assert "one replace-in-place Latest run" in prompt
 
 
 def test_workflow_pins_end_to_end_ownership_and_member_boundary():
@@ -81,6 +108,69 @@ def test_workflow_pins_end_to_end_ownership_and_member_boundary():
     assert "Current state" in workflow
     assert "Active watches" in workflow
     assert "replace-in-place `Latest run`" in workflow
+    assert "objective_lease.py claim" in workflow
+    assert "Outcome: HEALTHY | CHANGED | WATCHING | BLOCKED | NEEDS JAMIE" in workflow
+    assert "Run <objective> now and own the highest-impact measured gap." in readme
+
+
+def test_checkout_lease_is_atomic_and_owner_scoped(tmp_path: Path, monkeypatch):
+    lease_path = tmp_path / ".git" / "agent-team-objective-lease.json"
+    lease_path.parent.mkdir()
+    monkeypatch.setattr(objective_lease, "LEASE_PATH", lease_path)
+    claimed = objective_lease.claim(
+        "run",
+        now=datetime(2026, 8, 12, 12, 0, tzinfo=timezone.utc),
+        holder_id="thread-1",
+        holder_pid=4321,
+        hostname="test-host",
+        starting_head="abc123",
+        lease_id="lease-1",
+    )
+    assert claimed["lease_id"] == "lease-1"
+    assert lease_path.stat().st_mode & 0o777 == 0o600
+    with pytest.raises(SystemExit, match="already held"):
+        objective_lease.claim("club")
+    with pytest.raises(SystemExit, match="another run"):
+        objective_lease.release("run", lease_id="wrong")
+    monkeypatch.setattr(objective_lease, "_git", lambda *args: "")
+    objective_lease.release("run", lease_id="lease-1")
+    assert not lease_path.exists()
+
+
+def test_stale_lease_requires_proof_of_inactive_holder(tmp_path: Path, monkeypatch):
+    lease_path = tmp_path / ".git" / "agent-team-objective-lease.json"
+    lease_path.parent.mkdir()
+    monkeypatch.setattr(objective_lease, "LEASE_PATH", lease_path)
+    monkeypatch.setattr(objective_lease.socket, "gethostname", lambda: "test-host")
+    objective_lease.claim(
+        "club",
+        now=datetime(2026, 8, 12, 0, 0, tzinfo=timezone.utc),
+        holder_id="thread-2",
+        holder_pid=9876,
+        hostname="test-host",
+        starting_head="abc123",
+    )
+    checkout = {"dirty": False, "head": "abc123"}
+
+    def fake_git(*args: str) -> str:
+        if args == ("status", "--porcelain"):
+            return " M file" if checkout["dirty"] else ""
+        if args == ("rev-parse", "HEAD"):
+            return checkout["head"]
+        raise AssertionError(args)
+
+    monkeypatch.setattr(objective_lease, "_git", fake_git)
+    monkeypatch.setattr(objective_lease, "_process_exists", lambda pid: True)
+    with pytest.raises(SystemExit, match="still active"):
+        objective_lease.clear_stale(hours=8, now=datetime(2026, 8, 12, 12, 0, tzinfo=timezone.utc))
+    monkeypatch.setattr(objective_lease, "_process_exists", lambda pid: False)
+    objective_lease.clear_stale(hours=8, now=datetime(2026, 8, 12, 12, 0, tzinfo=timezone.utc))
+    assert not lease_path.exists()
+
+
+def test_registry_passes_the_common_contract_audit():
+    plan = tomllib.loads((ROOT / "AGENT-TEAM/automations.toml").read_text())
+    assert automation_audit.validate(plan) == []
 
 
 def test_objective_issue_templates_apply_exactly_one_owner():
@@ -148,6 +238,7 @@ def test_preflight_accepts_only_clean_synchronized_branch(tmp_path: Path):
         ("dirty", "DIRTY"),
         ("fetch-failure", "git fetch failed"),
         ("no-upstream", "no upstream configured"),
+        ("non-main", "only from main"),
     ],
 )
 def test_preflight_rejects_unsafe_states(tmp_path: Path, scenario: str, message: str):
@@ -167,6 +258,9 @@ def test_preflight_rejects_unsafe_states(tmp_path: Path, scenario: str, message:
         git(checkout, "remote", "set-url", "origin", str(tmp_path / "missing.git"))
     elif scenario == "no-upstream":
         git(checkout, "checkout", "-b", "scratch")
+    elif scenario == "non-main":
+        git(checkout, "checkout", "-b", "feature")
+        git(checkout, "push", "-u", "origin", "feature")
 
     result = preflight(checkout)
 

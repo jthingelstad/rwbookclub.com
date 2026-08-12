@@ -1,56 +1,51 @@
 #!/usr/bin/env bash
+# Read-only audit of the objective-owned exception ledger.
 
 set -euo pipefail
 
 command -v gh >/dev/null 2>&1 || { echo "gh CLI not found"; exit 1; }
+command -v jq >/dev/null 2>&1 || { echo "jq not found"; exit 1; }
 gh auth status >/dev/null 2>&1 || { echo "gh is not authenticated"; exit 1; }
 
-repo="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
 objectives=("objective:run" "objective:club" "objective:agent")
-retired_controls='["proposal","approved","ready","needs-design","wip","needs-deploy","meta","needs-eval","needs-culture","approved-for-oliver","needs-approval","in-progress","oliver-autonomous"]'
+allowed='["objective:run","objective:club","objective:agent"]'
+retired='["proposal","approved","ready","needs-design","wip","needs-deploy","meta","needs-eval","needs-culture","approved-for-oliver","needs-approval","in-progress","oliver-autonomous"]'
+issues="$(gh issue list --state open --limit 1000 --json number,title,labels,updatedAt)"
+verdict=0
 
-echo "Objective queue — $repo"
+echo "Objective queue — $(gh repo view --json nameWithOwner --jq .nameWithOwner)"
 for objective in "${objectives[@]}"; do
   printf '\n==> %s\n' "$objective"
-  gh issue list --state open --limit 1000 --label "$objective" \
-    --json number,title,labels,updatedAt \
-    --jq '.[] | "  #\(.number)  [\([.labels[].name] | join(","))]  \(.title)  (\(.updatedAt[0:10]))"'
+  printf '%s' "$issues" | jq -r --arg objective "$objective" '
+    .[] | select([.labels[].name] | index($objective))
+    | "  #\(.number)  [\([.labels[].name] | join(","))]  \(.title)  (\(.updatedAt[0:10]))"'
 done
 
 printf '\n==> Decisions waiting on Jamie\n'
-gh issue list --state open --limit 1000 --label decision
+printf '%s' "$issues" | jq -r '
+  .[] | select([.labels[].name] | index("decision")) | "  #\(.number)  \(.title)"'
 
-printf '\n==> Missing or conflicting objective ownership\n'
-issues="$(gh issue list --state open --limit 1000 --json number,title,labels)"
-bad="$(printf '%s' "$issues" | jq -r '
-  .[]
-  | ([.labels[].name | select(startswith("objective:"))] | length) as $owners
-  | select($owners != 1)
-  | "  #\(.number)  owners=\($owners)  \(.title)"
-')"
-verdict=0
-if [ -n "$bad" ]; then
-  printf '%s\n' "$bad"
-  verdict=1
-fi
+printf '\n==> Missing, conflicting, or unknown objective ownership\n'
+bad="$(printf '%s' "$issues" | jq -r --argjson allowed "$allowed" '
+  .[] | [.labels[].name | select(startswith("objective:"))] as $owners
+  | select(($owners | length) != 1 or ($allowed | index($owners[0]) | not))
+  | "  #\(.number)  owners=\($owners | if length == 0 then "none" else join(",") end)  \(.title)"')"
+if [ -n "$bad" ]; then printf '%s\n' "$bad"; verdict=1; fi
 
 printf '\n==> Retired workflow controls on open issues\n'
-retired="$(printf '%s' "$issues" | jq -r --argjson retired "$retired_controls" '
-  .[]
-  | ([.labels[].name | select(
-      (. as $name | $retired | index($name)) != null
-      or startswith("dispatch:")
-      or startswith("legacy:")
-    )]) as $controls
+old="$(printf '%s' "$issues" | jq -r --argjson retired "$retired" '
+  .[] | [.labels[].name | select((. as $name | $retired | index($name)) != null or startswith("dispatch:") or startswith("legacy:"))] as $controls
   | select($controls | length > 0)
-  | "  #\(.number)  [\($controls | join(","))]  \(.title)"
-')"
-if [ -n "$retired" ]; then
-  printf '%s\n' "$retired"
-  verdict=1
-fi
+  | "  #\(.number)  [\($controls | join(","))]  \(.title)"')"
+if [ -n "$old" ]; then printf '%s\n' "$old"; verdict=1; fi
+
+printf '\n==> Stale objective issues (no update in 14 days)\n'
+cutoff="$(date -u -v-14d +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d '-14 days' +%Y-%m-%dT%H:%M:%SZ)"
+printf '%s' "$issues" | jq -r --arg cutoff "$cutoff" '
+  .[] | select(.updatedAt < $cutoff) | select([.labels[].name | startswith("objective:")] | any)
+  | "  #\(.number)  \(.title)  (updated \(.updatedAt[0:10]))"'
 
 if [ "$verdict" -eq 0 ]; then
-  echo "  ✓ every open issue has one objective owner and no retired workflow controls"
+  echo "  ✓ every open issue has one known objective owner and no retired controls"
 fi
 exit "$verdict"

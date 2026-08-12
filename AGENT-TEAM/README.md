@@ -28,6 +28,22 @@ Choose the owner by the primary failed outcome, not by the file being edited:
 Cross-cutting work keeps one originating owner. The other objectives contribute an acceptance
 standard or capability; they do not create a second owner or a handoff queue.
 
+## How Jamie engages the team
+
+Jamie can start with the outcome instead of choosing a role or preparing a ticket:
+
+- `Run <objective> now and own the highest-impact measured gap.`
+- `Investigate <symptom>; choose the owner by the failed outcome, not the file.`
+- `Show me team status only; make no changes.`
+- `What across this team needs Jamie?`
+- `Resume the active watch for <objective or issue>.`
+
+Choose **Run Oliver** for execution, delivery, persistence, health, recovery, or cost;
+**Understand the Club** for authoritative club facts, provenance, projection, or source
+meaning; and **Improve Oliver** when the sources are sound but behavior, judgment,
+grounding, restraint, or usefulness is wrong. Cross-cutting work keeps one originating
+owner through acceptance.
+
 The former seven-role queue and dispatcher are retired. Git history and `work/`
 preserve that period. Historical design records may use the old role names; they are
 evidence, not current routing instructions.
@@ -41,6 +57,8 @@ evidence, not current routing instructions.
   gitignored; never hand-edit it.
 - `scripts/evaluator_evidence.py` collects exact, private production evidence for
   evaluation without mutating production.
+- `python3 AGENT-TEAM/scripts/automation_audit.py` validates this repository's registry
+  against installed Codex tasks; use `--registry-only` in source-only checks.
 - `uv run --locked python -m agent.publish` regenerates the corpus, builds the site,
   and publishes `gh-pages`.
 

@@ -1,42 +1,37 @@
-version = 1
+version = 2
+repo = "/Users/otto/Projects/rwbookclub.com"
 timezone = "America/Chicago"
 
 # These definitions preserve the existing Codex automation ids and current paused state.
 # PAUSED is descriptive history, not permission to reactivate an activity.
 # RRULEs describe calendar cadence only; incident/deploy/change follow-ups are manual starts.
 
-[[activities]]
+[[automation]]
 id = "oliver-operations-manager"
 name = "Run Oliver"
 objective = "run"
-role = "AGENT-TEAM/run-oliver.md"
+objective_file = "AGENT-TEAM/run-oliver.md"
 status = "PAUSED"
 rrule = "RRULE:FREQ=WEEKLY;BYHOUR=10;BYMINUTE=20;BYDAY=SA"
 model = "gpt-5.6-terra"
 reasoning_effort = "high"
-execution_environment = "local"
-cwd = "/Users/otto/Projects/rwbookclub.com"
 
-[[activities]]
+[[automation]]
 id = "oliver-club-ethnographer"
 name = "Understand the Club"
 objective = "club"
-role = "AGENT-TEAM/understand-club.md"
+objective_file = "AGENT-TEAM/understand-club.md"
 status = "PAUSED"
 rrule = "RRULE:FREQ=WEEKLY;INTERVAL=8;BYHOUR=19;BYMINUTE=0;BYDAY=TH"
 model = "gpt-5.6-terra"
 reasoning_effort = "xhigh"
-execution_environment = "local"
-cwd = "/Users/otto/Projects/rwbookclub.com"
 
-[[activities]]
+[[automation]]
 id = "oliver-evaluator"
 name = "Improve Oliver"
 objective = "agent"
-role = "AGENT-TEAM/improve-oliver.md"
+objective_file = "AGENT-TEAM/improve-oliver.md"
 status = "PAUSED"
 rrule = "RRULE:FREQ=WEEKLY;BYHOUR=14;BYMINUTE=30;BYDAY=FR"
 model = "gpt-5.6-sol"
 reasoning_effort = "xhigh"
-execution_environment = "local"
-cwd = "/Users/otto/Projects/rwbookclub.com"
