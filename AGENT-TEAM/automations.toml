@@ -2,8 +2,8 @@ version = 2
 repo = "."
 timezone = "America/Chicago"
 
-# These definitions preserve the existing Codex automation ids and current paused state.
-# PAUSED is descriptive history, not permission to reactivate an activity.
+# These definitions preserve the existing Codex automation ids. The intentionally
+# slow cadences fit a volunteer book club while keeping every objective active.
 # RRULEs describe calendar cadence only; incident/deploy/change follow-ups are manual starts.
 
 [[automation]]
@@ -11,7 +11,7 @@ id = "oliver-operations-manager"
 name = "Run Oliver"
 objective = "run"
 objective_file = "AGENT-TEAM/run-oliver.md"
-status = "PAUSED"
+status = "ACTIVE"
 rrule = "RRULE:FREQ=WEEKLY;BYHOUR=10;BYMINUTE=20;BYDAY=SA"
 model = "gpt-5.6-terra"
 reasoning_effort = "high"
@@ -21,7 +21,7 @@ id = "oliver-club-ethnographer"
 name = "Understand the Club"
 objective = "club"
 objective_file = "AGENT-TEAM/understand-club.md"
-status = "PAUSED"
+status = "ACTIVE"
 rrule = "RRULE:FREQ=WEEKLY;INTERVAL=8;BYHOUR=19;BYMINUTE=0;BYDAY=TH"
 model = "gpt-5.6-terra"
 reasoning_effort = "xhigh"
@@ -31,7 +31,7 @@ id = "oliver-evaluator"
 name = "Improve Oliver"
 objective = "agent"
 objective_file = "AGENT-TEAM/improve-oliver.md"
-status = "PAUSED"
+status = "ACTIVE"
 rrule = "RRULE:FREQ=WEEKLY;BYHOUR=14;BYMINUTE=30;BYDAY=FR"
 model = "gpt-5.6-sol"
 reasoning_effort = "xhigh"

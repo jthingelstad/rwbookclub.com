@@ -68,7 +68,7 @@ def preflight(checkout: Path) -> subprocess.CompletedProcess[str]:
     return run([str(PREFLIGHT)], checkout, check=False)
 
 
-def test_registry_has_three_paused_objective_owners():
+def test_registry_has_three_active_objective_owners():
     plan = tomllib.loads((ROOT / "AGENT-TEAM/automations.toml").read_text())
     entries = plan["automation"]
 
@@ -76,10 +76,14 @@ def test_registry_has_three_paused_objective_owners():
     assert plan["repo"] == "."
     assert len(entries) == 3
     assert {entry["objective"] for entry in entries} == {"run", "club", "agent"}
-    assert all(entry["status"] == "PAUSED" for entry in entries)
+    assert all(entry["status"] == "ACTIVE" for entry in entries)
     assert all((ROOT / entry["objective_file"]).is_file() for entry in entries)
     assert len({entry["id"] for entry in entries}) == 3
-    assert all(entry["rrule"].startswith("RRULE:FREQ=") for entry in entries)
+    assert {entry["objective"]: entry["rrule"] for entry in entries} == {
+        "run": "RRULE:FREQ=WEEKLY;BYHOUR=10;BYMINUTE=20;BYDAY=SA",
+        "club": "RRULE:FREQ=WEEKLY;INTERVAL=8;BYHOUR=19;BYMINUTE=0;BYDAY=TH",
+        "agent": "RRULE:FREQ=WEEKLY;BYHOUR=14;BYMINUTE=30;BYDAY=FR",
+    }
 
 
 def test_automation_prompt_uses_the_common_objective_contract():
