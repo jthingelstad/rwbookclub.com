@@ -21,28 +21,38 @@ selected objective file before acting. Read `agent/docs/SOUL.md`, `PURPOSE.md`, 
    business-rule regression; do not substitute a warning, prompt rule, or ticket chain.
 5. Recheck branch, upstream, worktree, and other active work immediately before the
    first edit and before push. Stop if the state changed.
-6. Run focused checks while iterating and the repository's complete local gates before
-   commit. Commit and push only current-run work directly to `main`.
-7. Run Oliver owns restart/publish and technical-health acceptance. The originating
-   objective retains semantic acceptance from natural club evidence.
+6. Run focused checks while iterating and
+   `AGENT-TEAM/scripts/verify.sh` before commit. Commit and push only current-run work
+   directly to `main`.
+7. Complete the Run Oliver technical-acceptance phase in the same run: restart or publish
+   only when the affected surface requires it, verify the intended revision and health,
+   and do not manufacture member activity. Run Oliver owns this standard; the current
+   objective owner executes it without changing owners or creating a handoff.
 8. Never send Discord, email, DM, meeting, corpus, or site activity merely to validate
    a change.
 
 ## Ownership and acceptance
 
-- Run Oliver owns deployment, restart, and technical-health acceptance for every
-  shipped change.
+- Run Oliver owns the deployment, restart, and technical-health acceptance standard for
+  every shipped change. Any objective that ships a change applies that phase before its
+  run ends; Run Oliver audits the mechanism and the resulting health on its cadence.
 - The originating objective owns semantic acceptance. Understand the Club proves the
   source model is faithful; Improve Oliver proves behavior or usefulness improved.
 - A clean deploy never substitutes for natural semantic evidence.
 - Safe, compatible schema evolution ships with its code and is rehearsed on a copy.
   Never point a new-code process or migration rehearsal at the live SQLite database.
+- If technical acceptance cannot safely finish in the same run, the work has become a
+  multi-run exception. Keep exactly one originating objective owner and record the commit,
+  required technical action, technical predicate, semantic predicate, and next check in
+  the issue and `Active watches`. A manually started Run Oliver pass may execute the
+  technical action, but ownership remains with the originating outcome until acceptance.
 
 ## Issues are the exception ledger
 
-Do not open an issue to authorize, claim, route, deploy, evaluate, or close same-run
-work. Retain one only when work spans runs, an external dependency blocks it, Jamie
-must decide, or the arc needs a durable record. Give it exactly one objective label.
+Do not open an issue to authorize, claim, route, evaluate, or close same-run work. Retain
+one only when work spans runs (including an incomplete deploy/acceptance phase), an external
+dependency blocks it, Jamie must decide, or the arc needs a durable record. Give it exactly
+one objective label.
 
 There are no dispatch labels, handoff labels, `wip` claims, commit lanes, or manager
 digests. Descriptive labels do not transfer ownership. An objective keeps the issue
@@ -64,6 +74,10 @@ preserve that boundary.
 Automation memory contains only `Current state`, `Active watches`, and one
 replace-in-place `Latest run`. Remove resolved watches. Git, issues, logs, SQLite, CI,
 and evaluation artifacts hold history.
+
+Each active watch is one compact line containing: originating objective; change/commit;
+technical state; semantic acceptance predicate; next natural event or date. Do not append
+run history or duplicate an issue narrative.
 
 ## Reporting
 

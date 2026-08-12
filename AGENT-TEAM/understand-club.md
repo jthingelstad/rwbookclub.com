@@ -24,8 +24,9 @@ changes materially.
 3. Inspect open `objective:club` issues. Prefer one deep, evidenced correction over a
    broad taxonomy or generic recommendation.
 4. For a bounded generator, capability, source-validation, or documentation defect,
-   fix the source and regression in the same run, run the complete gates, and retain
-   natural semantic acceptance after Run Oliver confirms deployment.
+   fix the source and regression in the same run, run `AGENT-TEAM/scripts/verify.sh`,
+   complete the Run Oliver technical-acceptance phase, and record the next natural
+   semantic evidence window when acceptance cannot yet be observed.
 5. Never hand-edit generated `corpus/data/`, infer private member views as facts, or
    publish private cultural evidence.
 

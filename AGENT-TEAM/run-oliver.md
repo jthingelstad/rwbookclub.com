@@ -21,9 +21,12 @@ Cadence: weekly, after every relevant deploy/publish, and after a reported incid
    growth/backup evidence, publish freshness, and recent cost/usage. A process being
    loaded is not proof its jobs succeeded.
 3. Inspect dependency/security advisories and open `objective:run` issues.
-4. If a concrete defect exists, fix it with the smallest regression, run the complete
-   local gates, push, restart or publish when required, and verify technical health.
-5. Never trigger a member email, DM, Discord message, meeting job, corpus write, or
+4. Inspect unresolved technical-acceptance watches from every objective. A watch does not
+   transfer ownership; it identifies a commit and the exact restart/publish evidence owed.
+5. If a concrete defect exists, fix it with the smallest regression, run
+   `AGENT-TEAM/scripts/verify.sh`, push, restart or publish when required, and verify the
+   intended revision, process/job health, and public-site state as applicable.
+6. Never trigger a member email, DM, Discord message, meeting job, corpus write, or
    public content change early for acceptance. Wait for its natural approved cadence.
 
 Do not turn a club-data judgment, product behavior decision, or member communication

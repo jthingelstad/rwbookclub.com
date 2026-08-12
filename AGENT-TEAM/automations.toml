@@ -3,6 +3,7 @@ timezone = "America/Chicago"
 
 # These definitions preserve the existing Codex automation ids and current paused state.
 # PAUSED is descriptive history, not permission to reactivate an activity.
+# RRULEs describe calendar cadence only; incident/deploy/change follow-ups are manual starts.
 
 [[activities]]
 id = "oliver-operations-manager"

@@ -17,16 +17,19 @@ Cadence: weekly and after a meaningful behavior change reaches production.
 ## Every run
 
 1. Run preflight. Collect the bounded seven-day evidence with
-   `scripts/evaluator_evidence.py --days 7`; production Discord/email evidence is
-   read-only, private, and never pasted into an issue or commit.
+   `uv run --locked python scripts/evaluator_evidence.py --days 7`; production
+   Discord/email evidence is read-only, private, and never pasted into an issue or commit.
 2. Evaluate exact end-to-end behavior: trigger, context/tool inputs, output, delivery,
    member reaction when available, and the relevant durable state. Do not score prose
    without checking what Oliver actually knew and did.
-3. Run the core synthetic goldens and regression suite. Separate insufficient evidence
-   from a failed behavior.
+3. Run the core synthetic goldens with
+   `uv run --locked python scripts/eval_oliver.py --round <N> --goldens-only`, where
+   `<N>` is the next local evaluator round, plus the deterministic regression suite.
+   Separate insufficient evidence from a failed behavior.
 4. Inspect open `objective:agent` issues. For a clear defect, fix the source, add the
-   behavioral regression, run complete gates, push, and wait for natural production
-   evidence after Run Oliver confirms deployment.
+   behavioral regression, run `AGENT-TEAM/scripts/verify.sh`, push, complete the Run
+   Oliver technical-acceptance phase, and record the next natural production evidence
+   window when semantic acceptance cannot yet be observed.
 5. For a new member-facing behavior, cadence, or consequential product direction, ask
    Jamie one concrete yes/no question with the smallest useful proposal.
 

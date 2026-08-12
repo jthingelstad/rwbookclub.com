@@ -17,6 +17,17 @@ Building and testing are capabilities of every objective owner. New member-facin
 behavior, communication cadence, non-review club-record writes, schedule/order
 changes, and other consequential product direction still belong to Jamie.
 
+Choose the owner by the primary failed outcome, not by the file being edited:
+
+- **Run Oliver** when execution, delivery, persistence, uptime, recovery, or cost is wrong.
+- **Understand the Club** when authoritative club facts, provenance, projection, or source
+  meaning is wrong.
+- **Improve Oliver** when the sources are sound but Oliver's behavior, judgment, grounding,
+  restraint, or usefulness is wrong.
+
+Cross-cutting work keeps one originating owner. The other objectives contribute an acceptance
+standard or capability; they do not create a second owner or a handoff queue.
+
 The former seven-role queue and dispatcher are retired. Git history and `work/`
 preserve that period. Historical design records may use the old role names; they are
 evidence, not current routing instructions.
@@ -48,6 +59,18 @@ open issue has exactly one ownership label:
 Work-type labels such as `bug`, `operations`, `culture`, `eval`, and `enhancement`
 remain descriptive. They do not select a worker. `decision` means Jamie must answer
 before the objective can continue.
+
+When a change cannot complete technical or natural acceptance in the same run, the issue or the
+originating automation's `Active watches` entry records the commit, originating objective,
+technical state, semantic predicate, and next natural evidence window. Absence of evidence is a
+pending watch, not a failed behavior.
+
+## Cadence and activation
+
+The RRULEs in `automations.toml` implement calendar cadence only. Phrases such as "after an
+incident," "after a deploy," or "after a behavior change" are intentional manual triggers for the
+current owner; the retired dispatcher is not replaced. While an activity is `PAUSED`, neither its
+calendar cadence nor those event phrases cause an automatic run.
 
 ## Human and privacy boundary
 
