@@ -576,12 +576,14 @@ def _question_block(
     else:
         parts.append("[Output visibility: PRIVATE MEMBER REPLY.]")
     if speaker:
-        who = (
-            f"{speaker} (member: {member_slug})"
-            if member_slug
-            else f"{speaker} (not a recognized member)"
-        )
-        parts.append(f"[Speaker: {who}]")
+        if member_slug:
+            parts.append(
+                f"[Trusted linked sender: {speaker} (member: {member_slug}). This runtime "
+                "identity is authoritative; answer who is speaking directly from it without "
+                "looking up conversation context.]"
+            )
+        else:
+            parts.append(f"[Unrecognized sender display name: {speaker} (not a linked member).]")
     if member_slug:
         # 8 (was 5): weekly reflection consolidates toward ~12 active per member; newest-first at 5
         # could starve stable facts.

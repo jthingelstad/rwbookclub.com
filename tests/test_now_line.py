@@ -78,6 +78,19 @@ def test_question_block_leads_with_now():
     assert "what day is it?" in block
 
 
+def test_question_block_marks_linked_sender_identity_as_authoritative():
+    block = oliver._question_block("who is asking?", "Jamie", "jamie", None)
+    assert "Trusted linked sender: Jamie (member: jamie)" in block
+    assert "answer who is speaking directly from it" in block
+    assert "without looking up conversation context" in block
+
+
+def test_question_block_does_not_trust_an_unlinked_display_name():
+    block = oliver._question_block("who is asking?", "Jamie", None, None)
+    assert "Trusted linked sender" not in block
+    assert "Unrecognized sender display name: Jamie (not a linked member)" in block
+
+
 def test_us_holiday_calendar():
     assert clock.us_holiday(date(2026, 7, 4)) == "Independence Day"
     assert clock.us_holiday(date(2026, 12, 25)) == "Christmas Day"
