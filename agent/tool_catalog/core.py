@@ -108,7 +108,7 @@ TOOLS = [
     },
     {
         "name": "get_author",
-        "description": "Author bio + the books the club has read by them. Use whenever someone asks about an author.",
+        "description": "Author bio + their books in club history, with isRead/isUpcoming status. Use whenever someone asks about an author.",
         "input_schema": {
             "type": "object",
             "properties": {"author": {"type": "string", "description": "author name or slug"}},

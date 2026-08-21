@@ -43,6 +43,13 @@ def test_guardrail_never_posts_to_group_on_a_members_behalf():
     assert "post it themselves" in p
 
 
+def test_grounding_forbids_invented_completed_actions():
+    prompt = oliver.OPERATIONAL_PROMPT
+    assert "Never claim you already sent, posted, nudged" in prompt
+    assert "tool result verifies that exact action" in prompt
+    assert "do not turn an intention or approved cadence into a completed action" in prompt
+
+
 def test_member_pronoun_policy_is_explicit_neutral_and_not_performative():
     prompt = oliver.OPERATIONAL_PROMPT
     assert "NEVER infer pronouns" in prompt
@@ -58,6 +65,13 @@ def test_horizon_prompt_is_status_not_picker_pressure():
     assert "call horizon" in prompt
     assert "calm runway/status read" in prompt
     assert "not that they are behind, summoned, or required to pick" in prompt
+
+
+def test_specific_club_read_requests_require_a_grounded_title():
+    prompt = oliver.OPERATIONAL_PROMPT
+    assert "explicitly asks for a specific CLUB READ" in prompt
+    assert "look up the candidate and name one grounded title" in prompt
+    assert "do not replace the requested example with generic lane or category advice" in prompt
 
 
 def test_book_mention_memory_uses_cultural_language_and_revised_tags():

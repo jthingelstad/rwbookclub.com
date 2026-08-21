@@ -95,6 +95,56 @@ class TestUpcomingMeetingsFilter:
 
 # ── richer book relationships ───────────────────────────────────────────────
 class TestBookRelationships:
+    def test_get_author_distinguishes_completed_and_upcoming_books(self, monkeypatch):
+        from agent import corpus_read as cr
+
+        monkeypatch.setattr(cr, "find_author", lambda _name: {"name": "Some Author"})
+        monkeypatch.setattr(
+            cr,
+            "books",
+            lambda: [
+                {
+                    "slug": "completed-book",
+                    "title": "Completed Book",
+                    "authors": ["Some Author"],
+                    "year": 2024,
+                    "topic": "History & Economics",
+                    "isRead": True,
+                    "isUpcoming": False,
+                },
+                {
+                    "slug": "upcoming-book",
+                    "title": "Upcoming Book",
+                    "authors": ["Some Author"],
+                    "year": 2026,
+                    "topic": "Technology",
+                    "isRead": False,
+                    "isUpcoming": True,
+                },
+            ],
+        )
+
+        result = cr.get_author("Some Author")
+
+        assert result is not None
+        by_slug = {book["slug"]: book for book in result["books"]}
+        assert by_slug["completed-book"] == {
+            "slug": "completed-book",
+            "title": "Completed Book",
+            "year": 2024,
+            "topic": "History & Economics",
+            "isRead": True,
+            "isUpcoming": False,
+        }
+        assert by_slug["upcoming-book"] == {
+            "slug": "upcoming-book",
+            "title": "Upcoming Book",
+            "year": 2026,
+            "topic": "Technology",
+            "isRead": False,
+            "isUpcoming": True,
+        }
+
     def test_related_books_returns_reasons(self, reset_books_cache):
         from agent import corpus_read as cr
 

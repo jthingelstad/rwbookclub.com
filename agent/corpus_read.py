@@ -426,17 +426,24 @@ def find_author(name_or_slug: str) -> dict | None:
 
 
 def get_author(name_or_slug: str) -> dict | None:
-    """Author bio + the books the club has read by them."""
+    """Author bio + their books in club history, with completed/upcoming status."""
     a = find_author(name_or_slug)
     if not a:
         return None
     name = a.get("name")
-    read = [
-        {"slug": b["slug"], "title": b.get("title"), "year": b.get("year"), "topic": b.get("topic")}
+    history = [
+        {
+            "slug": b["slug"],
+            "title": b.get("title"),
+            "year": b.get("year"),
+            "topic": b.get("topic"),
+            "isRead": bool(b.get("isRead")),
+            "isUpcoming": bool(b.get("isUpcoming")),
+        }
         for b in books()
         if name and name in (b.get("authors") or [])
     ]
-    read.sort(key=lambda x: x.get("year") or 0, reverse=True)
+    history.sort(key=lambda x: x.get("year") or 0, reverse=True)
     lifespan = None
     if a.get("birthYear"):
         lifespan = (
@@ -455,8 +462,8 @@ def get_author(name_or_slug: str) -> dict | None:
         "notableWorks": a.get("notableWorks"),
         "website": a.get("website"),
         "wikipediaUrl": a.get("wikipediaUrl"),
-        "books": read,
-        "bookCount": len(read),
+        "books": history,
+        "bookCount": len(history),
     }
 
 
