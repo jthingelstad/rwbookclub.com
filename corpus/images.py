@@ -37,6 +37,17 @@ def has_cover(slug: str) -> bool:
     return COVERS_DIR.exists() and any(COVERS_DIR.glob(f"{slug}-*.jpg"))
 
 
+def rename_cover_files(old_slug: str, new_slug: str) -> None:
+    """Move derived cover variants when a title change also changes its slug."""
+    if old_slug == new_slug or not COVERS_DIR.exists():
+        return
+    for old_path in COVERS_DIR.glob(f"{old_slug}-*.jpg"):
+        suffix = old_path.name[len(old_slug) :]
+        new_path = COVERS_DIR / f"{new_slug}{suffix}"
+        if not new_path.exists():
+            old_path.rename(new_path)
+
+
 def cover_url_from_id(cover_id: int) -> str:
     return f"https://covers.openlibrary.org/b/id/{cover_id}-L.jpg"
 

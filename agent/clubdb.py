@@ -579,8 +579,21 @@ def upsert_book(conn: sqlite3.Connection, meta: dict) -> dict:
     if not title:
         raise ValueError("a book needs a title")
     slug = slugify(title)
+    if not slug:
+        raise ValueError("a book title needs at least one letter or number")
     existing = conn.execute("SELECT id FROM club_books WHERE slug = ?", (slug,)).fetchone()
-    book_id = existing["id"] if existing else (meta.get("bookId") or _next_id(conn, "club_books"))
+    requested_id = meta.get("bookId")
+    if requested_id is not None:
+        target = conn.execute("SELECT id FROM club_books WHERE id = ?", (requested_id,)).fetchone()
+        if target is None:
+            raise ValueError("no such book")
+        if existing is not None and existing["id"] != requested_id:
+            raise ValueError("another book already uses that title")
+        book_id = requested_id
+        existed = True
+    else:
+        book_id = existing["id"] if existing else _next_id(conn, "club_books")
+        existed = existing is not None
     subjects = meta.get("subjects")
     subjects_json = json.dumps(subjects, ensure_ascii=False) if subjects is not None else None
     conn.execute(
@@ -622,7 +635,7 @@ def upsert_book(conn: sqlite3.Connection, meta: dict) -> dict:
         "INSERT INTO club_book_authors(book_id, author_id, ordinal) VALUES (?, ?, ?)",
         [(book_id, aid, i) for i, aid in enumerate(author_ids)],
     )
-    return {"id": book_id, "slug": slug, "existed": bool(existing), "author_ids": author_ids}
+    return {"id": book_id, "slug": slug, "existed": existed, "author_ids": author_ids}
 
 
 # ── Enrichment writers — the loop's ONLY DB write path (sidecars only) ────────

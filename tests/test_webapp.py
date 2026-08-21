@@ -399,16 +399,19 @@ def test_add_book_allows_titles_open_library_does_not_know(monkeypatch):
 
     written = []
     monkeypatch.setattr(routes_admin.openlibrary, "lookup", lambda title, isbn: None)
-    monkeypatch.setattr(
-        routes_admin.corpus_write,
-        "write_book",
-        lambda meta: written.append(meta) or {"slug": "an-unusual-book"},
-    )
+
+    def write_book(meta, *, enrich=True):
+        written.append((meta, enrich))
+        return {"slug": "an-unusual-book"}
+
+    monkeypatch.setattr(routes_admin.corpus_write, "write_book", write_book)
 
     result = routes_admin._add_book("An Unusual Book", "978-1-23456-789-0")
 
     assert result == {"slug": "an-unusual-book"}
-    assert written == [{"title": "An Unusual Book", "authors": [], "isbn13": "9781234567890"}]
+    assert written == [
+        ({"title": "An Unusual Book", "authors": [], "isbn13": "9781234567890"}, False)
+    ]
 
 
 def test_add_book_prefers_open_library_metadata(monkeypatch):
@@ -416,9 +419,82 @@ def test_add_book_prefers_open_library_metadata(monkeypatch):
 
     metadata = {"title": "Known Book", "authors": ["Known Author"], "olKey": "/works/OL1W"}
     monkeypatch.setattr(routes_admin.openlibrary, "lookup", lambda title, isbn: metadata)
-    monkeypatch.setattr(routes_admin.corpus_write, "write_book", lambda meta: meta)
+    monkeypatch.setattr(
+        routes_admin.corpus_write, "write_book", lambda meta, *, enrich: (meta, enrich)
+    )
 
-    assert routes_admin._add_book("Known Book", None) is metadata
+    assert routes_admin._add_book("Known Book", None) == (metadata, False)
+
+
+def test_isbn_lookup_never_falls_back_to_a_different_title_edition(monkeypatch):
+    from agent.club import openlibrary
+
+    title_calls = []
+    monkeypatch.setattr(openlibrary, "_by_isbn", lambda isbn: None)
+    monkeypatch.setattr(
+        openlibrary,
+        "_by_title",
+        lambda title: title_calls.append(title) or {"title": "Wrong Edition"},
+    )
+
+    assert openlibrary.lookup("Right Book", "978-1-23456-789-0") is None
+    assert title_calls == []
+
+
+def test_book_title_can_be_renamed_and_all_corpus_references_follow(monkeypatch, tmp_path):
+    from agent.webapp import routes_admin
+    from corpus import images
+
+    monkeypatch.setattr(routes_admin, "DATA_DIR", tmp_path / "corpus")
+    covers = tmp_path / "covers"
+    covers.mkdir()
+    (covers / "heart-of-darkness-240.jpg").write_bytes(b"cover")
+    monkeypatch.setattr(images, "COVERS_DIR", covers)
+    form = {
+        "title": "Heart of Darkness Corrected",
+        "topic": "Science Fiction & Fiction",
+        "fiction": "1",
+        "publication_year": "1902",
+        "page_count": "120",
+        "isbn13": "9780613837712",
+        "ol_key": "/works/OL38663W",
+        "authors": "Joseph Conrad",
+    }
+
+    assert routes_admin._save_book("heart-of-darkness", form) is None
+
+    with db.connect() as conn:
+        renamed = conn.execute(
+            "SELECT id, title FROM club_books WHERE slug='heart-of-darkness-corrected'"
+        ).fetchone()
+        assert renamed is not None and renamed["title"] == "Heart of Darkness Corrected"
+        assert (
+            conn.execute("SELECT 1 FROM club_books WHERE slug='heart-of-darkness'").fetchone()
+            is None
+        )
+    corpus_root = tmp_path / "corpus"
+    assert (corpus_root / "books" / "heart-of-darkness-corrected.json").exists()
+    assert not (corpus_root / "books" / "heart-of-darkness.json").exists()
+    assert not list((corpus_root / "reviews").glob("heart-of-darkness--*"))
+    assert list((corpus_root / "reviews").glob("heart-of-darkness-corrected--*"))
+    assert not (covers / "heart-of-darkness-240.jpg").exists()
+    assert (covers / "heart-of-darkness-corrected-240.jpg").read_bytes() == b"cover"
+
+
+def test_book_rename_refuses_a_slug_collision():
+    from agent.webapp import routes_admin
+
+    core = routes_admin._load_book_core("heart-of-darkness")
+    form = {
+        "title": "Enshittification",
+        "topic": core["topic"] or "",
+        "authors": ", ".join(core["authors"]),
+    }
+
+    assert routes_admin._save_book("heart-of-darkness", form) == (
+        "another book already uses that title"
+    )
+    assert routes_admin._load_book_core("heart-of-darkness")["title"] == "Heart of Darkness"
 
 
 def test_events_view_filters():

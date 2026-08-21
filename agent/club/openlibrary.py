@@ -11,19 +11,7 @@ import re
 import requests
 
 OL = "https://openlibrary.org"
-
-
-def _work_meta(work_key: str | None) -> dict:
-    if not work_key:
-        return {}
-    try:
-        w = requests.get(f"{OL}{work_key}.json", timeout=20).json()
-    except Exception:
-        return {}
-    desc = w.get("description")
-    if isinstance(desc, dict):
-        desc = desc.get("value")
-    return {"synopsis": (desc or None), "title": w.get("title")}
+LOOKUP_TIMEOUT = 8  # admin form: fail into manual entry instead of making the page look hung
 
 
 def normalize_isbn13(value: str | None) -> str | None:
@@ -41,27 +29,27 @@ def _isbn13(values) -> str | None:
 
 
 def _by_isbn(isbn: str) -> dict | None:
+    query_isbn = normalize_isbn13(isbn) or isbn.strip()
     try:
-        r = requests.get(f"{OL}/isbn/{isbn}.json", timeout=20)
+        r = requests.get(f"{OL}/isbn/{query_isbn}.json", timeout=LOOKUP_TIMEOUT)
         if not r.ok:
             return None
         ed = r.json()
     except Exception:
         return None
     work_key = (ed.get("works") or [{}])[0].get("key")
-    meta = _work_meta(work_key)
     year = None
     m = re.search(r"\b(1[5-9]\d\d|20\d\d)\b", str(ed.get("publish_date") or ""))
     if m:
         year = int(m.group(1))
     return {
-        "title": ed.get("title") or meta.get("title"),
-        "authors": [],  # edition authors are keys; fill from search if needed
+        "title": ed.get("title"),
+        "authors": [],  # edition authors are keys; the enrichment sweep resolves them later
         "publicationYear": year,
         "pageCount": ed.get("number_of_pages"),
-        "isbn13": re.sub(r"[^0-9X]", "", isbn) if len(re.sub(r"[^0-9X]", "", isbn)) == 13 else None,
+        "isbn13": normalize_isbn13(isbn),
         "olKey": work_key,
-        "synopsis": meta.get("synopsis"),
+        "synopsis": None,
     }
 
 
@@ -74,7 +62,7 @@ def _by_title(title: str) -> dict | None:
                 "limit": 1,
                 "fields": "key,title,author_name,first_publish_year,isbn,number_of_pages_median",
             },
-            timeout=20,
+            timeout=LOOKUP_TIMEOUT,
         )
         docs = (r.json().get("docs") or []) if r.ok else []
     except Exception:
@@ -82,7 +70,6 @@ def _by_title(title: str) -> dict | None:
     if not docs:
         return None
     d = docs[0]
-    meta = _work_meta(d.get("key"))
     return {
         "title": d.get("title"),
         "authors": d.get("author_name") or [],
@@ -90,18 +77,15 @@ def _by_title(title: str) -> dict | None:
         "pageCount": d.get("number_of_pages_median"),
         "isbn13": _isbn13(d.get("isbn")),
         "olKey": d.get("key"),
-        "synopsis": meta.get("synopsis"),
+        "synopsis": None,
     }
 
 
 def lookup(title: str | None = None, isbn: str | None = None) -> dict | None:
     """Return a best-guess metadata dict, or None if nothing matched."""
-    meta = _by_isbn(isbn) if isbn else None
-    if not meta and title:
-        meta = _by_title(title)
-    # If ISBN gave us a work but no authors, backfill from a title search.
-    if meta and not meta.get("authors") and meta.get("title"):
-        t = _by_title(meta["title"])
-        if t:
-            meta["authors"] = t.get("authors") or []
-    return meta
+    # An explicit ISBN identifies an edition. If that precise lookup is unavailable,
+    # let the admin form preserve their title + ISBN manually; a broad title search
+    # can silently select a different edition, language, or ISBN.
+    if isbn:
+        return _by_isbn(isbn)
+    return _by_title(title) if title else None

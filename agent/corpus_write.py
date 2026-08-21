@@ -65,7 +65,7 @@ def _enrich_new_book(book_id: int, author_ids: list[int], out_dir) -> None:
         log.exception("inline enrichment failed (non-fatal)")
 
 
-def write_book(meta: dict) -> dict:
+def write_book(meta: dict, *, enrich: bool = True) -> dict:
     title = (meta.get("title") or "").strip()
     if not title:
         raise WriteError("A book needs a title.")
@@ -76,7 +76,8 @@ def write_book(meta: dict) -> dict:
             corpus_gen.write_author_file(conn, aid, DATA_DIR)
     # Enrich the new book + its authors (separate connection; fetches cover/portraits,
     # regenerates the files). The caller schedules a background publish to deploy.
-    _enrich_new_book(res["id"], res["author_ids"], DATA_DIR)
+    if enrich:
+        _enrich_new_book(res["id"], res["author_ids"], DATA_DIR)
     _validate_or_raise()
     from corpus.images import has_cover
 

@@ -70,6 +70,10 @@ def _save_book(slug: str, form) -> str | None:
     topic = (form.get("topic") or "").strip() or None
     if topic is not None and topic not in clubdb.TOPICS:
         return "invalid topic"
+    submitted_title = form.get("title")
+    title = core["title"] if submitted_title is None else submitted_title.strip()
+    if not title:
+        return "a book needs a title"
 
     def _int(name):
         v = (form.get(name) or "").strip()
@@ -77,7 +81,8 @@ def _save_book(slug: str, form) -> str | None:
 
     authors = [a.strip() for a in (form.get("authors") or "").split(",") if a.strip()]
     meta = {
-        "title": core["title"],  # read-only: keeps the slug stable
+        "bookId": core["id"],
+        "title": title,
         "subtitle": (form.get("subtitle") or "").strip() or None,
         "topic": topic,
         "fiction": form.get("fiction") in ("1", "true", "on"),
@@ -89,11 +94,18 @@ def _save_book(slug: str, form) -> str | None:
         "subjects": core["subjects"],  # preserve — not edited here
         "authors": authors or core["authors"],  # preserve if the field was cleared
     }
-    with db.connect() as conn:
-        res = clubdb.upsert_book(conn, meta)
-        # Picker is derived from the host of the book's meeting(s) — edit it on the meeting,
-        # not here (see clubdb.club_book_pickers view / set_meeting_hosts).
-        corpus_gen.write_book_file(conn, res["id"], DATA_DIR)
+    try:
+        with db.connect() as conn:
+            res = clubdb.upsert_book(conn, meta)
+    except ValueError as e:
+        return str(e)
+    if res["slug"] != slug:
+        from corpus.images import rename_cover_files
+
+        rename_cover_files(slug, res["slug"])
+    # A slug appears in book files, meetings, reviews, and lists. Regenerate all
+    # projections so a rename cannot leave old references or filenames behind.
+    corpus_gen.generate(DATA_DIR)
     return None
 
 
@@ -143,7 +155,9 @@ def _add_book(title: str, isbn: str | None) -> dict:
         isbn13 = openlibrary.normalize_isbn13(isbn)
         if isbn13:
             meta["isbn13"] = isbn13
-    return corpus_write.write_book(meta)  # upsert + enrich + corpus files
+    # Keep the web request bounded. The daily enrichment sweep fills covers and
+    # extended metadata later; an external catalog must not hold the form open.
+    return corpus_write.write_book(meta, enrich=False)
 
 
 async def book_add(request: web.Request) -> web.Response:
