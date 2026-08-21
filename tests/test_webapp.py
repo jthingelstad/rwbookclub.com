@@ -405,10 +405,10 @@ def test_add_book_allows_titles_open_library_does_not_know(monkeypatch):
         lambda meta: written.append(meta) or {"slug": "an-unusual-book"},
     )
 
-    result = routes_admin._add_book("An Unusual Book", None)
+    result = routes_admin._add_book("An Unusual Book", "978-1-23456-789-0")
 
     assert result == {"slug": "an-unusual-book"}
-    assert written == [{"title": "An Unusual Book", "authors": []}]
+    assert written == [{"title": "An Unusual Book", "authors": [], "isbn13": "9781234567890"}]
 
 
 def test_add_book_prefers_open_library_metadata(monkeypatch):

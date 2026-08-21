@@ -26,11 +26,17 @@ def _work_meta(work_key: str | None) -> dict:
     return {"synopsis": (desc or None), "title": w.get("title")}
 
 
+def normalize_isbn13(value: str | None) -> str | None:
+    """Return a punctuation-free ISBN-13, or None for other ISBN forms."""
+    digits = re.sub(r"[^0-9X]", "", str(value or "").upper())
+    return digits if len(digits) == 13 else None
+
+
 def _isbn13(values) -> str | None:
-    for v in values or []:
-        digits = re.sub(r"[^0-9X]", "", str(v))
-        if len(digits) == 13:
-            return digits
+    for value in values or []:
+        isbn13 = normalize_isbn13(value)
+        if isbn13:
+            return isbn13
     return None
 
 

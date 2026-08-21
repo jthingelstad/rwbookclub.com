@@ -140,6 +140,9 @@ def _add_book(title: str, isbn: str | None) -> dict:
     meta = openlibrary.lookup(title, isbn)
     if not meta or not meta.get("title"):
         meta = {"title": title, "authors": []}
+        isbn13 = openlibrary.normalize_isbn13(isbn)
+        if isbn13:
+            meta["isbn13"] = isbn13
     return corpus_write.write_book(meta)  # upsert + enrich + corpus files
 
 
