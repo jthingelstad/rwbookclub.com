@@ -130,12 +130,16 @@ async def _render_books(request: web.Request, *, status: int = 200, error: str |
     )
 
 
-def _add_book(title: str, isbn: str | None) -> dict | None:
-    """Look the book up on Open Library and write it to the club record. Returns the
-    write result (with slug) or None if nothing matched."""
+def _add_book(title: str, isbn: str | None) -> dict:
+    """Write a book using Open Library metadata when available.
+
+    Open Library is enrichment, not an admission requirement: an obscure or
+    newly published title must still be creatable and can be completed on the
+    edit screen.
+    """
     meta = openlibrary.lookup(title, isbn)
     if not meta or not meta.get("title"):
-        return None
+        meta = {"title": title, "authors": []}
     return corpus_write.write_book(meta)  # upsert + enrich + corpus files
 
 
@@ -151,12 +155,6 @@ async def book_add(request: web.Request) -> web.Response:
         log.exception("add-book failed for title=%r isbn=%r", title, isbn)
         return await _render_books(
             request, status=500, error=f"Couldn't add “{title}”: {type(e).__name__}: {e}"
-        )
-    if res is None:
-        return await _render_books(
-            request,
-            status=404,
-            error=f"Couldn't find “{title}” on Open Library — try an ISBN, or check the title.",
         )
     state.mark_dirty()
     # Land on the edit page so the admin can refine the fetched metadata.

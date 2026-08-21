@@ -394,6 +394,33 @@ def test_meeting_id_or_404_rejects_non_int():
     assert routes_admin._meeting_id_or_404(_Req("42")) == 42
 
 
+def test_add_book_allows_titles_open_library_does_not_know(monkeypatch):
+    from agent.webapp import routes_admin
+
+    written = []
+    monkeypatch.setattr(routes_admin.openlibrary, "lookup", lambda title, isbn: None)
+    monkeypatch.setattr(
+        routes_admin.corpus_write,
+        "write_book",
+        lambda meta: written.append(meta) or {"slug": "an-unusual-book"},
+    )
+
+    result = routes_admin._add_book("An Unusual Book", None)
+
+    assert result == {"slug": "an-unusual-book"}
+    assert written == [{"title": "An Unusual Book", "authors": []}]
+
+
+def test_add_book_prefers_open_library_metadata(monkeypatch):
+    from agent.webapp import routes_admin
+
+    metadata = {"title": "Known Book", "authors": ["Known Author"], "olKey": "/works/OL1W"}
+    monkeypatch.setattr(routes_admin.openlibrary, "lookup", lambda title, isbn: metadata)
+    monkeypatch.setattr(routes_admin.corpus_write, "write_book", lambda meta: meta)
+
+    assert routes_admin._add_book("Known Book", None) is metadata
+
+
 def test_events_view_filters():
     jamie = _jamie_id()
     db.record_event(
