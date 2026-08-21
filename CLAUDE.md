@@ -38,8 +38,9 @@ Oliver writes nothing to it. The site is built + deployed **locally** to the **`
   (OL ids read from the DB). The enrichment loop (`uv run --locked python -m agent.enrich`) also fetches covers + author
   portraits. All land in the gitignored `assets/images/{covers,authors}/`.
 - **Input:** `website/src/` Nunjucks templates; `website/src/_data/*.js` glob `corpus/data/`. **Private-data
-  boundary:** the `_data` modules only read `books/ meetings/ members/ authors/ reviews/ lists/`, so any
-  future sensitive corpus fields must live outside those subtrees (and never render into `_site`).
+  boundary:** the reviews loader excludes DNF records before any template or public export sees them;
+  other future sensitive corpus fields must live outside the website-readable subtrees (and never render
+  into `_site`).
 - **Output:** `website/_site/` → force-pushed to `gh-pages`, served by GitHub Pages.
   **One-time manual setting:** Settings → Pages → Source → *Deploy from a branch* → `gh-pages` / `(root)`.
 - **Pages:** `/` (home), `/books/<slug>/`, `/members/<slug>/`, `/lists/`, `/lists/<slug>/`, `/about/`, `/stats/`, `/feed.xml`, `/llms.txt`, `/llms-full.txt`, `/robots.txt`, `/sitemap.xml`

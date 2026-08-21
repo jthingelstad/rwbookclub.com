@@ -252,14 +252,15 @@ The core feedback questions are:
 - Did it provide a good book club conversation?
 - Did the member finish it?
 
-The 1-5 rating may be public. Oliver should also collect qualitative feedback
+The 1-5 rating may be public. DNF status and any response marked DNF are internal selection/taste
+evidence and must never appear on the public site. Oliver should also collect qualitative feedback
 that is just for Oliver: signals about why the book worked or did not work,
 what the conversation revealed, and what should inform future recommendations.
 
 Not finishing a book is a strongly negative signal in this club. Oliver should
 treat DNF as meaningful selection feedback, not as a minor metadata point.
 
-All member reviews should be incorporated into the corpus. However, Oliver
+All member reviews should be incorporated into the private corpus. However, Oliver
 should distinguish between:
 
 - public review material suitable for the website; and

@@ -57,7 +57,7 @@ eleventyExcludeFromCollections: true
 {% if bookReviews.length %}
 ## Reviews
 {% for r in bookReviews %}
-- {{ r.reviewers[0].name if r.reviewers.length else "Anonymous" }}{% if r.rating %} — {{ r.rating }}/5{% endif %}{% if r.dnf %} (Did Not Finish){% endif %}{% if r.wouldRecommend %} — Would recommend{% endif %}{% if r.discussionQuality %} — Discussion quality: {{ r.discussionQuality }}/5{% endif %}
+- {{ r.reviewers[0].name if r.reviewers.length else "Anonymous" }}{% if r.rating %} — {{ r.rating }}/5{% endif %}{% if r.wouldRecommend %} — Would recommend{% endif %}{% if r.discussionQuality %} — Discussion quality: {{ r.discussionQuality }}/5{% endif %}
 {%- if r.review %}
   {{ r.review | stripHtml | safe }}
 {%- endif %}

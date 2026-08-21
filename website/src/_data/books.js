@@ -8,8 +8,10 @@
 
 const fs = require("fs");
 const path = require("path");
+const matter = require("gray-matter");
 const clock = require("../../lib/clock");
 const corpus = require("../../lib/corpus");
+const { isPublicReview } = require("./reviews");
 
 const DATA = corpus.dataDir();
 const COVERS_DIR = path.join(__dirname, "..", "assets", "images", "covers");
@@ -143,13 +145,16 @@ function readJsonDir(name) {
     .map((f) => ({ ...JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")), slug: f.slice(0, -5) }));
 }
 
-function reviewCountBySlug() {
-  // Count review files per book ("<book-slug>--<member-slug>.md"); "--" is only the separator.
-  const dir = path.join(DATA, "reviews");
+function reviewCountBySlug(dataRoot = DATA) {
+  // Count only reviews eligible for publication. DNF files stay in the private corpus,
+  // but must not affect any count that Eleventy could expose.
+  const dir = path.join(dataRoot, "reviews");
   const counts = new Map();
   if (!fs.existsSync(dir)) return counts;
   for (const f of fs.readdirSync(dir)) {
     if (!f.endsWith(".md")) continue;
+    const { data } = matter(fs.readFileSync(path.join(dir, f), "utf8"));
+    if (!isPublicReview(data)) continue;
     const slug = f.slice(0, -3).split("--")[0];
     counts.set(slug, (counts.get(slug) || 0) + 1);
   }
@@ -251,3 +256,4 @@ module.exports.readJsonDir = readJsonDir;
 module.exports.earliestMeetingBySlug = earliestMeetingBySlug;
 module.exports.attachRelated = attachRelated;
 module.exports.cleanSubjects = cleanSubjects;
+module.exports.reviewCountBySlug = reviewCountBySlug;

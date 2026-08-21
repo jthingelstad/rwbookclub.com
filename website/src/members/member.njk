@@ -92,12 +92,10 @@ eleventyComputed:
         {% for r in memberReviews %}
             {% for b in books %}
               {% if b.slug == r.book %}
-                <li class="member-review-row{% if r.dnf %} member-review-row--dnf{% endif %}">
+                <li class="member-review-row">
                   <a class="member-review-title" href="/books/{{ b.slug }}/">{{ b.title }}</a>
                   <span class="member-review-status">
-                    {% if r.dnf %}
-                      DNF
-                    {% elif r.rating %}
+                    {% if r.rating %}
                       <span class="review-rating">{% for i in range(0, r.rating) %}★{% endfor %}{% for i in range(r.rating, 5) %}<span class="dim">★</span>{% endfor %}</span>
                     {% endif %}
                   </span>

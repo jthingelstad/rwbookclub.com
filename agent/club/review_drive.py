@@ -6,7 +6,7 @@ context, not a prerequisite. The member may supply a rating, DNF, recommendation
 review words. The reply comes back through a small state machine:
 
     awaiting_reply --(member email)--> extract --> confirmation email --> awaiting_confirm
-    awaiting_confirm --YES--> reviews.write_review + publish + thanks --> written
+    awaiting_confirm --YES--> reviews.write_review + publish-safe projection + thanks --> written
     awaiting_confirm --corrections--> re-extract --> confirmation (max 2 rounds) --> parked
     any open state --PASS--> declined for this book permanently
     any state --"stop asking"--> review_optout event + durable memory --> declined
@@ -211,7 +211,7 @@ def send_ask(
     )
     opening = oliver.compose(
         "a one-or-two sentence warm opening for an email asking this member to complete their "
-        "public reading response for one past club book with no written review — reference an "
+        "reading response for one past club book with no written review — reference an "
         "existing rating only when one is supplied; otherwise never invent one. Do not explain "
         "the reply mechanics; a fixed instruction block follows this opening",
         {
@@ -230,7 +230,8 @@ def send_ask(
         opening.strip()
         + "\n\nJust reply with a **1–5 rating or DNF**, whether you'd recommend it, and a few "
         "sentences in your own words.\n\nReply **PASS** if you'd rather not review this one. "
-        "I'll show you exactly what I would record before anything is published."
+        "I'll show you exactly what I would record before saving it. Responses may appear on the "
+        "club site unless you mark the book DNF; DNF responses stay internal."
     )
     sent = outbound.send(
         to=[rec["email"]],
@@ -463,16 +464,20 @@ def handle_reply(draft: dict, msg) -> bool:
     if draft["state"] == "awaiting_confirm" and YES_RE.search(text):
         d = json.loads(draft["draft_json"] or "{}")
         result = _write(draft, d)
-        _reply(
-            oliver.compose(
+        if result.get("dnf"):
+            thanks = (
+                f"Recorded — thanks, {first}! Your DNF response for *{book['title']}* stays "
+                "internal to Oliver and will not appear on the club site."
+            )
+        else:
+            thanks = oliver.compose(
                 "a one-or-two sentence warm thanks: their review is recorded and will be on the "
                 "club site shortly",
                 {"member": first, "book": book["title"]},
                 fallback=f"Recorded — thanks, {first}! Your review of *{book['title']}* will be on "
                 "the club site shortly.",
-            ),
-            "recorded",
-        )
+            )
+        _reply(thanks, "recorded")
         db.record_event(
             actor="member",
             kind="review_recorded",

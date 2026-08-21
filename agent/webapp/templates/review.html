@@ -19,6 +19,8 @@
       <button type="button" class="dnf {{ 'active' if is_dnf }}" id="dnfBtn">DNF</button>
       <button class="linklike" type="button" id="clearRating">clear</button>
     </div>
+    <p class="muted">DNF stays internal to Oliver. When DNF is selected, this entire response is
+      excluded from the public site.</p>
     <label class="row mt-10"><input class="w-auto" type="checkbox" name="recommend" value="1" {{ 'checked' if existing.get('wouldRecommend') }}> &nbsp;I'd recommend this book</label>
     <label>Discussion quality (1–5, optional)</label>
     <select name="discussion">

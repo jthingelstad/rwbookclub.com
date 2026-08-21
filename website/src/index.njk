@@ -77,16 +77,14 @@ title: ""
         {% set rbook = null %}
         {% for b in books %}{% if b.slug == r.book %}{% set rbook = b %}{% endif %}{% endfor %}
         {% if rbook %}
-          <li class="recent-review{% if r.dnf %} recent-review--dnf{% endif %}">
+          <li class="recent-review">
             <div class="recent-review-head">
               <a class="recent-review-title" href="/books/{{ rbook.slug }}/">{{ rbook.title }}</a>
               <span class="recent-review-by">
                 {% for who in r.reviewers %}{% if who.slug %}<a href="/members/{{ who.slug }}/">{{ who.name }}</a>{% else %}{{ who.name }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
               </span>
             </div>
-            {% if r.dnf %}
-              <span class="review-tag review-tag--dnf">Did not finish</span>
-            {% elif r.rating %}
+            {% if r.rating %}
               <p class="review-rating" aria-label="Rated {{ r.rating }} of 5">{% for i in range(0, r.rating) %}★{% endfor %}{% for i in range(r.rating, 5) %}<span class="dim">★</span>{% endfor %}</p>
             {% endif %}
             {% if r.review %}<p class="recent-review-body">{{ r.review | truncate(180) }}</p>{% endif %}

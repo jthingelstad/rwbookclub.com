@@ -181,8 +181,9 @@ corpus or public website.
 for a private, member-scoped note about a club book. Private feedback is retained only in Oliver's
 memory for future pick/recommendation context; it never changes a public review or the website.
 
-Structured, public, deliberate editing — **book ratings/reviews, lists, profile/contact, and admin
-data management** — moved to the web app. Discord stays primary for the conversational, private,
+Structured, deliberate editing — **book ratings/reviews, lists, profile/contact, and admin data
+management** — moved to the web app. Reviews not marked DNF are public; DNF responses stay internal
+to Oliver and are excluded from the site. Discord stays primary for the conversational, private,
 in-the-moment things (attendance, reading status, private meeting feedback).
 
 - **`/oliver reading`** (members) — `status [status|progress|page|percent]` shows everyone / updates

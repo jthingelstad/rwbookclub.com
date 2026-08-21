@@ -602,11 +602,6 @@ body.shelf .page {
   border-radius: 2px;
   border-left: 3px solid var(--accent);
 }
-.review--dnf {
-  border-left-color: var(--ink-faint);
-  background: transparent;
-  border: 1px dashed var(--rule);
-}
 .review-head {
   display: flex;
   flex-wrap: wrap;
@@ -663,11 +658,6 @@ body.shelf .page {
   border-color: var(--accent);
 }
 .review-tag--disc .dim { color: var(--rule); }
-.review-tag--dnf {
-  color: var(--ink-faint);
-  border-color: var(--ink-faint);
-  background: transparent;
-}
 
 /* ─── Lists ──────────────────────────────────────────────────────────── */
 
@@ -832,10 +822,6 @@ body.shelf .page {
   color: var(--ink-faint);
   letter-spacing: 0.06em;
   white-space: nowrap;
-}
-.member-review-row--dnf .member-review-status {
-  text-transform: uppercase;
-  font-weight: 500;
 }
 .member-review-status .review-rating {
   font-size: 0.85rem;

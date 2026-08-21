@@ -242,6 +242,7 @@ def test_unrated_ask_requests_complete_response_without_inventing_rating(fresh_d
     assert "1–5 rating or DNF" in sent[0]["body"]
     assert "whether you'd recommend it" in sent[0]["body"]
     assert "Reply **PASS**" in sent[0]["body"]
+    assert "DNF responses stay internal" in sent[0]["body"]
     assert json.loads(db.draft_for_thread("T1")["draft_json"])["rating"] is None
 
 
@@ -312,6 +313,8 @@ def test_confirmed_dnf_completes_book_and_prevents_reselection(fresh_db, monkeyp
             (mid, candidate["slug"]),
         ).fetchone()
     assert dict(row) == {"rating": None, "dnf": 1, "would_recommend": 0, "body": None}
+    assert "stays internal to Oliver" in sent[-1]["body"]
+    assert "will not appear on the club site" in sent[-1]["body"]
     assert rd.next_candidate("nick") is None
 
 

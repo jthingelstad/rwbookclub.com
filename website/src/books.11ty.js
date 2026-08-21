@@ -20,7 +20,6 @@ module.exports = class {
             slug: p.slug || null,
           })),
           rating: r.rating ?? null,
-          dnf: !!r.dnf,
           wouldRecommend: !!r.wouldRecommend,
           discussionQuality: r.discussionQuality ?? null,
           review: r.review || null,
