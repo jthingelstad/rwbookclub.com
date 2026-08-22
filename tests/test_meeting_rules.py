@@ -162,6 +162,53 @@ def test_horizon_thin_runway_uses_loren_as_first_open_picker(monkeypatch):
     assert result["firstEmptyPicker"] == {"slug": "loren", "name": "Loren"}
 
 
+def test_horizon_ignores_bookless_non_book_meetings(monkeypatch):
+    rules = _horizon_world(monkeypatch, upcoming_count=1)
+    scheduled_book = rules.corpus_read.upcoming_meetings()[0]
+    non_book_meetings = [
+        {
+            "meetingId": 9001,
+            "meetingDate": "2026-07-30",
+            "type": ["Social"],
+            "books": [],
+            "slug": None,
+            "title": None,
+            "hostSlugs": ["loren"],
+        },
+        {
+            "meetingId": 9002,
+            "meetingDate": "2026-08-30",
+            "type": ["Picking"],
+            "books": [],
+            "slug": None,
+            "title": None,
+            "hostSlugs": ["nick"],
+        },
+    ]
+    open_book_meeting = {
+        "meetingId": 9003,
+        "meetingDate": "2026-09-30",
+        "type": ["Book"],
+        "books": [],
+        "slug": None,
+        "title": None,
+        "hostSlugs": ["tom"],
+    }
+    monkeypatch.setattr(
+        rules.corpus_read,
+        "upcoming_meetings",
+        lambda: [scheduled_book, *non_book_meetings, open_book_meeting],
+    )
+
+    result = rules.horizon()
+
+    assert result["scheduledCount"] == 2 and result["emptyCount"] == 3
+    assert [slot["meetingId"] for slot in result["slots"][:2]] == [None, 9003]
+    assert result["slots"][1]["bookStatus"] == "open"
+    assert result["slots"][1]["picker"] == {"slug": "tom", "name": "Tom"}
+    assert result["firstEmptyPicker"] == {"slug": "loren", "name": "Loren"}
+
+
 def test_horizon_empty_and_membership_change(monkeypatch):
     rules = _horizon_world(monkeypatch, upcoming_count=0, include_loren=False)
     result = rules.horizon(depth=4)

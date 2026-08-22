@@ -73,13 +73,28 @@ def _current_members() -> list[dict]:
     )
 
 
+def _counts_toward_book_horizon(meeting: dict) -> bool:
+    """Whether a scheduled meeting represents one slot in the reading runway.
+
+    A Book meeting with an open pick belongs in the horizon. So does any meeting
+    with an actual linked book (for example, the historical Spouses meetings).
+    Bookless Social and Picking meetings are real calendar context, but are not
+    missing book picks and must not displace a reading-horizon slot.
+    """
+    return bool(meeting.get("books") or meeting.get("slug") or meeting.get("title")) or "Book" in (
+        meeting.get("type") or []
+    )
+
+
 def horizon(depth: int = 5) -> dict:
     """Read-only meeting/book runway plus fair-recency pickers for open slots.
 
-    Scheduled upcoming meetings stay authoritative even when their book is still open. Other
-    empty slots are awareness only: current members are ordered by their least-recently scheduled
-    pick, excluding anyone already represented in the meeting portion before cycling into a second
-    round for depths beyond membership size.
+    Scheduled Book meetings stay authoritative even when their book is still open.
+    Scheduled non-book meetings remain calendar context, but do not consume a
+    book-horizon slot. Other empty slots are awareness only: current members are
+    ordered by their least-recently scheduled pick, excluding anyone already
+    represented in the meeting portion before cycling into a second round for
+    depths beyond membership size.
     """
     depth = max(1, min(int(depth), 8))
     current = _current_members()
@@ -114,7 +129,12 @@ def horizon(depth: int = 5) -> dict:
 
     slots = []
     scheduled_pickers: set[str] = set()
-    for upcoming in corpus_read.upcoming_meetings()[:depth]:
+    book_meetings = [
+        meeting
+        for meeting in corpus_read.upcoming_meetings()
+        if _counts_toward_book_horizon(meeting)
+    ]
+    for upcoming in book_meetings[:depth]:
         book = corpus_read.find_book(upcoming.get("slug") or upcoming.get("title")) or {}
         picker_slugs = [
             slug for slug in (upcoming.get("hostSlugs") or book.get("pickerSlugs") or []) if slug
