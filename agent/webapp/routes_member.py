@@ -30,7 +30,7 @@ def _safe_return(form, default: str) -> str:
     single-slash `/webapp/` path: reject `/webapp//evil.com` (some proxies treat `//` as
     scheme-relative) and backslash variants browsers normalize to `//`."""
     ret = (form.get("return") or "").strip()
-    if not ret.startswith("/webapp/") or ret.startswith("/webapp//") or "\\" in ret:
+    if not ret.startswith("/webapp/") or "//" in ret or "\\" in ret:
         return default
     return ret
 

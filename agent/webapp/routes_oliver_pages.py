@@ -18,7 +18,7 @@ from agent import clubdb, db
 from agent import corpus_read as cr
 from agent.mail.email_render import _render_markdown
 from agent.webapp.render import render
-from agent.webapp.routes_member import _form
+from agent.webapp.routes_member import _form, _safe_return
 
 
 def _members() -> list[dict]:
@@ -87,10 +87,7 @@ async def event_delete(request: web.Request) -> web.Response:
     except ValueError:
         raise web.HTTPFound("/webapp/admin/events") from None
     await asyncio.to_thread(db.delete_event, event_id)
-    ret = (form.get("return") or "").strip()
-    if not ret.startswith("/webapp/admin/events"):
-        ret = "/webapp/admin/events"
-    raise web.HTTPFound(ret)
+    raise web.HTTPFound(_safe_return(form, "/webapp/admin/events"))
 
 
 # ── Book Cloud (admin + member — same full view, per Jamie) ──────────────────
@@ -223,10 +220,7 @@ async def memory_action(request: web.Request) -> web.Response:
     elif op == "retire" and memory_id:
         await asyncio.to_thread(db.delete_memory, memory_id)
     # Memories are private (never rendered to the public site) — no mark_dirty.
-    ret = (form.get("return") or "").strip()
-    if not ret.startswith("/webapp/admin/memories"):
-        ret = "/webapp/admin/memories"
-    raise web.HTTPFound(ret)
+    raise web.HTTPFound(_safe_return(form, "/webapp/admin/memories"))
 
 
 async def member_memories_page(request: web.Request) -> web.Response:

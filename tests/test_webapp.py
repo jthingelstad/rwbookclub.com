@@ -332,7 +332,9 @@ def test_safe_return_blocks_open_redirect():
         "//evil.com",
         "https://evil.com",
         "/webapp//evil.com",
+        "/webapp/admin/events//evil.com",
         "/webapp/\\evil.com",
+        "/webapp/admin/events\\evil.com",
         "",
         "/etc/passwd",
     ):
