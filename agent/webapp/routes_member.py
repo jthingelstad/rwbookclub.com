@@ -8,6 +8,7 @@ call `state.mark_dirty()`; the site is published later (Publish button / idle sh
 from __future__ import annotations
 
 import asyncio
+from urllib.parse import urlparse
 
 from aiohttp import web
 
@@ -30,7 +31,14 @@ def _safe_return(form, default: str) -> str:
     single-slash `/webapp/` path: reject `/webapp//evil.com` (some proxies treat `//` as
     scheme-relative) and backslash variants browsers normalize to `//`."""
     ret = (form.get("return") or "").strip()
-    if not ret.startswith("/webapp/") or "//" in ret or "\\" in ret:
+    parsed = urlparse(ret)
+    if (
+        not ret.startswith("/webapp/")
+        or "//" in ret
+        or "\\" in ret
+        or parsed.netloc
+        or parsed.scheme
+    ):
         return default
     return ret
 
