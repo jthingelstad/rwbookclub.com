@@ -228,7 +228,7 @@ def _add_meeting(date: str, book_slugs: list[str], host_slugs: list[str], types:
     types = [t for t in types if t in clubdb.MEETING_TYPES]
     with db.connect() as conn:
         book_ids = [b for b in (clubdb.book_id_for_slug(conn, s) for s in book_slugs if s) if b]
-        use_types = types or (["Book"] if book_ids else ["Social"])
+        use_types = types or ["Book"]
         mid = clubdb.create_meeting(conn, date_iso=day, book_id=None, types=use_types)
         if book_ids:
             clubdb.set_meeting_books(conn, mid, book_ids)

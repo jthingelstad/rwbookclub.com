@@ -804,7 +804,7 @@ def test_routes_end_to_end(monkeypatch):
                 ) as r:
                     assert r.status == 302
                 assert not db.get_memories(query="Web e2e test memory")
-                # admin can create a two-book meeting and a bookless meeting
+                # admin can create a two-book meeting and a bookless Book meeting
                 acsrf = sessions.read_session(admin_val)["csrf"]
                 async with s.post(
                     base + "/webapp/admin/meetings/add",
@@ -998,7 +998,8 @@ def test_routes_end_to_end(monkeypatch):
         e2e = next(x for x in clubdb.all_lists(conn) if x["slug"] == "jamie-e2e-list")
     assert row["rating"] == 4
     assert meetings["2026-10-01"]["book_slugs"] == ["heart-of-darkness", "enshittification"]
-    assert meetings["2026-10-02"]["book_slugs"] == []  # bookless meeting created
+    assert meetings["2026-10-02"]["book_slugs"] == []  # bookless Book meeting created
+    assert meetings["2026-10-02"]["type"] == ["Book"]
     assert sorted(pickers) == ensh_hosts  # picker is derived from the meeting host(s)
     assert wtm and wtm[0]["is_current"] == 0  # member added then retired
     assert [e["book_slug"] for e in e2e["entries"]] == [
