@@ -175,6 +175,21 @@ GOLDEN_EMAIL = [
         "expected": "Reply privately with the grounded next meeting and book/open-pick state.",
     },
     {
+        "category": "public_resource_links",
+        "surface": "direct_email",
+        "speaker": "Erik",
+        "subject": "Club links",
+        "body": (
+            "Please send me the public club website and the iCal feed for all meetings. "
+            "I do not need the private editor."
+        ),
+        "expected_reply": True,
+        "expected": (
+            "Give the configured public website and /meetings.ics calendar-feed URLs directly; "
+            "do not replace either with /oliver my-club or claim the URLs are unavailable."
+        ),
+    },
+    {
         "category": "mailing_list_direct_question",
         "surface": "mailing_list",
         "speaker": "Tom",
@@ -381,7 +396,8 @@ JUDGE_SYSTEM = (
     "club total, WITHOUT a visible tool call can be grounded in that cache — don't auto-flag "
     "those numbers as fabricated. That same cached system context carries up to four upcoming "
     "meetings with exact local date/time, location when known, title or open-pick state, and "
-    "picker/host; no tool call is required to state those cached facts. (2) Every interaction also "
+    "picker/host, plus the configured public website, members page, and meeting calendar feed; "
+    "no tool call is required to state those cached facts or links. (2) Every interaction also "
     "carries a hidden [Now] line with the exact club-local date and time, so natural current-time "
     "phrasing is grounded even though it is absent from the tool trace. (3) web_search is an "
     "Anthropic "

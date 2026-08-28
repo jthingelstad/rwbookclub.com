@@ -38,6 +38,18 @@ def test_prompt_roster_excludes_oliver(monkeypatch):
     assert "Oliver (" not in roster  # no "Oliver (0 picks, 0 hosted)" in his own prompt
 
 
+def test_prompt_carries_configured_public_resources(monkeypatch):
+    from agent import context
+
+    monkeypatch.setattr(config, "SITE_URL", "https://books.example")
+    overview = context.club_context()
+    assert "club website https://books.example/" in overview
+    assert "member resources https://books.example/members/" in overview
+    assert "meeting calendar feed https://books.example/meetings.ics" in overview
+    assert "/oliver my-club opens their private editor" in overview
+    assert "not a substitute for the public site or calendar feed" in overview
+
+
 def test_member_lenses_exclude_oliver(monkeypatch):
     monkeypatch.setattr(picking.cr, "members", _fake_members)
     monkeypatch.setattr(picking.cr, "member_history", lambda slug: {})

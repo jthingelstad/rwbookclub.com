@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections import Counter
 from datetime import datetime, timezone
 
-from agent import clock, db, member_preferences
+from agent import clock, config, db, member_preferences
 from agent import corpus_read as cr
 from agent.club import meeting_rules
 
@@ -68,6 +68,10 @@ def club_context() -> str:
         "THE R/W BOOK CLUB — overview",
         "Meeting monthly since April 2003 in Minneapolis–Saint Paul; about 8 books a year, "
         "mostly non-fiction. Members rotate picking the book and hosting the discussion.",
+        f"Public resources: club website {config.SITE_URL}/; member resources "
+        f"{config.SITE_URL}/members/; meeting calendar feed {config.SITE_URL}/meetings.ics. "
+        "Give these public links directly when a member asks; /oliver my-club opens their "
+        "private editor and is not a substitute for the public site or calendar feed.",
         f"Read {stats['totalRead']} books so far "
         f"({stats['nonfiction']} non-fiction, {stats['fiction']} fiction), "
         f"{stats['firstYear']}–{stats['lastYear']}.",
