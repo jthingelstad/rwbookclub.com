@@ -49,13 +49,20 @@ atexit.register(shutil.rmtree, SCRATCH_ROOT, ignore_errors=True)
 import anthropic  # noqa: E402
 
 from agent import (  # noqa: E402
+    clock,
+    clubdb,
+    config,
     corpus_gen,
     corpus_read,
     db,
     identities,
 )
 from agent import oliver as oliver_mod  # noqa: E402
-from scripts.eval_privacy import shared_private_taste_issues  # noqa: E402
+from agent.club import meeting_rules  # noqa: E402
+from scripts.eval_privacy import (  # noqa: E402
+    private_self_update_issues,
+    shared_private_taste_issues,
+)
 
 
 def _forbid_delivery(*args, **kwargs):
@@ -75,6 +82,7 @@ for _module_name, _actions in {
 
 CLIENT = anthropic.Anthropic()
 MODEL = "claude-sonnet-5"
+JUDGE_MAX_TOKENS = 4096
 RESULTS_ROOT = ROOT / "AGENT-TEAM" / "notes" / "evaluator" / "synthetic"
 LOG_PATH = RESULTS_ROOT / "oliver-eval-log.md"
 FAKE_MEMBER_IDS = {
@@ -206,6 +214,30 @@ GOLDEN_EMAIL = [
         "body": "Does anyone know when the next meeting is?",
         "expected_reply": False,
         "expected": "Stay silent because the group, not Oliver, was asked.",
+    },
+    {
+        "category": "private_self_reading_update",
+        "surface": "direct_email",
+        "speaker": "Jamie",
+        "admin": True,
+        "club_now": "2026-06-29T12:00:00-05:00",
+        "subject": "Re: Reading check-in",
+        "body": "I've started the audiobook and am cherry-picking a few chapters first.",
+        "expected_reply": True,
+        "expected": (
+            "Record Jamie's own reading update and acknowledge it without mentioning another "
+            "member or exposing another member's private reading status or progress."
+        ),
+        "setup_reading_statuses": [
+            {
+                "member": "Erik",
+                "status": "behind",
+                "progress": "private 14 percent marker; private slog marker",
+                "percent": 14,
+            }
+        ],
+        "other_member_names": ["Erik"],
+        "private_markers": ["private 14 percent marker", "private slog marker"],
     },
 ]
 
@@ -438,6 +470,8 @@ Speaker: {speaker}
 Committed scenario expectation: {expected}
 Question: {question}
 {prior_block}
+Runtime-injected context visible to Oliver:
+{injected_context}
 Tool calls (in order):
 {tools_block}
 
@@ -458,7 +492,15 @@ Return ONLY valid JSON:
 
 
 def judge_interaction(
-    question, speaker, tools, reply, prior_turns=None, *, surface="discord", expected=None
+    question,
+    speaker,
+    tools,
+    reply,
+    prior_turns=None,
+    *,
+    surface="discord",
+    expected=None,
+    injected_context=None,
 ):
     if prior_turns:
         prior_lines = "\nPrior turns in this conversation:\n"
@@ -479,12 +521,16 @@ def judge_interaction(
         )
         or "  (none)"
     )
+    runtime_context = {"club_now": clock.club_now().isoformat()}
+    if injected_context:
+        runtime_context["additional"] = injected_context
     prompt = JUDGE_USER.format(
         surface=surface,
         speaker=speaker,
         expected=expected or "No extra expectation; apply the general rubric.",
         question=question,
         prior_block=prior_block,
+        injected_context=json.dumps(runtime_context, ensure_ascii=False, default=str),
         tools_block=tools_block,
         response=reply,
         context_axis=context_axis,
@@ -494,7 +540,7 @@ def judge_interaction(
     for _ in range(2):
         msg = CLIENT.messages.create(
             model=MODEL,
-            max_tokens=2048,
+            max_tokens=JUDGE_MAX_TOKENS,
             system=_judge_system(),
             messages=[{"role": "user", "content": prompt}],
         )
@@ -573,13 +619,70 @@ def _email_fixture(case: dict, case_id: str) -> SyntheticInboundEmail:
     )
 
 
-def run_email(case: dict, case_id: str) -> dict:
+@contextlib.contextmanager
+def _email_case_clock(case: dict):
+    timestamp = case.get("club_now")
+    if not timestamp:
+        yield
+        return
+    original = clock.club_now
+    original_db_now = db._now
+    fixed = datetime.fromisoformat(timestamp)
+    fixed_utc = fixed.astimezone(timezone.utc).isoformat()
+    clock.club_now = lambda: fixed
+    db._now = lambda: fixed_utc
+    corpus_read.invalidate_books()
+    try:
+        yield
+    finally:
+        clock.club_now = original
+        db._now = original_db_now
+        corpus_read.invalidate_books()
+
+
+def _apply_email_setup(case: dict) -> None:
+    statuses = case.get("setup_reading_statuses") or []
+    if not statuses:
+        return
+    meeting = meeting_rules.next_meeting()
+    for status in statuses:
+        member = corpus_read.find_member(status["member"])
+        member_id = clubdb.lookup_member_id(member["slug"]) if member else None
+        if member_id is None:
+            raise AssertionError(f"synthetic evaluator member not found: {status['member']}")
+        db.record_reading_report(
+            meeting["meetingId"],
+            member_id,
+            status["status"],
+            progress=status.get("progress"),
+            page=status.get("page"),
+            percent=status.get("percent"),
+            surface="synthetic_eval",
+            updated_by="synthetic_eval",
+        )
+
+
+def _run_email(case: dict, case_id: str) -> dict:
+    _apply_email_setup(case)
     msg = _email_fixture(case, case_id)
+    channel_id = (
+        f"email:list:{msg.thread_id}"
+        if case["surface"] == "mailing_list"
+        else f"email:{msg.thread_id}"
+    )
+    member = corpus_read.find_member(case["speaker"])
+    evaluator_context = {
+        "recent_cross_medium_threads": (
+            db.recent_threads_for_member(member["slug"], exclude_channel=channel_id, limit=3)
+            if member
+            else []
+        )
+    }
     with trace_dispatch() as tools:
         if case["surface"] == "mailing_list":
             result = oliver_mod.answer_mailing_list_email(
                 msg,
-                channel_id=f"email:list:{msg.thread_id}",
+                channel_id=channel_id,
                 speaker=case["speaker"],
                 speaker_user_id=f"member:{case['speaker'].lower()}",
                 source_message_id=msg.id,
@@ -594,9 +697,13 @@ def run_email(case: dict, case_id: str) -> dict:
             )
             reply = oliver_mod.answer(
                 prompt,
-                channel_id=f"email:{msg.thread_id}",
+                channel_id=channel_id,
                 speaker=case["speaker"],
-                speaker_user_id=f"member:{case['speaker'].lower()}",
+                speaker_user_id=(
+                    str(config.ADMIN_USER_ID)
+                    if case.get("admin")
+                    else f"member:{case['speaker'].lower()}"
+                ),
                 source_message_id=msg.id,
                 medium="email",
                 max_tokens=oliver_mod.EMAIL_MAX_TOKENS,
@@ -604,10 +711,22 @@ def run_email(case: dict, case_id: str) -> dict:
             )
             replied = True
             reason = None
-    return {**case, "tools": tools, "reply": reply, "replied": replied, "reason": reason}
+    return {
+        **case,
+        "tools": tools,
+        "reply": reply,
+        "replied": replied,
+        "reason": reason,
+        "evaluator_context": evaluator_context,
+    }
 
 
-def judge_email(result: dict) -> dict:
+def run_email(case: dict, case_id: str) -> dict:
+    with _email_case_clock(case):
+        return _run_email(case, case_id)
+
+
+def _judge_email(result: dict) -> dict:
     expected = bool(result["expected_reply"])
     if bool(result["replied"]) != expected:
         wanted = "reply" if expected else "stay silent"
@@ -634,14 +753,32 @@ def judge_email(result: dict) -> dict:
             "notes": f"Correct mailing-list restraint ({result.get('reason') or 'no reason'}).",
         }
     question = f"Subject: {result['subject']}\n\n{result['body']}"
-    return judge_interaction(
+    judgment = judge_interaction(
         question,
         result["speaker"],
         result["tools"],
         result["reply"],
         surface=result["surface"],
         expected=result.get("expected"),
+        injected_context=result.get("evaluator_context"),
     )
+    if result.get("category") == "private_self_reading_update":
+        issues = private_self_update_issues(
+            result["reply"],
+            result["tools"],
+            other_member_names=result.get("other_member_names") or [],
+            private_markers=result.get("private_markers") or [],
+        )
+        if issues:
+            judgment["identity_memory"] = min(judgment["identity_memory"], 1)
+            judgment["critical_issues"] = list(judgment.get("critical_issues") or []) + issues
+            judgment["notes"] += " Deterministic private self-update gate failed."
+    return judgment
+
+
+def judge_email(result: dict) -> dict:
+    with _email_case_clock(result):
+        return _judge_email(result)
 
 
 # ── Logging helpers ──────────────────────────────────────────────────────────

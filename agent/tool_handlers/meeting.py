@@ -156,6 +156,11 @@ def _configured_discord_admin(request: RequestContext) -> bool:
     return str(request.speaker_user_id or "") == str(config.ADMIN_USER_ID)
 
 
+def _self_scoped_actor(request: RequestContext) -> access.Actor:
+    """Keep a member self-write receipt scoped to the member, even for the admin."""
+    return access.Actor(member_slug=request.member_slug, is_admin=False)
+
+
 def _pending_reviews(tool_input: dict, request: RequestContext):
     target = _member_slug(tool_input["member"])
     if not target:
@@ -256,7 +261,9 @@ def _record_availability(tool_input: dict, request: RequestContext):
     )
     return {
         "saved": True,
-        "meetingStatus": meeting_status_snapshot(request.actor, meeting_id=meeting_id),
+        "meetingStatus": meeting_status_snapshot(
+            _self_scoped_actor(request), meeting_id=meeting_id
+        ),
     }
 
 
@@ -286,7 +293,10 @@ def _record_reading_status(tool_input: dict, request: RequestContext):
         f"Member: {request.member_slug}\nStatus: {tool_input['status']}\n"
         f"Progress: {tool_input.get('progress') or '-'}\nMeeting: {meeting['meetingKey']}",
     )
-    return {"saved": True, "readingStatus": reading_status_snapshot(meeting, request.actor)}
+    return {
+        "saved": True,
+        "readingStatus": reading_status_snapshot(meeting, _self_scoped_actor(request)),
+    }
 
 
 def _request_reading_update(tool_input: dict, request: RequestContext):

@@ -234,3 +234,28 @@ def test_meeting_tools_expose_only_own_member_signals_outside_admin(fresh_db):
     }
     admin_campaign = _call("meeting_campaign", {}, ADMIN_CTX)
     assert {row["memberSlug"] for row in admin_campaign["members"]} >= {"jamie", "nick"}
+
+
+def test_admin_self_write_receipts_do_not_expose_other_members(fresh_db):
+    meeting = meeting_rules.next_meeting()
+    nick_id = clubdb.lookup_member_id("nick")
+    db.record_attendance_report(meeting["meetingId"], nick_id, "no")
+    db.record_reading_report(
+        meeting["meetingId"], nick_id, "behind", progress="private chapter marker"
+    )
+
+    availability = _call("record_availability", {"status": "yes"}, ADMIN_CTX)
+    assert availability["saved"] is True
+    assert [row["memberSlug"] for row in availability["meetingStatus"]["attendance"]] == ["jamie"]
+
+    reading = _call(
+        "record_reading_status",
+        {"status": "started", "progress": "audiobook"},
+        ADMIN_CTX,
+    )
+    assert reading["saved"] is True
+    assert [row["memberSlug"] for row in reading["readingStatus"]["statuses"]] == ["jamie"]
+    assert "private chapter marker" not in json.dumps(reading)
+
+    explicit_admin_read = _call("reading_status", {}, ADMIN_CTX)
+    assert {row["memberSlug"] for row in explicit_admin_read["statuses"]} >= {"jamie", "nick"}
