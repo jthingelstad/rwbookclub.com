@@ -1,0 +1,31 @@
+# Hackers and Painters: Big Ideas from the Computer Age
+
+- **Author:** Paul Graham
+- **Read:** April 2005
+- **Topic:** Technology
+- **Subjects:** Computer programming, Electronic data processing personnel
+- **Published:** 2004
+- **Picked by:** Dan
+- **ISBN-13:** 9780596550660
+- **Open Library:** https://openlibrary.org/works/OL27071402W
+- **Cover:** https://rwbookclub.com/assets/images/covers/hackers-and-painters-394.jpg
+- **Canonical page:** https://rwbookclub.com/books/hackers-and-painters/
+
+## Synopsis
+
+This seems to be a duplicate entry of https://openlibrary.org/works/OL2973119W/Hackers_painters
+
+## Related books
+
+- Beautiful Code (Shared themes: Computer programming)
+  https://rwbookclub.com/books/beautiful-code.txt
+- The Mythical Man-Month (Shared themes: Computer programming)
+  https://rwbookclub.com/books/the-mythical-man-month.txt
+- Life After Google (Technology)
+  https://rwbookclub.com/books/life-after-google.txt
+- Enshittification (Technology)
+  https://rwbookclub.com/books/enshittification.txt
+- Co-Intelligence (Technology)
+  https://rwbookclub.com/books/co-intelligence.txt
+- Army of None (Technology)
+  https://rwbookclub.com/books/army-of-none.txt

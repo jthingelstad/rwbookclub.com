@@ -1,0 +1,28 @@
+# The Success of Open Source
+
+- **Author:** Steve Weber
+- **Read:** March 2006
+- **Topic:** Technology
+- **Subjects:** Open source software, Computer software, Logiciels libres, 85.20 management information, Open Source, Softwareentwicklung, Softwaremarkt, Open broncode, Programmatuurtechniek, Economische aspecten, Politieke aspecten, Internet (impactos sociais)
+- **Published:** 2004
+- **Pages:** 312
+- **Picked by:** David
+- **ISBN-13:** 9780674012929
+- **Open Library:** https://openlibrary.org/works/OL15840214W
+- **Cover:** https://rwbookclub.com/assets/images/covers/the-success-of-open-source-960.jpg
+- **Canonical page:** https://rwbookclub.com/books/the-success-of-open-source/
+
+## Related books
+
+- Enshittification (Technology)
+  https://rwbookclub.com/books/enshittification.txt
+- Co-Intelligence (Technology)
+  https://rwbookclub.com/books/co-intelligence.txt
+- Army of None (Technology)
+  https://rwbookclub.com/books/army-of-none.txt
+- The Blocksize War (Technology)
+  https://rwbookclub.com/books/the-blocksize-war.txt
+- The Master Algorithm (Technology)
+  https://rwbookclub.com/books/the-master-algorithm.txt
+- Life After Google (Technology)
+  https://rwbookclub.com/books/life-after-google.txt

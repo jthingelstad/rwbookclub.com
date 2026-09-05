@@ -1,0 +1,27 @@
+# Complexity: A Very Short Introduction
+
+- **Author:** John H. Holland
+- **Read:** May 2015
+- **Topic:** Science and Math
+- **Subjects:** Complexity (philosophy), Komplexität, Komplexes System
+- **Published:** 2014
+- **Pages:** 112
+- **ISBN-13:** 9780199662548
+- **Open Library:** https://openlibrary.org/works/OL17785073W
+- **Cover:** https://rwbookclub.com/assets/images/covers/complexity-322.jpg
+- **Canonical page:** https://rwbookclub.com/books/complexity/
+
+## Related books
+
+- The Structure and Dynamics of Networks (Shared themes: Complexity (philosophy))
+  https://rwbookclub.com/books/the-structure-and-dynamics-of-networks.txt
+- Antifragile (Shared themes: Complexity (philosophy))
+  https://rwbookclub.com/books/antifragile.txt
+- Patterns in Nature (Science and Math)
+  https://rwbookclub.com/books/patterns-in-nature.txt
+- Scale (Science and Math)
+  https://rwbookclub.com/books/scale.txt
+- The Complexity of Cooperation (Science and Math)
+  https://rwbookclub.com/books/the-complexity-of-cooperation.txt
+- Otherlands (Science and Math)
+  https://rwbookclub.com/books/otherlands.txt
