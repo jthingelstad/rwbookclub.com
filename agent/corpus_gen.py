@@ -18,7 +18,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+import tempfile
 from pathlib import Path
 
 import yaml
@@ -38,9 +40,23 @@ DEFAULT_OUT = DATA_DIR
 ENTITY_DIRS = ["books", "meetings", "members", "authors", "reviews", "lists"]
 
 
-def _write_json(path: Path, obj: dict) -> None:
+def _write_text(path: Path, text: str) -> None:
+    """Replace one corpus file without exposing a partial document to readers."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n")
+    fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        Path(temporary).unlink(missing_ok=True)
+        raise
+
+
+def _write_json(path: Path, obj: dict) -> None:
+    _write_text(path, json.dumps(obj, indent=2, ensure_ascii=False) + "\n")
 
 
 def write_manifest(out_root: Path = DEFAULT_OUT) -> Path:
@@ -216,7 +232,7 @@ def generate(out_root: Path = DEFAULT_OUT) -> dict:
             emit_json("lists", f"{lst['slug']}.json", _list_doc(lst))
         for r in clubdb.all_reviews(conn):
             name = f"{r['book_slug']}--{r['member_slug']}.md"
-            (out_root / "reviews" / name).write_text(_review_text(r))
+            _write_text(out_root / "reviews" / name, _review_text(r))
             keep["reviews"].add(name)
             written["reviews"] += 1
 
@@ -259,8 +275,7 @@ def write_meeting_file(conn, meeting_id: int, out_root: Path = DEFAULT_OUT) -> P
 def write_review_file(conn, review_id: int, out_root: Path = DEFAULT_OUT) -> Path:
     r = next(r for r in clubdb.all_reviews(conn) if r["id"] == review_id)
     path = Path(out_root) / "reviews" / f"{r['book_slug']}--{r['member_slug']}.md"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(_review_text(r))
+    _write_text(path, _review_text(r))
     _invalidate_read_cache()
     return path
 
