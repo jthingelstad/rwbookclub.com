@@ -3,10 +3,10 @@
 > **This is history, not current guidance.** Airtable was the club's original data store. It was
 > retired after a one-time import (`python -m agent.script.archive.import_airtable`, which now reads the
 > on-disk snapshot under `agent/script/_airtable_cache/`, not the API). **SQLite (`club_*` tables in
-> `agent/oliver.db`) is authoritative** — see the repo `CLAUDE.md`. No code reads `AIRTABLE_*` env
+> `agent/oliver.db`) is authoritative** — see the repo `AGENTS.md`. No code reads `AIRTABLE_*` env
 > vars anymore. The table IDs, field shapes, row counts, and coverage numbers below are frozen at
 > import time and explain how the data was sourced; they do **not** reflect the live DB. For current
-> data conventions (picker vs host, local meeting time, topic taxonomy, etc.) see `CLAUDE.md`.
+> data conventions (picker vs host, local meeting time, topic taxonomy, etc.) see `AGENTS.md`.
 
 ## Data Source (Airtable)
 
@@ -57,7 +57,7 @@ Primary field is `Name` (formula: `MMMM YYYY: <Book>`).
 | Name | formula | Auto-generated label |
 | Meeting Date | dateTime | Range: 2003-04 → 2025-11 |
 | Book | link → Books | Multi (rare). The Sept 2012 meeting links to two books. |
-| Host | link → Members | **This is the book picker.** (Historical shorthand — the live model treats picker and host as distinct; see `CLAUDE.md`.) |
+| Host | link → Members | **This is the book picker.** (Historical shorthand — the live model treats picker and host as distinct; see `AGENTS.md`.) |
 | Meeting Type | multi-select | Choices: Book, Spouses, Videos, Essay, Movie, Picking |
 | Location | text | Sparse: 41 of 181 |
 | Notes | long text | Sparse: 7 of 181 |
@@ -199,7 +199,7 @@ requests.patch(f"{base_url}/{books_table}", json=body, headers=auth)
 ## Open follow-ups (point-in-time, from the Airtable launch)
 
 These were captured at launch; the still-binding ones (topic re-categorization needs Jamie's
-per-book approval; member bios/dates deliberately out of schema) are enforced in `CLAUDE.md`'s
+per-book approval; member bios/dates deliberately out of schema) are enforced in `AGENTS.md`'s
 "Things not to do". Enrichment (Wikipedia bio fallback) has since shipped.
 
 1. ~~*The Devil in the White City* has no cover.~~ Resolved — covers are complete for all 179 books.

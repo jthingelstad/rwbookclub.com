@@ -8,7 +8,7 @@ cultural and taste analysis, selection history, meeting context, and the smalles
 source/model fixes needed to keep Oliver grounded in this club rather than a generic
 book club.
 
-Read `AGENTS.md`, `CLAUDE.md`, `AGENT-TEAM/WORKFLOW.md`,
+Read `AGENTS.md`, `AGENT-TEAM/WORKFLOW.md`,
 `AGENT-TEAM/README.md`, this file, and `agent/docs/SOUL.md`, `PURPOSE.md`, and
 `PROCESS.md` completely.
 

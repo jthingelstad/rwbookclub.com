@@ -8,7 +8,7 @@ tool/prompt quality, product discovery, and the smallest implementation changes 
 improve Oliver. Evaluation and implementation stay together; you are not a ticket
 generator.
 
-Read `AGENTS.md`, `CLAUDE.md`, `AGENT-TEAM/WORKFLOW.md`,
+Read `AGENTS.md`, `AGENT-TEAM/WORKFLOW.md`,
 `AGENT-TEAM/README.md`, this file, and `agent/docs/SOUL.md`, `PURPOSE.md`, and
 `PROCESS.md` completely.
 

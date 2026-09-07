@@ -1,7 +1,7 @@
 # Oliver Email Archive and Unified Conversation Architecture
 
 > Historical design record. The implemented schema is documented in `docs/ERD.md`; current
-> mail behavior and privacy boundaries are documented in `agent/README.md` and `CLAUDE.md`.
+> mail behavior and privacy boundaries are documented in `agent/README.md` and `AGENTS.md`.
 > Names, phases, and open questions below reflect the pre-implementation design and are not an
 > active work queue.
 

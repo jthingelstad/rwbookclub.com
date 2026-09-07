@@ -11,5 +11,5 @@ why the current system looks the way it does, but they are not maintained runboo
   Airtable-to-SQLite inversion plan and cutover record.
 - [`AIRTABLE-REFERENCE.md`](AIRTABLE-REFERENCE.md) — retired Airtable schema and import notes.
 
-For current guidance, use [`../../CLAUDE.md`](../../CLAUDE.md), the component READMEs, and GitHub
+For current guidance, use [`../../AGENTS.md`](../../AGENTS.md), the component READMEs, and GitHub
 Issues.

@@ -70,6 +70,6 @@ cache under `agent/script/_airtable_cache/`, not the API — no credentials need
 ## Contract changes
 
 The full authoritative SQLite schema (tables, fields, conventions) is documented in the repo-root
-`CLAUDE.md`. The generated-file contract is defined by `corpus/schema.py` and currently has version
+`AGENTS.md`. The generated-file contract is defined by `corpus/schema.py` and currently has version
 1. Any field or layout change must update the models, generator, Python and JavaScript consumers,
 shared contract tests, and the manifest version when the change is not backwards compatible.

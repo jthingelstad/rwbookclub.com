@@ -4,7 +4,7 @@ Replaces the scattered OL access (``agent/club/openlibrary.py`` add-book lookup 
 ``corpus/openlibrary_subjects.py`` subject backfill). It resolves a book to its OL
 Work, pulls book facts (description, subjects, ratings, editions, cover, ISBN, year,
 pages) and the work's author keys, and fetches OL *author* records (bio, birth/death,
-photo, Wikidata link) — the author fetcher documented in CLAUDE.md but never built.
+photo, Wikidata link) — the author fetcher documented in AGENTS.md but never built.
 
 All fetches are best-effort via ``agent.enrich.http`` (None on failure).
 """

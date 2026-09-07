@@ -5,7 +5,7 @@ outcome, not a job type or directory. It follows evidence through diagnosis, cod
 tests, deployment, and natural acceptance instead of handing each step to another
 role.
 
-Read `AGENTS.md` -> `CLAUDE.md` -> this file -> `AGENT-TEAM/README.md` -> the
+Read `AGENTS.md` -> this file -> `AGENT-TEAM/README.md` -> the
 selected objective file before acting. Read `agent/docs/SOUL.md`, `PURPOSE.md`, and
 `PROCESS.md` whenever behavior or member context is in scope.
 

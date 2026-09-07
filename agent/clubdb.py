@@ -101,7 +101,7 @@ CREATE INDEX IF NOT EXISTS idx_club_meeting_hosts_member ON club_meeting_hosts(m
 -- table and always equalled the host (materialized from it); collapsed to this view so
 -- the two can never diverge. A book re-read across two meetings has both meetings' hosts
 -- as pickers (pick-events; summing picks across members can exceed distinct books read).
--- Correct a picker by editing the meeting's host. See CLAUDE.md.
+-- Correct a picker by editing the meeting's host. See AGENTS.md.
 CREATE VIEW IF NOT EXISTS club_book_pickers AS
     SELECT mb.book_id, mh.member_id, MIN(mh.ordinal) AS ordinal
     FROM club_meeting_books mb
@@ -994,7 +994,7 @@ def update_meeting(
 # Meeting type tags (club_meetings.type_json is a JSON array — a meeting can be more than one).
 MEETING_TYPES = ["Book", "Social", "Picking", "Planning", "Holiday"]
 
-# The 11 single-select Topic choices (see CLAUDE.md). The admin book editor validates against these.
+# The 11 single-select Topic choices (see AGENTS.md). The admin book editor validates against these.
 TOPICS = [
     "Brain & Psychology",
     "Current Events & People",

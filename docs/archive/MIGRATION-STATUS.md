@@ -11,7 +11,7 @@ a short supervised step (below).
 > **locally** by `python -m agent.publish` to the **`gh-pages` branch** (GitHub Pages serves
 > it); CI no longer builds the site (`deploy.yml` removed). `main` is pure source — Oliver
 > writes nothing to it. Reviews became DB-backed (`club_reviews`) so the startup corpus regen
-> can't prune them. See `CLAUDE.md` → "Site build + deploy".
+> can't prune them. See `AGENTS.md` → "Site build + deploy".
 
 ## What's done and verified
 

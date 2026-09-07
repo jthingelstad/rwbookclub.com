@@ -1,7 +1,7 @@
 # Oliver implementation history (archived)
 
 > Historical record only. These phases describe how Oliver was built and include superseded
-> paths and commands. GitHub Issues are the current roadmap; use `CLAUDE.md` and
+> paths and commands. GitHub Issues are the current roadmap; use `AGENTS.md` and
 > `agent/README.md` for maintained architecture and capability guidance.
 
 Oliver is the R/W Book Club's Discord agent. The goal: a real agent — tool use +

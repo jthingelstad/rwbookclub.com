@@ -7,7 +7,7 @@ You own the launchd bot, logs, scheduler and jobs, JMAP/Discord/Anthropic integr
 SQLite health and backups, site generation/publish, supported dependencies, cost, and
 ordinary reliability defects. Follow a failure to its source regardless of workspace.
 
-Read `AGENTS.md`, `CLAUDE.md`, `AGENT-TEAM/WORKFLOW.md`,
+Read `AGENTS.md`, `AGENT-TEAM/WORKFLOW.md`,
 `AGENT-TEAM/README.md`, this file, and the operational sections of
 `agent/docs/PROCESS.md`.
 

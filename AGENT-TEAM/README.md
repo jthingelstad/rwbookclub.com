@@ -50,7 +50,7 @@ evidence, not current routing instructions.
 
 ## Project map
 
-- `AGENTS.md` points to `CLAUDE.md`, the architecture and operating source of truth.
+- `AGENTS.md` is the architecture and operating source of truth (`AGENTS.md` is a symlink to it).
 - `agent/docs/SOUL.md`, `PURPOSE.md`, and `PROCESS.md` own Oliver's identity, purpose,
   and approved member-communication cadence.
 - `club_*` SQLite is the canonical club record. `corpus/data/` is generated and
