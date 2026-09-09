@@ -9,9 +9,9 @@ Product Manager, or Team Manager.
 
 | Objective | File | Cadence | Primary question |
 |---|---|---|---|
-| **Run Oliver** | `run-oliver.md` | Weekly and after incidents/deploys | Is Oliver and the public site healthy, current, recoverable, observable, and inexpensive to run? |
-| **Understand the Club** | `understand-club.md` | Every eight weeks and when the club record changes materially | Does Oliver's model of the club reflect authoritative history, member taste, culture, and current reading context? |
-| **Improve Oliver** | `improve-oliver.md` | Weekly and after meaningful behavior changes | Is Oliver actually useful, grounded, restrained, and improving across Discord, email, meetings, and the site? |
+| **Run Oliver** | `run-oliver.md` | Wednesday and Saturday 06:10 | Is Oliver and the public site healthy, current, recoverable, observable, and inexpensive to run? |
+| **Understand the Club** | `understand-club.md` | Every eight weeks Saturday 07:15, starting October 10, 2026 | Does Oliver's model of the club reflect authoritative history, member taste, culture, and current reading context? |
+| **Improve Oliver** | `improve-oliver.md` | Friday 18:00 | Is Oliver actually useful, grounded, restrained, and improving across Discord, email, meetings, and the site? |
 
 Building and testing are capabilities of every objective owner. New member-facing
 behavior, communication cadence, non-review club-record writes, schedule/order
@@ -106,3 +106,15 @@ calendar cadence nor those event phrases cause an automatic run.
 Oliver should feel like a grounded, useful sixth member of this particular book club.
 Prefer measured outcomes over tickets, the smallest source fix over a guard, and a
 healthy no-op over invented work.
+
+## Calendar implementation
+
+All times above are America/Chicago. Scheduled starts can run a minute or two
+late because the app adds jitter. Autonomous checks can finish outside Jamie's
+project windows; nonurgent decisions wait for early morning or early evening.
+The manifest records the installed schedule and prompt, including the explicit
+repository directory when the app launches from Projects.
+
+The app wakes interval activities more often than their full objective cadence.
+The prompt's first date check skips non-due days without further work. Preserve
+that check and its anchor when reinstalling; the calendar rule alone is incomplete.

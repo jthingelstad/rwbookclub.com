@@ -80,9 +80,9 @@ def test_registry_has_three_active_objective_owners():
     assert all((ROOT / entry["objective_file"]).is_file() for entry in entries)
     assert len({entry["id"] for entry in entries}) == 3
     assert {entry["objective"]: entry["rrule"] for entry in entries} == {
-        "run": "RRULE:FREQ=WEEKLY;BYHOUR=10;BYMINUTE=20;BYDAY=SA",
-        "club": "RRULE:FREQ=WEEKLY;INTERVAL=8;BYHOUR=19;BYMINUTE=0;BYDAY=TH",
-        "agent": "RRULE:FREQ=WEEKLY;BYHOUR=14;BYMINUTE=30;BYDAY=FR",
+        "run": "RRULE:FREQ=WEEKLY;BYDAY=WE,SA;BYHOUR=6;BYMINUTE=10",
+        "club": "RRULE:FREQ=WEEKLY;BYDAY=SA;BYHOUR=7;BYMINUTE=15",
+        "agent": "RRULE:FREQ=WEEKLY;BYDAY=FR;BYHOUR=18;BYMINUTE=0",
     }
 
 
@@ -291,3 +291,28 @@ def test_retired_dispatcher_and_job_roles_are_absent():
     assert not (ROOT / ".github/ISSUE_TEMPLATE/bug.md").exists()
     assert not (ROOT / ".github/ISSUE_TEMPLATE/task.md").exists()
     assert not (ROOT / ".github/ISSUE_TEMPLATE/proposal.md").exists()
+
+
+def test_additional_time_slots_preserve_one_owner_and_explicit_launch_contract():
+    from copy import deepcopy
+
+    plan = tomllib.loads((ROOT / "AGENT-TEAM/automations.toml").read_text())
+    owner = next(entry for entry in plan["automation"] if not entry.get("schedule_of"))
+    alias = dict(owner, id="test-additional-slot", schedule_of=owner["id"])
+    candidate = deepcopy(plan)
+    candidate["automation"].append(alias)
+    assert automation_audit.validate(candidate) == []
+    alias["schedule_of"] = "missing-owner"
+    assert any("same primary owner" in error for error in automation_audit.validate(candidate))
+    alias["schedule_of"] = owner["id"]
+    alias["objective_file"] = "AGENT-TEAM/README.md"
+    assert any("same primary owner" in error for error in automation_audit.validate(candidate))
+    alias["objective_file"] = owner["objective_file"]
+    alias.pop("schedule_of")
+    assert "objectives must have exactly one owner" in automation_audit.validate(candidate)
+    override = dict(
+        owner, prompt="Calendar check first; preserve the due-day boundary.", launch_cwd=".."
+    )
+    expected = automation_audit.expected(override)
+    assert expected["prompt"] == override["prompt"]
+    assert expected["cwds"] == [str(ROOT.parent)]
