@@ -387,6 +387,16 @@ def _email_evidence(
         if index is not None:
             messages[index]["metadata"]["processing"] = processing
             continue
+        if (
+            row["status"] == "ignored"
+            and str(row["from_email"] or "").strip().lower() == oliver_email
+            and row["error"] is None
+        ):
+            # Mailing-list delivery can put Oliver's own outbound message back in
+            # the inbox. The inbound pipeline deliberately ignores that echo and
+            # does not archive it as a member-authored message, so it is complete
+            # evidence rather than a missing member interaction.
+            continue
         messages.append(
             _message(
                 evidence_id=f"email-gap:{inbound_id}",

@@ -392,6 +392,33 @@ def test_missing_inbound_archive_is_an_explicit_gap(tmp_path: Path) -> None:
     assert report["summary"]["evidence_gaps"] == 1
 
 
+def test_ignored_self_echo_is_not_member_evidence_gap(tmp_path: Path) -> None:
+    path = _database(tmp_path)
+    with sqlite3.connect(path) as conn:
+        conn.execute(
+            "INSERT INTO inbound_emails VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                "self-echo-provider-id",
+                "mailing-list-thread",
+                "oliver@rwbookclub.com",
+                "[rwbookclub] Meeting reminder",
+                "ignored",
+                None,
+                None,
+                "2026-07-25T10:00:00Z",
+                "2026-07-25T10:00:01Z",
+            ),
+        )
+
+    report = collect_evidence(path, since=SINCE, until=UNTIL)
+
+    assert not any(
+        item["links"].get("inbound_email_id") == "self-echo-provider-id"
+        for item in report["messages"]
+    )
+    assert report["summary"]["evidence_gaps"] == 0
+
+
 def test_raw_private_evidence_can_only_be_written_below_local_root(tmp_path: Path) -> None:
     allowed = tmp_path / "notes" / "evaluator"
     report = {"messages": [{"body": "private"}]}
