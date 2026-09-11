@@ -24,6 +24,8 @@ prompt = "Use `/Users/otto/Projects/rwbookclub.com` as the working directory for
 
 [[automation]]
 id = "oliver-club-ethnographer"
+work_interval_days = 56
+work_anchor_date = "2026-10-10"
 name = "Understand the Club"
 objective = "club"
 objective_file = "AGENT-TEAM/understand-club.md"

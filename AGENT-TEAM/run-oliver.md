@@ -11,7 +11,8 @@ Read `AGENTS.md`, `AGENT-TEAM/WORKFLOW.md`,
 `AGENT-TEAM/README.md`, this file, and the operational sections of
 `agent/docs/PROCESS.md`.
 
-Cadence: weekly, after every relevant deploy/publish, and after a reported incident.
+Calendar cadence: `SCHEDULE.md` (generated from `automations.toml`). Relevant
+deploy/publish and incident follow-ups are explicit starts.
 
 ## Every run
 
