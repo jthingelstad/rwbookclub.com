@@ -1,0 +1,28 @@
+# The Structure and Dynamics of Networks
+
+- **Author:** Mark Newman and Duncan J. Watts
+- **Read:** January 2015
+- **Topic:** Science and Math
+- **Subjects:** Réseaux sociaux, Dynamique, Computer networks, Complexity (Philosophy), Complexité (Philosophie), Social networks, Réseaux d'ordinateurs, Dynamics, Mathematics, Applied
+- **Published:** 2006
+- **Pages:** 592
+- **Picked by:** Nick
+- **ISBN-13:** 9781400841356
+- **Open Library:** https://openlibrary.org/works/OL19002758W
+- **Cover:** https://rwbookclub.com/assets/images/covers/the-structure-and-dynamics-of-networks-387.jpg
+- **Canonical page:** https://rwbookclub.com/books/the-structure-and-dynamics-of-networks/
+
+## Related books
+
+- Antifragile (Shared themes: Complexity (Philosophy))
+  https://rwbookclub.com/books/antifragile.txt
+- Complexity (Shared themes: Complexity (Philosophy))
+  https://rwbookclub.com/books/complexity.txt
+- The Joy of x (Shared themes: Mathematics)
+  https://rwbookclub.com/books/the-joy-of-x.txt
+- Scale (Science and Math)
+  https://rwbookclub.com/books/scale.txt
+- The Epigenetics Revolution (Science and Math)
+  https://rwbookclub.com/books/the-epigenetics-revolution.txt
+- Wetware (Science and Math)
+  https://rwbookclub.com/books/wetware.txt
