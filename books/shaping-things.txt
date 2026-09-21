@@ -1,0 +1,33 @@
+# Shaping Things
+
+- **Author:** Bruce Sterling
+- **Read:** July 2008
+- **Topic:** Technology
+- **Subjects:** Technology assessment, Technological forecasting
+- **Published:** 2005
+- **Pages:** 149
+- **Picked by:** Erik
+- **ISBN-13:** 9780262195331
+- **Club rating:** 3/5 (from 1 member)
+- **Open Library:** https://openlibrary.org/works/OL1888034W
+- **Cover:** https://rwbookclub.com/assets/images/covers/shaping-things-348.jpg
+- **Canonical page:** https://rwbookclub.com/books/shaping-things/
+
+## Reviews
+
+- Jamie — 3/5
+
+## Related books
+
+- Beautiful Code (Technology)
+  https://rwbookclub.com/books/beautiful-code.txt
+- Enshittification (Technology)
+  https://rwbookclub.com/books/enshittification.txt
+- Co-Intelligence (Technology)
+  https://rwbookclub.com/books/co-intelligence.txt
+- Army of None (Technology)
+  https://rwbookclub.com/books/army-of-none.txt
+- The Blocksize War (Technology)
+  https://rwbookclub.com/books/the-blocksize-war.txt
+- The Master Algorithm (Technology)
+  https://rwbookclub.com/books/the-master-algorithm.txt

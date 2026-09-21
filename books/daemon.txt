@@ -1,0 +1,39 @@
+# Daemon
+
+- **Author:** Daniel Suarez
+- **Read:** December 2017
+- **Topic:** Technology (Fiction)
+- **Subjects:** Human-computer interaction, International economic integration, Computer programmers, Thriller, Programmeurs, Intégration économique internationale, Long now manual for civilization
+- **Published:** 2009
+- **Pages:** 640
+- **Picked by:** Jamie
+- **ISBN-13:** 9780451228734
+- **Club rating:** 5/5 (from 2 members)
+- **Open Library:** https://openlibrary.org/works/OL13646905W
+- **Cover:** https://rwbookclub.com/assets/images/covers/daemon-320.jpg
+- **Canonical page:** https://rwbookclub.com/books/daemon/
+
+## Synopsis
+
+Already an underground sensation, a high-tech thriller for the wireless age that explores the unthinkable consequences of a computer program running without human control—a daemon—designed to dismantle society and bring about a new world order. Technology controls almost everything in our modern-day world, from remote entry on our cars to access to our homes, from the flight controls of our airplanes to the movements of the entire world economy. Thousands of autonomous computer programs, or daemons, make our networked world possible, running constantly in the background of our lives, trafficking e-mail, transferring money, and monitoring power grids. For the most part, daemons are benign, but the same can't always be said for the people who design them. Matthew Sobol was a legendary computer game designer—the architect behind half-a-dozen popular online games. His premature death depressed both gamers and his company's stock price. But Sobol's fans aren't the only ones to note his passing. When his obituary is posted online, a previously dormant daemon activates, initiating a chain of events intended to unravel the fabric of our hyper-efficient, interconnected world. With Sobol's secrets buried along with him, and as new layers of his daemon are unleashed at every turn, it's up to an unlikely alliance to decipher his intricate plans and wrest the world from the grasp of a nameless, faceless enemy—or learn to live in a society in which we are no longer in control... Computer technology expert Daniel Suarez blends haunting high-tech realism with gripping suspense in an authentic, complex thriller in the tradition of Michael Crichton, Neal Stephenson, and William Gibson.
+
+## Reviews
+
+- Jamie — 5/5
+
+- Loren — 5/5
+
+## Related books
+
+- Freedom™ (By the same author)
+  https://rwbookclub.com/books/freedom-tm.txt
+- The Master Switch (Shared themes: Long now manual for civilization)
+  https://rwbookclub.com/books/the-master-switch.txt
+- The Box (Shared themes: International economic integration)
+  https://rwbookclub.com/books/the-box.txt
+- Army of None (Technology)
+  https://rwbookclub.com/books/army-of-none.txt
+- Life After Google (Technology)
+  https://rwbookclub.com/books/life-after-google.txt
+- Beautiful Evidence (Technology)
+  https://rwbookclub.com/books/beautiful-evidence.txt

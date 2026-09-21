@@ -1,0 +1,37 @@
+# Wetware: A Computer in Every Living Cell
+
+- **Author:** Dennis Bray
+- **Read:** July 2010
+- **Topic:** Science and Math
+- **Subjects:** Cytology, Cell interaction, Molecular biology, Computational biology, Cell Biology, Cell Physiological Phenomena
+- **Published:** 2009
+- **Pages:** 267
+- **Picked by:** Tom
+- **ISBN-13:** 9780300141733
+- **Club rating:** 3/5 (from 1 member)
+- **Open Library:** https://openlibrary.org/works/OL16018523W
+- **Cover:** https://rwbookclub.com/assets/images/covers/wetware-331.jpg
+- **Canonical page:** https://rwbookclub.com/books/wetware/
+
+## Synopsis
+
+"How does a single-cell creature, such as an amoeba, lead such a sophisticated life? How does it hunt living prey, respond to lights, sounds, and smells, and display complex sequences of movements without the benefit of a nervous system? This book offers a startling and original answer. The author taps the findings of the new discipline of systems biology to show that the internal chemistry of living cells is a form of computation. Cells are built out of molecular circuits that perform logical operations, as electronic devices do, but with unique properties. Bray argues that the computational juice of cells provides the basis of all the distinctive properties of living systems: it allows organisms to embody in their internal structure an image of the world, and this accounts for their adaptability, responsiveness, and intelligence."--Book jacket.
+
+## Reviews
+
+- Jamie — 3/5
+
+## Related books
+
+- The Epigenetics Revolution (Science and Math)
+  https://rwbookclub.com/books/the-epigenetics-revolution.txt
+- Antifragile (Science and Math)
+  https://rwbookclub.com/books/antifragile.txt
+- The Selfish Gene (Science and Math)
+  https://rwbookclub.com/books/the-selfish-gene.txt
+- Mama's Last Hug (Science and Math)
+  https://rwbookclub.com/books/mama-s-last-hug.txt
+- Scale (Science and Math)
+  https://rwbookclub.com/books/scale.txt
+- Superforecasting (Science and Math)
+  https://rwbookclub.com/books/superforecasting.txt
