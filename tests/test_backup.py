@@ -50,6 +50,24 @@ def test_backup_retention_prunes_oldest(fresh_db, monkeypatch, tmp_path):
     assert "oliver-2026-06-29.db.gz" in kept
 
 
+def test_backup_warns_when_the_prior_successful_snapshot_disappeared(
+    fresh_db, monkeypatch, tmp_path
+):
+    _point_at(monkeypatch, tmp_path)
+    fresh_db.set_job_state(
+        backup.JOB_KEY,
+        {"date": "2026-06-28", "file": "oliver-2026-06-28.db.gz", "bytes": 123},
+    )
+
+    assert backup.run()
+
+    warnings = fresh_db.pending_activity(limit=5)
+    assert any(
+        row["kind"] == "warning" and row["title"] == "Offsite backup retention degraded"
+        for row in warnings
+    )
+
+
 def test_backup_disabled_and_failure_paths(fresh_db, monkeypatch, tmp_path):
     monkeypatch.setattr(config, "OFFSITE_BACKUP_ENABLED", False)
     assert backup.run() is None

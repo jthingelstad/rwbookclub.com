@@ -9,8 +9,10 @@ Mechanics: the hourly scheduler calls `run()` on every tick; a `job_state['offsi
 date gate makes it once per club-local day, whenever the first tick after midnight happens to
 land (no fixed hour — a Mac asleep at 3am still gets its backup at 9). The snapshot uses
 sqlite3's online backup API (consistent under WAL, same as admin.sh), gzips to ~3-4 MB, and
-prunes to the newest OLIVER_OFFSITE_BACKUP_KEEP files. Success is quiet (one INFO line);
-failure posts a warning to #oliver-log via db.add_activity so it can't rot silently.
+prunes to the newest OLIVER_OFFSITE_BACKUP_KEEP files. Success is quiet (one INFO line),
+unless the prior successful snapshot disappeared before the next run; that recovery-retention
+loss posts a warning to #oliver-log. Write failures do the same, so neither condition can rot
+silently.
 """
 
 from __future__ import annotations
@@ -57,6 +59,13 @@ def run(*, force: bool = False) -> dict | None:
         security.set_private_umask()
         target.mkdir(parents=True, exist_ok=True, mode=security.PRIVATE_DIR_MODE)
         security.secure_directory_tree(target)
+        # A fresh backup alone is not enough to prove recoverability. If the last successful
+        # copy disappeared between daily runs, preserve the new snapshot but make that external
+        # retention loss visible to the operator.
+        previous_file = state.get("file")
+        previous_missing = bool(
+            previous_file and state.get("date") != today and not (target / previous_file).is_file()
+        )
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             tmp_path = Path(tmp.name)
         try:
@@ -75,6 +84,12 @@ def run(*, force: bool = False) -> dict | None:
 
         size = (target / name).stat().st_size
         db.set_job_state(JOB_KEY, {"date": today, "file": name, "bytes": size})
+        if previous_missing:
+            db.add_activity(
+                "warning",
+                "Offsite backup retention degraded",
+                f"Previous successful snapshot {previous_file} was missing before {name} ran.",
+            )
         log.info(
             "offsite backup written: %s (%.1f MB, keeping %d)",
             target / name,
