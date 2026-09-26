@@ -147,6 +147,8 @@ def test_postscript_prompt_has_grounding_and_candidates():
     assert "Klara and the Sun" in p and "Kazuo Ishiguro" in p  # candidate + author fed in
     assert "The Remains of the Day" in p  # notable works → search targeting
     assert "web_search" in p and "LEAVE IT OUT" in p  # grounding rails
+    assert "relevant even when polarizing" in p
+    assert "Who picked the book is club history, not evidence of endorsement" in p
     assert "<email>" in p and "## " in p  # format contract
 
 

@@ -69,7 +69,9 @@ def test_compose_falls_back_on_error(monkeypatch):
     assert out == "TEMPLATE"
 
 
-def test_generate_is_stateless(monkeypatch):
+def test_generate_is_stateless_but_receives_club_memory(fresh_db, monkeypatch):
+    captured = {}
+
     class _Usage:
         input_tokens = output_tokens = 1
         cache_read_input_tokens = cache_creation_input_tokens = 0
@@ -86,14 +88,23 @@ def test_generate_is_stateless(monkeypatch):
         class messages:
             @staticmethod
             def create(**kwargs):
+                captured.update(kwargs)
                 return _Resp()
 
     monkeypatch.setattr(oliver, "_get_client", lambda: _Client())
+    oliver.db.add_memory(
+        "Keep public associations separate from member motives.",
+        scope="club",
+        source="reflection",
+    )
     logged = []
     monkeypatch.setattr(oliver.db, "log_message", lambda *a, **k: logged.append(a))
     out = oliver.generate("write the topic email")
     assert out == "DRAFT"
     assert logged == []  # stateless: reads no history, persists nothing
+    prompt = captured["messages"][0]["content"]
+    assert "Club lore you've noted" in prompt
+    assert "Keep public associations separate from member motives." in prompt
 
 
 def test_compose_falls_back_on_empty_completion(monkeypatch):

@@ -174,6 +174,16 @@ def test_consolidate_club_scope(fresh_db, monkeypatch):
     assert "December meeting" in club[0]["note"]
 
 
+def test_club_reflection_keeps_one_member_feedback_bounded():
+    prompt = reflection.CLUB_SYSTEM
+    assert "not a club decision, norm, or consensus" in prompt
+    assert "keep public associations separate from any member's motive or endorsement" in prompt
+    assert "without a blanket ban" in prompt
+    assert "only when the group or admin explicitly decides it" in prompt
+    assert "store the reusable editorial lesson, not an incident recap" in prompt
+    assert "relevance is not endorsement" in prompt
+
+
 def test_club_provenance_protected(fresh_db, monkeypatch):
     protected = db.add_memory("Admin-curated club fact", scope="club", source="admin")
     monkeypatch.setattr(
