@@ -84,7 +84,7 @@ HEALTH_DIGEST_ENABLED = os.environ.get("OLIVER_HEALTH_DIGEST_ENABLED", "1") not 
 HEALTH_DIGEST_WEEKDAY = int(os.environ.get("OLIVER_HEALTH_DIGEST_WEEKDAY") or 0)  # Monday
 HEALTH_DIGEST_HOUR = int(os.environ.get("OLIVER_HEALTH_DIGEST_HOUR") or 8)  # 8am club time
 
-# Daily off-machine DB backup → iCloud Drive (agent/backup.py; iCloud syncs it off the Mac).
+# Weekly off-machine DB backup → iCloud Drive (agent/backup.py; iCloud syncs it off the Mac).
 # ON by default; the directory default is the Mac's iCloud Drive root + Oliver/backups.
 OFFSITE_BACKUP_ENABLED = os.environ.get("OLIVER_OFFSITE_BACKUP_ENABLED", "1") not in {
     "0",
@@ -95,7 +95,8 @@ OFFSITE_BACKUP_DIR = os.environ.get(
     "OLIVER_OFFSITE_BACKUP_DIR",
     "~/Library/Mobile Documents/com~apple~CloudDocs/Oliver/backups",
 )
-OFFSITE_BACKUP_KEEP = int(os.environ.get("OLIVER_OFFSITE_BACKUP_KEEP") or 14)
+OFFSITE_BACKUP_KEEP = int(os.environ.get("OLIVER_OFFSITE_BACKUP_KEEP") or 3)
+OFFSITE_BACKUP_INTERVAL_DAYS = 7
 
 # Oliver's own club_members row (the "sixth member": public profile, webapp login). Human-only
 # mechanics — roll calls, check-ins, outreach, audits, taste lenses — must exclude this slug

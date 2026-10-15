@@ -8,7 +8,7 @@ worst case — the old Mac is gone and all you have is GitHub + iCloud + your pa
 | Thing | Where it lives |
 |---|---|
 | All code, site templates, docs | GitHub `jthingelstad/rwbookclub.com` (`main`) |
-| **The club record + Oliver's memory** (`oliver.db`) | iCloud Drive → `Oliver/backups/oliver-<date>.db.gz` (daily, 14 kept) |
+| **The club record + Oliver's memory** (`oliver.db`) | iCloud Drive → `Oliver/backups/oliver-<date>.db.gz` (weekly, 3 kept) |
 | Secrets (`.env` values) | Your password manager (names listed in `.env.example`) |
 | The public site | Already live on GitHub Pages (`gh-pages`) — it keeps serving while you rebuild |
 | Corpus, covers, author images | Regenerated from the DB (`corpus_gen`, `enrich`) — nothing to restore |
@@ -65,11 +65,12 @@ worst case — the old Mac is gone and all you have is GitHub + iCloud + your pa
 
 ## What you lose in the worst case
 
-At most one day of Oliver's conversational state (since the last nightly snapshot). The club
-record itself (books/meetings/reviews) changes slowly, so effectively nothing.
+Recovery reaches the last successful weekly snapshot. With backups running normally, up to
+seven days of club-record changes and Oliver's conversational state can be lost; a failed or
+missed backup can extend that window.
 
 ## Ongoing safety (already automated)
 
-- **Daily**: gzipped snapshot → iCloud (`agent/backup.py`, scheduler-driven, 14 kept).
+- **Weekly**: gzipped snapshot → iCloud (`agent/backup.py`, scheduler-driven, 3 kept). Due seven club-local days after the last successful backup; a sleeping Mac catches up at the next scheduler tick. A failed attempt does not advance the gate.
 - **Weekly**: health digest email to the admin — a MISSING Monday email is the alarm.
 - **On failure**: backup/enrichment problems post warnings to #oliver-log.

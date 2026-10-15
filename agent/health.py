@@ -97,7 +97,10 @@ def digest_email(facts: dict) -> tuple[str, str]:
         facts["warnings7d"] == 0
         and not delivery_alerts
         and not job_alerts
-        and (facts["backupAgeDays"] is not None and facts["backupAgeDays"] <= 1)
+        and (
+            facts["backupAgeDays"] is not None
+            and facts["backupAgeDays"] <= config.OFFSITE_BACKUP_INTERVAL_DAYS
+        )
     )
     opener = oliver.compose(
         "one or two sentences opening your weekly health report to Jamie — your own status, "
@@ -114,7 +117,10 @@ def digest_email(facts: dict) -> tuple[str, str]:
         + (f" ({facts['backupAgeDays']}d old)" if facts["backupAgeDays"] is not None else "")
         # explicit None check: a 0-day-old backup is the GOOD case, and `0 or 99` would flag it
         + (
-            " ⚠️" if (99 if facts["backupAgeDays"] is None else facts["backupAgeDays"]) > 1 else " ✓"
+            " ⚠️"
+            if facts["backupAgeDays"] is None
+            or facts["backupAgeDays"] > config.OFFSITE_BACKUP_INTERVAL_DAYS
+            else " ✓"
         ),
         f"- **Warnings (7d)**: {facts['warnings7d']}"
         + (" ✓" if not facts["warnings7d"] else " ⚠️ — " + "; ".join(facts["recentWarnings"])),

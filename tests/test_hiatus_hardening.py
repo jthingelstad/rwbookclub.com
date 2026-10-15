@@ -3,6 +3,8 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+import pytest
+
 from agent import db, health
 from agent.enrich import loop as enrich_loop
 
@@ -151,3 +153,12 @@ def test_digest_flags_stale_backup_and_warnings(fresh_db, monkeypatch):
     subject, body = health.digest_email(health.snapshot())
     assert "⚠️" in subject
     assert "Something broke" in body
+
+
+@pytest.mark.parametrize(("backup_date", "marker"), [("2026-06-22", "✓"), ("2026-06-21", "⚠️")])
+def test_digest_backup_freshness_matches_weekly_cadence(fresh_db, monkeypatch, backup_date, marker):
+    monkeypatch.setattr(health.oliver, "compose", lambda kind, facts, fallback="": fallback)
+    fresh_db.set_job_state("offsite_backup", {"date": backup_date, "file": "snapshot.gz"})
+    _, body = health.digest_email(health.snapshot())
+    backup_line = next(line for line in body.splitlines() if "**Backup**" in line)
+    assert backup_line.endswith(marker)

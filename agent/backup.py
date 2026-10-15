@@ -1,4 +1,4 @@
-"""Daily off-machine backup of oliver.db to iCloud Drive.
+"""Weekly off-machine backup of oliver.db to iCloud Drive.
 
 The local `agent/backups/` snapshots protect against bad migrations, but everything lived on
 one Mac — a dead disk took the club's 23-year record with it. This job writes a consistent
@@ -6,8 +6,8 @@ gzipped snapshot into iCloud Drive (`~/Library/Mobile Documents/com~apple~CloudD
 and iCloud carries it off the machine.
 
 Mechanics: the hourly scheduler calls `run()` on every tick; a `job_state['offsite_backup']`
-date gate makes it once per club-local day, whenever the first tick after midnight happens to
-land (no fixed hour — a Mac asleep at 3am still gets its backup at 9). The snapshot uses
+date gate makes it once every seven club-local days after the last successful backup,
+whenever the first eligible tick lands (a sleeping Mac catches up when awake). The snapshot uses
 sqlite3's online backup API (consistent under WAL, same as admin.sh), gzips to ~3-4 MB, and
 prunes to the newest OLIVER_OFFSITE_BACKUP_KEEP files. Success is quiet (one INFO line),
 unless the prior successful snapshot disappeared before the next run; that recovery-retention
@@ -22,6 +22,7 @@ import logging
 import sqlite3
 import tempfile
 from contextlib import closing
+from datetime import date
 from pathlib import Path
 
 from agent import clock, config, db, security
@@ -43,14 +44,19 @@ def _snapshot_to(dst: Path) -> None:
 
 
 def run(*, force: bool = False) -> dict | None:
-    """One daily off-machine backup. Returns a summary dict when a backup was written,
-    None when disabled or already done today. Raises nothing — failures are logged and
+    """One weekly off-machine backup. Returns a summary dict when a backup was written,
+    None when disabled or not yet due. Raises nothing — failures are logged and
     reported to the activity feed, then swallowed (the scheduler tick must survive)."""
     if not config.OFFSITE_BACKUP_ENABLED:
         return None
-    today = clock.club_today_iso()
+    today_date = clock.club_today()
+    today = today_date.isoformat()
     state = db.get_job_state(JOB_KEY) or {}
-    if not force and state.get("date") == today:
+    try:
+        age_days = (today_date - date.fromisoformat(state["date"])).days
+    except KeyError, TypeError, ValueError:
+        age_days = None
+    if not force and age_days is not None and 0 <= age_days < config.OFFSITE_BACKUP_INTERVAL_DAYS:
         return None
 
     target = _target_dir()
@@ -60,7 +66,7 @@ def run(*, force: bool = False) -> dict | None:
         target.mkdir(parents=True, exist_ok=True, mode=security.PRIVATE_DIR_MODE)
         security.secure_directory_tree(target)
         # A fresh backup alone is not enough to prove recoverability. If the last successful
-        # copy disappeared between daily runs, preserve the new snapshot but make that external
+        # copy disappeared between weekly runs, preserve the new snapshot but make that external
         # retention loss visible to the operator.
         previous_file = state.get("file")
         previous_missing = bool(
