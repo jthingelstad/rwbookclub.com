@@ -1,0 +1,40 @@
+# The Success of Open Source
+
+- **Author:** Steve Weber
+- **Read:** March 2006
+- **Topic:** Technology
+- **Subjects:** Open source software, Computer software, Logiciels libres, 85.20 management information, Open Source, Softwareentwicklung, Softwaremarkt, Open broncode, Programmatuurtechniek, Economische aspecten, Politieke aspecten, Internet (impactos sociais)
+- **Published:** 2004
+- **Pages:** 312
+- **Picked by:** David
+- **ISBN-13:** 9780674012929
+- **Open Library:** https://openlibrary.org/works/OL15840214W
+- **Cover:** https://rwbookclub.com/assets/images/covers/the-success-of-open-source-960.jpg
+- **Canonical page:** https://rwbookclub.com/books/the-success-of-open-source/
+
+## Synopsis
+
+"Much of the innovative programming that powers the Internet, creates operating systems, and produces software is the result of "open source" code, that is, code that is freely distributed - as opposed to being kept secret - by those who write it. Leaving source code open has generated some of the most sophisticated developments in computer technology, including, most notably, Linux and Apache, which pose a significant challenge to Microsoft in the marketplace.
+
+As Steven Weber discusses, open source's success in a highly competitive industry has subverted many assumptions about how businesses are run, and how intellectual products are created and protected."
+
+"Traditionally, intellectual property law has allowed companies to control knowledge and has guarded the rights of the innovator, at the expense of industry-wide cooperation. In turn, engineers of new software code are richly rewarded; but, as Weber shows, in spite of the conventional wisdom that innovation is driven by the promise of individual and corporate wealth, ensuring the free distribution of code among computer programmers can empower a more effective process for building intellectual products.
+
+In the case of open source, independent programmers - sometimes hundreds or thousands of them - make unpaid contributions to software that develops organically, through trial and error."
+
+"Weber argues that the success of open source is not a freakish exception to economic principles. The open source community is guided by standards, rules, decisionmaking procedures, and sanctioning mechanisms. Weber explains the political and economic dynamics of this mysterious but important market development."--Jacket.
+
+## Related books
+
+- Enshittification (Technology)
+  https://rwbookclub.com/books/enshittification.txt
+- Life After Google (Technology)
+  https://rwbookclub.com/books/life-after-google.txt
+- The Master Switch (Technology)
+  https://rwbookclub.com/books/the-master-switch.txt
+- Beautiful Code (Technology)
+  https://rwbookclub.com/books/beautiful-code.txt
+- Beautiful Evidence (Technology)
+  https://rwbookclub.com/books/beautiful-evidence.txt
+- The Box (Technology)
+  https://rwbookclub.com/books/the-box.txt

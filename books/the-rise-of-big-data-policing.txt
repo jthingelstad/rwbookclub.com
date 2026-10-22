@@ -1,0 +1,32 @@
+# The Rise of Big Data Policing: Surveillance, Race, and the Future of Law Enforcement
+
+- **Author:** Andrew Guthrie Ferguson
+- **Read:** August 2020
+- **Topic:** Politics & Social Sciences
+- **Subjects:** Criminal statistics, Police, Electronic surveillance, Big data, Law enforcement, Racial profiling in law enforcement, Data processing, Discrimination in law enforcement, Data mining in law enforcement
+- **Published:** 2017
+- **Pages:** 259
+- **Picked by:** Jamie
+- **ISBN-13:** 9781479892822
+- **Open Library:** https://openlibrary.org/works/OL19764034W
+- **Cover:** https://rwbookclub.com/assets/images/covers/the-rise-of-big-data-policing-960.jpg
+- **Canonical page:** https://rwbookclub.com/books/the-rise-of-big-data-policing/
+
+## Synopsis
+
+In a high-tech command center in downtown Los Angeles, a digital map lights up with 911 calls, television monitors track breaking news stories, surveillance cameras sweep the streets, and rows of networked computers link analysts and police officers to a wealth of law enforcement intelligence. This is just a glimpse into a future where software predicts future crimes, algorithms generate virtual "most-wanted" lists, and databanks collect personal and biometric information. The Rise of Big Data Policing introduces the cutting-edge technology that is changing how the police do their jobs and shows why it is more important than ever that citizens understand the far-reaching consequences of big data surveillance as a law enforcement tool. Andrew Guthrie Ferguson reveals how these new technologies - viewed as race-neutral and objective - have been eagerly adopted by police departments hoping to distance themselves from claims of racial bias and unconstitutional practices. After a series of high-profile police shootings and federal investigations into systemic police misconduct, and in an era of law enforcement budget cutbacks, data-driven policing has been billed as a way to "turn the page" on racial bias. But behind the data are real people, and difficult questions remain about racial discrimination and the potential to distort constitutional protections. In this first book on big data policing, Ferguson offers an examination of how new technologies will alter the who, where, when and how we police. These new technologies also offer data-driven methods to improve police accountability and to remedy the underlying socio-economic risk factors that encourage crime. The Rise of Big Data Policing is a must read for anyone concerned with how technology will revolutionize law enforcement and its potential threat to the security, privacy, and constitutional rights of citizens. --
+
+## Related books
+
+- Nation of Takers (Politics & Social Sciences)
+  https://rwbookclub.com/books/nation-of-takers.txt
+- Caste (Politics & Social Sciences)
+  https://rwbookclub.com/books/caste.txt
+- The WEIRDest People in the World (Politics & Social Sciences)
+  https://rwbookclub.com/books/the-weirdest-people-in-the-world.txt
+- Flagrant Conduct (Politics & Social Sciences)
+  https://rwbookclub.com/books/flagrant-conduct.txt
+- Republic, Lost (Politics & Social Sciences)
+  https://rwbookclub.com/books/republic-lost.txt
+- Triumph of the City (Politics & Social Sciences)
+  https://rwbookclub.com/books/triumph-of-the-city.txt
