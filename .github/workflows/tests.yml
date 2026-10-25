@@ -58,3 +58,7 @@ jobs:
         env:
           OLIVER_CORPUS_DIR: ${{ runner.temp }}/corpus
         run: npm run build
+      - name: Check the built llms.txt
+        env:
+          LLMS_TXT_REQUIRED: "1"
+        run: node --test website/test/llms-built.test.js

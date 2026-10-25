@@ -66,6 +66,10 @@ nodeAttr enabled in the tailnet ACL (one-time).
 
 Loops and `{% set %}` tags emit a newline per iteration by default. When a loop's only job is to build up a variable (not render output), use `{%-` / `-%}` on every tag in the block, otherwise a full-corpus loop dumps hundreds of blank lines into the output. The `futureBooks` setup block in `website/src/llms*.txt.njk` is the canonical example.
 
+### llms.txt shape
+
+`/llms.txt` keeps the llmstxt.org shape that its reference parser (`llms-txt`) reads: prose and plain lists go above the first `##`, and under any `##` every line is one `- [name](url): notes` item. One other line under a heading (a paragraph, a wrapped item, a list without links) makes the parser fail the whole file. Book names turn brackets into parentheses for the same reason. CI checks the built file after "Build website" (`website/test/llms-built.test.js`; open-web audit G21, 2026-10-25).
+
 ## Data Source
 
 **SQLite (`club_*`) is authoritative** (see top). Airtable was the original store and the seed for

@@ -2,29 +2,14 @@
 permalink: /llms.txt
 eleventyExcludeFromCollections: true
 ---
+{#- The llmstxt.org shape, as its reference parser (llms-txt) reads it: prose
+    and plain lists sit above the first "##", and under a "##" every line is
+    one "- [name](url): notes" link, or the parser fails the whole file (open-web
+    audit G21, 2026-10-25). Names turn brackets into parentheses: the parser
+    ends a name at the first "]", escaped or not. -#}
 # {{ site.title }} — Reading History
 
-> This file is designed for LLM consumption. Paste this URL into any AI
-> chatbot to give it full context about our book club's reading history.
-> Human-readable site: {{ site.url }}
-
-## How to use this archive
-
-- [llms.txt]({{ site.url }}/llms.txt): this file. A compact index of every book,
-  each linked to the detailed text file for that book.
-- [Books]({{ site.url }}/books/): one plain-text file per book,
-  `{{ site.url }}/books/<slug>.txt`, with full metadata, subjects (thematic
-  tags), synopsis, meeting notes, member reviews, and a list of related books.
-  Every book below links its own; fetch the one you care about.
-- [Oliver]({{ site.url }}/oliver/): about Oliver, the club's AI agent (it maintains this archive)
-- [books.json]({{ site.url }}/books.json): structured JSON, one row per book (including
-  subjects and a related-books graph), for analytical or cross-book queries.
-- [Authors]({{ site.url }}/authors/): a page per author, `{{ site.url }}/authors/<slug>/`,
-  with a short bio and the books of theirs the club has read.
-- [Meetings]({{ site.url }}/meetings/): the full meeting timeline (book discussions
-  plus the occasional spouses' dinner, movie night, and book-picking session).
-
-## About the club
+> This file is designed for LLM consumption. Paste this URL into any AI chatbot to give it full context about our book club's reading history. Human-readable site: {{ site.url }}
 
 The R/W Book Club has been meeting since April {{ site.founded }}. The "R/W"
 stands for Read / Write — the members are technically minded and many blog.
@@ -34,12 +19,29 @@ rotate picking the next book and hosting the discussion.
 As of this build there are {{ journey.totalBooks }} books across
 {{ journey.years | length }} years of reading.
 
-## Meeting cadence
+Meeting cadence:
 
 - Meets roughly monthly (about 8 meetings per year)
 - Members rotate picking the next book
 - The picker usually hosts the discussion
 - Meetings are in-person in the Minneapolis–Saint Paul area
+
+Topic distribution:
+
+{{ books | topicSummary | safe }}
+
+The reading history at the end lists every book newest first, one section per
+year. Each entry links the .txt file with the full metadata, synopsis, and
+reviews for that book.
+
+## How to use this archive
+
+- [llms.txt]({{ site.url }}/llms.txt): this file. A compact index of every book, each linked to the detailed text file for that book.
+- [Books]({{ site.url }}/books/): one plain-text file per book, `{{ site.url }}/books/<slug>.txt`, with full metadata, subjects (thematic tags), synopsis, meeting notes, member reviews, and a list of related books. Every book below links its own; fetch the one you care about.
+- [Oliver]({{ site.url }}/oliver/): about Oliver, the club's AI agent (it maintains this archive)
+- [books.json]({{ site.url }}/books.json): structured JSON, one row per book (including subjects and a related-books graph), for analytical or cross-book queries.
+- [Authors]({{ site.url }}/authors/): a page per author, `{{ site.url }}/authors/<slug>/`, with a short bio and the books of theirs the club has read.
+- [Meetings]({{ site.url }}/meetings/): the full meeting timeline (book discussions plus the occasional spouses' dinner, movie night, and book-picking session).
 
 {%- set futureBooks = [] -%}
 {%- for book in books -%}
@@ -51,17 +53,17 @@ As of this build there are {{ journey.totalBooks }} books across
 ## Current book
 {% if futureBooks.length %}
 {% set current = futureBooks[futureBooks.length - 1] %}
-- [{{ current.title | safe | replace("[", "\\[") | replace("]", "\\]") }}{% if current.subtitle %}: {{ current.subtitle | safe | replace("[", "\\[") | replace("]", "\\]") }}{% endif %}]({{ site.url }}/books/{{ current.slug }}.txt): by {{ current.authors | joinNames | safe }} · Meeting {{ current.meetingDate | monthYear }}{% if current.pickerName %} · Picked by {{ current.pickerName }}{% endif %}
+- [{{ current.title | safe | replace("[", "(") | replace("]", ")") }}{% if current.subtitle %}: {{ current.subtitle | safe | replace("[", "(") | replace("]", ")") }}{% endif %}]({{ site.url }}/books/{{ current.slug }}.txt): by {{ current.authors | joinNames | safe }} · Meeting {{ current.meetingDate | monthYear }}{% if current.pickerName %} · Picked by {{ current.pickerName }}{% endif %}
 {% else %}
 {% set current = books[0] %}
-- [{{ current.title | safe | replace("[", "\\[") | replace("]", "\\]") }}{% if current.subtitle %}: {{ current.subtitle | safe | replace("[", "\\[") | replace("]", "\\]") }}{% endif %}]({{ site.url }}/books/{{ current.slug }}.txt): by {{ current.authors | joinNames | safe }} · Read {{ current.meetingDate | monthYear }}{% if current.pickerName %} · Picked by {{ current.pickerName }}{% endif %}
+- [{{ current.title | safe | replace("[", "(") | replace("]", ")") }}{% if current.subtitle %}: {{ current.subtitle | safe | replace("[", "(") | replace("]", ")") }}{% endif %}]({{ site.url }}/books/{{ current.slug }}.txt): by {{ current.authors | joinNames | safe }} · Read {{ current.meetingDate | monthYear }}{% if current.pickerName %} · Picked by {{ current.pickerName }}{% endif %}
 {% endif %}
 
 {% if futureBooks.length > 1 %}
 ## Coming up
 {% for book in futureBooks | reverse %}
 {% if loop.index0 > 0 %}
-- [{{ book.title | safe | replace("[", "\\[") | replace("]", "\\]") }}{% if book.subtitle %}: {{ book.subtitle | safe | replace("[", "\\[") | replace("]", "\\]") }}{% endif %}]({{ site.url }}/books/{{ book.slug }}.txt): by {{ book.authors | joinNames | safe }} · {{ book.meetingDate | monthYear }}{% if book.pickerName %} · Picked by {{ book.pickerName }}{% endif %}
+- [{{ book.title | safe | replace("[", "(") | replace("]", ")") }}{% if book.subtitle %}: {{ book.subtitle | safe | replace("[", "(") | replace("]", ")") }}{% endif %}]({{ site.url }}/books/{{ book.slug }}.txt): by {{ book.authors | joinNames | safe }} · {{ book.meetingDate | monthYear }}{% if book.pickerName %} · Picked by {{ book.pickerName }}{% endif %}
 {% endif %}
 {% endfor %}
 {% endif %}
@@ -71,19 +73,11 @@ As of this build there are {{ journey.totalBooks }} books across
 - [{{ m.name }}]({{ site.url }}/members/{{ m.slug }}/){% if m.pickedCount %}: {{ m.pickedCount }} picks{% endif %}
 {%- endfor %}
 
-## Topic distribution
+{%- for yr in journey.years %}
 
-{{ books | topicSummary | safe }}
-
-## Reading history (compact)
-
-Books are listed newest-first, grouped by year. Each entry links the .txt
-file with the full metadata, synopsis, and reviews for that book.
-{% for yr in journey.years %}
-
-### {{ yr.year }}
+## {{ yr.year }}
 {% for book in yr.books %}
-- [{{ book.title | safe | replace("[", "\\[") | replace("]", "\\]") }}{% if book.subtitle %}: {{ book.subtitle | safe | replace("[", "\\[") | replace("]", "\\]") }}{% endif %}]({{ site.url }}/books/{{ book.slug }}.txt): by {{ book.authors | joinNames | safe }}{% if book.topic %} · {{ book.topic | safe }}{% endif %}{% if book.fiction %} · Fiction{% endif %}{% if book.pageCount %} · {{ book.pageCount }}pp{% endif %}{% if book.publicationYear %} · Published {{ book.publicationYear }}{% endif %}{% if book.pickerName %} · Picked by {{ book.pickerName }}{% endif %}
+- [{{ book.title | safe | replace("[", "(") | replace("]", ")") }}{% if book.subtitle %}: {{ book.subtitle | safe | replace("[", "(") | replace("]", ")") }}{% endif %}]({{ site.url }}/books/{{ book.slug }}.txt): by {{ book.authors | joinNames | safe }}{% if book.topic %} · {{ book.topic | safe }}{% endif %}{% if book.fiction %} · Fiction{% endif %}{% if book.pageCount %} · {{ book.pageCount }}pp{% endif %}{% if book.publicationYear %} · Published {{ book.publicationYear }}{% endif %}{% if book.pickerName %} · Picked by {{ book.pickerName }}{% endif %}
 
 {%- endfor %}
 {%- endfor %}
