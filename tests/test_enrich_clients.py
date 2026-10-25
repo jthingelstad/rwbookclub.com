@@ -276,3 +276,27 @@ def test_select_gap_fills_and_filters():
         e["id"] for e in loop._select(items, done, id_key="id", force=True, slug="b", limit=None)
     ] == [2]
     assert len(loop._select(items, set(), id_key="id", force=True, slug=None, limit=2)) == 2
+
+
+def test_plain_text_drops_open_library_markup():
+    raw = (
+        "He wrote *Understanding Comics* (1993) and **Making Comics**.\r\n\r\n"
+        "See [TED talk](http://www.ted.com/talks/x.html) and [Wikipedia][1].\r\n\r\n\r\n"
+        "  [1]: https://en.wikipedia.org/wiki/X\r\n"
+        'Photo by <a href="//commons.wikimedia.org">A &amp; B</a>.'
+    )
+    assert ol.plain_text(raw) == (
+        "He wrote Understanding Comics (1993) and Making Comics.\n\n"
+        "See TED talk and Wikipedia.\n\nPhoto by A & B."
+    )
+
+
+def test_plain_text_keeps_lone_asterisks_and_empties():
+    assert ol.plain_text("5 * 3 = 15, rated 4*") == "5 * 3 = 15, rated 4*"
+    assert ol.plain_text("  ") is None
+    assert ol.plain_text(None) is None
+
+
+def test_author_facts_bio_is_plain_text():
+    facts = ol.author_facts({"bio": {"type": "/type/text", "value": "Author of *Lila*."}})
+    assert facts["bio"] == "Author of Lila."
