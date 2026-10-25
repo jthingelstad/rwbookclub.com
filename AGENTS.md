@@ -47,7 +47,7 @@ Oliver writes nothing to it. The site is built + deployed **locally** to the **`
   into `_site`).
 - **Output:** `website/_site/` → force-pushed to `gh-pages`, served by GitHub Pages.
   **One-time manual setting:** Settings → Pages → Source → *Deploy from a branch* → `gh-pages` / `(root)`.
-- **Pages:** `/` (home), `/books/<slug>/`, `/members/<slug>/`, `/lists/`, `/lists/<slug>/`, `/about/`, `/stats/`, `/feed.xml`, `/llms.txt`, `/llms-full.txt`, `/robots.txt`, `/sitemap.xml`
+- **Pages:** `/` (home), `/books/<slug>/`, `/books/<slug>.txt`, `/members/<slug>/`, `/authors/<slug>/`, `/lists/`, `/lists/<slug>/`, `/meetings/`, `/about/`, `/stats/`, `/oliver/`, `/feed.xml`, `/meetings.ics`, `/books.json`, `/next.json`, `/llms.txt`, `/robots.txt`, `/sitemap.xml` (the per-book `.txt` files replaced `/llms-full.txt` on 2026-04-17)
 
 ## Member + admin web app (`agent/webapp/`)
 
