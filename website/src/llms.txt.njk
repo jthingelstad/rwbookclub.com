@@ -10,18 +10,18 @@ eleventyExcludeFromCollections: true
 
 ## How to use this archive
 
-- `{{ site.url }}/llms.txt` — this file. Compact index of every book, with
-  a URL to the detailed text file for each one.
-- `{{ site.url }}/books/<slug>.txt` — one plain-text file per book with
-  full metadata, subjects (thematic tags), synopsis, meeting notes, member
-  reviews, and a list of related books. Fetch these individually for the book
-  you care about.
-- `{{ site.url }}/oliver/` — about Oliver, the club's AI agent (it maintains this archive)
-- `{{ site.url }}/books.json` — structured JSON, one row per book (including
+- [llms.txt]({{ site.url }}/llms.txt): this file. A compact index of every book,
+  each linked to the detailed text file for that book.
+- [Books]({{ site.url }}/books/): one plain-text file per book,
+  `{{ site.url }}/books/<slug>.txt`, with full metadata, subjects (thematic
+  tags), synopsis, meeting notes, member reviews, and a list of related books.
+  Every book below links its own; fetch the one you care about.
+- [Oliver]({{ site.url }}/oliver/): about Oliver, the club's AI agent (it maintains this archive)
+- [books.json]({{ site.url }}/books.json): structured JSON, one row per book (including
   subjects and a related-books graph), for analytical or cross-book queries.
-- `{{ site.url }}/authors/<slug>/` — a page per author, with a short bio and
-  the books of theirs the club has read.
-- `{{ site.url }}/meetings/` — the full meeting timeline (book discussions
+- [Authors]({{ site.url }}/authors/): a page per author, `{{ site.url }}/authors/<slug>/`,
+  with a short bio and the books of theirs the club has read.
+- [Meetings]({{ site.url }}/meetings/): the full meeting timeline (book discussions
   plus the occasional spouses' dinner, movie night, and book-picking session).
 
 ## About the club
@@ -51,30 +51,24 @@ As of this build there are {{ journey.totalBooks }} books across
 ## Current book
 {% if futureBooks.length %}
 {% set current = futureBooks[futureBooks.length - 1] %}
-- **{{ current.title | safe }}{% if current.subtitle %}: {{ current.subtitle | safe }}{% endif %}** by {{ current.authors | joinNames | safe }}
-  {{ site.url }}/books/{{ current.slug }}.txt
-  Meeting {{ current.meetingDate | monthYear }}{% if current.pickerName %} · Picked by {{ current.pickerName }}{% endif %}
+- [{{ current.title | safe | replace("[", "\\[") | replace("]", "\\]") }}{% if current.subtitle %}: {{ current.subtitle | safe | replace("[", "\\[") | replace("]", "\\]") }}{% endif %}]({{ site.url }}/books/{{ current.slug }}.txt): by {{ current.authors | joinNames | safe }} · Meeting {{ current.meetingDate | monthYear }}{% if current.pickerName %} · Picked by {{ current.pickerName }}{% endif %}
 {% else %}
 {% set current = books[0] %}
-- **{{ current.title | safe }}{% if current.subtitle %}: {{ current.subtitle | safe }}{% endif %}** by {{ current.authors | joinNames | safe }}
-  {{ site.url }}/books/{{ current.slug }}.txt
-  Read {{ current.meetingDate | monthYear }}{% if current.pickerName %} · Picked by {{ current.pickerName }}{% endif %}
+- [{{ current.title | safe | replace("[", "\\[") | replace("]", "\\]") }}{% if current.subtitle %}: {{ current.subtitle | safe | replace("[", "\\[") | replace("]", "\\]") }}{% endif %}]({{ site.url }}/books/{{ current.slug }}.txt): by {{ current.authors | joinNames | safe }} · Read {{ current.meetingDate | monthYear }}{% if current.pickerName %} · Picked by {{ current.pickerName }}{% endif %}
 {% endif %}
 
 {% if futureBooks.length > 1 %}
 ## Coming up
 {% for book in futureBooks | reverse %}
 {% if loop.index0 > 0 %}
-- **{{ book.title | safe }}{% if book.subtitle %}: {{ book.subtitle | safe }}{% endif %}** by {{ book.authors | joinNames | safe }}
-  {{ site.url }}/books/{{ book.slug }}.txt
-  {{ book.meetingDate | monthYear }}{% if book.pickerName %} · Picked by {{ book.pickerName }}{% endif %}
+- [{{ book.title | safe | replace("[", "\\[") | replace("]", "\\]") }}{% if book.subtitle %}: {{ book.subtitle | safe | replace("[", "\\[") | replace("]", "\\]") }}{% endif %}]({{ site.url }}/books/{{ book.slug }}.txt): by {{ book.authors | joinNames | safe }} · {{ book.meetingDate | monthYear }}{% if book.pickerName %} · Picked by {{ book.pickerName }}{% endif %}
 {% endif %}
 {% endfor %}
 {% endif %}
 
 ## Current members
 {% for m in currentMembers %}
-- {{ m.name }}{% if m.pickedCount %} ({{ m.pickedCount }} picks){% endif %}
+- [{{ m.name }}]({{ site.url }}/members/{{ m.slug }}/){% if m.pickedCount %}: {{ m.pickedCount }} picks{% endif %}
 {%- endfor %}
 
 ## Topic distribution
@@ -83,15 +77,13 @@ As of this build there are {{ journey.totalBooks }} books across
 
 ## Reading history (compact)
 
-Books are listed newest-first, grouped by year. Follow the .txt URL under
-each entry for the full metadata, synopsis, and reviews for that book.
+Books are listed newest-first, grouped by year. Each entry links the .txt
+file with the full metadata, synopsis, and reviews for that book.
 {% for yr in journey.years %}
 
 ### {{ yr.year }}
 {% for book in yr.books %}
-- **{{ book.title | safe }}{% if book.subtitle %}: {{ book.subtitle | safe }}{% endif %}** by {{ book.authors | joinNames | safe }}
-  {{ site.url }}/books/{{ book.slug }}.txt
-  {{ book.topic | safe }}{% if book.fiction %} · Fiction{% endif %}{% if book.pageCount %} · {{ book.pageCount }}pp{% endif %}{% if book.publicationYear %} · Published {{ book.publicationYear }}{% endif %}{% if book.pickerName %} · Picked by {{ book.pickerName }}{% endif %}
+- [{{ book.title | safe | replace("[", "\\[") | replace("]", "\\]") }}{% if book.subtitle %}: {{ book.subtitle | safe | replace("[", "\\[") | replace("]", "\\]") }}{% endif %}]({{ site.url }}/books/{{ book.slug }}.txt): by {{ book.authors | joinNames | safe }}{% if book.topic %} · {{ book.topic | safe }}{% endif %}{% if book.fiction %} · Fiction{% endif %}{% if book.pageCount %} · {{ book.pageCount }}pp{% endif %}{% if book.publicationYear %} · Published {{ book.publicationYear }}{% endif %}{% if book.pickerName %} · Picked by {{ book.pickerName }}{% endif %}
 
 {%- endfor %}
 {%- endfor %}
