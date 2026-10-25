@@ -11,6 +11,7 @@ All fetches are best-effort via ``agent.enrich.http`` (None on failure).
 
 from __future__ import annotations
 
+import html
 import re
 
 from agent.enrich import http
@@ -123,6 +124,35 @@ def _year(text) -> int | None:
     return int(m.group(1)) if m else None
 
 
+# ── Text ─────────────────────────────────────────────────────────────────────
+# Open Library writes bios and descriptions in Markdown (and some carry pasted HTML),
+# but the site and the corpus show them as plain text, so the syntax would print
+# literally. Keep the words and paragraph breaks; drop the markup and reference lists.
+_REF_DEF = re.compile(r"^[ \t]*\[[^\]]+\]:[ \t]*\S.*$", re.M)
+_LINK = re.compile(r"\[([^\]]+)\](?:\([^)]*\)|\[[^\]]*\])")
+_STRONG = re.compile(r"\*\*(\S(?:.*?\S)?)\*\*", re.S)
+_EM = re.compile(r"(?<![\w*])\*(\S(?:[^*]*?\S)?)\*(?![\w*])")
+_BREAK = re.compile(r"<br\s*/?>", re.I)
+_BLOCK_END = re.compile(r"</(?:p|div|li|h[1-6]|blockquote)\s*>", re.I)
+_TAG = re.compile(r"<[^>]*>")
+
+
+def plain_text(text) -> str | None:
+    """Markdown/HTML from Open Library as the plain text the site prints."""
+    if not text:
+        return None
+    s = str(text).replace("\r\n", "\n").replace("\r", "\n")
+    s = _REF_DEF.sub("", s)
+    s = _LINK.sub(r"\1", s)
+    s = _STRONG.sub(r"\1", s)
+    s = _EM.sub(r"\1", s)
+    s = _BLOCK_END.sub("\n\n", _BREAK.sub("\n", s))
+    s = html.unescape(_TAG.sub("", s))
+    s = re.sub(r"[ \t]+\n", "\n", s)
+    s = re.sub(r"\n{3,}", "\n\n", s)
+    return s.strip() or None
+
+
 # ── Work + editions ──────────────────────────────────────────────────────────
 def work(ol_key: str | None) -> dict | None:
     """Fetch an OL Work record (/works/OL..W.json)."""
@@ -135,7 +165,7 @@ def _work_description(w: dict) -> str | None:
     desc = w.get("description")
     if isinstance(desc, dict):
         desc = desc.get("value")
-    return (desc or None) and str(desc).strip() or None
+    return plain_text(desc)
 
 
 def _work_author_keys(w: dict) -> list[str]:
@@ -190,7 +220,7 @@ def author_facts(rec: dict | None) -> dict:
     remote = rec.get("remote_ids") or {}
     photos = [p for p in (rec.get("photos") or []) if isinstance(p, int) and p > 0]
     return {
-        "bio": (bio or None) and str(bio).strip() or None,
+        "bio": plain_text(bio),
         "birth_year": _year(rec.get("birth_date")),
         "death_year": _year(rec.get("death_date")),
         "website": website,
