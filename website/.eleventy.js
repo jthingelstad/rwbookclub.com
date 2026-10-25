@@ -1,5 +1,6 @@
 const markdownIt = require("markdown-it");
 const { assertCorpusContract } = require("./lib/corpus");
+const { rfc822Date } = require("./lib/rss");
 // Member-authored review bodies are Markdown. html:false escapes any raw HTML in the source, so
 // rendering member content is XSS-safe; linkify turns bare URLs into links; breaks honors newlines.
 const _reviewMd = markdownIt({ html: false, linkify: true, breaks: true });
@@ -95,11 +96,8 @@ module.exports = function (eleventyConfig) {
     return reviews.filter((r) => r.member === memberSlug);
   });
 
-  // RFC-822 / RFC-2822 date for the RSS feed
-  eleventyConfig.addFilter("rfc822Date", (iso) => {
-    if (!iso) return "";
-    return new Date(iso).toUTCString();
-  });
+  // RFC-822 / RFC-2822 date for the RSS feed; a bare meeting date is stamped at noon UTC (lib/rss.js)
+  eleventyConfig.addFilter("rfc822Date", rfc822Date);
 
   // Format a number with locale separators: 54321 → "54,321"
   eleventyConfig.addFilter("localeNumber", (n) => {
