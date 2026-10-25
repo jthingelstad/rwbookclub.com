@@ -6,8 +6,10 @@ pagination:
 permalink: "/books/{{ book.slug }}/"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ book.title }}"
+  title: "{{ book.title | safe }}"
   textAlternate: "/books/{{ book.slug }}.txt"
+  description: "{{ book.title | safe }}{% if book.authors and book.authors.length %} by {{ book.authors | joinNames | safe }}{% endif %}. {% if book.isUpcoming %}The R/W Book Club's next book, for {{ book.meetingDate | monthYear }}.{% elif book.meetingDate %}The R/W Book Club read it in {{ book.meetingDate | monthYear }}{% if book.pickerNames %}, picked by {{ book.pickerNames | joinNames | safe }}{% endif %}.{% else %}On the R/W Book Club's shelf.{% endif %}"
+  ogImage: "{% if book.hasCover and book.coverWidths %}/assets/images/covers/{{ book.slug }}-{{ book.coverWidths | last }}.jpg{% endif %}"
 ---
 
 <article class="book-detail">

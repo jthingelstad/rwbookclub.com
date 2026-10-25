@@ -6,7 +6,8 @@ pagination:
 permalink: "/lists/{{ list.slug }}/"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ list.name }}"
+  title: "{{ list.name | safe }}"
+  description: "{% if list.description %}{{ list.description | safe }}{% else %}{{ list.name | safe }}, {% if list.scope == 'club' %}a club list{% else %}{{ list.ownerName | safe }}'s list{% endif %} from the R/W Book Club.{% endif %}"
 ---
 
 <article class="list-detail">

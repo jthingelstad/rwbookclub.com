@@ -6,7 +6,9 @@ pagination:
 permalink: "/authors/{{ author.slug }}/"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ author.name }}"
+  title: "{{ author.name | safe }}"
+  description: "{% if author.books.length == 1 %}The R/W Book Club read {{ author.name | safe }}'s {{ author.books[0].title | safe }}{% if author.books[0].year %} in {{ author.books[0].year }}{% endif %}.{% else %}The R/W Book Club has read {{ author.books.length }} books by {{ author.name | safe }}: {% for b in author.books %}{{ b.title | safe }}{% if not loop.last %}, {% endif %}{% endfor %}.{% endif %}"
+  ogImage: "{% if author.hasPhoto and author.photoWidths %}/assets/images/authors/{{ author.slug }}-{{ author.photoWidths | last }}.jpg{% endif %}"
 ---
 
 <article class="author-detail">
