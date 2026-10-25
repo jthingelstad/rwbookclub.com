@@ -6,7 +6,8 @@ pagination:
 permalink: "/members/{{ member.slug }}/"
 layout: layouts/base.njk
 eleventyComputed:
-  title: "{{ member.name }}"
+  title: "{{ member.name | safe }}"
+  description: "{{ member.name | safe }}'s picks, reviews and lists in the R/W Book Club, which has been reading together since April 2003."
 ---
 
 <article class="member-detail">
