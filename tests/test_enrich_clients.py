@@ -291,6 +291,13 @@ def test_plain_text_drops_open_library_markup():
     )
 
 
+def test_plain_text_keeps_html_paragraphs_and_line_breaks_apart():
+    raw = "<p>First paragraph.</p><p>Second paragraph.</p>First line<br>Second line<BR/>Third"
+    assert ol.plain_text(raw) == (
+        "First paragraph.\n\nSecond paragraph.\n\nFirst line\nSecond line\nThird"
+    )
+
+
 def test_plain_text_keeps_lone_asterisks_and_empties():
     assert ol.plain_text("5 * 3 = 15, rated 4*") == "5 * 3 = 15, rated 4*"
     assert ol.plain_text("  ") is None

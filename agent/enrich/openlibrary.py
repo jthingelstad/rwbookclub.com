@@ -132,6 +132,8 @@ _REF_DEF = re.compile(r"^[ \t]*\[[^\]]+\]:[ \t]*\S.*$", re.M)
 _LINK = re.compile(r"\[([^\]]+)\](?:\([^)]*\)|\[[^\]]*\])")
 _STRONG = re.compile(r"\*\*(\S(?:.*?\S)?)\*\*", re.S)
 _EM = re.compile(r"(?<![\w*])\*(\S(?:[^*]*?\S)?)\*(?![\w*])")
+_BREAK = re.compile(r"<br\s*/?>", re.I)
+_BLOCK_END = re.compile(r"</(?:p|div|li|h[1-6]|blockquote)\s*>", re.I)
 _TAG = re.compile(r"<[^>]*>")
 
 
@@ -144,6 +146,7 @@ def plain_text(text) -> str | None:
     s = _LINK.sub(r"\1", s)
     s = _STRONG.sub(r"\1", s)
     s = _EM.sub(r"\1", s)
+    s = _BLOCK_END.sub("\n\n", _BREAK.sub("\n", s))
     s = html.unescape(_TAG.sub("", s))
     s = re.sub(r"[ \t]+\n", "\n", s)
     s = re.sub(r"\n{3,}", "\n\n", s)
