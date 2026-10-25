@@ -8,6 +8,8 @@ from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parents[1]
 LINK = re.compile(r"(?<!!)\[[^]]+\]\(([^)]+)\)")
+# Inline code shows link syntax as an example (`- [name](url): notes`), not a link to follow.
+CODE_SPAN = re.compile(r"`[^`\n]+`")
 
 
 def _markdown_files() -> list[Path]:
@@ -21,7 +23,7 @@ def _markdown_files() -> list[Path]:
 def test_repository_relative_markdown_links_resolve():
     broken: list[str] = []
     for document in _markdown_files():
-        for match in LINK.finditer(document.read_text()):
+        for match in LINK.finditer(CODE_SPAN.sub("", document.read_text())):
             raw = match.group(1).strip().strip("<>")
             target = raw.split(maxsplit=1)[0]
             if target.startswith(("#", "/", "http://", "https://", "mailto:")):
