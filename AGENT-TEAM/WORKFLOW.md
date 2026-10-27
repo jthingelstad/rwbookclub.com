@@ -106,6 +106,18 @@ Oliver pass may recommend one specific contract correction when evidence shows d
 work, collisions, manufactured findings, or stalled acceptance; there is no separate Team
 Manager.
 
+Then post that block to Jamie's activity stream, using this run's installed
+automation id (`oliver-operations-manager`, `oliver-evaluator` or
+`oliver-club-ethnographer`):
+
+```sh
+/Users/otto/Projects/projects-sysadmin/scripts/activity post --agent <automation id> --text "<the block>"
+```
+
+It goes to #rwbookclub-log, and to #needs-jamie when the outcome is `BLOCKED` or
+`NEEDS JAMIE`. Add `--url` for the PR or issue the run is about. A failed post is
+noted in the report, never retried in a loop; the run's own result stands.
+
 ## Calendar and due work
 
 `automations.toml` owns the calendar; `SCHEDULE.md` is its generated view.
