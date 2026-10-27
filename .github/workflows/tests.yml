@@ -3,6 +3,7 @@ name: tests
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -62,3 +63,7 @@ jobs:
         env:
           LLMS_TXT_REQUIRED: "1"
         run: node --test website/test/llms-built.test.js
+      - name: Check the built site for S3 (types, and the gh-pages workflow riding along)
+        env:
+          BUILT_SITE_REQUIRED: "1"
+        run: node --test tests/aws-hosting.test.mjs

@@ -1,0 +1,64 @@
+name: Publish to S3 and CloudFront
+
+# This workflow lives on the gh-pages branch. Its source is website/gh-pages/deploy-aws.yml on main;
+# website/.eleventy.js copies it into every build as .github/workflows/deploy-aws.yml, so each orphan
+# commit agent.publish force-pushes to gh-pages carries it, and the push runs it. Edit it on main.
+#
+# It publishes the pushed tree to S3 behind CloudFront with scripts/deploy-aws.mjs from main, as the
+# delivery role (infra/templates.mjs), which trusts the gh-pages branch only.
+
+on:
+  push:
+    branches: [gh-pages]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Each publish is the whole site, so a newer push waiting behind a running one replaces any older one.
+concurrency:
+  group: deploy-aws
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/gh-pages'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out the built site (gh-pages)
+        uses: actions/checkout@v7
+        with:
+          path: site
+          persist-credentials: false
+
+      - name: Check out the deploy scripts (main)
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          path: source
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: source/.node-version
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+
+      - run: npm ci --ignore-scripts
+        working-directory: source
+
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Publish to S3 and CloudFront
+        working-directory: source
+        run: node scripts/deploy-aws.mjs --site ../site

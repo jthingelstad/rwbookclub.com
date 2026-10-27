@@ -1,0 +1,23 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "rwbookclub.com and www.rwbookclub.com HTTPS certificate - external DNS validation",
+  "Resources": {
+    "Certificate": {
+      "Type": "AWS::CertificateManager::Certificate",
+      "Properties": {
+        "DomainName": "rwbookclub.com",
+        "SubjectAlternativeNames": [
+          "www.rwbookclub.com"
+        ],
+        "ValidationMethod": "DNS"
+      }
+    }
+  },
+  "Outputs": {
+    "CertificateArn": {
+      "Value": {
+        "Ref": "Certificate"
+      }
+    }
+  }
+}
