@@ -1,4 +1,4 @@
-"""Build the static site from the live DB and deploy it to GitHub Pages (gh-pages branch).
+"""Build the static site from the live DB and push it to the gh-pages branch, which deploys it.
 
 The corpus (`corpus/data/`) is a private, on-disk artifact regenerated from the `club_*`
 tables — it is no longer committed to git, and CI no longer builds the site (it has no DB).
@@ -8,8 +8,10 @@ Instead the build + deploy run locally, where the data lives:
     (Oliver runs publish_site() in the background after every data write)
 
 `publish_site()` regenerates the corpus, runs `npm run build`, refuses to deploy an empty
-site (or one missing the CNAME), and pushes `website/_site` to the `gh-pages` branch, which
-GitHub Pages serves. A non-blocking file lock prevents overlapping builds.
+site (or one missing the CNAME), and pushes `website/_site` to the `gh-pages` branch. The push runs
+the workflow the build carries (.github/workflows/deploy-aws.yml), which publishes it to S3 +
+CloudFront. GitHub Pages is off; CNAME and .nojekyll are kept as the full-build marker and are not
+published to S3. A non-blocking file lock prevents overlapping builds.
 """
 
 from __future__ import annotations
@@ -111,7 +113,7 @@ def _deploy_gh_pages(message: str) -> None:
         env=_ENV,
         timeout=DEPLOY_TIMEOUT,
     ).stdout.strip()
-    (SITE_DIR / ".nojekyll").touch()  # tell GitHub Pages to serve the tree as-is (no Jekyll)
+    (SITE_DIR / ".nojekyll").touch()  # a GitHub Pages leftover, harmless; the S3 deploy skips it
 
     def g(*args: str) -> None:
         _run([git, *args], DEPLOY_TIMEOUT, cwd=SITE_DIR)
