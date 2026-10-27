@@ -1,0 +1,22 @@
+{
+  "account": "999153317627",
+  "region": "us-east-1",
+  "domain": "rwbookclub.com",
+  "stacks": {
+    "certificate": "rwbookclub-certificate",
+    "site": "rwbookclub-site",
+    "delivery": "rwbookclub-delivery"
+  },
+  "stackTags": {
+    "Application": "Thingelstad",
+    "Project": "rwbookclub",
+    "Repository": "jthingelstad/rwbookclub.com",
+    "ManagedBy": "cloudformation",
+    "Environment": "production"
+  },
+  "siteBucket": "rwbookclub-site-sitebucket-zyhjeom66pff",
+  "distributionId": "EONMN2NZ0HHH5",
+  "cloudfrontDomain": "d1lf2vtfu8ki48.cloudfront.net",
+  "deploymentRoleArn": "arn:aws:iam::999153317627:role/rwbookclub-delivery-DeploymentRole-j1NqGrvIkADV",
+  "certificateArn": "arn:aws:acm:us-east-1:999153317627:certificate/a2b8b597-f063-4024-89d0-0cea02eb3598"
+}

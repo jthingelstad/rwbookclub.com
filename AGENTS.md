@@ -4,7 +4,7 @@ The canonical, maintained guide for this repo: architecture, schema, build/deplo
 the full "things not to do". `CLAUDE.md` is a symlink to this file, so Claude Code and Codex read
 the same instructions; do not fork them.
 
-Project-specific context for coding agents. The site is live at rwbookclub.com (served by GitHub Pages from the **`gh-pages` branch**, built + deployed **locally** by Oliver — not from `main`/CI). Club counts change over time; query the `club_*` tables or generated corpus instead of copying a point-in-time count into code or prompts.
+Project-specific context for coding agents. The site is live at rwbookclub.com, built + deployed **locally** by Oliver to the **`gh-pages` branch** (not from `main`/CI). GitHub Pages serves that branch until the DNS moves; each push also publishes it to S3 + CloudFront (see "S3 + CloudFront" below). Club counts change over time; query the `club_*` tables or generated corpus instead of copying a point-in-time count into code or prompts.
 
 ## Project
 
@@ -48,6 +48,28 @@ Oliver writes nothing to it. The site is built + deployed **locally** to the **`
 - **Output:** `website/_site/` → force-pushed to `gh-pages`, served by GitHub Pages.
   **One-time manual setting:** Settings → Pages → Source → *Deploy from a branch* → `gh-pages` / `(root)`.
 - **Pages:** `/` (home), `/books/<slug>/`, `/books/<slug>.txt`, `/members/<slug>/`, `/authors/<slug>/`, `/lists/`, `/lists/<slug>/`, `/meetings/`, `/about/`, `/stats/`, `/oliver/`, `/feed.xml`, `/meetings.ics`, `/books.json`, `/next.json`, `/llms.txt`, `/robots.txt`, `/sitemap.xml` (the per-book `.txt` files replaced `/llms-full.txt` on 2026-04-17)
+
+## S3 + CloudFront (`infra/`, since 2026-10-27)
+
+The site is also served from S3 behind CloudFront, ready for the DNS cutover from GitHub Pages
+(Namecheap is Jamie's). Oliver needs no AWS credentials: every build carries
+`.github/workflows/deploy-aws.yml` (source `website/gh-pages/deploy-aws.yml`, copied in by
+`website/.eleventy.js`), so the orphan commit `agent.publish` force-pushes to `gh-pages` runs it.
+That workflow checks out `gh-pages` (the site) and `main` (the scripts) and runs
+`scripts/deploy-aws.mjs --site ../site` as the `rwbookclub-delivery` role, which trusts
+`ref:refs/heads/gh-pages` only (repo variable `AWS_DEPLOY_ROLE_ARN`). Edit the workflow on `main`; a
+copy on `gh-pages` is overwritten by the next publish. `CNAME`, `.nojekyll` and `.github/` are not
+published to S3; a file `scripts/publish-plan.mjs` cannot type fails the deploy.
+
+- Stacks (deployed from this Mac as cloud-engineer, `npm run infra -- certificate|site|delivery`,
+  outputs in `infra/deployment.json`): `rwbookclub-certificate` (apex + `www` SAN),
+  `rwbookclub-site` (bucket, distribution, viewer-request function, headers, 5xx alarm, access
+  logs in `/rwbookclub/web-access`, 14 days, no IP or query), `rwbookclub-delivery`.
+- The viewer-request function (`infra/viewer-request.mjs`) 301s any `www.` host to the apex keeping
+  path and query, sends `/about` to `/about/`, and serves `index.html` for directory URLs.
+- Templates are generated: change `infra/templates.mjs`, `npm run infra:generate`, deploy the stack,
+  then publish. `tests/aws-hosting.test.mjs` pins all of it (`npm test`; CI reruns it on the build).
+- Publish by hand from a `gh-pages` checkout: `node scripts/deploy-aws.mjs --site <dir>`.
 
 ## Member + admin web app (`agent/webapp/`)
 

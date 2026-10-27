@@ -10,6 +10,9 @@ module.exports = function (eleventyConfig) {
   // Pass static assets through unchanged
   eleventyConfig.addPassthroughCopy({ "src/assets": "assets" });
   eleventyConfig.addPassthroughCopy({ "src/CNAME": "CNAME" });
+  // The workflow that publishes the gh-pages branch to S3 and CloudFront rides on that branch, so every
+  // build carries it (agent.publish pushes _site as an orphan commit). Not published to S3.
+  eleventyConfig.addPassthroughCopy({ "gh-pages/deploy-aws.yml": ".github/workflows/deploy-aws.yml" });
 
   // Watch CSS so --serve picks up edits
   eleventyConfig.addWatchTarget("src/assets/css/");
