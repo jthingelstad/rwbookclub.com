@@ -4,7 +4,7 @@ The canonical, maintained guide for this repo: architecture, schema, build/deplo
 the full "things not to do". `CLAUDE.md` is a symlink to this file, so Claude Code and Codex read
 the same instructions; do not fork them.
 
-Project-specific context for coding agents. The site is live at rwbookclub.com, built + deployed **locally** by Oliver to the **`gh-pages` branch** (not from `main`/CI). GitHub Pages serves that branch until the DNS moves; each push also publishes it to S3 + CloudFront (see "S3 + CloudFront" below). Club counts change over time; query the `club_*` tables or generated corpus instead of copying a point-in-time count into code or prompts.
+Project-specific context for coding agents. The site is live at rwbookclub.com, built + deployed **locally** by Oliver to the **`gh-pages` branch** (not from `main`/CI). `gh-pages` is the hand-off branch: each push to it runs the workflow that publishes the site to S3 + CloudFront, which serves rwbookclub.com and www (see "S3 + CloudFront" below). GitHub Pages is off since the 2026-10-27 DNS cutover. Club counts change over time; query the `club_*` tables or generated corpus instead of copying a point-in-time count into code or prompts.
 
 ## Project
 
@@ -33,8 +33,10 @@ Oliver writes nothing to it. The site is built + deployed **locally** to the **`
 
 - **Generator:** Eleventy 3, in `website/` (`npm run build`, `npm run serve` from the repo root).
 - **Deploy:** `uv run --locked python -m agent.publish` (or `npm run deploy`) = regen corpus from the DB → `npm run build`
-  → force-push `website/_site` (built HTML + all images + `CNAME` + `.nojekyll`) as a clean orphan to
-  `gh-pages`. Refuses to deploy an empty site (guards on `_site/index.html` + `_site/CNAME`). Oliver
+  → force-push `website/_site` (built HTML + all images + `CNAME` + `.nojekyll` + the S3 workflow) as a clean
+  orphan to `gh-pages`. Refuses to deploy an empty site (guards on `_site/index.html` + `_site/CNAME` + 50 book
+  pages). `CNAME` and `.nojekyll` are Pages leftovers kept so that guard and Oliver's running code stay
+  as they are; the S3 deploy skips them. Oliver
   runs this in the background after every data write (`commands.schedule_publish`); a developer runs it
   after a template/code change. A startup `publish.ensure_corpus()` (bot `on_ready`) regenerates the
   corpus so on-disk mirrors the DB.
@@ -45,14 +47,14 @@ Oliver writes nothing to it. The site is built + deployed **locally** to the **`
   boundary:** the reviews loader excludes DNF records before any template or public export sees them;
   other future sensitive corpus fields must live outside the website-readable subtrees (and never render
   into `_site`).
-- **Output:** `website/_site/` → force-pushed to `gh-pages`, served by GitHub Pages.
-  **One-time manual setting:** Settings → Pages → Source → *Deploy from a branch* → `gh-pages` / `(root)`.
+- **Output:** `website/_site/` → force-pushed to `gh-pages`, which triggers the S3 + CloudFront deploy.
+  GitHub Pages is off (repo Settings → Pages); do not turn it back on, the domain points at CloudFront.
 - **Pages:** `/` (home), `/books/<slug>/`, `/books/<slug>.txt`, `/members/<slug>/`, `/authors/<slug>/`, `/lists/`, `/lists/<slug>/`, `/meetings/`, `/about/`, `/stats/`, `/oliver/`, `/feed.xml`, `/meetings.ics`, `/books.json`, `/next.json`, `/llms.txt`, `/robots.txt`, `/sitemap.xml` (the per-book `.txt` files replaced `/llms-full.txt` on 2026-04-17)
 
 ## S3 + CloudFront (`infra/`, since 2026-10-27)
 
-The site is also served from S3 behind CloudFront, ready for the DNS cutover from GitHub Pages
-(Namecheap is Jamie's). Oliver needs no AWS credentials: every build carries
+The site is served from S3 behind CloudFront: rwbookclub.com and www.rwbookclub.com point at the
+distribution since 2026-10-27 (DNS at Namecheap is Jamie's), and GitHub Pages is off. Oliver needs no AWS credentials: every build carries
 `.github/workflows/deploy-aws.yml` (source `website/gh-pages/deploy-aws.yml`, copied in by
 `website/.eleventy.js`), so the orphan commit `agent.publish` force-pushes to `gh-pages` runs it.
 That workflow checks out `gh-pages` (the site) and `main` (the scripts) and runs
@@ -207,7 +209,7 @@ Some titles contain non-ASCII characters that must round-trip cleanly: `Cræft`,
 - Don't re-categorize books across the Topic field without per-book confirmation from Jamie.
 - Don't fetch metadata from Google Books. The unauthenticated daily quota is exhausted on this network. Use Open Library.
 - Don't commit `.env` or hard-code the PAT, bot token, or API key.
-- Cover images are gitignored, regenerated from Open Library (via `olKey`) into `assets/images/covers/` and served from `gh-pages` — not committed, and not from Airtable attachment URLs (which expire).
+- Cover images are gitignored, regenerated from Open Library (via `olKey`) into `assets/images/covers/` and published from `gh-pages` to S3 — not committed, and not from Airtable attachment URLs (which expire).
 
 ## Work Tracking
 
