@@ -82,6 +82,8 @@ def snapshot() -> dict:
             elif reading_ok:
                 combined["nextAction"] = "none"
                 attending_reading_ok += 1
+            elif reading_status in db.READING_TERMINAL:
+                combined["nextAction"] = "none"  # gave up (dnf): nothing left to ask
             else:
                 combined["nextAction"] = "reading_checkin"
                 attending_reading_not_ok += 1
@@ -160,8 +162,8 @@ def format_dashboard(data: dict | None = None) -> str:
 def _outreach_kind(member: dict) -> str | None:
     """What Oliver still needs to collect from this member, or None if nothing.
 
-    Roll call first (attendance unknown/unsure), then reading until `finished`. A declined member
-    ('no') and a confirmed-and-finished member are both done.
+    Roll call first (attendance unknown/unsure), then reading until a terminal status (`finished`
+    or `dnf`). A declined member ('no') and a confirmed member who has finished or given up are done.
     """
     attendance = member.get("attendance")
     if attendance in ("pending", "unsure"):
@@ -169,7 +171,7 @@ def _outreach_kind(member: dict) -> str | None:
     if (
         attendance == "yes"
         and member.get("bookAssigned", True)
-        and member.get("reading") != "finished"
+        and member.get("reading") not in db.READING_TERMINAL
     ):
         return "reading"
     return None

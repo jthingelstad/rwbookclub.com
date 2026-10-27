@@ -82,6 +82,18 @@ def test_reading_needed_until_finished_only():
     assert "declined" not in got  # not attending → nothing
 
 
+def test_dnf_ends_reading_outreach():
+    got = _by_slug(
+        _plan(
+            6,
+            _member("quit", attendance="yes", reading="dnf", last_asked_days=3, reading_asks=1),
+            _member("paused", attendance="yes", reading="paused", last_asked_days=3),
+        )
+    )
+    assert "quit" not in got  # gave up → nothing left to collect
+    assert got["paused"]["kind"] == "reading"
+
+
 def test_bookless_meeting_never_starts_reading_outreach():
     assert (
         _plan(

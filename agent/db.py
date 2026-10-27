@@ -328,7 +328,7 @@ CREATE TABLE IF NOT EXISTS meeting_member_status (
     meeting_id             INTEGER NOT NULL REFERENCES club_meetings(id),
     member_id              INTEGER NOT NULL REFERENCES club_members(id),
     attendance             TEXT NOT NULL DEFAULT 'unknown',  -- unknown | yes | no | unsure
-    reading                TEXT NOT NULL DEFAULT 'unknown',  -- unknown + the 6 READING_STATUSES
+    reading                TEXT NOT NULL DEFAULT 'unknown',  -- unknown + the 7 READING_STATUSES
     reading_progress       TEXT,
     reading_page           INTEGER,
     reading_percent        INTEGER,
@@ -1950,7 +1950,9 @@ def feedback_stats() -> dict:
 # ── Event log (the club timeline) + meeting-status projection ───────────────
 # One append-only `events` log is the club's timeline; `meeting_member_status` is the current-state
 # projection over the meeting_ops member events. record_event writes both atomically.
-READING_STATUSES = {"not_started", "started", "on_track", "behind", "finished", "paused"}
+READING_STATUSES = {"not_started", "started", "on_track", "behind", "finished", "paused", "dnf"}
+# Statuses that close a member's reading for the meeting: no more check-ins.
+READING_TERMINAL = {"finished", "dnf"}
 
 # kind → category. Phase 1 populates meeting_ops + the meeting_scheduled hook; the Phase 2 chronicle
 # kinds (the archive miner + the live recording surface) fill the rest of the taxonomy. A `record_event`

@@ -886,11 +886,11 @@ async def reading_checkin_cmd(
         if (meeting_id is not None and member_id is not None)
         else None
     )
-    if existing and existing["reading"] == "finished":
+    if existing and existing["reading"] in db.READING_TERMINAL:
         db.add_activity(
             "reading_checkin_skipped",
             "Reading check-in skipped",
-            f"Member: {m['slug']}\nReason: already finished\nBook: {title}",
+            f"Member: {m['slug']}\nReason: already {existing['reading']}\nBook: {title}",
         )
         await interaction.response.send_message(
             f"{m['name']} is already marked finished for {title}; not sending a check-in.",
