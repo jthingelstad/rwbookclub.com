@@ -63,6 +63,10 @@ jobs:
         env:
           LLMS_TXT_REQUIRED: "1"
         run: node --test website/test/llms-built.test.js
+      - name: Check the built sitemap
+        env:
+          SITEMAP_REQUIRED: "1"
+        run: node --test website/test/sitemap-built.test.js
       - name: Check the built site for S3 (types, and the gh-pages workflow riding along)
         env:
           BUILT_SITE_REQUIRED: "1"

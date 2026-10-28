@@ -50,6 +50,7 @@ Oliver writes nothing to it. The site is built + deployed **locally** to the **`
 - **Output:** `website/_site/` → force-pushed to `gh-pages`, which triggers the S3 + CloudFront deploy.
   GitHub Pages is off (repo Settings → Pages); do not turn it back on, the domain points at CloudFront.
 - **Pages:** `/` (home), `/books/<slug>/`, `/books/<slug>.txt`, `/members/<slug>/`, `/authors/<slug>/`, `/lists/`, `/lists/<slug>/`, `/meetings/`, `/about/`, `/stats/`, `/oliver/`, `/feed.xml`, `/meetings.ics`, `/books.json`, `/next.json`, `/llms.txt`, `/robots.txt`, `/sitemap.xml` (the per-book `.txt` files replaced `/llms-full.txt` on 2026-04-17)
+- **Sitemap lastmod:** every `<url>` carries a `<lastmod>` (`website/lib/lastmod.js`, via `_data/lastmod.js`): the newest dated fact the page shows (meetings held, public review `createdAt`, member `joined`), for a section page the newest of its entries, for `/about/` and `/oliver/` also their template's last commit. Never the build time; never a future date. The club record keeps no edit times, so an edit that adds no dated fact does not move a date. `website/test/sitemap-built.test.js` checks the built file in CI.
 
 ## S3 + CloudFront (`infra/`, since 2026-10-27)
 

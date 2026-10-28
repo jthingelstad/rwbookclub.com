@@ -2,60 +2,70 @@
 permalink: /sitemap.xml
 eleventyExcludeFromCollections: true
 ---
-{#- lastmod only where a page has a date of its own: a book page's meeting, once
-    it has happened. Section, member, list and author pages change with reviews,
-    bios and picks that carry no date here, so they leave lastmod off rather than
-    all claiming the newest meeting. -#}
+{#- Every page's lastmod is the date its content last changed, as near as the
+    club record can say: its own dated facts (meetings held, reviews, joins), or
+    for a section the newest of its entries. Never the build time. See
+    lib/lastmod.js. -#}
 <?xml version="1.0" encoding="utf-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>{{ site.url }}/</loc>
+    <lastmod>{{ lastmod.of("/") }}</lastmod>
   </url>
   <url>
     <loc>{{ site.url }}/about/</loc>
+    <lastmod>{{ lastmod.of("/about/") }}</lastmod>
   </url>
   <url>
     <loc>{{ site.url }}/stats/</loc>
+    <lastmod>{{ lastmod.of("/stats/") }}</lastmod>
   </url>
   <url>
     <loc>{{ site.url }}/books/</loc>
+    <lastmod>{{ lastmod.of("/books/") }}</lastmod>
   </url>
   <url>
     <loc>{{ site.url }}/members/</loc>
+    <lastmod>{{ lastmod.of("/members/") }}</lastmod>
   </url>
   <url>
     <loc>{{ site.url }}/lists/</loc>
+    <lastmod>{{ lastmod.of("/lists/") }}</lastmod>
   </url>
   <url>
     <loc>{{ site.url }}/authors/</loc>
+    <lastmod>{{ lastmod.of("/authors/") }}</lastmod>
   </url>
   <url>
     <loc>{{ site.url }}/meetings/</loc>
+    <lastmod>{{ lastmod.of("/meetings/") }}</lastmod>
   </url>
   <url>
     <loc>{{ site.url }}/oliver/</loc>
+    <lastmod>{{ lastmod.of("/oliver/") }}</lastmod>
   </url>
   {%- for book in books %}
   <url>
     <loc>{{ site.url }}/books/{{ book.slug }}/</loc>
-    {%- if book.meetingDate and not book.isUpcoming %}
-    <lastmod>{{ book.meetingDate }}</lastmod>
-    {%- endif %}
+    <lastmod>{{ lastmod.of("/books/" + book.slug + "/") }}</lastmod>
   </url>
   {%- endfor %}
   {%- for m in currentMembers %}
   <url>
     <loc>{{ site.url }}/members/{{ m.slug }}/</loc>
+    <lastmod>{{ lastmod.of("/members/" + m.slug + "/") }}</lastmod>
   </url>
   {%- endfor %}
   {%- for l in lists %}
   <url>
     <loc>{{ site.url }}/lists/{{ l.slug }}/</loc>
+    <lastmod>{{ lastmod.of("/lists/" + l.slug + "/") }}</lastmod>
   </url>
   {%- endfor %}
   {%- for a in authors %}
   <url>
     <loc>{{ site.url }}/authors/{{ a.slug }}/</loc>
+    <lastmod>{{ lastmod.of("/authors/" + a.slug + "/") }}</lastmod>
   </url>
   {%- endfor %}
 </urlset>
