@@ -65,3 +65,8 @@ test("nothing is dated in the future", () => {
   assert.equal(d.get("/about/"), "2026-10-28");
   assert.equal(d.get("/books/old/"), "2026-10-28");
 });
+
+test("an empty section still gets a date", () => {
+  const d = pageDates({ ...fixture, lists: [] });
+  assert.equal(d.get("/lists/"), "2026-10-20");
+});

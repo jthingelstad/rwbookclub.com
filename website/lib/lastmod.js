@@ -12,7 +12,8 @@
 // - a section page (/books/, /authors/, /members/, /lists/): the newest of its
 //   entries; /meetings/: the newest meeting that has happened; /, /stats/: the
 //   newest fact on the site; /about/ and /oliver/ (prose plus club counts): the
-//   newer of that and their template's last commit.
+//   newer of that and their template's last commit. An empty section takes the
+//   newest fact on the site.
 //
 // A book with no dated fact (scheduled but not met yet, or on no meeting at all)
 // takes the newest meeting that has happened: books are picked and scheduled at
@@ -83,15 +84,17 @@ function pageDates({ books, meetings, reviews, lists, members, authors, template
     ...currentMembers.map((m) => cap(m.joined || null)),
   ]);
 
+  // A section with no entries yet (the last list deleted) still has a page: it
+  // takes the newest fact on the site.
   const dates = new Map([
     ["/", site],
     ["/about/", maxDate([site, cap(templateDates.about)])],
     ["/stats/", site],
-    ["/books/", maxDate([...bookDate.values()])],
-    ["/members/", maxDate(currentMembers.map((m) => memberDate.get(m.slug)))],
-    ["/lists/", maxDate([...listDate.values()])],
-    ["/authors/", maxDate([...authorDate.values()])],
-    ["/meetings/", lastMeeting],
+    ["/books/", maxDate([...bookDate.values()]) || site],
+    ["/members/", maxDate(currentMembers.map((m) => memberDate.get(m.slug))) || site],
+    ["/lists/", maxDate([...listDate.values()]) || site],
+    ["/authors/", maxDate([...authorDate.values()]) || site],
+    ["/meetings/", lastMeeting || site],
     ["/oliver/", maxDate([site, cap(templateDates.oliver)])],
   ]);
   for (const [slug, date] of bookDate) dates.set(`/books/${slug}/`, date);
