@@ -1,0 +1,28 @@
+# The Complexity of Cooperation: Agent-Based Models of Competition and Collaboration
+
+- **Author:** Robert Axelrod
+- **Read:** October 2005
+- **Topic:** Science and Math
+- **Subjects:** Computational complexity, Social systems, Adaptability (Psychology), Conflict management, Competition, Adjustment (Psychology), Computer simulation, Cooperativeness
+- **Published:** 1997
+- **Pages:** 232
+- **Picked by:** John
+- **ISBN-13:** 9780691015675
+- **Open Library:** https://openlibrary.org/works/OL2620281W
+- **Cover:** https://rwbookclub.com/assets/images/covers/the-complexity-of-cooperation-322.jpg
+- **Canonical page:** https://rwbookclub.com/books/the-complexity-of-cooperation/
+
+## Related books
+
+- Antifragile (Shared themes: Adjustment (Psychology))
+  https://rwbookclub.com/books/antifragile.txt
+- Patterns in Nature (Science and Math)
+  https://rwbookclub.com/books/patterns-in-nature.txt
+- Genesis (Science and Math)
+  https://rwbookclub.com/books/genesis.txt
+- Scale (Science and Math)
+  https://rwbookclub.com/books/scale.txt
+- Complexity (Science and Math)
+  https://rwbookclub.com/books/complexity.txt
+- Otherlands (Science and Math)
+  https://rwbookclub.com/books/otherlands.txt
