@@ -125,7 +125,7 @@ def meeting_readiness_snapshot(actor: access.Actor) -> dict:
                     for member in campaign["members"]
                     if member["attendance"] == "yes"
                     and member.get("bookAssigned", True)
-                    and member["reading"] != "finished"
+                    and member["reading"] not in db.READING_TERMINAL
                 ]
             ),
         },
@@ -321,16 +321,16 @@ def _request_reading_update(tool_input: dict, request: RequestContext):
         return {"error": "the next meeting is scheduled but its book has not been picked"}
     title = (meeting.get("book") or {}).get("title") or "the current book"
     existing = db.meeting_member_status(meeting_id, member_id)
-    if existing and existing["reading"] == "finished":
+    if existing and existing["reading"] in db.READING_TERMINAL:
         db.add_activity(
             "reading_checkin_skipped",
             "Reading check-in skipped",
-            f"Member: {member['slug']}\nReason: already finished\nBook: {title}",
+            f"Member: {member['slug']}\nReason: already {existing['reading']}\nBook: {title}",
         )
         return {
             "sent": False,
             "member": member["slug"],
-            "reason": f"{member['name']} is already marked finished for {title}",
+            "reason": f"{member['name']} is already marked {existing['reading']} for {title}",
             "readingStatus": reading_status_snapshot(meeting, request.actor),
         }
     body = meeting_rules.reading_checkin_email_body(

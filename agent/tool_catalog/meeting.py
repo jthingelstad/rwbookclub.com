@@ -73,7 +73,16 @@ TOOLS = [
             "properties": {
                 "status": {
                     "type": "string",
-                    "enum": ["not_started", "started", "on_track", "behind", "finished", "paused"],
+                    "enum": [
+                        "not_started",
+                        "started",
+                        "on_track",
+                        "behind",
+                        "finished",
+                        "paused",
+                        "dnf",
+                    ],
+                    "description": "Use dnf when they say they gave up, stopped for good, or did not finish.",
                 },
                 "progress": {
                     "type": "string",
