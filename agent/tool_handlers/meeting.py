@@ -125,7 +125,7 @@ def meeting_readiness_snapshot(actor: access.Actor) -> dict:
                     for member in campaign["members"]
                     if member["attendance"] == "yes"
                     and member.get("bookAssigned", True)
-                    and member["reading"] != "finished"
+                    and member["reading"] not in db.READING_TERMINAL
                 ]
             ),
         },

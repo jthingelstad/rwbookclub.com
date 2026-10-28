@@ -786,7 +786,7 @@ async def whoami_cmd(interaction: discord.Interaction) -> None:
     name="status", description="Show everyone's progress on the next book, or update yours."
 )
 @discord.app_commands.describe(
-    status="Optional status: not_started, started, on_track, behind, finished, paused",
+    status="Optional status: not_started, started, on_track, behind, finished, paused, dnf",
     progress="Optional short note, e.g. 'chapter 6' or 'halfway'",
     page="Optional page number",
     percent="Optional percent complete",
@@ -893,7 +893,7 @@ async def reading_checkin_cmd(
             f"Member: {m['slug']}\nReason: already {existing['reading']}\nBook: {title}",
         )
         await interaction.response.send_message(
-            f"{m['name']} is already marked finished for {title}; not sending a check-in.",
+            f"{m['name']} is already marked {existing['reading']} for {title}; not sending a check-in.",
             ephemeral=True,
         )
         return
