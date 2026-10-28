@@ -226,10 +226,10 @@ export const site = template(
       }
     },
     // Access logs, the same shape as the other sites': CloudFront's standard logging into CloudWatch
-    // Logs, kept 14 days, JSON, with no client IP and no query string.
+    // Logs, kept 24 months (731 days), JSON, with no client IP and no query string.
     AccessLogGroup: {
       Type: 'AWS::Logs::LogGroup',
-      Properties: { LogGroupName: '/rwbookclub/web-access', RetentionInDays: 14 }
+      Properties: { LogGroupName: '/rwbookclub/web-access', RetentionInDays: 731 }
     },
     AccessLogSource: {
       Type: 'AWS::Logs::DeliverySource',

@@ -66,7 +66,7 @@ published to S3; a file `scripts/publish-plan.mjs` cannot type fails the deploy.
 - Stacks (deployed from this Mac as cloud-engineer, `npm run infra -- certificate|site|delivery`,
   outputs in `infra/deployment.json`): `rwbookclub-certificate` (apex + `www` SAN),
   `rwbookclub-site` (bucket, distribution, viewer-request function, headers, 5xx alarm, access
-  logs in `/rwbookclub/web-access`, 14 days, no IP or query), `rwbookclub-delivery`.
+  logs in `/rwbookclub/web-access`, 24 months, no IP or query), `rwbookclub-delivery`.
 - The viewer-request function (`infra/viewer-request.mjs`) 301s any `www.` host to the apex keeping
   path and query, sends `/about` to `/about/`, and serves `index.html` for directory URLs.
 - Templates are generated: change `infra/templates.mjs`, `npm run infra:generate`, deploy the stack,

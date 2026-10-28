@@ -75,9 +75,9 @@ test('the delivery role trusts the gh-pages branch and nothing else', () => {
   assert.equal(condition['token.actions.githubusercontent.com:aud'], 'sts.amazonaws.com');
 });
 
-test('access logs keep 14 days with no client IP and no query string', () => {
+test('access logs keep 24 months with no client IP and no query string', () => {
   assert.equal(site.Resources.AccessLogGroup.Properties.LogGroupName, '/rwbookclub/web-access');
-  assert.equal(site.Resources.AccessLogGroup.Properties.RetentionInDays, 14);
+  assert.equal(site.Resources.AccessLogGroup.Properties.RetentionInDays, 731);
   assert.equal(site.Resources.AccessLogDestination.Properties.OutputFormat, 'json');
   assert.ok(!ACCESS_LOG_FIELDS.includes('c-ip') && !ACCESS_LOG_FIELDS.includes('cs-uri-query'));
 });
