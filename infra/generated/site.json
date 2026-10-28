@@ -308,7 +308,7 @@
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
         "LogGroupName": "/rwbookclub/web-access",
-        "RetentionInDays": 14
+        "RetentionInDays": 731
       }
     },
     "AccessLogSource": {
