@@ -7,11 +7,11 @@ const test = require("node:test");
 
 const read = (name) => fs.readFileSync(path.join(__dirname, "..", "src", name), "utf8");
 
-test("sitemap lastmod is a book's own meeting date, and nothing else's", () => {
+test("every sitemap url carries a lastmod from lib/lastmod.js", () => {
   const sitemap = read("sitemap.xml.njk");
-  const lastmods = sitemap.match(/<lastmod>[^<]*<\/lastmod>/g) ?? [];
-  assert.deepEqual(lastmods, ["<lastmod>{{ book.meetingDate }}</lastmod>"]);
-  assert.match(sitemap, /\{%- if book\.meetingDate and not book\.isUpcoming %\}\s*<lastmod>/);
+  const urls = sitemap.match(/<url>[\s\S]*?<\/url>/g) ?? [];
+  assert.ok(urls.length >= 13);
+  for (const url of urls) assert.match(url, /<lastmod>\{\{ lastmod\.of\("[^"]*"( \+ \w+\.slug \+ "\/")?\) \}\}<\/lastmod>/, url);
 });
 
 test("the sitemap lists the Oliver page", () => {
