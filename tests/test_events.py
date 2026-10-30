@@ -44,6 +44,37 @@ class TestRecordEvent:
         detail = json.loads(fresh_db.meeting_events(mid, kind="reading_reported")[0]["detail"])
         assert detail["status"] == "on_track" and detail["progress"] == "halfway"
 
+    @pytest.mark.parametrize("progress", ["gave up on Girard", "Did not finish", "gave up on it"])
+    def test_explicit_terminal_language_overrides_nonterminal_model_status(
+        self, fresh_db, progress
+    ):
+        mid, jamie, _ = _ids()
+        fresh_db.record_reading_report(mid, jamie, "paused", progress=progress, surface="email")
+
+        assert fresh_db.meeting_member_status(mid, jamie)["reading"] == "dnf"
+        detail = json.loads(fresh_db.meeting_events(mid, kind="reading_reported")[0]["detail"])
+        assert detail == {"status": "dnf", "progress": progress, "page": None, "percent": None}
+
+    @pytest.mark.parametrize(
+        "progress",
+        [
+            "gave up on print for now and switched to audio",
+            "not DNF, just paused",
+            "did not finish chapter 3",
+        ],
+    )
+    def test_temporary_pause_language_remains_paused(self, fresh_db, progress):
+        mid, jamie, _ = _ids()
+        fresh_db.record_reading_report(
+            mid,
+            jamie,
+            "paused",
+            progress=progress,
+            surface="email",
+        )
+
+        assert fresh_db.meeting_member_status(mid, jamie)["reading"] == "paused"
+
     def test_requests_bump_ask_counts(self, fresh_db):
         mid, jamie, _ = _ids()
         fresh_db.record_attendance_request(mid, jamie)

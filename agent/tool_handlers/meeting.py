@@ -277,10 +277,11 @@ def _record_reading_status(tool_input: dict, request: RequestContext):
         return {"error": "no scheduled meeting to record reading status against"}
     if not meeting.get("book"):
         return {"error": "the next meeting is scheduled but its book has not been picked"}
+    status = db.normalize_reading_status(tool_input["status"], tool_input.get("progress"))
     db.record_reading_report(
         meeting_id,
         member_id,
-        tool_input["status"],
+        status,
         progress=tool_input.get("progress"),
         page=tool_input.get("page"),
         percent=tool_input.get("percent"),
@@ -290,7 +291,7 @@ def _record_reading_status(tool_input: dict, request: RequestContext):
     db.add_activity(
         "reading_update",
         "Reading status recorded",
-        f"Member: {request.member_slug}\nStatus: {tool_input['status']}\n"
+        f"Member: {request.member_slug}\nStatus: {status}\n"
         f"Progress: {tool_input.get('progress') or '-'}\nMeeting: {meeting['meetingKey']}",
     )
     return {

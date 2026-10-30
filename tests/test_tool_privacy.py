@@ -259,3 +259,19 @@ def test_admin_self_write_receipts_do_not_expose_other_members(fresh_db):
 
     explicit_admin_read = _call("reading_status", {}, ADMIN_CTX)
     assert {row["memberSlug"] for row in explicit_admin_read["statuses"]} >= {"jamie", "nick"}
+
+
+def test_record_reading_status_treats_gave_up_as_terminal(fresh_db):
+    result = _call(
+        "record_reading_status",
+        {"status": "paused", "progress": "gave up on it"},
+        JAMIE_CTX,
+    )
+
+    jamie_status = next(
+        row for row in result["readingStatus"]["statuses"] if row["memberSlug"] == "jamie"
+    )
+    assert jamie_status["status"] == "dnf"
+    meeting_id = result["readingStatus"]["meeting"]["meetingId"]
+    jamie_id = clubdb.lookup_member_id("jamie")
+    assert db.meeting_member_status(meeting_id, jamie_id)["reading"] == "dnf"

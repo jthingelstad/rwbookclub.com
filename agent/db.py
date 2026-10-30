@@ -1953,6 +1953,34 @@ def feedback_stats() -> dict:
 READING_STATUSES = {"not_started", "started", "on_track", "behind", "finished", "paused", "dnf"}
 # Statuses that close a member's reading for the meeting: no more check-ins.
 READING_TERMINAL = {"finished", "dnf"}
+_EXPLICIT_DNF_RE = re.compile(
+    r"\b(?:dnf(?:ed|'d)?|gave up|"
+    r"(?:did(?: not|n['’]t)|could(?: not|n['’]t)|won['’]t) finish"
+    r"(?!\s+(?:the\s+)?(?:chapter|section|part|preface|introduction|page|pages)\b)|"
+    r"stopped (?:reading )?for good)\b",
+    re.IGNORECASE,
+)
+_TEMPORARY_READING_RE = re.compile(
+    r"\b(?:(?:not|isn['’]t) dnf|for now|temporar(?:y|ily)|yet|"
+    r"switch(?:ed|ing)? to|resum(?:e|ed|ing)|"
+    r"still (?:reading|listening)|plans? to (?:continue|resume))\b",
+    re.IGNORECASE,
+)
+
+
+def normalize_reading_status(status: str, progress: str | None) -> str:
+    """Keep explicit terminal language from being stored as a temporary pause.
+
+    The model supplies both fields and has occasionally paired ``paused`` with a short terminal
+    summary such as "gave up on it".  That contradiction leaves the outreach campaign open and
+    causes Oliver to ask again.  Preserve genuinely temporary pauses and format switches.
+    """
+    if status in READING_TERMINAL or not progress:
+        return status
+    if _EXPLICIT_DNF_RE.search(progress) and not _TEMPORARY_READING_RE.search(progress):
+        return "dnf"
+    return status
+
 
 # kind → category. Phase 1 populates meeting_ops + the meeting_scheduled hook; the Phase 2 chronicle
 # kinds (the archive miner + the live recording surface) fill the rest of the taxonomy. A `record_event`
@@ -2176,6 +2204,7 @@ def record_reading_report(
 ) -> int:
     if status not in READING_STATUSES:
         raise ValueError(f"reading status must be one of {sorted(READING_STATUSES)}")
+    status = normalize_reading_status(status, progress)
     if page is not None and page < 0:
         raise ValueError("page must be >= 0")
     if percent is not None and not 0 <= percent <= 100:
