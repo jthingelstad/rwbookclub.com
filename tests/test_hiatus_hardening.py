@@ -1,7 +1,6 @@
-"""Enrichment sweep (retry caps + exhaustion flags) and the weekly health digest."""
+"""Enrichment sweep (retry caps + exhaustion flags) and the health facts the morning digest reads."""
 
-from datetime import datetime
-from zoneinfo import ZoneInfo
+import json
 
 import pytest
 
@@ -118,47 +117,65 @@ def test_sweep_network_failure_aborts_without_burning_attempts(fresh_db, monkeyp
     assert att == 1  # unchanged — a down source is not the book's fault
 
 
-# ── Health digest ────────────────────────────────────────────────────────────
-def _monday_8am():
-    return datetime(2026, 7, 6, 8, 30, tzinfo=ZoneInfo("America/Chicago"))
-
-
-def test_digest_sends_once_per_week_at_the_gate(fresh_db, monkeypatch):
-    sent = []
-    monkeypatch.setattr(health.outbound, "send", lambda **kw: sent.append(kw) or {"emailId": "x"})
-    monkeypatch.setattr(health.identities, "member_slug_for_user", lambda uid: "jamie")
-    monkeypatch.setattr(
-        health.identities, "email_for_member", lambda slug: {"email": "jamie@example.test"}
-    )
-    monkeypatch.setattr(health.oliver, "compose", lambda kind, facts, fallback="": fallback)
+# ── Health facts (read by the Otto Ops morning digest) ─────────────────────────
+def test_healthy_facts_have_no_problems(fresh_db):
     from agent import clock
 
     fresh_db.set_job_state(
         "offsite_backup", {"date": clock.club_today_iso(), "file": "oliver-today.db.gz"}
     )
-
-    assert health.run(_monday_8am()) is True
-    assert sent[0]["to"] == ["jamie@example.test"]
-    assert "Backup" in sent[0]["body"] and "absence is the alarm" in sent[0]["body"]
+    facts = health.snapshot()
     # A same-day backup must read as healthy (regression: `0 or 99` once flagged 0d as stale).
-    assert "(0d old) ✓" in sent[0]["body"]
-    assert health.run(_monday_8am()) is False  # same week → no repeat
-    assert health.run(_monday_8am().replace(hour=14)) is False  # outside the gate hour
+    assert facts["backupAgeDays"] == 0
+    assert health.problems(facts) == []
 
 
-def test_digest_flags_stale_backup_and_warnings(fresh_db, monkeypatch):
-    monkeypatch.setattr(health.oliver, "compose", lambda kind, facts, fallback="": fallback)
+def test_problems_name_a_stale_backup_and_count_warnings_without_their_text(fresh_db):
     fresh_db.set_job_state("offsite_backup", {"date": "2026-06-20", "file": "old.gz"})
-    fresh_db.add_activity("warning", "Something broke", "details")
-    subject, body = health.digest_email(health.snapshot())
-    assert "⚠️" in subject
-    assert "Something broke" in body
+    fresh_db.add_activity("warning", "Something broke for a member", "details")
+    found = health.problems(health.snapshot())
+    assert any(p.startswith("offsite backup is") for p in found)
+    assert "1 warnings in 7 days (#oliver-log)" in found
+    assert not any("Something broke" in p for p in found)
 
 
-@pytest.mark.parametrize(("backup_date", "marker"), [("2026-06-22", "✓"), ("2026-06-21", "⚠️")])
-def test_digest_backup_freshness_matches_weekly_cadence(fresh_db, monkeypatch, backup_date, marker):
-    monkeypatch.setattr(health.oliver, "compose", lambda kind, facts, fallback="": fallback)
+@pytest.mark.parametrize(("backup_date", "stale"), [("2026-06-22", False), ("2026-06-21", True)])
+def test_backup_freshness_matches_weekly_cadence(fresh_db, backup_date, stale):
     fresh_db.set_job_state("offsite_backup", {"date": backup_date, "file": "snapshot.gz"})
-    _, body = health.digest_email(health.snapshot())
-    backup_line = next(line for line in body.splitlines() if "**Backup**" in line)
-    assert backup_line.endswith(marker)
+    found = health.problems(health.snapshot())
+    assert any(p.startswith("offsite backup is") for p in found) is stale
+
+
+def test_json_command_prints_facts_and_problems_and_carries_no_titles(fresh_db, capsys):
+    fresh_db.add_activity("warning", "Private warning title", "details")
+    assert health.main(["--json"]) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert set(out) == {"facts", "problems"}
+    assert out["facts"]["warnings7d"] == 1
+    assert {"meetingScheduled", "bookPicked", "daysToMeeting"} <= set(out["facts"])
+    assert "Private warning title" not in json.dumps(out)
+
+
+def test_retired_email_job_no_longer_reads_as_overdue(fresh_db):
+    from agent import database
+
+    fresh_db.begin_job_run(
+        "health_digest",
+        lease_owner="old-worker",
+        lease_expires_at="2026-01-01T00:00:00+00:00",
+        expected_interval_seconds=3600,
+        now="2026-01-01T00:00:00+00:00",
+    )
+    assert "health_digest" in [row["job_name"] for row in fresh_db.job_statuses()]
+    with fresh_db.connect() as conn:
+        database._retire_health_digest_job(conn)
+    assert "health_digest" not in [row["job_name"] for row in fresh_db.job_statuses()]
+
+
+def test_json_command_refuses_a_missing_database(monkeypatch, tmp_path):
+    missing = tmp_path / "oliver.db"
+    monkeypatch.setattr(health.db, "DB_PATH", missing)
+    with pytest.raises(SystemExit) as stop:
+        health.main(["--json"])
+    assert stop.value.code == 2
+    assert not missing.exists()

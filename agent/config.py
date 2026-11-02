@@ -74,16 +74,6 @@ ENRICH_SWEEP_ENABLED = os.environ.get("OLIVER_ENRICH_SWEEP_ENABLED", "1") not in
 }
 ENRICH_SWEEP_LIMIT = int(os.environ.get("OLIVER_ENRICH_SWEEP_LIMIT") or 8)
 
-# Weekly health digest email to the admin. The rule is inverted alarming: Oliver writes every
-# week, so a MISSING digest is itself the signal that something is wrong.
-HEALTH_DIGEST_ENABLED = os.environ.get("OLIVER_HEALTH_DIGEST_ENABLED", "1") not in {
-    "0",
-    "false",
-    "False",
-}
-HEALTH_DIGEST_WEEKDAY = int(os.environ.get("OLIVER_HEALTH_DIGEST_WEEKDAY") or 0)  # Monday
-HEALTH_DIGEST_HOUR = int(os.environ.get("OLIVER_HEALTH_DIGEST_HOUR") or 8)  # 8am club time
-
 # Weekly off-machine DB backup → iCloud Drive (agent/backup.py; iCloud syncs it off the Mac).
 # ON by default; the directory default is the Mac's iCloud Drive root + Oliver/backups.
 OFFSITE_BACKUP_ENABLED = os.environ.get("OLIVER_OFFSITE_BACKUP_ENABLED", "1") not in {

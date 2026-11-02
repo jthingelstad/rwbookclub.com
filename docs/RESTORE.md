@@ -60,8 +60,8 @@ worst case — the old Mac is gone and all you have is GitHub + iCloud + your pa
 8. **GitHub auth for publish + releases** — `gh auth login`; confirm `git push` works
    (Oliver deploys the site by pushing `gh-pages` and cuts releases via `gh`).
 9. **Smoke** — in Discord: `/oliver ping`, `/oliver admin status` (expect the current release
-   name), and ask Oliver something in #ask-oliver. On Monday you'll get the health digest;
-   its arrival is the "all clear."
+   name), and ask Oliver something in #ask-oliver. The next Otto Ops morning digest
+   (06:30) should show an Oliver section with no problems.
 
 ## What you lose in the worst case
 
@@ -72,5 +72,5 @@ missed backup can extend that window.
 ## Ongoing safety (already automated)
 
 - **Weekly**: gzipped snapshot → iCloud (`agent/backup.py`, scheduler-driven, 3 kept). Due seven club-local days after the last successful backup; a sleeping Mac catches up at the next scheduler tick. A failed attempt does not advance the gate.
-- **Weekly**: health digest email to the admin — a MISSING Monday email is the alarm.
+- **Daily**: the Otto Ops morning digest reads `python -m agent.health --json` and flags a stale backup, warnings, stuck outbox deliveries and overdue or failing scheduler jobs; `check-services-running` catches a stopped Oliver within 30 minutes.
 - **On failure**: backup/enrichment problems post warnings to #oliver-log.

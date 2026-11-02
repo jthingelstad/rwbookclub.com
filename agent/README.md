@@ -109,7 +109,7 @@ agent/
   are committed to `outbox_messages` before a provider call. Stable keys make replay idempotent;
   known pre-provider failures retry with bounded backoff, while an interrupted or ambiguous
   in-flight provider attempt is quarantined as `uncertain` rather than risking a duplicate. The
-  weekly health email reports pending, retrying, uncertain, and dead counts.
+  Otto Ops morning digest reports uncertain and dead counts (`python -m agent.health --json`).
 - **Meeting campaign** (`meeting_campaign.py` + `/oliver meeting dashboard`): combines the
   current book/date, days remaining, roll call, picker requirement, reading status, per-member ask
   counts + last-asked timestamps, and recommended next actions into one dashboard/tool snapshot.
