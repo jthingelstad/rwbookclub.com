@@ -178,6 +178,9 @@
           "PriceClass": "PriceClass_100",
           "IPV6Enabled": true,
           "HttpVersion": "http2and3",
+          "WebACLId": {
+            "Fn::ImportValue": "edge-waf-WebAclArn"
+          },
           "DefaultRootObject": "index.html",
           "Aliases": {
             "Fn::If": [
