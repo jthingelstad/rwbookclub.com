@@ -17,7 +17,6 @@ from agent import (
     config,
     db,
     delivery,
-    health,
     jobs,
     oliver,
     outbox,
@@ -207,7 +206,6 @@ async def _run_maintenance_jobs(now: datetime) -> int:
 
     await _scheduled_job("enrichment_sweep", enrichment_job)
     await _scheduled_job("review_drive", lambda: asyncio.to_thread(review_drive.run, now))
-    await _scheduled_job("health_digest", lambda: asyncio.to_thread(health.run, now))
 
     async def reflection_job() -> int:
         if not (

@@ -44,11 +44,20 @@ def _seed_private_member_pronouns(conn: sqlite3.Connection) -> None:
     )
 
 
+def _retire_health_digest_job(conn: sqlite3.Connection) -> None:
+    """The weekly health email left Oliver's scheduler on 2026-11-02 (the Otto Ops morning
+    digest reads `python -m agent.health --json` instead). Its lease row would otherwise read as
+    overdue forever; its run history stays."""
+    conn.execute("DELETE FROM job_leases WHERE job_name = 'health_digest'")
+    conn.execute("DELETE FROM job_state WHERE key = 'health_digest'")
+
+
 MIGRATIONS = (
     *db.RUNTIME_MIGRATIONS,
     (9, "legacy_club_schema", clubdb.migrate_legacy_club_schema),
     (10, "author_enrichment_validation", _add_author_enrichment_validation),
     (11, "private_member_pronouns", _seed_private_member_pronouns),
+    (12, "retire_health_digest_job", _retire_health_digest_job),
 )
 
 

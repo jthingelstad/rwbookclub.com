@@ -96,7 +96,8 @@ def test_private_pronoun_migration_seeds_current_members_once_without_a_future_d
 def test_registered_pronoun_migration_backfills_every_current_member_including_oliver(fresh_db):
     with fresh_db.connect() as conn:
         conn.execute("DELETE FROM member_preferences")
-        conn.execute("DELETE FROM schema_migrations WHERE version = 11")
+        # The ledger refuses a gap, so the later migrations rerun with it.
+        conn.execute("DELETE FROM schema_migrations WHERE version >= 11")
 
     database.run_migrations()
 
@@ -174,10 +175,10 @@ def test_legacy_email_tracking_upgrade_is_recorded(fresh_db):
         }
     assert tables == set()
     assert [(version, name) for version, name, _ in _ledger(fresh_db)][-4:] == [
-        (8, "unified_meeting_events"),
         (9, "legacy_club_schema"),
         (10, "author_enrichment_validation"),
         (11, "private_member_pronouns"),
+        (12, "retire_health_digest_job"),
     ]
 
 

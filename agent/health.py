@@ -1,22 +1,20 @@
-"""Weekly health digest: Oliver emails the admin one short status note.
+"""Oliver's health facts, read every morning by the Otto Ops digest.
 
-Inverted alarming for the hiatus: warnings in #oliver-log only work if someone reads them, so
-instead Oliver WRITES every week (Monday morning, club time) — a missing digest is itself the
-alarm. The body is deterministic facts (backup age, warnings, usage, memory, next meeting) with
-one composed line of Oliver's voice on top; if the model call fails, the facts still go out.
+`python -m agent.health --json` prints the facts (backup age, warnings, outbox, scheduler jobs,
+memory, usage, next meeting) and the problems in them. It only reads: it never initializes or
+migrates the database, and makes no model or network call. The Otto Ops job
+`post-morning-digest` runs it at 06:30 and posts counts only. This replaced the weekly health
+email on 2026-11-02; a stopped Oliver is caught by `check-services-running`, which watches
+com.rwbookclub.oliver every 15 minutes.
 """
 
 from __future__ import annotations
 
-import logging
+import argparse
+import json
 
-from agent import clock, config, db, identities, jobs, oliver
+from agent import clock, config, db, jobs
 from agent.club import meeting_rules
-from agent.mail import outbound
-
-log = logging.getLogger("oliver.health")
-
-JOB_KEY = "health_digest"
 
 
 def snapshot() -> dict:
@@ -35,13 +33,6 @@ def snapshot() -> dict:
             "SELECT COUNT(*) FROM activity_events WHERE kind='warning' "
             "AND created_at > datetime('now','-7 days')"
         ).fetchone()[0]
-        recent_warns = [
-            r["title"]
-            for r in conn.execute(
-                "SELECT title FROM activity_events WHERE kind='warning' "
-                "AND created_at > datetime('now','-7 days') ORDER BY id DESC LIMIT 3"
-            )
-        ]
         tokens = conn.execute(
             "SELECT COALESCE(SUM(input_tokens+output_tokens),0) FROM usage_log "
             "WHERE created_at > datetime('now','-7 days')"
@@ -68,7 +59,6 @@ def snapshot() -> dict:
         "backupAgeDays": backup_age,
         "dbMB": round(db.DB_PATH.stat().st_size / 1e6, 1) if db.DB_PATH.exists() else None,
         "warnings7d": warnings,
-        "recentWarnings": recent_warns,
         "kTokens7d": int(tokens / 1000),
         "memories": db.count_memories(),
         "reflectionRanAt": (db.get_job_state("reflection") or {}).get("ran_at", "")[:10] or "never",
@@ -80,94 +70,49 @@ def snapshot() -> dict:
             "failed": failed_jobs,
             "active": sum(bool(row["lease_owner"]) for row in job_rows),
         },
-        "nextMeeting": (
-            (meeting.get("book") or {}).get("title")
-            or ("Book not picked" if meeting.get("meetingId") else None)
-        ),
+        "meetingScheduled": bool(meeting.get("meetingId")),
+        "bookPicked": bool((meeting.get("book") or {}).get("title")),
         "daysToMeeting": days_out,
         "release": (db.current_release() or {}).get("name") or "unnamed",
     }
 
 
-def digest_email(facts: dict) -> tuple[str, str]:
-    today = meeting_rules.friendly_date(clock.club_today_iso())
-    delivery_alerts = facts["outbox"].get("uncertain", 0) + facts["outbox"].get("dead", 0)
-    job_alerts = len(facts["jobs"]["overdue"]) + len(facts["jobs"]["failed"])
-    ok = (
-        facts["warnings7d"] == 0
-        and not delivery_alerts
-        and not job_alerts
-        and (
-            facts["backupAgeDays"] is not None
-            and facts["backupAgeDays"] <= config.OFFSITE_BACKUP_INTERVAL_DAYS
-        )
-    )
-    opener = oliver.compose(
-        "one or two sentences opening your weekly health report to Jamie — your own status, "
-        "in your voice, honest about the headline (all quiet, or something needs a look)",
-        facts,
-        fallback="All quiet in the engine room this week."
-        if ok
-        else "A few things below are worth a look when you have a minute.",
-    )
-    lines = [
-        opener,
-        "",
-        f"- **Backup**: {facts['backupFile'] or 'NONE'}"
-        + (f" ({facts['backupAgeDays']}d old)" if facts["backupAgeDays"] is not None else "")
-        # explicit None check: a 0-day-old backup is the GOOD case, and `0 or 99` would flag it
-        + (
-            " ⚠️"
-            if facts["backupAgeDays"] is None
-            or facts["backupAgeDays"] > config.OFFSITE_BACKUP_INTERVAL_DAYS
-            else " ✓"
-        ),
-        f"- **Warnings (7d)**: {facts['warnings7d']}"
-        + (" ✓" if not facts["warnings7d"] else " ⚠️ — " + "; ".join(facts["recentWarnings"])),
-        f"- **Outbox**: {facts['outbox'].get('pending', 0)} pending · "
-        f"{facts['outbox'].get('retry', 0)} retrying · "
-        f"{facts['outbox'].get('uncertain', 0)} uncertain · "
-        f"{facts['outbox'].get('dead', 0)} dead" + (" ✓" if not delivery_alerts else " ⚠️"),
-        f"- **Scheduler jobs**: {facts['jobs']['total']} tracked · "
-        f"{len(facts['jobs']['overdue'])} overdue · {len(facts['jobs']['failed'])} failed · "
-        f"{facts['jobs']['active']} active" + (" ✓" if not job_alerts else " ⚠️"),
-        f"- **Database**: {facts['dbMB']} MB · {facts['memories']} active memories · "
-        f"last reflection {facts['reflectionRanAt']}",
-        f"- **Usage (7d)**: ~{facts['kTokens7d']}k tokens",
-        f"- **Next meeting**: {facts['nextMeeting'] or 'none scheduled'}"
-        + (f" in {facts['daysToMeeting']} days" if facts["daysToMeeting"] is not None else ""),
-        f"- **Running release**: {facts['release']}",
-        "",
-        "_If this email ever fails to arrive on a Monday, that absence is the alarm — "
-        "check the Mac._",
-    ]
-    subject = f"Oliver health — {today}" + ("" if ok else " ⚠️")
-    return subject, "\n".join(lines)
+def problems(facts: dict) -> list[str]:
+    """What needs a look, in plain words. Names jobs, never a member or a warning's text."""
+    found = []
+    age = facts["backupAgeDays"]
+    if age is None:
+        found.append("no offsite backup recorded")
+    elif age > config.OFFSITE_BACKUP_INTERVAL_DAYS:
+        found.append(f"offsite backup is {age} days old")
+    if facts["warnings7d"]:
+        found.append(f"{facts['warnings7d']} warnings in 7 days (#oliver-log)")
+    uncertain = facts["outbox"].get("uncertain", 0)
+    dead = facts["outbox"].get("dead", 0)
+    if uncertain or dead:
+        found.append(f"outbox has {uncertain} uncertain and {dead} dead deliveries")
+    if facts["jobs"]["overdue"]:
+        found.append("scheduler jobs overdue: " + ", ".join(facts["jobs"]["overdue"]))
+    if facts["jobs"]["failed"]:
+        found.append("scheduler jobs failing: " + ", ".join(facts["jobs"]["failed"]))
+    return found
 
 
-def run(now) -> bool:
-    """Weekly gate + send. Called from the hourly scheduler; True when a digest was sent."""
-    if not config.HEALTH_DIGEST_ENABLED:
-        return False
-    if now.weekday() != config.HEALTH_DIGEST_WEEKDAY or now.hour != config.HEALTH_DIGEST_HOUR:
-        return False
-    week = f"{now.isocalendar().year}-W{now.isocalendar().week:02d}"
-    state = db.get_job_state(JOB_KEY) or {}
-    if state.get("week") == week:
-        return False  # restart double-fire inside the gate hour
-    admin_slug = identities.member_slug_for_user(str(config.ADMIN_USER_ID))
-    rec = identities.email_for_member(admin_slug) if admin_slug else None
-    if not rec:
-        log.warning("health digest: no admin email linked; skipping")
-        return False
-    subject, body = digest_email(snapshot())
-    outbound.send(
-        to=[rec["email"]],
-        subject=subject,
-        body=body,
-        idempotency_key=f"email:health:{week}",
-        policy="linked_member",
-    )
-    db.set_job_state(JOB_KEY, {"week": week, "sent_at": db._now()})
-    log.info("health digest sent to admin (%s)", week)
-    return True
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Print Oliver's health facts. Read only.")
+    parser.add_argument("--json", action="store_true", help="print the facts and problems as JSON")
+    args = parser.parse_args(argv)
+    if not db.DB_PATH.exists():
+        # sqlite3 would create an empty database here; a wrong path must fail instead.
+        parser.exit(2, f"no Oliver database at {db.DB_PATH}\n")
+    facts = snapshot()
+    found = problems(facts)
+    if args.json:
+        print(json.dumps({"facts": facts, "problems": found}, indent=2))
+    else:
+        print("\n".join(found) if found else "healthy")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
