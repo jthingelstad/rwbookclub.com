@@ -3,7 +3,7 @@
 // (`npm run infra -- <stack>`), never from CI:
 //
 //   certificate  rwbookclub.com with www.rwbookclub.com, validated by two CNAMEs at Namecheap
-//   site         the bucket, the distribution and its function, headers, access logs, 5xx alarm
+//   site         the bucket, the distribution and its function, headers, access logs
 //   delivery     the role the gh-pages workflow assumes to publish Oliver's build (scripts/deploy-aws.mjs)
 //
 // Oliver builds the site on this Mac and force-pushes it to the gh-pages branch (agent/publish.py). That
@@ -44,8 +44,6 @@ const ref = (name) => ({ Ref: name });
 const sub = (value) => ({ 'Fn::Sub': value });
 const get = (name, field) => ({ 'Fn::GetAtt': [name, field] });
 const custom = (a, b) => ({ 'Fn::If': ['CustomDomain', a, b] });
-// The Thingelstad family alarm topic, subscribed to the shared projects-ops-alerts queue.
-const alarmTopic = sub('arn:${AWS::Partition}:sns:us-east-1:${AWS::AccountId}:weekly-thing-librarian-alarms');
 // AWS managed CachingOptimized: no cookies, headers or query strings in the key, so ?ref= variants share
 // one cached copy; it honours the Cache-Control each object is uploaded with.
 const CACHING_OPTIMIZED = '658327ea-f89d-4fab-a63d-7e88639e58f6';
@@ -204,27 +202,6 @@ export const site = template(
             { ErrorCode: 404, ResponseCode: 404, ResponsePagePath: '/404.html', ErrorCachingMinTTL: 60 }
           ]
         }
-      }
-    },
-    DistributionErrorAlarm: {
-      Type: 'AWS::CloudWatch::Alarm',
-      Properties: {
-        AlarmName: sub('${AWS::StackName}-distribution-5xx'),
-        AlarmDescription: `CloudFront returned more than 5% 5xx responses for ${DOMAIN} in two of three five-minute windows.`,
-        Namespace: 'AWS/CloudFront',
-        MetricName: '5xxErrorRate',
-        Dimensions: [
-          { Name: 'DistributionId', Value: ref('Distribution') },
-          { Name: 'Region', Value: 'Global' }
-        ],
-        Statistic: 'Average',
-        Period: 300,
-        EvaluationPeriods: 3,
-        DatapointsToAlarm: 2,
-        Threshold: 5,
-        ComparisonOperator: 'GreaterThanThreshold',
-        TreatMissingData: 'notBreaching',
-        AlarmActions: [alarmTopic]
       }
     },
     // Access logs, the same shape as the other sites': CloudFront's standard logging into CloudWatch

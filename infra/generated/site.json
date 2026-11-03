@@ -272,41 +272,6 @@
         }
       }
     },
-    "DistributionErrorAlarm": {
-      "Type": "AWS::CloudWatch::Alarm",
-      "Properties": {
-        "AlarmName": {
-          "Fn::Sub": "${AWS::StackName}-distribution-5xx"
-        },
-        "AlarmDescription": "CloudFront returned more than 5% 5xx responses for rwbookclub.com in two of three five-minute windows.",
-        "Namespace": "AWS/CloudFront",
-        "MetricName": "5xxErrorRate",
-        "Dimensions": [
-          {
-            "Name": "DistributionId",
-            "Value": {
-              "Ref": "Distribution"
-            }
-          },
-          {
-            "Name": "Region",
-            "Value": "Global"
-          }
-        ],
-        "Statistic": "Average",
-        "Period": 300,
-        "EvaluationPeriods": 3,
-        "DatapointsToAlarm": 2,
-        "Threshold": 5,
-        "ComparisonOperator": "GreaterThanThreshold",
-        "TreatMissingData": "notBreaching",
-        "AlarmActions": [
-          {
-            "Fn::Sub": "arn:${AWS::Partition}:sns:us-east-1:${AWS::AccountId}:weekly-thing-librarian-alarms"
-          }
-        ]
-      }
-    },
     "AccessLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
