@@ -1,0 +1,37 @@
+# The Blocksize War: The battle over who controls Bitcoin’s protocol rules
+
+- **Author:** Jonathan Bier
+- **Read:** January 2022
+- **Topic:** Technology
+- **Subjects:** Bitcoin
+- **Published:** 2021
+- **Pages:** 228
+- **Picked by:** Jamie
+- **ISBN-13:** 9798721895609
+- **Club rating:** 2/5 (from 1 member)
+- **Open Library:** https://openlibrary.org/works/OL30747417W
+- **Cover:** https://rwbookclub.com/assets/images/covers/the-blocksize-war-850.jpg
+- **Canonical page:** https://rwbookclub.com/books/the-blocksize-war/
+
+## Meeting notes
+
+Special guest: Hector Fernandez
+
+## Reviews
+
+- Jamie — 2/5
+
+## Related books
+
+- Enshittification (Technology)
+  https://rwbookclub.com/books/enshittification.txt
+- Co-Intelligence (Technology)
+  https://rwbookclub.com/books/co-intelligence.txt
+- Army of None (Technology)
+  https://rwbookclub.com/books/army-of-none.txt
+- The Master Algorithm (Technology)
+  https://rwbookclub.com/books/the-master-algorithm.txt
+- Life After Google (Technology)
+  https://rwbookclub.com/books/life-after-google.txt
+- Powering the Dream (Technology)
+  https://rwbookclub.com/books/powering-the-dream.txt
