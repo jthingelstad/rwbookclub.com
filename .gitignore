@@ -53,3 +53,6 @@ agent/script/_airtable_cache/
 
 # OS
 .DS_Store
+.env.*
+!.env.example
+!.env.tpl
